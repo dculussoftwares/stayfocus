@@ -7,7 +7,7 @@ Runs in GitHub Actions after `terraform apply` in infra/github (see
   1. Sub-issues: each story becomes a sub-issue of its epic.
   2. Dependencies: each story is marked "blocked by" the stories it depends on.
   3. Projects v2 board: uses the existing org project (#11), links the repo,
-     ensures the custom fields, adds every issue, sets Type / Size / Story ID,
+     ensures the custom fields, adds every issue, sets Level / Size / Story ID,
      and sets an initial Status. Status values already set by people are never
      overwritten, with one exception: Backlog -> Ready once all dependencies are closed.
 
@@ -198,7 +198,7 @@ def ensure_fields(project_id: str) -> dict[str, dict]:
         except RuntimeError as e:
             print(f"warning: could not update Status options ({e}); set them in the project settings")
 
-    for name, options in (("Type", TYPE_OPTIONS), ("Size", SIZE_OPTIONS)):
+    for name, options in (("Level", TYPE_OPTIONS), ("Size", SIZE_OPTIONS)):  # "Type" is reserved by GitHub issue types
         if name not in fields:
             mutate("""mutation($p:ID!,$n:String!,$o:[ProjectV2SingleSelectFieldOptionInput!]){
                         createProjectV2Field(input:{projectId:$p,dataType:SINGLE_SELECT,name:$n,singleSelectOptions:$o}){clientMutationId}}""",
@@ -222,7 +222,7 @@ def load_items(project_id: str) -> dict[str, dict]:
                    id content{... on Issue{id}}
                    status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}}
                    size:fieldValueByName(name:"Size"){... on ProjectV2ItemFieldSingleSelectValue{name}}
-                   type:fieldValueByName(name:"Type"){... on ProjectV2ItemFieldSingleSelectValue{name}}
+                   type:fieldValueByName(name:"Level"){... on ProjectV2ItemFieldSingleSelectValue{name}}
                    sid:fieldValueByName(name:"Story ID"){... on ProjectV2ItemFieldTextValue{text}}}}}}}""",
             id=project_id, after=cursor,
         )
@@ -278,7 +278,7 @@ def sync_board(backlog: dict, issues: dict[int, dict]) -> None:
             print(f"board: added {key}")
 
         if item["type"] != kind:
-            set_select(project_id, item["id"], fields["Type"], kind)
+            set_select(project_id, item["id"], fields["Level"], kind)
         if size and item["size"] != size:
             set_select(project_id, item["id"], fields["Size"], size)
         if item["sid"] != key:
