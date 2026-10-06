@@ -16,7 +16,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Topic | Decision |
 |---|---|
 | Platform | Android only, Kotlin + Jetpack Compose, Material 3 as base, fully custom-themed (dark only) |
-| SDK levels | `minSdk = 26`, `targetSdk = 36`, `compileSdk = 36` |
+| SDK levels | `minSdk = 26`, `targetSdk = 36`, `compileSdk = 37` (Coil 3.6 and Compose 1.12 require it; `targetSdk` stays 36) |
 | DI | Hilt (KSP) |
 | Persistence | Room (schema exported to `/schemas`) + Preferences DataStore |
 | Async | Coroutines + Flow; ViewModels expose a single `StateFlow<UiState>` |

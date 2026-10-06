@@ -13,6 +13,8 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.coil.compose)
+    implementation(libs.androidx.core.ktx)
 
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
