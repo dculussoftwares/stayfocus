@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.ui.icon
 
 import android.content.Context
 import android.content.pm.PackageManager
+import androidx.core.graphics.drawable.toBitmap
 import coil3.ImageLoader
 import coil3.Uri
 import coil3.asImage
@@ -16,6 +17,7 @@ import coil3.toUri
 fun packageIconUri(pkg: String): Uri = "$PACKAGE_SCHEME:$pkg".toUri()
 
 internal const val PACKAGE_SCHEME = "package"
+private const val ICON_PX = 192
 
 /**
  * Loads a launcher icon through [PackageManager] for `package:` URIs.
@@ -30,7 +32,8 @@ internal class PackageIconFetcher(
     override suspend fun fetch(): FetchResult {
         val icon = context.packageManager.getApplicationIcon(pkg)
         return ImageFetchResult(
-            image = icon.asImage(),
+            // Rasterised at a fixed size: the cache key is the URI, so it must not depend on request size.
+            image = icon.toBitmap(width = ICON_PX, height = ICON_PX).asImage(),
             isSampled = false,
             dataSource = DataSource.DISK,
         )
