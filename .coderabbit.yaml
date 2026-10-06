@@ -1,0 +1,85 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit is the required reviewer for every PR (see docs/IMPLEMENTATION_PLAN.md §4).
+# The PR merges only after CodeRabbit approves: all its comments resolved, latest commit reviewed.
+language: "en-US"
+early_access: false
+
+reviews:
+  profile: "assertive"
+  # Request changes on actionable comments; approve once they're resolved.
+  request_changes_workflow: true
+  # PR authors are coding agents: they must not approve their own PRs with "@coderabbitai approve".
+  allow_author_approval: false
+  high_level_summary: true
+  review_status: true
+  collapse_walkthrough: true
+  poem: false
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    - "!design_handoff_stay_focused_phase1/**"
+    - "!LICENSE"
+    - "!**/*.lock.hcl"
+    - "!**/schemas/**/*.json"
+    - "!**/src/test/snapshots/**"
+    - "!**/*.png"
+  path_instructions:
+    - path: "**/*.kt"
+      instructions: |
+        Kotlin + Jetpack Compose Android code. Check against docs/IMPLEMENTATION_PLAN.md §5:
+        - Features use only StayFocusedTheme tokens (no hard-coded colours, radii or dp spacing outside :core:ui).
+        - Screens split into XxxRoute (ViewModel wiring) and a stateless XxxScreen(state, onEvent); one StateFlow<UiState> per ViewModel.
+        - Time comes from an injected Clock/TimeSource, never System.currentTimeMillis() in logic.
+        - :feature:* modules never import each other; :core:model has no Android imports.
+        - User-visible strings live in strings.xml and match the design prototype copy exactly.
+        - Coroutines: no GlobalScope, structured concurrency, cancellation-safe; no blocking calls on the main thread.
+        - Privacy: never log app package names or usage data at INFO+ in release builds.
+        - Pure logic (rule evaluator, parsers, formatters, aggregation) must come with unit tests.
+    - path: "**/AndroidManifest.xml"
+      instructions: |
+        Google Play policy gate. Flag any of the following unless the linked story explicitly requires it:
+        QUERY_ALL_PACKAGES, REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, isAccessibilityTool, any new dangerous or special permission,
+        a foreground service in :app, or a missing IsMonitoringTool flag / FGS specialUse property in :kids.
+    - path: "**/*.gradle.kts"
+      instructions: |
+        Versions must come from gradle/libs.versions.toml; keep module build files minimal (convention plugins in build-logic).
+        compileSdk/targetSdk 36, minSdk 26. The build must still work without google-services.json.
+    - path: "infra/**/*.tf"
+      instructions: |
+        Terraform applied only by GitHub Actions with HCP Terraform state. Check least privilege for IAM roles and service accounts,
+        no secrets or credentials in code or defaults, pinned provider versions, no resources that should come from another
+        root module, and that destructive changes (replace/destroy) are intentional.
+    - path: "firebase/firestore.rules"
+      instructions: |
+        Security boundary of the app (plan §8). Rules must deny by default, validate every written field (types, sizes,
+        allowed keys via onlyChanges/hasOnly), keep parents and children strictly separated, and match the tests.
+        Flag any rule that lets a client create device docs, claim link tokens or write another user's data.
+    - path: "firebase/functions/**"
+      instructions: |
+        Only the 5 functions in plan §8 may exist. Each must use the shared secure wrapper: App Check enforced,
+        request.auth required with the caller's role checked, zod input validation, per-uid rate limiting,
+        transactions for multi-document writes, typed HttpsErrors without internal details, no personal data in logs.
+    - path: ".github/workflows/**"
+      instructions: |
+        Public repo: third-party actions pinned to full commit SHAs, minimal `permissions`, secrets never exposed to
+        pull requests from forks, no untrusted input interpolated into `run:` scripts.
+    - path: "backlog/*/stories/*.md"
+      instructions: |
+        Backlog story: front matter needs id, title, epic, size, modules, depends, labels; every `depends` id must exist and
+        there must be no cycles. docs/agents/PHASE1_EXECUTION.md must be regenerated (python3 scripts/backlog/waves.py).
+    - path: "backlog/*/epics/*.md"
+      instructions: |
+        Backlog epic: front matter has only id and title (by design; stories carry the rest). Check that the epic text and
+        exit criteria agree with its stories.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "docs/IMPLEMENTATION_PLAN.md"
+
+chat:
+  auto_reply: true

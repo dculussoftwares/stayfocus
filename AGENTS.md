@@ -8,12 +8,13 @@ Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a compan
 3. The GitHub issue you're working on. Each story lists its scope, acceptance criteria and dependencies.
 
 **Rules**
-- Commit **directly to `main`** (no feature branches or PRs). The commit that finishes a story ends with `Closes #<issue>`.
-- Track work on the **kanban board** (https://github.com/orgs/dculussoftwares/projects/11): pick from *Ready*, move to *In progress* (`scripts/backlog/board.py`); *Done* happens when the issue closes.
+- One story = one branch (`m<N>/<issue>-<slug>`) = one PR with `Closes #<issue>`, reviewed by **CodeRabbit** (`.coderabbit.yaml`).
+  Fix or answer every CodeRabbit comment; merge only when CI is green and CodeRabbit has approved. Never self-approve or dismiss its review.
+- Track work on the **kanban board** (https://github.com/orgs/dculussoftwares/projects/11): pick from *Ready*, move to *In progress* when you start and *In review* when the PR is open (`scripts/backlog/board.py`); *Done* happens when the PR merges.
 - Prompts and the parallel execution order are in `docs/agents/PHASE1_EXECUTION.md`.
 - Don't start a story whose "Depends on" issues are still open.
 - Stay inside the story's scope; open a new issue for anything else you find.
-- Run `./gradlew spotlessCheck detekt lint testDebugUnitTest assembleDebug` before every push; `main` must stay green. `git pull --rebase` before pushing; never force-push.
+- Install the git hooks once per clone/worktree (`scripts/dev/setup-hooks.sh`, from M1-14). Run `./gradlew ciCheck` (from M1-02; before that, `./gradlew assembleDebug`) before every push. Never push to `main` directly or force-push it.
 - The project must build without `google-services.json`.
 - Never add permissions, manifest flags or `QUERY_ALL_PACKAGES` unless the story says so (Play policy).
 - Infrastructure (GitHub settings, GCP/Firebase) changes **only** through Terraform in `infra/`, applied by GitHub Actions. Never use a console, `gcloud ... create`, or `firebase deploy`. See `docs/INFRASTRUCTURE.md`.
