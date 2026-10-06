@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/dculus-ui-36181fa0-089c-484a-9dcb-a3369f574d01/styles.css">
+<script src="_ds/dculus-ui-36181fa0-089c-484a-9dcb-a3369f574d01/_ds_bundle.js"></script>
+<style>body{margin:0;background:hsl(var(--background));font-family:var(--font-sans);color:hsl(var(--foreground))}a{color:var(--tf-green)}a:hover{color:var(--tf-darkest)}</style>
+</helmet>
+<div style="max-width:960px;margin:0 auto;padding:48px 24px 96px;display:flex;flex-direction:column;gap:48px">
+
+<header style="display:flex;flex-direction:column;gap:12px">
+<div style="font:500 12px var(--font-mono);color:hsl(var(--muted-foreground));letter-spacing:.04em">STAY FOCUSED · ANDROID · OPEN SOURCE · DRAFT v1</div>
+<h1 style="margin:0;font-size:40px;line-height:1.1;font-weight:600;color:var(--tf-darkest);text-wrap:pretty">Product plan, phase by phase</h1>
+<p style="margin:0;font-size:16px;line-height:1.6;max-width:680px;color:var(--tf-text);text-wrap:pretty">A free, open-source app blocker for Android. You sign in with an account and can link and control your other devices from your phone by scanning a QR code. This plan covers what I understood from the reference screenshots, the scope of each phase, the Phase 1 screens, and the questions we still need to settle before I build the Phase 1 prototype.</p>
+</header>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">1. Reference app teardown</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px">
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Dashboard</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Today's screen time and launches, Take a Break presets, the current mode, 6 stacked quick-action cards, profiles and templates. Too much is packed into one screen, so users have trouble telling which items are features and which are status.</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Modes</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Normal, Lock (password) and Strict (deactivation method). Each mode shows 1 to 3 locks for how strict it is, and this works well as a mental model.</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Analytics</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Day stepper, 5 metric tabs, an hourly bar chart with an average line, and per-app usage bars with overflow menus.</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">All Apps</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Search, Pinned sort, and a lock toggle on every app with time spent and launches. When an app is blocked, its row expands to show the rule.</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Profile wizard</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Pick a condition from 7+ types, then a sub-type such as daily or hourly, then the rules: what to block (launch or notification), days, interval and threshold picker. Powerful, but the user has to understand the jargon before they can start.</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">What we drop</div><div style="font-size:14px;line-height:1.55;color:var(--tf-muted)">Ads, the trial pill, Upgrade badges, and the 18+ upsell placed among the quick actions. The app is free, so every screen can stay focused on the job.</div></div>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">2. UX principles</h2>
+<ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.55;color:var(--tf-text)">
+<li><strong style="color:var(--tf-darkest)">Plain words for each block type.</strong> We say "Limit time", "Block during hours" and "Block now". We avoid "Blocking Condition".</li>
+<li><strong style="color:var(--tf-darkest)">Templates first, custom second.</strong> Most people start by tapping a template, then adjust it.</li>
+<li><strong style="color:var(--tf-darkest)">Status and actions are separate.</strong> The dashboard shows what is happening. Settings live in their own tab.</li>
+<li><strong style="color:var(--tf-darkest)">Every device looks the same.</strong> A linked device uses the same dashboard as this phone, scoped to that device. Nothing new to learn.</li>
+<li><strong style="color:var(--tf-darkest)">Permissions are explained just before they are needed.</strong> One screen per permission, and each one says why.</li>
+</ol>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">3. Phases</h2>
+<div style="display:flex;flex-direction:column;gap:12px">
+
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border-strong);border-radius:12px;padding:20px;display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">PHASE 1 · v1.0</div><div style="font-size:18px;font-weight:600;color:var(--tf-darkest)">Block, limit, link</div><div style="font-size:13px;color:var(--tf-muted)">First Play Store release</div></div>
+<div style="display:flex;flex-direction:column;gap:10px;font-size:14px;line-height:1.55;color:var(--tf-text)">
+<div><strong style="color:var(--tf-darkest)">Accounts</strong>: Google sign-in and email + password (Firebase Auth), with forgot-password.</div>
+<div><strong style="color:var(--tf-darkest)">Device linking</strong>: a parent links a child's phone by scanning the QR code shown on the child's phone. The child's phone needs no account. Includes a device list, unlinking, and tamper alerts.</div>
+<div><strong style="color:var(--tf-darkest)">Remote controls</strong>: view usage, block or unblock apps, start or stop a focus session, approve unlock requests, see live status (online, battery, current app).</div>
+<div><strong style="color:var(--tf-darkest)">Blocking</strong>: app blocker, usage limits (daily and hourly), <strong style="color:var(--tf-darkest)">Use, then rest</strong> (each time you open an app you get X minutes, then it's blocked for Y minutes), schedules (time intervals), Quick Block and Take a Break.</div>
+<div><strong style="color:var(--tf-darkest)">AI block builder</strong>: describe a block in your own words, e.g. "Instagram 10 min, then lock 1 hour". The AI fills in the block form, and you review it before it turns on.</div>
+<div><strong style="color:var(--tf-darkest)">Analytics</strong>: screen time, launches, unlocks, per-app detail, day and week.</div>
+<div style="color:var(--tf-muted)">Normal mode only. Instead of tamper protection, the parent gets tamper alerts.</div>
+</div></div>
+
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:20px;display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:600 12px var(--font-mono);color:hsl(var(--muted-foreground))">PHASE 2</div><div style="font-size:18px;font-weight:600;color:var(--tf-darkest)">Commitment</div></div>
+<div style="font-size:14px;line-height:1.55;color:var(--tf-text)">Lock and Strict modes (Device Admin, uninstall protection), website blocker, Reels/Shorts blocker, notification blocking, launch-count and wait-timer limits. New remote controls: switch modes, edit profiles, lock now.</div></div>
+
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:20px;display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:600 12px var(--font-mono);color:hsl(var(--muted-foreground))">PHASE 3</div><div style="font-size:18px;font-weight:600;color:var(--tf-darkest)">Focus &amp; study</div></div>
+<div style="font-size:14px;line-height:1.55;color:var(--tf-text)">Pomodoro and study timer with automatic blocking, focus sounds, goal-based unlocks, keyword blocker, adult content filter, Strict Alarm.</div></div>
+
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:20px;display:grid;grid-template-columns:minmax(0,180px) minmax(0,1fr);gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px"><div style="font:600 12px var(--font-mono);color:hsl(var(--muted-foreground))">PHASE 4</div><div style="font-size:18px;font-weight:600;color:var(--tf-darkest)">Groups &amp; context</div></div>
+<div style="font-size:14px;line-height:1.55;color:var(--tf-text)">Admin and team/school groups, location blocking, digital detox schedules, home-screen widgets, and optional monetization.</div></div>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">4. Phase 1 screen inventory</h2>
+<p style="margin:0;font-size:14px;color:var(--tf-muted)">Proposed navigation: 4 tabs (Home · Block · Devices · Insights). Account opens from the avatar on Home.</p>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px">
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">ONBOARDING · 6</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">Welcome<br>Sign in / Sign up<br>Forgot password<br>"Who uses this device?"<br>Permission setup (usage, accessibility, overlay, notifications, battery)<br>First-block template pick</div></div>
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">HOME · 3</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">Dashboard (today, active blocks, devices strip)<br>Take a Break sheet<br>Active session / countdown</div></div>
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">BLOCK · 6</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">Profiles + templates<br>Create profile: type → apps → rules → save<br>Profile detail / edit<br>App picker<br>All apps (quick toggle)<br>Blocked-app overlay</div></div>
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">DEVICES · 6</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">My devices<br>Link: show QR / scan QR<br>Confirm link + role<br>Remote device dashboard<br>Remote app block list<br>Unlock requests inbox</div></div>
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">INSIGHTS · 2</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">Overview (time, launches, unlocks)<br>App detail</div></div>
+<div style="border:1px solid var(--tf-border);border-radius:12px;padding:16px;background:hsl(var(--card));display:flex;flex-direction:column;gap:8px"><div style="font:600 12px var(--font-mono);color:var(--tf-green)">ACCOUNT · 3</div><div style="font-size:14px;line-height:1.7;color:var(--tf-text)">Profile &amp; sign out<br>Permission health check<br>About / open source / privacy</div></div>
+</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">5. Linking flow (draft)</h2>
+<ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15px;line-height:1.55;color:var(--tf-text)">
+<li>On the device to be controlled: install the app, then Devices → <strong style="color:var(--tf-darkest)">Link to another phone</strong>. A QR code appears, valid for 5 minutes.</li>
+<li>On the controller phone: Devices → <strong style="color:var(--tf-darkest)">Add device</strong> → scan the code.</li>
+<li>Both screens show a matching confirmation code. The child's phone shows exactly what the parent will be able to do and asks for consent.</li>
+<li>The device appears in the controller's list. A permanent notification on the controlled device says "Managed by Alex's phone".</li>
+<li>When an app is blocked, the controlled device can tap <strong style="color:var(--tf-darkest)">Ask for more time</strong>. The controller gets a push notification with Approve 15 / 30 / 60 min or Deny.</li>
+</ol>
+<div style="border:1px solid var(--tf-error-bg-lg);background:var(--tf-error-bg);border-radius:12px;padding:16px;font-size:14px;line-height:1.55;color:var(--tf-text)"><strong style="color:var(--tf-error)">Play Store rule.</strong> Linking is allowed for parent → child only. Google prohibits monitoring another adult, such as a partner, even if they consent. See section 8.</div>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">6. Technical notes</h2>
+<ul style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55;color:var(--tf-text)">
+<li>Kotlin + Jetpack Compose. UsageStatsManager for analytics, an AccessibilityService and overlay for blocking.</li>
+<li>Firebase Auth, Firestore for device state and commands, and FCM to wake the controlled device for remote commands.</li>
+<li>Open source: forks bring their own <span style="font-family:var(--font-mono);font-size:13px">google-services.json</span>. Blocking also works offline, without an account.</li>
+<li>AI block builder: Gemini through Firebase AI Logic, which fits the Firebase stack and has no server to run. Answers come back in a strict JSON format that maps to the 4 block types. The AI only receives the sentence the user typed, never their usage data. If AI is unavailable or the user is offline, the app falls back to a simple rule-based reader on the phone. The AI never turns a block on by itself. Play's AI-generated content policy applies lightly here because the output is a settings form, not content. Still mention AI in the listing and Data safety form, and let users report a bad result.</li>
+<li>Battery optimisation must be turned off on the controlled device, or remote commands arrive late on some OEMs (Xiaomi, Oppo, Vivo).</li>
+</ul>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:12px;border-top:1px solid var(--tf-border);padding-top:32px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">7. Decisions (agreed)</h2>
+<ol style="margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.55;color:var(--tf-text)">
+<li><strong style="color:var(--tf-darkest)">Parent → child only.</strong> One phone controls, the other is controlled. A device can't be both. Admin/team linking moves to Phase 4.</li>
+<li><strong style="color:var(--tf-darkest)">The child device doesn't need an account.</strong> It links to the parent's account through the QR code.</li>
+<li><strong style="color:var(--tf-darkest)">Child shows, parent scans.</strong> Only the child's phone shows a QR code, and only the parent's phone can scan it. Both then confirm a 6-digit code.</li>
+<li><strong style="color:var(--tf-darkest)">The child can unlink anytime.</strong> The parent gets a notification when they do.</li>
+<li><strong style="color:var(--tf-darkest)">Tamper alerts.</strong> The parent is told when a permission is turned off or the app is uninstalled.</li>
+<li><strong style="color:var(--tf-darkest)">Tabs:</strong> Home · Block · Devices · Insights.</li>
+<li>Free with no ads for now. Monetization comes later.</li>
+</ol>
+</section>
+
+<section style="display:flex;flex-direction:column;gap:16px">
+<h2 style="margin:0;font-size:22px;font-weight:600;color:var(--tf-darkest)">8. Play Store compliance: Phase 1</h2>
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--tf-muted);max-width:680px">These are the items that most often block an app blocker or parental-control app at review. Each one is built into the Phase 1 design. The ones that need code or Play Console work are marked so they can be planned early.</p>
+
+<div style="border:1px solid var(--tf-border-strong);background:hsl(var(--card));border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px">
+<div style="font:600 12px var(--font-mono);color:var(--tf-error)">TIMELINE BLOCKER</div>
+<div style="font-size:16px;font-weight:600;color:var(--tf-darkest)">Closed test: 12 testers for 14 days</div>
+<div style="font-size:14px;line-height:1.55;color:var(--tf-text)">New personal developer accounts (created after 13 Nov 2023) must run a closed test with at least 12 testers, opted in for 14 days in a row, before they can apply for production access. Plan about 3 weeks between the build being finished and the public launch. Organization accounts with a D-U-N-S number are exempt. Start recruiting testers during development.</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Accessibility API</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">Do not set isAccessibilityTool; that flag is only for disability tools. Show a separate in-app disclosure screen right before sending the user to Settings. It says what data is read (the app in the foreground) and how it's used (blocking only, kept on the phone), and needs a clear "Agree" tap. Fill in the Play Console declaration, record the demo video, and mention it in the store listing.</div><div style="font:500 11px var(--font-mono);color:var(--tf-green)">IN PROTOTYPE · PLAY CONSOLE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Monitoring (stalkerware policy)</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">Sending a child's usage, current app and battery to the parent counts as monitoring. It requires: parent → child only (never adults), the IsMonitoringTool flag in the manifest, a persistent notification with a unique icon whenever it runs, monitoring described in the store listing, and no hidden or "spy" wording.</div><div style="font:500 11px var(--font-mono);color:var(--tf-green)">IN PROTOTYPE · MANIFEST · LISTING</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">App list without QUERY_ALL_PACKAGES</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">Build the app picker with a &lt;queries&gt; intent filter for launcher apps (MAIN/LAUNCHER). That covers every app the user can open and avoids a restricted permission and its declaration.</div><div style="font:500 11px var(--font-mono);color:hsl(var(--muted-foreground))">CODE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Foreground service type</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">The child's phone needs a persistent service for sync and its notification. Declare foregroundServiceType="specialUse" with a written use-case property and complete the FGS declaration in Play Console. The parent's phone only needs WorkManager and FCM, with no foreground service.</div><div style="font:500 11px var(--font-mono);color:hsl(var(--muted-foreground))">MANIFEST · PLAY CONSOLE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Target API 36</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">Since 31 Aug 2026, new apps and updates must target Android 16 (API 36). Set targetSdk = 36 from day one and test the blocking overlay and usage access on Android 16.</div><div style="font:500 11px var(--font-mono);color:hsl(var(--muted-foreground))">CODE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Account deletion</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">Accounts can be created, so the app needs a "Delete account" option in-app and a web page for deletion requests, linked in the Data safety form. Deleting the account must remove the Firestore data and the linked child devices too.</div><div style="font:500 11px var(--font-mono);color:var(--tf-green)">IN PROTOTYPE · WEB PAGE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Privacy policy &amp; Data safety</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">A hosted privacy policy URL, linked in-app and in the listing. The Data safety form declares app activity, device IDs and app info collected from the child's phone, encrypted in transit, with no sharing or ads.</div><div style="font:500 11px var(--font-mono);color:hsl(var(--muted-foreground))">WEB PAGE · PLAY CONSOLE</div></div>
+<div style="background:hsl(var(--card));border:1px solid var(--tf-border);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600;color:var(--tf-darkest)">Usage access &amp; overlay</div><div style="font-size:13px;line-height:1.55;color:var(--tf-muted)">PACKAGE_USAGE_STATS and SYSTEM_ALERT_WINDOW are special-access permissions the user grants in Settings. Explain each one in-app first (one screen per permission) and never make the app unusable if one is denied.</div><div style="font:500 11px var(--font-mono);color:var(--tf-green)">IN PROTOTYPE</div></div>
+</div>
+
+<div style="border:1px solid var(--tf-border-strong);background:hsl(var(--card));border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:6px">
+<div style="font:600 12px var(--font-mono);color:var(--tf-green)">DECIDED</div>
+<div style="font-size:16px;font-weight:600;color:var(--tf-darkest)">Two apps: Stay Focused + Stay Focused Kids</div>
+<div style="font-size:14px;line-height:1.55;color:var(--tf-text)">Google only allows monitoring in apps "exclusively designed and marketed" for parents or enterprise. Stay Focused is mainly a self-control app, so putting monitoring in the same APK risks a rejection that is hard to argue. <strong style="color:var(--tf-darkest)">Recommendation:</strong> ship the child side as a small companion app, "Stay Focused Kids". It carries the IsMonitoringTool flag, the persistent notification and the Accessibility declaration. The main app stays a self-control and parent app, with lighter declarations. Both are built from the same open-source repo as two Gradle modules that share the blocking engine.</div>
+</div>
+
+<div style="border:1px solid var(--tf-border);background:hsl(var(--accent));border-radius:12px;padding:16px;font-size:13px;line-height:1.55;color:var(--tf-text)"><strong style="color:var(--tf-darkest)">Phase 2 heads-up:</strong> the Accessibility API can't be used to stop someone uninstalling or disabling an app, unless it's authorized by a parent in a parental control app. Self-imposed Strict mode therefore needs Device Admin and its own disclosure, not Accessibility. We'll design that in Phase 2.</div>
+<p style="margin:0;font-size:12px;color:var(--tf-light-muted)">Checked against Google Play policy pages as of Oct 2026. Re-check the Play Console policy status page before each release.</p>
+</section>
+</div>
+</x-dc>
+</body>
+</html>

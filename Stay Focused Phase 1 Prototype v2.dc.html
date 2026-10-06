@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=clash-display@500,600,700&f[]=satoshi@400,500,700,900&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600;700&display=swap">
+<style>body{margin:0;background:#E6E5DF;font-family:'Satoshi',sans-serif;color:#0E0F0D;-webkit-font-smoothing:antialiased}a{color:#C6F432}a:hover{color:#E4FF8A}button{font-family:inherit}textarea::placeholder,input::placeholder{color:#6E7367}*::-webkit-scrollbar{width:0;height:0}@keyframes sfPulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(198,244,50,.55)}50%{opacity:.7;box-shadow:0 0 0 5px rgba(198,244,50,0)}}@keyframes sfIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes sfUp{from{transform:translateY(100%)}to{transform:none}}@keyframes sfSpin{to{transform:rotate(360deg)}}</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:48px;padding:36px 20px;box-sizing:border-box">
+
+<sc-if value="{{ showPanel }}" hint-placeholder-val="{{ true }}">
+<aside style="width:250px;display:flex;flex-direction:column;gap:22px;padding-top:16px">
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#6B6E66">PHASE 1 · PROTOTYPE v2</div><div style="font:600 30px/1 'Clash Display',sans-serif;letter-spacing:-.02em">Stay<br>Focused</div><div style="font-size:13px;line-height:1.55;color:#55584F">An instrument panel for your attention. Jump into a flow:</div></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ jumps }}" as="j" hint-placeholder-count="6">
+<button onClick="{{ j.go }}" style="display:flex;gap:10px;align-items:flex-start;text-align:left;padding:10px 12px;border-radius:12px;border:1px solid rgba(14,15,13,.1);background:#F3F2EE;cursor:pointer;transition:all .15s" style-hover="background:#0E0F0D;color:#F2F4EC"><span style="font:600 11px 'Geist Mono',monospace;opacity:.5;padding-top:2px">{{ j.n }}</span><span style="display:flex;flex-direction:column;gap:2px"><span style="font-size:13px;font-weight:700">{{ j.label }}</span><span style="font-size:12px;opacity:.6">{{ j.hint }}</span></span></button>
+</sc-for>
+</div>
+<div style="font-size:12px;line-height:1.5;color:#6B6E66">Drag the dial to set time. Buttons marked "(demo)" stand in for the other phone.</div>
+</aside>
+</sc-if>
+
+<div style="width:392px;height:844px;flex:none;border-radius:52px;background:#050604;padding:9px;box-sizing:border-box;box-shadow:0 40px 80px -20px rgba(14,15,13,.45),0 0 0 1px rgba(255,255,255,.06) inset">
+<div style="position:relative;width:100%;height:100%;border-radius:44px;overflow:hidden;background:#0E0F0D;color:#F2F4EC;display:flex;flex-direction:column">
+
+<div style="height:38px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font:600 13px 'Geist Mono',monospace;color:#F2F4EC;position:relative;z-index:2;background:{{ statusBg }}"><span>9:41</span><div style="width:88px;height:24px;border-radius:14px;background:#000"></div><span style="display:flex;gap:6px;align-items:center"><svg width="15" height="11" viewBox="0 0 15 11"><path d="M1 10h2V7H1zM5 10h2V5H5zM9 10h2V3H9zM13 10h2V1h-2z" fill="currentColor"></path></svg><svg width="22" height="11" viewBox="0 0 22 11"><rect x=".5" y=".5" width="18" height="10" rx="2.5" fill="none" stroke="currentColor"></rect><rect x="2" y="2" width="11" height="7" rx="1" fill="#C6F432"></rect><rect x="19.5" y="3.5" width="1.5" height="4" rx=".5" fill="currentColor"></rect></svg></span></div>
+
+<div style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column">
+
+<sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ true }}">
+<div style="flex:1;display:flex;flex-direction:column;position:relative;overflow:hidden;animation:sfIn .5s ease both">
+<svg width="520" height="520" viewBox="0 0 240 240" style="position:absolute;right:-230px;top:-60px;opacity:.9"><circle cx="120" cy="120" r="104" fill="none" stroke="#1F221C" stroke-width="10"></circle><circle cx="120" cy="120" r="104" fill="none" stroke="#C6F432" stroke-width="10" stroke-linecap="round" stroke-dasharray="230 654" transform="rotate(150 120 120)"></circle><sc-for list="{{ welcomeTicks }}" as="t" hint-placeholder-count="0"><line x1="{{ t.x1 }}" y1="{{ t.y1 }}" x2="{{ t.x2 }}" y2="{{ t.y2 }}" stroke="{{ t.c }}" stroke-width="{{ t.w }}" stroke-linecap="round"></line></sc-for></svg>
+<div style="flex:1"></div>
+<div style="padding:0 26px 26px;display:flex;flex-direction:column;gap:22px;position:relative">
+<div style="font:600 11px 'Geist Mono',monospace;letter-spacing:.12em;color:#C6F432">● STAY FOCUSED</div>
+<div style="font:600 50px/.98 'Clash Display',sans-serif;letter-spacing:-.01em">Take back<br><span style="color:#C6F432">your time.</span></div>
+<div style="font-size:15px;line-height:1.55;color:#A6AB9D;max-width:300px">Block what distracts you. Set limits that hold. Look after your child's phone from yours.</div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+<button onClick="{{ toSignin }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:0 22px" style-hover="background:#D6FF55"><span>Get started</span><span style="font-size:20px">→</span></button>
+<button onClick="{{ toChildQr }}" style="height:52px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#F2F4EC;font-size:15px;font-weight:600;cursor:pointer" style-hover="background:#171915">This is my child's phone</button>
+</div>
+<div style="font:500 10.5px 'Geist Mono',monospace;color:#6E7367;letter-spacing:.06em;text-align:center">FREE · OPEN SOURCE · NO ADS</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSignin }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:14px 22px 24px;gap:22px;animation:sfIn .35s ease both">
+<button onClick="{{ toWelcome }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 34px/1 'Clash Display',sans-serif;letter-spacing:-.02em">{{ authTitle }}</div><div style="font-size:14px;color:#A6AB9D">Your account keeps blocks and linked phones in sync.</div></div>
+<button onClick="{{ googleSignin }}" style="height:54px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;gap:12px;font-size:15px;font-weight:700;cursor:pointer" style-hover="border-color:#C6F432"><span style="width:22px;height:22px;border-radius:11px;background:#F2F4EC;color:#0E0F0D;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">G</span>Continue with Google</button>
+<div style="display:flex;align-items:center;gap:12px;font:500 11px 'Geist Mono',monospace;color:#6E7367"><div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div>OR EMAIL<div style="flex:1;height:1px;background:rgba(255,255,255,.08)"></div></div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<label style="display:flex;flex-direction:column;gap:7px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">EMAIL<input type="email" placeholder="you@example.com" value="{{ email }}" onChange="{{ onEmail }}" style="height:54px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#171915;color:#F2F4EC;font:500 16px 'Satoshi',sans-serif;padding:0 16px;outline:none" style-focus="border-color:#C6F432"></input></label>
+<label style="display:flex;flex-direction:column;gap:7px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">PASSWORD<input type="password" placeholder="At least 6 characters" value="{{ pw }}" onChange="{{ onPw }}" style="height:54px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#171915;color:#F2F4EC;font:500 16px 'Satoshi',sans-serif;padding:0 16px;outline:none" style-focus="border-color:#C6F432"></input></label>
+<sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:13px;color:#FF7A66;display:flex;gap:8px;align-items:center"><span style="width:6px;height:6px;border-radius:3px;background:#FF5A47"></span>{{ err }}</div></sc-if>
+<sc-if value="{{ isSigninMode }}" hint-placeholder-val="{{ true }}"><button onClick="{{ forgot }}" style="align-self:flex-start;border:none;background:none;padding:0;font-size:13px;font-weight:600;color:#C6F432;cursor:pointer">Forgot password?</button></sc-if>
+</div>
+<div style="flex:1"></div>
+<button onClick="{{ emailSubmit }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer" style-hover="background:#D6FF55">{{ authCta }}</button>
+<button onClick="{{ toggleAuth }}" style="border:none;background:none;font-size:14px;color:#A6AB9D;cursor:pointer">{{ authSwitch }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPerms }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:16px 22px 24px;gap:22px;animation:sfIn .35s ease both">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">SYSTEM CHECK</span><span style="font:700 13px 'Geist Mono',monospace;color:#C6F432">{{ permCount }}/4</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px"><sc-for list="{{ permList }}" as="p" hint-placeholder-count="4"><div style="height:4px;border-radius:2px;background:{{ p.seg }};transition:background .3s"></div></sc-for></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 32px/1.02 'Clash Display',sans-serif;letter-spacing:-.02em">Four switches,<br>then you're in.</div><div style="font-size:14px;line-height:1.5;color:#A6AB9D">Android needs these before Stay Focused can see and block apps.</div></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ permList }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;gap:14px;align-items:center;padding:16px;border-radius:18px;background:#171915;border:1px solid {{ p.bd }};transition:border-color .3s">
+<span style="width:10px;height:10px;border-radius:5px;flex:none;background:{{ p.led }};box-shadow:{{ p.glow }}"></span>
+<div style="flex:1;display:flex;flex-direction:column;gap:3px"><div style="font-size:15px;font-weight:700">{{ p.title }}</div><div style="font-size:12.5px;line-height:1.45;color:#A6AB9D">{{ p.why }}</div></div>
+<button onClick="{{ p.grant }}" style="flex:none;height:36px;padding:0 14px;border-radius:12px;border:none;font-size:13px;font-weight:800;cursor:pointer;background:{{ p.bg }};color:{{ p.fg }}">{{ p.cta }}</button>
+</div>
+</sc-for>
+</div>
+<div style="flex:1"></div>
+<button onClick="{{ finishPerms }}" style="height:56px;border-radius:16px;border:none;background:{{ permBtnBg }};color:{{ permBtnFg }};font-size:16px;font-weight:800;cursor:pointer">{{ permCta }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChildQr }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:14px 22px 24px;gap:22px;animation:sfIn .35s ease both">
+<button onClick="{{ toWelcome }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 32px/1.02 'Clash Display',sans-serif;letter-spacing:-.02em">Link to a<br>parent's phone</div><div style="font-size:14px;line-height:1.5;color:#A6AB9D">On the parent's phone: Devices → Add device → Scan. No account needed here.</div></div>
+<div style="align-self:center;position:relative;padding:20px;border-radius:26px;background:#F2F4EC;box-shadow:0 0 0 8px #171915,0 0 60px rgba(198,244,50,.18)"><div style="display:grid;grid-template-columns:repeat(21,9px);grid-auto-rows:9px"><sc-for list="{{ qr }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.bg }};border-radius:1.5px"></div></sc-for></div></div>
+<div style="display:flex;justify-content:center;gap:8px;font:500 12px 'Geist Mono',monospace;color:#A6AB9D"><span style="width:8px;height:8px;border-radius:4px;background:#C6F432;align-self:center;animation:sfPulse 1.6s infinite"></span>WAITING FOR SCAN · 4:52</div>
+<div style="flex:1"></div>
+<button onClick="{{ toChildConfirm }}" style="height:52px;border-radius:16px;border:1px dashed rgba(255,255,255,.22);background:transparent;color:#F2F4EC;font-size:14px;font-weight:600;cursor:pointer">Parent scanned the code (demo)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChildConfirm }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:22px 22px 24px;gap:20px;animation:sfIn .35s ease both">
+<div style="font:600 30px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">Let {{ parent }} manage this phone?</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:20px;background:#171915;border:1px solid rgba(198,244,50,.35)"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">MATCH THIS CODE ON {{ parentUpper }}'S PHONE</span><span style="font:700 38px 'Geist Mono',monospace;letter-spacing:.14em;color:#C6F432">482 913</span></div>
+<div style="display:flex;flex-direction:column;gap:12px"><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">{{ parentUpper }} WILL BE ABLE TO</span>
+<sc-for list="{{ consentList }}" as="c" hint-placeholder-count="5"><div style="display:flex;gap:12px;align-items:center;font-size:14.5px"><span style="width:20px;height:20px;border-radius:6px;background:rgba(198,244,50,.14);display:flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C6F432" stroke-width="3.5" stroke-linecap="round"><path d="M5 12l5 5 9-10"></path></svg></span>{{ c }}</div></sc-for>
+</div>
+<div style="font-size:13px;line-height:1.5;color:#A6AB9D;padding:14px;border-radius:14px;background:#171915">A notification always shows while this phone is managed. You can unlink anytime, and {{ parent }} will be told.</div>
+<div style="flex:1"></div>
+<button onClick="{{ toChildHome }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer">Allow and link</button>
+<button onClick="{{ toWelcome }}" style="border:none;background:none;font-size:14px;color:#A6AB9D;cursor:pointer">Cancel</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isChildHome }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:8px 18px 24px;gap:16px;animation:sfIn .35s ease both">
+<div style="display:flex;flex-direction:column;gap:5px;padding:14px 16px;border-radius:22px;background:#262922;border:1px solid rgba(255,255,255,.06)"><div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#A6AB9D"><span style="width:18px;height:18px;border-radius:6px;background:#C6F432;display:flex;align-items:center;justify-content:center;font:600 9px 'Clash Display',sans-serif;color:#0E0F0D">SF</span>Stay Focused Kids · now</div><div style="font-size:14px;font-weight:700">This phone is managed by {{ parent }}</div><div style="font-size:12px;color:#A6AB9D">Screen time and app use are shared with {{ parent }}.</div></div>
+<div style="font:500 9.5px 'Geist Mono',monospace;color:#6E7367;margin-top:-10px;padding-left:4px">↑ PERSISTENT NOTIFICATION · REQUIRED BY PLAY POLICY</div>
+<div style="display:flex;justify-content:space-between;align-items:flex-end;padding:6px 4px 0"><div style="display:flex;flex-direction:column;gap:4px"><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">TODAY</span><span style="font:600 52px/1 'Clash Display',sans-serif;letter-spacing:-.03em">1h 12m</span></div><span style="font:600 11px 'Geist Mono',monospace;color:#C6F432;padding-bottom:8px">48 MIN UNDER LIMIT</span></div>
+<sc-if value="{{ childWaiting }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:12px;align-items:center;padding:14px 16px;border-radius:16px;background:rgba(255,181,71,.12);border:1px solid rgba(255,181,71,.35)"><span style="width:16px;height:16px;border-radius:8px;border:2px solid #FFB547;border-top-color:transparent;animation:sfSpin 1s linear infinite;flex:none"></span><span style="font-size:14px">Waiting for {{ parent }} · {{ childReqMins }} more min of Instagram</span></div></sc-if>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;padding-left:4px">RULES SET BY {{ parentUpper }}</span>
+<div style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:#171915"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Instagram</span><span style="font-size:12.5px;color:#A6AB9D">30 min a day · used up</span></div><span style="font:700 10.5px 'Geist Mono',monospace;padding:5px 9px;border-radius:8px;background:rgba(255,90,71,.16);color:#FF7A66">LOCKED</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:#171915"><div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">Games</span><span style="font-size:12.5px;color:#A6AB9D">School days · 8:00–15:00</span></div><span style="font:700 10.5px 'Geist Mono',monospace;padding:5px 9px;border-radius:8px;background:#262922;color:#A6AB9D">LATER</span></div>
+<div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:18px;background:#171915"><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><span style="font-size:15px;font-weight:700">YouTube</span><span style="font:600 12px 'Geist Mono',monospace;color:#C6F432">18m left</span></div><div style="height:4px;border-radius:2px;background:#262922;overflow:hidden"><div style="width:70%;height:100%;background:#C6F432"></div></div></div></div>
+</div></div>
+<button onClick="{{ toBlocked }}" style="height:52px;border-radius:16px;border:1px dashed rgba(255,255,255,.22);background:transparent;color:#F2F4EC;font-size:14px;font-weight:600;cursor:pointer">Open Instagram (demo)</button>
+<button onClick="{{ childUnlink }}" style="border:none;background:none;font-size:13px;font-weight:600;color:#FF7A66;cursor:pointer;padding:6px">Unlink from {{ parent }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBlocked }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:24px 24px 26px;gap:20px;background:radial-gradient(120% 70% at 50% 0%,#3A1712 0%,#0E0F0D 60%);animation:sfIn .3s ease both">
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:18px;text-align:center">
+<div style="position:relative;width:120px;height:120px;display:flex;align-items:center;justify-content:center"><div style="position:absolute;inset:0;border-radius:60px;border:2px solid rgba(255,90,71,.35)"></div><div style="position:absolute;inset:14px;border-radius:46px;background:rgba(255,90,71,.14)"></div><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#FF7A66" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg></div>
+<div style="font:600 11px 'Geist Mono',monospace;letter-spacing:.12em;color:#FF7A66">INSTAGRAM · LOCKED</div>
+<div style="font:600 34px/1.02 'Clash Display',sans-serif;letter-spacing:-.02em">Today's 30 minutes<br>are used up.</div>
+<div style="display:flex;flex-direction:column;gap:4px;align-items:center"><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">OPENS IN</span><span style="font:700 34px 'Geist Mono',monospace;letter-spacing:.04em">{{ midnightLeft }}</span></div>
+</div>
+<sc-if value="{{ reqNone }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<button onClick="{{ reqAsk }}" style="height:56px;border-radius:16px;border:none;background:#F2F4EC;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer">Ask {{ parent }} for more time</button>
+<button onClick="{{ toChildHome }}" style="height:48px;border:none;background:none;color:#A6AB9D;font-size:15px;font-weight:600;cursor:pointer">Close</button>
+</div>
+</sc-if>
+<sc-if value="{{ reqPick }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;animation:sfIn .25s ease both"><div style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;text-align:center">HOW MUCH MORE?</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><sc-for list="{{ reqOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.pick }}" style="height:60px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#171915;color:#F2F4EC;font:700 17px 'Geist Mono',monospace;cursor:pointer" style-hover="border-color:#F2F4EC">{{ o.label }}</button></sc-for></div></div>
+</sc-if>
+<sc-if value="{{ reqSent }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px;text-align:center;animation:sfIn .25s ease both"><div style="font-size:16px;font-weight:700">Request sent to {{ parent }}</div><div style="font-size:13px;color:#A6AB9D">You'll get a notification when they answer.</div><button onClick="{{ toChildHome }}" style="height:48px;border:none;background:none;color:#F2F4EC;font-size:15px;font-weight:600;cursor:pointer">Close</button></div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ tHome }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 18px 24px;gap:14px;animation:sfIn .35s ease both">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><div style="display:flex;flex-direction:column;gap:3px"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">MON 06 OCT · 10:42</span><span style="font:600 22px 'Clash Display',sans-serif;letter-spacing:-.01em">Morning, {{ parent }}</span></div><button onClick="{{ toAccount }}" style="width:44px;height:44px;border-radius:15px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;font:600 16px 'Clash Display',sans-serif;cursor:pointer">{{ initial }}</button></div>
+
+<div style="display:flex;gap:8px">
+<button onClick="{{ homeNewBlock }}" style="flex:1;height:56px;border-radius:18px;border:1.5px solid #F2F4EC;background:#F2F4EC;color:#0E0F0D;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px" style-hover="background:#fff"><span style="width:24px;height:24px;border-radius:8px;background:#0E0F0D;color:#C6F432;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1">+</span>New block</button>
+<button onClick="{{ homeAiBlock }}" style="flex:none;height:56px;padding:0 16px;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:#171915;color:#F2F4EC;font-size:13.5px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px" style-hover="border-color:#C6F432"><span style="font:700 9.5px 'Geist Mono',monospace;letter-spacing:.06em;padding:2px 5px;border-radius:5px;background:#C6F432;color:#0E0F0D">AI</span>Describe</button>
+</div>
+
+<button onClick="{{ toInsights }}" style="position:relative;text-align:left;border:1px solid rgba(255,255,255,.07);background:linear-gradient(180deg,#171915,#121410);border-radius:28px;padding:16px 16px 18px;display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;color:#F2F4EC;overflow:hidden">
+<div style="display:flex;justify-content:space-between;width:100%"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">SCREEN TIME</span><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.06em;color:#C6F432">INSIGHTS →</span></div>
+<div style="position:relative;width:300px;height:176px">
+<svg width="300" height="176" viewBox="0 0 300 176"><path d="{{ gauge.track }}" fill="none" stroke="#262922" stroke-width="14" stroke-linecap="round"></path><path d="{{ gauge.value }}" fill="none" stroke="#C6F432" stroke-width="14" stroke-linecap="round"></path><sc-for list="{{ gauge.ticks }}" as="t" hint-placeholder-count="0"><line x1="{{ t.x1 }}" y1="{{ t.y1 }}" x2="{{ t.x2 }}" y2="{{ t.y2 }}" stroke="{{ t.c }}" stroke-width="{{ t.w }}" stroke-linecap="round"></line></sc-for><line x1="{{ gauge.avg.x1 }}" y1="{{ gauge.avg.y1 }}" x2="{{ gauge.avg.x2 }}" y2="{{ gauge.avg.y2 }}" stroke="#F2F4EC" stroke-width="3" stroke-linecap="round"></line></svg>
+<div style="position:absolute;left:40px;right:40px;top:90px;display:flex;flex-direction:column;align-items:center;gap:6px"><span style="font:600 30px/1 'Clash Display',sans-serif;letter-spacing:-.02em;white-space:nowrap">2h 27m</span><span style="font:500 11px 'Geist Mono',monospace;color:#A6AB9D">▲ 8m over your 2h 19m avg</span></div>
+<div style="position:absolute;left:24px;bottom:0;font:500 10px 'Geist Mono',monospace;color:#6E7367">0h</div><div style="position:absolute;right:22px;bottom:0;font:500 10px 'Geist Mono',monospace;color:#6E7367">4h</div>
+</div>
+<div style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px;width:100%;margin-top:4px"><sc-for list="{{ ledMini }}" as="col" hint-placeholder-count="24"><div style="display:flex;flex-direction:column-reverse;gap:3px"><sc-for list="{{ col.cells }}" as="c" hint-placeholder-count="5"><div style="height:5px;border-radius:1.5px;background:{{ c }}"></div></sc-for></div></sc-for></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);width:100%;margin-top:8px;border-top:1px solid rgba(255,255,255,.07);padding-top:12px"><div style="display:flex;flex-direction:column;gap:2px"><span style="font:700 20px 'Geist Mono',monospace">63</span><span style="font:500 10px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">LAUNCHES</span></div><div style="display:flex;flex-direction:column;gap:2px"><span style="font:700 20px 'Geist Mono',monospace">48</span><span style="font:500 10px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">UNLOCKS</span></div><div style="display:flex;flex-direction:column;gap:2px"><span style="font:700 20px 'Geist Mono',monospace;color:#C6F432">12</span><span style="font:500 10px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">BLOCKED</span></div></div>
+</button>
+
+<sc-if value="{{ breakActive }}" hint-placeholder-val="{{ false }}">
+<div style="border-radius:28px;padding:20px;background:#C6F432;color:#0E0F0D;display:flex;flex-direction:column;gap:12px;animation:sfIn .35s ease both">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:700 10.5px 'Geist Mono',monospace;letter-spacing:.1em">ON A BREAK · APPS LOCKED</span><button onClick="{{ endBreak }}" style="border:1.5px solid #0E0F0D;background:none;color:#0E0F0D;font-size:12px;font-weight:800;padding:6px 12px;border-radius:10px;cursor:pointer">End early</button></div>
+<span style="font:700 60px/1 'Geist Mono',monospace;letter-spacing:-.02em">{{ breakLeft }}</span>
+<div style="display:grid;grid-template-columns:repeat(30,1fr);gap:2px"><sc-for list="{{ breakSegs }}" as="b" hint-placeholder-count="30"><div style="height:10px;border-radius:2px;background:{{ b }}"></div></sc-for></div>
+</div>
+</sc-if>
+<sc-if value="{{ breakIdle }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openBreak }}" style="text-align:left;border:none;border-radius:28px;padding:20px;background:#C6F432;color:#0E0F0D;display:flex;align-items:center;gap:14px;cursor:pointer;transition:transform .15s" style-hover="transform:translateY(-2px)" style-active="transform:scale(.98)">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 24px/1 'Clash Display',sans-serif;letter-spacing:-.02em">Take a break</span><span style="font-size:13.5px;font-weight:600;opacity:.7">Lock distracting apps for a while</span></div>
+<span style="width:52px;height:52px;border-radius:18px;background:#0E0F0D;color:#C6F432;display:flex;align-items:center;justify-content:center;font-size:22px;flex:none">→</span>
+</button>
+</sc-if>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">ACTIVE BLOCKS · THIS PHONE</span><button onClick="{{ toBlock }}" style="border:none;background:none;font-size:13px;font-weight:700;color:#C6F432;cursor:pointer">Manage</button></div>
+<sc-for list="{{ profileRows }}" as="p" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:#171915;border:1px solid rgba(255,255,255,.05)"><span style="flex:none;width:44px;height:44px;border-radius:14px;background:{{ p.chipBg }};color:{{ p.chipFg }};display:flex;align-items:center;justify-content:center;font:700 10px 'Geist Mono',monospace;letter-spacing:.04em">{{ p.short }}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">{{ p.name }}</span><span style="font-size:12.5px;color:#A6AB9D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.desc }}</span></div><button onClick="{{ p.toggle }}" style="flex:none;width:50px;height:30px;border-radius:10px;border:none;padding:3px;cursor:pointer;background:{{ p.trk }};display:flex;justify-content:{{ p.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:{{ p.knob }}"></span></button></div>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+</div>
+
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">LINKED PHONES</span><button onClick="{{ toDevices }}" style="border:none;background:none;font-size:13px;font-weight:700;color:#C6F432;cursor:pointer">All</button></div>
+<sc-for list="{{ deviceRows }}" as="d" hint-placeholder-count="1">
+<button onClick="{{ d.open }}" style="text-align:left;display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:#171915;border:1px solid rgba(255,255,255,.05);cursor:pointer;color:#F2F4EC"><span style="width:44px;height:44px;border-radius:14px;background:#262922;display:flex;align-items:center;justify-content:center;flex:none;font:600 16px 'Clash Display',sans-serif">{{ d.initial }}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">{{ d.name }}</span><span style="display:flex;align-items:center;gap:6px;font:500 11px 'Geist Mono',monospace;color:#A6AB9D"><span style="width:7px;height:7px;border-radius:4px;background:#C6F432;animation:sfPulse 2s infinite"></span>{{ d.statusLine }}</span></div><sc-if value="{{ d.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width:24px;height:24px;border-radius:8px;background:#FF5A47;color:#0E0F0D;font:800 12px 'Geist Mono',monospace;display:flex;align-items:center;justify-content:center">{{ d.badge }}</span></sc-if></button>
+</sc-for>
+<sc-if value="{{ noDevices }}" hint-placeholder-val="{{ false }}"><button onClick="{{ toAdd }}" style="height:56px;border-radius:20px;border:1.5px dashed rgba(255,255,255,.18);background:none;font-size:14px;font-weight:700;color:#F2F4EC;cursor:pointer">+ Link a child's phone</button></sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ tBlock }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 18px 24px;gap:14px;animation:sfIn .35s ease both">
+<div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 4px"><span style="font:600 34px/1 'Clash Display',sans-serif;letter-spacing:-.025em">Block</span><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;padding-bottom:4px">BLOCKING ON</span></div>
+<div style="display:flex;gap:8px;overflow-x:auto;margin:0 -18px;padding:0 18px"><sc-for list="{{ targets }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="flex:none;display:flex;align-items:center;gap:10px;height:52px;padding:0 16px 0 8px;border-radius:16px;cursor:pointer;background:{{ t.bg }};border:1.5px solid {{ t.bd }};color:{{ t.fg }};transition:all .15s"><span style="width:36px;height:36px;border-radius:11px;display:flex;align-items:center;justify-content:center;font:600 14px 'Clash Display',sans-serif;background:{{ t.chipBg }};color:{{ t.chipFg }}">{{ t.initial }}</span><span style="display:flex;flex-direction:column;align-items:flex-start;gap:1px"><span style="font-size:14px;font-weight:800">{{ t.name }}</span><span style="font:500 10px 'Geist Mono',monospace;letter-spacing:.06em;opacity:.7">{{ t.count }}</span></span></button></sc-for></div>
+<div style="display:flex;gap:8px">
+<button onClick="{{ newProfile }}" style="flex:1;min-width:0;height:64px;border-radius:20px;border:none;background:#C6F432;color:#0E0F0D;cursor:pointer;display:flex;align-items:center;gap:12px;padding:0 16px;box-shadow:0 10px 30px -10px rgba(198,244,50,.55)" style-hover="background:#D6FF55" style-active="transform:scale(.98)"><span style="width:34px;height:34px;border-radius:11px;background:#0E0F0D;color:#C6F432;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1;flex:none">+</span><span style="flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;text-align:left"><span style="font-size:16px;font-weight:900">New block</span><span style="font-size:12px;font-weight:700;opacity:.65;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">on {{ targetName }}</span></span></button>
+<button onClick="{{ toggleAi }}" style="flex:none;width:76px;height:64px;border-radius:20px;border:1.5px solid {{ aiBtnBd }};background:{{ aiBtnBg }};color:#F2F4EC;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px"><span style="font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:#C6F432;color:#0E0F0D">AI</span><span style="font-size:11.5px;font-weight:700">Describe</span></button>
+</div>
+<sc-if value="{{ cmAi }}" hint-placeholder-val="{{ false }}">
+<div style="position:relative;display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:24px;background:#171915;border:1px solid rgba(198,244,50,.3);animation:sfIn .25s ease both">
+<span style="font-size:13px;color:#A6AB9D">Say it the way you'd say it. You'll check the result before it turns on for {{ targetName }}.</span>
+<textarea value="{{ aiText }}" onChange="{{ onAiText }}" placeholder="Let me use Instagram for 10 minutes, then lock it for an hour" rows="3" style="position:relative;width:100%;box-sizing:border-box;resize:none;border-radius:16px;border:1px solid rgba(255,255,255,.1);background:#0E0F0D;color:#F2F4EC;font:500 15px/1.45 'Satoshi',sans-serif;padding:14px;outline:none" style-focus="border-color:#C6F432"></textarea>
+<div style="display:flex;gap:6px;overflow-x:auto;margin:0 -16px;padding:0 16px;position:relative"><sc-for list="{{ aiExamples }}" as="e" hint-placeholder-count="3"><button onClick="{{ e.use }}" style="flex:none;height:32px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:none;color:#C9CDC0;font-size:12.5px;font-weight:600;cursor:pointer" style-hover="border-color:#C6F432;color:#F2F4EC">{{ e.label }}</button></sc-for></div>
+<sc-if value="{{ aiIdle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ aiGo }}" style="position:relative;height:50px;border-radius:14px;border:none;background:#C6F432;color:#0E0F0D;font-size:15px;font-weight:800;cursor:pointer">Create block</button></sc-if>
+<sc-if value="{{ aiBusy }}" hint-placeholder-val="{{ false }}"><div style="position:relative;height:50px;border-radius:14px;background:#262922;display:flex;align-items:center;justify-content:center;gap:10px;font:600 12px 'Geist Mono',monospace;color:#C6F432"><span style="width:14px;height:14px;border-radius:7px;border:2px solid #C6F432;border-top-color:transparent;animation:sfSpin .8s linear infinite"></span>READING YOUR REQUEST</div></sc-if>
+</div>
+</sc-if>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:#171915"><sc-for list="{{ blockTabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="height:38px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};transition:all .2s">{{ t.label }}</button></sc-for></div>
+
+<sc-if value="{{ btProfiles }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ blockProfileRows }}" as="p" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:#171915;border:1px solid rgba(255,255,255,.05)"><span style="flex:none;width:44px;height:44px;border-radius:14px;background:{{ p.chipBg }};color:{{ p.chipFg }};display:flex;align-items:center;justify-content:center;font:700 10px 'Geist Mono',monospace;letter-spacing:.04em">{{ p.short }}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">{{ p.name }}</span><span style="font-size:12.5px;line-height:1.4;color:#A6AB9D">{{ p.desc }}</span></div><button onClick="{{ p.toggle }}" style="flex:none;width:50px;height:30px;border-radius:10px;border:none;padding:3px;cursor:pointer;background:{{ p.trk }};display:flex;justify-content:{{ p.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:{{ p.knob }}"></span></button></div>
+</sc-for>
+<div style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;margin-top:10px;padding:0 4px">START FROM A TEMPLATE</div>
+<div style="display:flex;gap:10px;overflow-x:auto;margin:0 -18px;padding:0 18px">
+<sc-for list="{{ templates }}" as="t" hint-placeholder-count="4">
+<button onClick="{{ t.use }}" style="flex:none;width:168px;height:176px;text-align:left;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:22px;border:1px solid rgba(255,255,255,.06);background:#171915;color:#F2F4EC;cursor:pointer" style-hover="border-color:#C6F432"><span style="font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;color:{{ t.code }}">{{ t.short }}</span><span style="flex:1"></span><span style="font:600 18px/1.1 'Clash Display',sans-serif">{{ t.name }}</span><span style="font-size:12.5px;line-height:1.4;color:#A6AB9D">{{ t.desc }}</span></button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ btApps }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ appRows }}" as="a" hint-placeholder-count="8">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:#171915"><div style="width:40px;height:40px;border-radius:13px;flex:none;background:{{ a.tint }};display:flex;align-items:center;justify-content:center;font:600 16px 'Clash Display',sans-serif;color:#0E0F0D">{{ a.letter }}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:15px;font-weight:700">{{ a.name }}</span><span style="font:500 11px 'Geist Mono',monospace;color:#A6AB9D">{{ a.line }}</span></div><button onClick="{{ a.toggle }}" style="flex:none;height:34px;padding:0 12px;border-radius:10px;border:{{ a.bd }};font:700 11px 'Geist Mono',monospace;letter-spacing:.06em;cursor:pointer;background:{{ a.bg }};color:{{ a.fg }}">{{ a.cta }}</button></div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ tDevices }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 18px 24px;gap:14px;animation:sfIn .35s ease both">
+<div style="display:flex;justify-content:space-between;align-items:center;padding:0 4px"><span style="font:600 34px/1 'Clash Display',sans-serif;letter-spacing:-.025em">Devices</span><button onClick="{{ toAdd }}" style="height:42px;padding:0 16px;border-radius:14px;border:none;background:#F2F4EC;color:#0E0F0D;font-size:14px;font-weight:800;cursor:pointer">+ Link</button></div>
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1px solid rgba(255,255,255,.08);font:500 11px 'Geist Mono',monospace;color:#A6AB9D;letter-spacing:.04em"><span style="width:8px;height:8px;border-radius:4px;background:#F2F4EC"></span>THIS PHONE · PIXEL 8 · PARENT · {{ deviceCount }} LINKED</div>
+<sc-for list="{{ deviceRows }}" as="d" hint-placeholder-count="1">
+<button onClick="{{ d.open }}" style="text-align:left;display:flex;flex-direction:column;gap:16px;padding:18px;border-radius:26px;background:linear-gradient(180deg,#1A1C17,#141611);border:1px solid rgba(255,255,255,.07);cursor:pointer;color:#F2F4EC">
+<div style="display:flex;align-items:center;gap:12px;width:100%"><span style="width:48px;height:48px;border-radius:16px;background:#262922;display:flex;align-items:center;justify-content:center;flex:none;font:600 18px 'Clash Display',sans-serif">{{ d.initial }}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font:600 19px 'Clash Display',sans-serif">{{ d.name }}</span><span style="font:500 11px 'Geist Mono',monospace;color:#A6AB9D">{{ d.model }}</span></div><span style="display:flex;align-items:center;gap:6px;font:600 10.5px 'Geist Mono',monospace;letter-spacing:.06em;color:#C6F432"><span style="width:8px;height:8px;border-radius:4px;background:#C6F432;animation:sfPulse 2s infinite"></span>ONLINE</span></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;width:100%;border-radius:14px;overflow:hidden;background:rgba(255,255,255,.06)"><div style="display:flex;flex-direction:column;gap:3px;padding:12px;background:#171915"><span style="font:500 9.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">TODAY</span><span style="font:700 16px 'Geist Mono',monospace">{{ d.time }}</span></div><div style="display:flex;flex-direction:column;gap:3px;padding:12px;background:#171915"><span style="font:500 9.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">BATTERY</span><span style="font:700 16px 'Geist Mono',monospace">{{ d.battery }}</span></div><div style="display:flex;flex-direction:column;gap:3px;padding:12px;background:#171915"><span style="font:500 9.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">USING</span><span style="font:700 14px 'Geist Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ d.current }}</span></div></div>
+<sc-if value="{{ d.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#FF7A66"><span style="width:8px;height:8px;border-radius:4px;background:#FF5A47"></span>{{ d.alertLine }}</span></sc-if>
+</button>
+</sc-for>
+<sc-if value="{{ noDevices }}" hint-placeholder-val="{{ false }}"><div style="padding:34px 20px;border-radius:26px;border:1.5px dashed rgba(255,255,255,.16);text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center"><span style="font:600 18px 'Clash Display',sans-serif">No linked phones</span><span style="font-size:13px;line-height:1.5;color:#A6AB9D">Link your child's phone to see their usage and set limits from here.</span></div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ tInsights }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 18px 24px;gap:14px;animation:sfIn .35s ease both">
+<div style="display:flex;justify-content:space-between;align-items:center"><button onClick="{{ dayPrev }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;cursor:pointer;font-size:18px;color:#F2F4EC">‹</button><div style="display:flex;flex-direction:column;align-items:center;gap:2px"><span style="font:600 22px 'Clash Display',sans-serif">{{ dayLabel }}</span><span style="font:500 10.5px 'Geist Mono',monospace;color:#A6AB9D;letter-spacing:.08em">{{ dayDate }}</span></div><button onClick="{{ dayNext }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;cursor:pointer;font-size:18px;color:#F2F4EC;opacity:{{ nextOpacity }}">›</button></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);padding:4px;border-radius:14px;background:#171915"><sc-for list="{{ metricTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.go }}" style="height:38px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};transition:all .2s">{{ t.label }}</button></sc-for></div>
+<div style="border-radius:26px;background:#171915;border:1px solid rgba(255,255,255,.06);padding:18px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:6px"><span style="font:600 40px/1 'Clash Display',sans-serif;letter-spacing:-.03em;white-space:nowrap">{{ metricTotal }}</span><span style="font:500 11px 'Geist Mono',monospace;color:#A6AB9D;white-space:nowrap">{{ metricSub }}</span></div>
+<div style="position:relative"><div style="display:grid;grid-template-columns:repeat(24,1fr);gap:3px"><sc-for list="{{ ledBig }}" as="col" hint-placeholder-count="24"><div style="display:flex;flex-direction:column-reverse;gap:3px"><sc-for list="{{ col.cells }}" as="c" hint-placeholder-count="10"><div style="height:7px;border-radius:2px;background:{{ c }}"></div></sc-for></div></sc-for></div><div style="position:absolute;left:-4px;right:-4px;bottom:{{ avgPos }};border-top:1.5px dashed rgba(242,244,236,.55)"></div></div>
+<div style="display:flex;justify-content:space-between;font:500 10px 'Geist Mono',monospace;color:#6E7367"><span>00</span><span>06</span><span>12</span><span>18</span><span>23</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:4px;padding:8px;border-radius:26px;background:#171915">
+<sc-for list="{{ insightApps }}" as="a" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;padding:10px"><span style="font:600 11px 'Geist Mono',monospace;color:#6E7367;width:16px">{{ a.rank }}</span><div style="width:36px;height:36px;border-radius:12px;flex:none;background:{{ a.tint }};display:flex;align-items:center;justify-content:center;font:600 14px 'Clash Display',sans-serif;color:#0E0F0D">{{ a.letter }}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:7px"><div style="display:flex;justify-content:space-between;font-size:14px"><span style="font-weight:700">{{ a.name }}</span><span style="font:600 12px 'Geist Mono',monospace;color:#C9CDC0">{{ a.val }}</span></div><div style="height:4px;border-radius:2px;background:#262922;overflow:hidden"><div style="height:100%;border-radius:2px;background:#C6F432;width:{{ a.pct }};transition:width .4s"></div></div></div></div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sWizard }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:10px 18px 20px;gap:18px;animation:sfIn .3s ease both">
+<div style="display:flex;align-items:center;gap:12px"><button onClick="{{ wizBack }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><div style="flex:1;display:grid;grid-template-columns:repeat(3,1fr);gap:4px"><sc-for list="{{ wizDots }}" as="d" hint-placeholder-count="3"><div style="height:4px;border-radius:2px;background:{{ d.bg }};transition:background .3s"></div></sc-for></div><span style="font:700 12px 'Geist Mono',monospace;color:#C6F432">0{{ wizStep }}<span style="color:#6E7367">/03</span></span></div>
+<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;margin-right:2px">ON</span><sc-for list="{{ wizTargets }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="height:32px;padding:0 12px;border-radius:10px;font-size:12.5px;font-weight:800;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }};border:1px solid {{ t.bd }}">{{ t.name }}</button></sc-for></div>
+
+<sc-if value="{{ w1 }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div style="font:600 30px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">How should<br>it block?</div>
+<button onClick="{{ toAiMode }}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:16px;border:1px dashed rgba(198,244,50,.4);background:rgba(198,244,50,.06);color:#F2F4EC;cursor:pointer;text-align:left;margin-bottom:4px"><span style="font:700 9.5px 'Geist Mono',monospace;letter-spacing:.06em;padding:3px 6px;border-radius:5px;background:#C6F432;color:#0E0F0D">AI</span><span style="flex:1;font-size:13.5px;font-weight:700">Rather just describe it?</span><span style="color:#C6F432">→</span></button>
+<sc-for list="{{ wizTypes }}" as="t" hint-placeholder-count="4">
+<button onClick="{{ t.pick }}" style="text-align:left;display:flex;gap:14px;align-items:center;padding:16px;border-radius:20px;cursor:pointer;background:#171915;border:1.5px solid {{ t.bd }};color:#F2F4EC;transition:border-color .15s" style-hover="border-color:rgba(198,244,50,.6)"><span style="flex:none;width:48px;height:48px;border-radius:15px;background:{{ t.chipBg }};color:{{ t.chipFg }};display:flex;align-items:center;justify-content:center;font:700 10px 'Geist Mono',monospace">{{ t.short }}</span><div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font-size:16px;font-weight:800">{{ t.name }}</span><span style="font-size:13px;line-height:1.4;color:#A6AB9D">{{ t.desc }}</span></div><span style="color:#6E7367;font-size:18px">→</span></button>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ w2 }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-end"><div style="font:600 30px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">Which apps?</div><span style="font:700 12px 'Geist Mono',monospace;color:#C6F432;padding-bottom:4px">{{ wizAppCount }} SELECTED</span></div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+<sc-for list="{{ wizAppRows }}" as="a" hint-placeholder-count="8">
+<button onClick="{{ a.toggle }}" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 4px 10px;border-radius:18px;border:1.5px solid {{ a.bd }};background:{{ a.bg }};cursor:pointer;color:#F2F4EC;transition:all .15s"><div style="width:44px;height:44px;border-radius:14px;background:{{ a.tint }};display:flex;align-items:center;justify-content:center;font:600 17px 'Clash Display',sans-serif;color:#0E0F0D">{{ a.letter }}</div><span style="font-size:12px;font-weight:700">{{ a.name }}</span><span style="font:500 10px 'Geist Mono',monospace;color:#A6AB9D">{{ a.time }}</span><span style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-radius:5px;background:{{ a.boxBg }};display:flex;align-items:center;justify-content:center"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#0E0F0D" stroke-width="4" stroke-linecap="round"><path d="M5 12l5 5 9-10"></path></svg></span></button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ w3 }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:16px">
+<div style="font:600 28px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">{{ w3Title }}</div>
+<sc-if value="{{ wizFromAi }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:18px;background:rgba(198,244,50,.08);border:1px solid rgba(198,244,50,.3)"><div style="display:flex;gap:8px;align-items:center"><span style="font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;padding:3px 7px;border-radius:6px;background:#C6F432;color:#0E0F0D">AI DRAFT</span><span style="font-size:13px;font-weight:700">{{ wizTypeName }}</span><button onClick="{{ wizChangeType }}" style="margin-left:auto;border:none;background:none;padding:0;font-size:13px;font-weight:700;color:#C6F432;cursor:pointer">Change</button></div><span style="font-size:13px;line-height:1.45;color:#C9CDC0">{{ aiNote }}</span></div>
+</sc-if>
+<sc-if value="{{ wCycle }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><sc-for list="{{ cycleTabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border-radius:16px;cursor:pointer;background:{{ t.bg }};border:1.5px solid {{ t.bd }};color:{{ t.fg }};transition:all .15s"><span style="font:700 10px 'Geist Mono',monospace;letter-spacing:.08em;opacity:.75">{{ t.label }}</span><span style="font:700 20px 'Geist Mono',monospace">{{ t.val }}</span></button></sc-for></div>
+</sc-if>
+<sc-if value="{{ showDial }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px">
+<sc-if value="{{ wLimit }}" hint-placeholder-val="{{ false }}"><div style="display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:14px;background:#171915;width:100%"><sc-for list="{{ periodTabs }}" as="t" hint-placeholder-count="2"><button onClick="{{ t.go }}" style="height:38px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button></sc-for></div></sc-if>
+<div style="position:relative;width:236px;height:236px">
+<svg width="236" height="236" viewBox="0 0 240 240" onPointerDown="{{ dial.down }}" style="touch-action:none;cursor:grab;display:block"><circle cx="120" cy="120" r="108" fill="#121410" stroke="rgba(255,255,255,.06)"></circle><circle cx="120" cy="120" r="100" fill="none" stroke="#262922" stroke-width="8"></circle><circle cx="120" cy="120" r="100" fill="none" stroke="#C6F432" stroke-width="8" stroke-linecap="round" stroke-dasharray="{{ dial.dash }}" transform="rotate(-90 120 120)"></circle><sc-for list="{{ dial.ticks }}" as="t" hint-placeholder-count="0"><line x1="{{ t.x1 }}" y1="{{ t.y1 }}" x2="{{ t.x2 }}" y2="{{ t.y2 }}" stroke="{{ t.c }}" stroke-width="{{ t.w }}" stroke-linecap="round"></line></sc-for><circle cx="{{ dial.kx }}" cy="{{ dial.ky }}" r="13" fill="#C6F432" stroke="#0E0F0D" stroke-width="4"></circle></svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><span style="font-family:'Clash Display',sans-serif;font-weight:600;line-height:1;letter-spacing:-.03em;white-space:nowrap;font-size:{{ dial.fs }}">{{ dial.big }}</span><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">{{ dial.unit }}</span></div>
+</div>
+<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><sc-for list="{{ dial.presets }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border-radius:10px;font:700 12px 'Geist Mono',monospace;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</button></sc-for></div>
+</div>
+</sc-if>
+<sc-if value="{{ wSchedule }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ rangeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.pick }}" style="height:60px;padding:0 18px;display:flex;align-items:center;justify-content:space-between;border-radius:18px;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};border:1.5px solid {{ o.bd }}"><span style="font:700 20px 'Geist Mono',monospace">{{ o.label }}</span><span style="font-size:12px;font-weight:700;opacity:.7">{{ o.hint }}</span></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ showDays }}" hint-placeholder-val="{{ false }}">
+<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px"><sc-for list="{{ dayChips }}" as="d" hint-placeholder-count="7"><button onClick="{{ d.toggle }}" style="height:42px;border-radius:12px;border:1px solid {{ d.bd }};font:700 12px 'Geist Mono',monospace;cursor:pointer;background:{{ d.bg }};color:{{ d.fg }};transition:all .15s">{{ d.label }}</button></sc-for></div>
+</sc-if>
+<div style="padding:14px 16px;border-radius:16px;border:1px dashed rgba(255,255,255,.16);font-size:14px;line-height:1.5;color:#E3E6DA">{{ wizSummary }}</div>
+</div>
+</sc-if>
+
+<div style="flex:1"></div>
+<button onClick="{{ wizNext }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer;flex:none" style-hover="background:#D6FF55">{{ wizCta }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sAdd }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:10px 18px 20px;gap:16px;animation:sfIn .3s ease both">
+<button onClick="{{ closeSub }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 32px/1.02 'Clash Display',sans-serif;letter-spacing:-.02em">Link a<br>child's phone</div><div style="font-size:14px;line-height:1.5;color:#A6AB9D">Install Stay Focused Kids on their phone first. Then scan the QR code it shows.</div></div>
+<button onClick="{{ toScan }}" style="text-align:left;display:flex;align-items:center;gap:16px;padding:20px;border-radius:24px;border:none;background:#C6F432;color:#0E0F0D;cursor:pointer"><div style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:600 19px 'Clash Display',sans-serif">Scan their code</span><span style="font-size:13px;font-weight:600;opacity:.7">Their phone shows a QR code</span></div><span style="font-size:22px">→</span></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sScan }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;background:#000;padding:10px 18px 20px;gap:18px">
+<button onClick="{{ toAdd }}" style="width:42px;height:42px;border-radius:14px;border:none;background:rgba(255,255,255,.1);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px">
+<div style="position:relative;width:250px;height:250px"><div style="position:absolute;left:0;top:0;width:46px;height:46px;border-left:4px solid #C6F432;border-top:4px solid #C6F432;border-radius:18px 0 0 0"></div><div style="position:absolute;right:0;top:0;width:46px;height:46px;border-right:4px solid #C6F432;border-top:4px solid #C6F432;border-radius:0 18px 0 0"></div><div style="position:absolute;left:0;bottom:0;width:46px;height:46px;border-left:4px solid #C6F432;border-bottom:4px solid #C6F432;border-radius:0 0 0 18px"></div><div style="position:absolute;right:0;bottom:0;width:46px;height:46px;border-right:4px solid #C6F432;border-bottom:4px solid #C6F432;border-radius:0 0 18px 0"></div><div style="position:absolute;inset:22px;border-radius:10px;background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;font:600 11px 'Geist Mono',monospace;letter-spacing:.12em;color:#6E7367">CAMERA</div></div>
+<div style="font-size:15px;text-align:center;color:#C9CDC0;max-width:260px;line-height:1.5">Point at the QR code on your child's phone</div>
+</div>
+<button onClick="{{ toConfirm }}" style="height:52px;border-radius:16px;border:1px dashed rgba(255,255,255,.25);background:transparent;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Code found (demo)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sShowQr }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:10px 18px 20px;gap:20px;animation:sfIn .3s ease both">
+<button onClick="{{ toAdd }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="display:flex;flex-direction:column;gap:8px"><div style="font:600 28px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">Scan this from<br>your child's phone</div><div style="font-size:14px;color:#A6AB9D">In Stay Focused Kids: Link → Scan.</div></div>
+<div style="align-self:center;padding:20px;border-radius:26px;background:#F2F4EC;box-shadow:0 0 0 8px #171915,0 0 60px rgba(198,244,50,.18)"><div style="display:grid;grid-template-columns:repeat(21,9px);grid-auto-rows:9px"><sc-for list="{{ qr }}" as="c" hint-placeholder-count="0"><div style="background:{{ c.bg }};border-radius:1.5px"></div></sc-for></div></div>
+<div style="flex:1"></div>
+<button onClick="{{ toConfirm }}" style="height:52px;border-radius:16px;border:1px dashed rgba(255,255,255,.22);background:transparent;color:#F2F4EC;font-size:14px;font-weight:600;cursor:pointer">Child scanned it (demo)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sConfirm }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:20px 18px 20px;gap:18px;animation:sfIn .3s ease both">
+<div style="font:600 30px/1.05 'Clash Display',sans-serif;letter-spacing:-.02em">Do the codes match?</div>
+<div style="display:flex;flex-direction:column;gap:8px;padding:18px;border-radius:20px;background:#171915;border:1px solid rgba(198,244,50,.35)"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">SAME 6 DIGITS ON THEIR PHONE</span><span style="font:700 38px 'Geist Mono',monospace;letter-spacing:.14em;color:#C6F432">482 913</span></div>
+<label style="display:flex;flex-direction:column;gap:7px;font:600 11px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D">NAME THIS PHONE<input value="{{ newName }}" onChange="{{ onNewName }}" style="height:54px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#171915;color:#F2F4EC;font:600 16px 'Satoshi',sans-serif;padding:0 16px;outline:none" style-focus="border-color:#C6F432"></input></label>
+<div style="font-size:13px;line-height:1.5;color:#A6AB9D">Linking finishes when your child taps Allow. They can unlink anytime, and you'll be told if they do.</div>
+<div style="flex:1"></div>
+<button onClick="{{ finishLink }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer">Child allowed it (demo)</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sRemote }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:6px 18px 24px;gap:12px;animation:sfIn .3s ease both">
+<div style="display:flex;align-items:center;gap:12px"><button onClick="{{ closeSub }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><div style="flex:1;display:flex;flex-direction:column;gap:3px"><span style="font:600 22px/1 'Clash Display',sans-serif">{{ rName }}</span><span style="display:flex;gap:6px;align-items:center;font:500 10.5px 'Geist Mono',monospace;color:#C6F432;letter-spacing:.04em"><span style="width:7px;height:7px;border-radius:4px;background:#C6F432;animation:sfPulse 2s infinite"></span>ONLINE · {{ rBattery }} · {{ rCurrentUpper }}</span></div></div>
+<sc-if value="{{ rHasAlert }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:20px;background:rgba(255,90,71,.1);border:1px solid rgba(255,90,71,.35)"><div style="display:flex;gap:10px;align-items:flex-start"><span style="width:8px;height:8px;border-radius:4px;background:#FF5A47;margin-top:6px;flex:none"></span><div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:14.5px;font-weight:800;color:#FF8A78">Accessibility turned off · 10:42</span><span style="font-size:13px;line-height:1.45;color:#C9CDC0">Blocking is paused on this phone until it's back on.</span></div></div><div style="display:flex;gap:8px;padding-left:18px"><button onClick="{{ dismissAlert }}" style="height:34px;padding:0 14px;border-radius:10px;border:none;background:#FF5A47;color:#0E0F0D;font-size:13px;font-weight:800;cursor:pointer">Remind them</button><button onClick="{{ dismissAlert }}" style="height:34px;padding:0 12px;border-radius:10px;border:none;background:none;color:#C9CDC0;font-size:13px;font-weight:600;cursor:pointer">Dismiss</button></div></div>
+</sc-if>
+<sc-if value="{{ rHasReq }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:20px;background:rgba(255,181,71,.1);border:1px solid rgba(255,181,71,.35)"><div style="display:flex;flex-direction:column;gap:3px"><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#FFB547">REQUEST · 2 MIN AGO</span><span style="font-size:15px;font-weight:800">15 more minutes of Instagram?</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"><sc-for list="{{ approveOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.go }}" style="height:40px;border-radius:12px;border:{{ o.bd }};font:700 12px 'Geist Mono',monospace;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for></div></div>
+</sc-if>
+<div style="border-radius:22px;padding:16px;background:{{ rFocusBg }};color:{{ rFocusFg }};display:flex;flex-direction:column;gap:12px;border:1px solid rgba(255,255,255,.06)">
+<div style="display:flex;justify-content:space-between;align-items:center"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em">{{ rFocusTitle }}</span><sc-if value="{{ rFocusOn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ stopFocus }}" style="border:1.5px solid #0E0F0D;background:none;color:#0E0F0D;font-size:12px;font-weight:800;padding:5px 12px;border-radius:10px;cursor:pointer">Stop</button></sc-if></div>
+<sc-if value="{{ rFocusOn }}" hint-placeholder-val="{{ false }}"><span style="font:700 44px/1 'Geist Mono',monospace">{{ rFocusLeft }}</span></sc-if>
+<sc-if value="{{ rFocusOff }}" hint-placeholder-val="{{ true }}"><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"><sc-for list="{{ focusOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.start }}" style="height:46px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:#0E0F0D;font:700 14px 'Geist Mono',monospace;color:#F2F4EC;cursor:pointer" style-hover="border-color:#C6F432">{{ o.label }}</button></sc-for></div></sc-if>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 4px 0"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">BLOCKS ON THIS PHONE</span></div>
+<sc-for list="{{ rProfiles }}" as="p" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:#171915;border:1px solid rgba(255,255,255,.05)"><span style="flex:none;width:44px;height:44px;border-radius:14px;background:{{ p.chipBg }};color:{{ p.chipFg }};display:flex;align-items:center;justify-content:center;font:700 10px 'Geist Mono',monospace;letter-spacing:.04em">{{ p.short }}</span><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:15px;font-weight:700">{{ p.name }}</span><span style="font-size:12.5px;line-height:1.4;color:#A6AB9D">{{ p.desc }}</span></div><button onClick="{{ p.toggle }}" style="flex:none;width:50px;height:30px;border-radius:10px;border:none;padding:3px;cursor:pointer;background:{{ p.trk }};display:flex;justify-content:{{ p.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:{{ p.knob }}"></span></button></div>
+</sc-for>
+<button onClick="{{ rNewBlock }}" style="height:56px;border-radius:18px;border:none;background:#C6F432;color:#0E0F0D;font-size:15px;font-weight:900;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px"><span style="width:24px;height:24px;border-radius:8px;background:#0E0F0D;color:#C6F432;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:1">+</span>New block for {{ rName }}</button>
+<div style="display:flex;justify-content:space-between;padding:6px 4px 0"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">TODAY · {{ rTime }}</span><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">LOCK</span></div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ rApps }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:#171915"><div style="width:38px;height:38px;border-radius:12px;flex:none;background:{{ a.tint }};display:flex;align-items:center;justify-content:center;font:600 15px 'Clash Display',sans-serif;color:#0E0F0D">{{ a.letter }}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between"><span style="font-size:14.5px;font-weight:700">{{ a.name }}</span><span style="font:600 11.5px 'Geist Mono',monospace;color:#A6AB9D">{{ a.time }}</span></div><div style="height:3px;border-radius:2px;background:#262922;overflow:hidden"><div style="height:100%;background:{{ a.barC }};width:{{ a.pct }}"></div></div></div><button onClick="{{ a.toggle }}" style="flex:none;width:50px;height:30px;border-radius:10px;border:none;padding:3px;cursor:pointer;background:{{ a.trk }};display:flex;justify-content:{{ a.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:{{ a.knob }}"></span></button></div>
+</sc-for>
+</div>
+<button onClick="{{ parentUnlink }}" style="height:50px;border-radius:16px;border:1px solid rgba(255,90,71,.3);background:none;color:#FF7A66;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px">Unlink this phone</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sAccount }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;padding:10px 18px 24px;gap:16px;animation:sfIn .3s ease both">
+<button onClick="{{ closeSub }}" style="width:42px;height:42px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:#171915;color:#F2F4EC;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button>
+<div style="display:flex;align-items:center;gap:14px"><div style="width:64px;height:64px;border-radius:22px;background:#C6F432;color:#0E0F0D;display:flex;align-items:center;justify-content:center;font:600 26px 'Clash Display',sans-serif">{{ initial }}</div><div style="display:flex;flex-direction:column;gap:3px"><span style="font:600 24px 'Clash Display',sans-serif">{{ parent }}</span><span style="font:500 12px 'Geist Mono',monospace;color:#A6AB9D">{{ accountEmail }}</span></div></div>
+<div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D;padding:0 4px">SYSTEM CHECK</span>
+<div style="display:flex;flex-direction:column;gap:1px;border-radius:20px;overflow:hidden;background:rgba(255,255,255,.06)">
+<sc-for list="{{ permList }}" as="p" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:14px 16px;background:#171915"><span style="width:8px;height:8px;border-radius:4px;background:{{ p.led }};box-shadow:{{ p.glow }}"></span><span style="flex:1;font-size:14px;font-weight:600">{{ p.title }}</span><button onClick="{{ p.grant }}" style="border:none;font:700 10.5px 'Geist Mono',monospace;letter-spacing:.06em;padding:6px 10px;border-radius:8px;cursor:pointer;background:{{ p.bg }};color:{{ p.fg }}">{{ p.ctaUpper }}</button></div></sc-for>
+</div></div>
+<div style="display:flex;flex-direction:column;gap:10px;padding:16px;border-radius:20px;background:#171915;font-size:14px;line-height:1.5;color:#C9CDC0">Stay Focused is free and open source, with no ads.<div style="display:flex;gap:16px;font-weight:700"><a href="#">Source on GitHub</a><a href="#">Privacy policy</a></div><span style="font:500 11px 'Geist Mono',monospace;color:#6E7367">v1.0.0</span></div>
+<button onClick="{{ signOut }}" style="height:50px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:none;color:#F2F4EC;font-size:14px;font-weight:700;cursor:pointer">Sign out</button>
+<button onClick="{{ deleteAccount }}" style="border:none;background:none;color:#FF7A66;font-size:13px;font-weight:700;cursor:pointer;padding:4px">Delete account and all data</button>
+</div>
+</sc-if>
+
+</div>
+
+<sc-if value="{{ showNav }}" hint-placeholder-val="{{ false }}">
+<nav style="flex:none;margin:0 14px 6px;display:grid;grid-template-columns:repeat(4,1fr);padding:6px;border-radius:24px;background:#1A1C17;border:1px solid rgba(255,255,255,.07);box-shadow:0 -10px 30px rgba(0,0,0,.4)">
+<sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+<button onClick="{{ n.go }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;border:none;border-radius:18px;cursor:pointer;padding:9px 0 7px;background:{{ n.bg }};transition:background .2s"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{ n.fg }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ n.d }}"></path></svg><span style="font:700 10px 'Geist Mono',monospace;letter-spacing:.06em;color:{{ n.fg }}">{{ n.label }}</span></button>
+</sc-for>
+</nav>
+</sc-if>
+<div style="height:20px;flex:none;display:flex;align-items:center;justify-content:center"><div style="width:110px;height:4px;border-radius:2px;background:rgba(242,244,236,.5)"></div></div>
+
+<sc-if value="{{ isBreakSheet }}" hint-placeholder-val="{{ false }}">
+<div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;z-index:5">
+<div onClick="{{ stop }}" style="width:100%;background:#171915;border-radius:32px 32px 0 0;padding:14px 22px 30px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:16px;animation:sfUp .3s cubic-bezier(.2,.8,.2,1) both;border-top:1px solid rgba(255,255,255,.08)">
+<div style="width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.2)"></div>
+<div style="align-self:stretch;display:flex;justify-content:space-between;align-items:flex-end"><span style="font:600 26px 'Clash Display',sans-serif;letter-spacing:-.02em">Take a break</span><span style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.08em;color:#A6AB9D;padding-bottom:5px">DRAG THE DIAL</span></div>
+<div style="position:relative;width:236px;height:236px">
+<svg width="236" height="236" viewBox="0 0 240 240" onPointerDown="{{ dial.down }}" style="touch-action:none;cursor:grab;display:block"><circle cx="120" cy="120" r="108" fill="#0E0F0D" stroke="rgba(255,255,255,.06)"></circle><circle cx="120" cy="120" r="100" fill="none" stroke="#262922" stroke-width="8"></circle><circle cx="120" cy="120" r="100" fill="none" stroke="#C6F432" stroke-width="8" stroke-linecap="round" stroke-dasharray="{{ dial.dash }}" transform="rotate(-90 120 120)"></circle><sc-for list="{{ dial.ticks }}" as="t" hint-placeholder-count="0"><line x1="{{ t.x1 }}" y1="{{ t.y1 }}" x2="{{ t.x2 }}" y2="{{ t.y2 }}" stroke="{{ t.c }}" stroke-width="{{ t.w }}" stroke-linecap="round"></line></sc-for><circle cx="{{ dial.kx }}" cy="{{ dial.ky }}" r="13" fill="#C6F432" stroke="#171915" stroke-width="4"></circle></svg>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none"><span style="font-family:'Clash Display',sans-serif;font-weight:600;line-height:1;letter-spacing:-.03em;white-space:nowrap;font-size:{{ dial.fs }}">{{ dial.big }}</span><span style="font:600 11px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">{{ dial.unit }}</span></div>
+</div>
+<div style="display:flex;gap:6px"><sc-for list="{{ dial.presets }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.pick }}" style="height:34px;padding:0 12px;border-radius:10px;font:700 12px 'Geist Mono',monospace;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }};border:1px solid {{ o.bd }}">{{ o.label }}</button></sc-for></div>
+<div style="font-size:13px;color:#A6AB9D;text-align:center">Instagram, YouTube, Reddit and X stay locked until the timer ends.</div>
+<button onClick="{{ startBreak }}" style="align-self:stretch;height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer">Start {{ dial.big }} {{ dial.unitLower }} break</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDisclose }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;z-index:5">
+<div style="width:100%;background:#171915;border-radius:32px 32px 0 0;padding:24px 22px 30px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;animation:sfUp .3s cubic-bezier(.2,.8,.2,1) both;border-top:1px solid rgba(255,255,255,.08)">
+<div style="font:600 10.5px 'Geist Mono',monospace;letter-spacing:.1em;color:#C6F432">BEFORE YOU CONTINUE</div>
+<div style="font:600 26px/1.1 'Clash Display',sans-serif;letter-spacing:-.02em">Stay Focused uses the Accessibility service</div>
+<div style="display:flex;flex-direction:column;gap:1px;border-radius:18px;overflow:hidden;background:rgba(255,255,255,.06)">
+<div style="display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:#0E0F0D"><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">WHAT IT READS</span><span style="font-size:13.5px;line-height:1.45">The app on your screen, and the website address in supported browsers.</span></div>
+<div style="display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:#0E0F0D"><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">WHY</span><span style="font-size:13.5px;line-height:1.45">To show the block screen when a blocked app opens, and to count screen time.</span></div>
+<div style="display:flex;flex-direction:column;gap:3px;padding:12px 14px;background:#0E0F0D"><span style="font:600 10px 'Geist Mono',monospace;letter-spacing:.1em;color:#A6AB9D">NEVER</span><span style="font-size:13.5px;line-height:1.45">Reads messages, passwords or typing. Never shared or sold. Stays on this phone unless you link a child's device.</span></div>
+</div>
+<div style="font-size:12px;color:#A6AB9D">Turn it off anytime in Android Settings. <a href="#">Privacy policy</a></div>
+<button onClick="{{ discloseAgree }}" style="height:56px;border-radius:16px;border:none;background:#C6F432;color:#0E0F0D;font-size:16px;font-weight:800;cursor:pointer">Agree and open Settings</button>
+<button onClick="{{ discloseNo }}" style="border:none;background:none;font-size:14px;color:#A6AB9D;cursor:pointer">No thanks</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:16px;right:16px;bottom:104px;padding:14px 16px;border-radius:16px;background:#F2F4EC;color:#0E0F0D;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 20px 40px rgba(0,0,0,.5);display:flex;gap:10px;align-items:center;z-index:6;animation:sfIn .25s ease both"><span style="width:8px;height:8px;border-radius:4px;background:#0E0F0D;flex:none"></span>{{ toast }}</div>
+</sc-if>
+
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showFlowPanel&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;parentName&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;Priya&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;startFlow&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;onboarding&quot;,&quot;parent&quot;,&quot;child&quot;],&quot;default&quot;:&quot;onboarding&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const APPS=[
+{id:'instagram',name:'Instagram',tint:'#FF9A8B',mins:41,launches:12,blocked:true},
+{id:'youtube',name:'YouTube',tint:'#FF7A66',mins:38,launches:6,blocked:true},
+{id:'reddit',name:'Reddit',tint:'#FFB547',mins:22,launches:9,blocked:false},
+{id:'whatsapp',name:'WhatsApp',tint:'#7EE0A1',mins:18,launches:21,blocked:false},
+{id:'chrome',name:'Chrome',tint:'#9DC3FF',mins:15,launches:7,blocked:false},
+{id:'x',name:'X',tint:'#D9DCD2',mins:9,launches:4,blocked:false},
+{id:'spotify',name:'Spotify',tint:'#7EE0A1',mins:4,launches:3,blocked:false},
+{id:'maps',name:'Maps',tint:'#B9A7FF',mins:0,launches:1,blocked:false}];
+const KID=[
+{id:'yt',name:'YouTube',tint:'#FF7A66',mins:52,blocked:false},
+{id:'ig',name:'Instagram',tint:'#FF9A8B',mins:30,blocked:true},
+{id:'ff',name:'Free Fire',tint:'#FFB547',mins:26,blocked:false},
+{id:'wa',name:'WhatsApp',tint:'#7EE0A1',mins:20,blocked:false},
+{id:'ch',name:'Chrome',tint:'#9DC3FF',mins:14,blocked:false}];
+const HOURS=[0,0,0,0,0,0,2,6,14,9,5,8,12,4,3,7,10,6,9,18,22,15,8,2];
+const ICON={home:'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',block:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM5.6 5.6l12.8 12.8',devices:'M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zM11 18h2',insights:'M4 20V11M10 20V5M16 20v-7M21 20H3'};
+const LIME='#C6F432',INK='#0E0F0D',P1='#171915',P2='#262922',TXT='#F2F4EC',DIM='#A6AB9D';
+const fmt=m=>{m=Math.round(m);const h=Math.floor(m/60),r=m%60;return h?`${h}h ${r}m`:`${r}m`;};
+const mmss=ms=>{const s=Math.max(0,Math.ceil(ms/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;};
+const hms=ms=>{const s=Math.max(0,Math.floor(ms/1000));return [Math.floor(s/3600),Math.floor(s/60)%60,s%60].map(v=>String(v).padStart(2,'0')).join(':');};
+const QR=(()=>{const n=21,c=[];let seed=11;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};const f=(x,y)=>{for(const[fx,fy]of[[0,0],[14,0],[0,14]]){const dx=x-fx,dy=y-fy;if(dx>=0&&dx<7&&dy>=0&&dy<7)return dx===0||dx===6||dy===0||dy===6||(dx>=2&&dx<=4&&dy>=2&&dy<=4);}return null;};for(let y=0;y<n;y++)for(let x=0;x<n;x++){const v=f(x,y);const sep=(x<8&&y<8)||(x>12&&y<8)||(x<8&&y>12);c.push({bg:(v!==null?v:(!sep&&rnd()>.5))?INK:'transparent'});}return c;})();
+const DAYS=['M','T','W','T','F','S','S'];
+const TYPES=[{id:'limit',name:'Limit time',desc:'An allowance per day or hour. When it runs out, the app locks.'},{id:'cycle',name:'Use, then rest',desc:'Each time you open it, use it for a while. Then it locks for a while.'},{id:'schedule',name:'Block during hours',desc:'Locked between set times, e.g. 9:00–17:00 on weekdays.'},{id:'now',name:'Block now',desc:'Locks straight away for a set time.'}];
+const SHORT={limit:'LIM',schedule:'HRS',now:'NOW',cycle:'CYC'};
+const CHIP={limit:['#FF9A8B',INK],cycle:[LIME,INK],schedule:['#B9A7FF',INK],now:['#FFB547',INK]};
+const withVal=(arr,v)=>[...new Set([...arr,v])].sort((a,b)=>a-b);
+const sel=on=>on?{bg:LIME,fg:INK,bd:LIME}:{bg:P1,fg:TXT,bd:'rgba(255,255,255,.1)'};
+const seg=on=>on?{bg:TXT,fg:INK}:{bg:'transparent',fg:DIM};
+const tog=on=>({trk:on?LIME:P2,knob:on?INK:'#6E7367',jc:on?'flex-end':'flex-start'});
+const pt=(cx,cy,r,a)=>{const t=a*Math.PI/180;return[+(cx+r*Math.sin(t)).toFixed(2),+(cy-r*Math.cos(t)).toFixed(2)];};
+const arc=(cx,cy,r,a0,a1)=>{const[x0,y0]=pt(cx,cy,r,a0),[x1,y1]=pt(cx,cy,r,a1);return `M${x0} ${y0}A${r} ${r} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}`;};
+const WELCOME_TICKS=Array.from({length:60},(_,i)=>{const a=i*6,maj=i%5===0;const[x1,y1]=pt(120,120,maj?80:86,a),[x2,y2]=pt(120,120,92,a);return{x1,y1,x2,y2,c:(a>=240&&a<=366)||a<=6?LIME:'#2E322A',w:maj?2.5:1.5};});
+const AI_SYS=`You turn a user's sentence into an app-blocking rule for an Android app. Reply with ONLY a JSON object, no prose:
+{"type":"limit"|"cycle"|"schedule"|"now","apps":[ids],"mins":number,"period":"daily"|"hourly","use":number,"rest":number,"range":"HH:MM–HH:MM","now":number,"days":["mon","tue","wed","thu","fri","sat","sun"] (only the days the block applies),"note":"one short sentence restating the rule"}
+type meanings: limit = allowance per day/hour then block (mins, period). cycle = each time opened, allow "use" minutes then block for "rest" minutes. schedule = block between times (range, 24h, en dash). now = block immediately for "now" minutes.
+Known app ids: instagram, youtube, reddit, whatsapp, chrome, x, spotify, maps. "social media" = instagram, reddit, x, youtube. School days / weekdays = mon–fri. Weekends = sat, sun. Default to all 7 days if no days are mentioned.`;
+const DAY_KEYS=['mon','tue','wed','thu','fri','sat','sun'];
+function toDays(r,text){const t=text.toLowerCase();
+if(/weekday|school day|work day|workday/.test(t))return[1,1,1,1,1,0,0];
+if(/weekend/.test(t))return[0,0,0,0,0,1,1];
+if(Array.isArray(r.days)&&r.days.length&&typeof r.days[0]==='string'){const set=r.days.map(d=>String(d).slice(0,3).toLowerCase());const out=DAY_KEYS.map(k=>set.includes(k)?1:0);if(out.some(Boolean))return out;}
+return[1,1,1,1,1,1,1];}
+function localParse(t){t=t.toLowerCase();const ids=APPS.filter(a=>t.includes(a.name.toLowerCase())||t.includes(a.id)).map(a=>a.id);const apps=ids.length?ids:(/social/.test(t)?['instagram','reddit','x','youtube']:['instagram','youtube']);const nums=(t.match(/\d+\s*(h|hour|hours|min|mins|minutes|m)\b/g)||[]).map(x=>parseInt(x)*(/h/.test(x.replace(/\d+\s*/,''))&&!/min/.test(x)?60:1));
+if(/then|rest|lock.*for|block.*for.*after/.test(t)&&nums.length>=2)return{type:'cycle',apps,use:nums[0],rest:nums[1]};
+if(/from|between|until|till|\d\s*(am|pm)/.test(t)){const h=(t.match(/\d{1,2}(:\d\d)?\s*(am|pm)?/g)||[]).slice(0,2).map(x=>{let n=parseInt(x);if(/pm/.test(x)&&n<12)n+=12;return String(n).padStart(2,'0')+':00';});return{type:'schedule',apps,range:h.length===2?h.join('–'):'09:00–17:00'};}
+if(/\bnow\b|next/.test(t))return{type:'now',apps,now:nums[0]||60};
+return{type:'limit',apps,mins:nums[0]||30,period:/an hour|per hour|hourly/.test(t)?'hourly':'daily'};}
+const DIALS={breakPick:{max:120,step:5,presets:[15,30,60,120]},wizMins:{max:180,step:5,presets:[15,30,60,90]},wizUse:{max:60,step:1,presets:[5,10,15,30]},wizRest:{max:180,step:5,presets:[15,30,60,120]},wizNow:{max:480,step:15,presets:[30,60,120,240]}};
+const dlabel=m=>m>=60?(m%60?`${Math.floor(m/60)}h${m%60}`:`${m/60}h`):`${m}m`;
+
+class Component extends DCLogic {
+  state = {
+    screen:'welcome', tab:'home', sub:null, sheet:null, authMode:'signin', email:'', pw:'', err:'',
+    perms:{usage:false,access:false,overlay:false,notif:false},
+    profiles:[{id:'p0',target:'me',type:'cycle',name:'Mindful scrolling',desc:'10m on, 30m off · Instagram, YouTube',on:true},{id:'p1',target:'me',type:'limit',name:'Social limit',desc:'30 min a day · Reddit, X',on:true},{id:'p2',target:'me',type:'schedule',name:'Work hours',desc:'Mon–Fri · 09:00–17:00 · 3 apps',on:false},{id:'k1',target:'d1',type:'limit',name:'Instagram limit',desc:'30 min a day · Instagram',on:true},{id:'k2',target:'d1',type:'schedule',name:'School hours',desc:'Mon–Fri · 08:00–15:00 · Free Fire',on:true}],
+    blockTarget:'me', wizTarget:'me', createMode:null,
+    apps:APPS.map(a=>({...a})), blockTab:'profiles', metric:'time', day:0,
+    wizStep:1, wizType:'limit', wizApps:['instagram','youtube'], wizPeriod:'daily', wizMins:30, wizRange:'09:00–17:00', wizNow:60, wizDays:[1,1,1,1,1,0,0], wizUse:10, wizRest:30, cycleEdit:'use',
+    wizAi:false, aiNote:'', aiText:'', aiBusy:false,
+    breakEnds:null, breakLen:0, breakPick:30, now:Date.now(),
+    devices:[{id:'d1',name:"Aarav's phone",model:'Redmi Note 12 · Kids app',battery:64,current:'YouTube',alert:true,request:true,focusEnds:null,apps:KID.map(a=>({...a}))}],
+    remoteId:null, newName:"Aarav's phone", childReq:'none', childReqMins:15, toast:null, disclose:false,
+  };
+  componentDidMount(){
+    this.t=setInterval(()=>this.setState({now:Date.now()}),1000);
+    const f=this.props.startFlow;
+    if(f==='parent')this.setState({screen:'app',tab:'home'});
+    if(f==='child')this.setState({screen:'childhome'});
+  }
+  componentWillUnmount(){clearInterval(this.t);clearTimeout(this.tt);}
+  toastMsg(m){clearTimeout(this.tt);this.setState({toast:m});this.tt=setTimeout(()=>this.setState({toast:null}),2600);}
+  go(o){this.setState(o);}
+  updDev(id,fn){this.setState(s=>({devices:s.devices.map(d=>d.id===id?fn(d):d)}));}
+  dialField(){const s=this.state;if(s.sheet==='break')return'breakPick';if(s.wizType==='limit')return'wizMins';if(s.wizType==='cycle')return s.cycleEdit==='use'?'wizUse':'wizRest';if(s.wizType==='now')return'wizNow';return null;}
+  dialDown(e){
+    const field=this.dialField();if(!field)return;const cfg=DIALS[field];const el=e.currentTarget;
+    const upd=ev=>{const r=el.getBoundingClientRect();const dx=ev.clientX-(r.left+r.width/2),dy=ev.clientY-(r.top+r.height/2);let a=Math.atan2(dx,-dy)*180/Math.PI;if(a<0)a+=360;let v=Math.round(a/360*cfg.max/cfg.step)*cfg.step;v=Math.max(cfg.step,Math.min(cfg.max,v||cfg.max));if(v!==this.state[field])this.setState({[field]:v});};
+    upd(e);const mv=ev=>upd(ev);const up=()=>{window.removeEventListener('pointermove',mv);window.removeEventListener('pointerup',up);};
+    window.addEventListener('pointermove',mv);window.addEventListener('pointerup',up);
+  }
+  async runAi(text){
+    if(!text.trim())return this.toastMsg('Describe the block first');
+    this.setState({aiBusy:true});
+    let r;
+    try{const out=await window.claude.complete({system:AI_SYS,messages:[{role:'user',content:text}],max_tokens:400});r=JSON.parse(out.match(/\{[\s\S]*\}/)[0]);}catch(e){r=localParse(text);}
+    const type=['limit','cycle','schedule','now'].includes(r.type)?r.type:'limit';
+    const apps=(r.apps||[]).filter(id=>APPS.some(a=>a.id===id));
+    const n=(v,d)=>Math.max(1,Math.round(Number(v)||d));
+    const tg=this.state.blockTarget||'me';const KM={instagram:'ig',youtube:'yt',whatsapp:'wa',chrome:'ch'};let fin=apps.length?apps:['instagram','youtube'];if(tg!=='me'){fin=fin.map(i=>KM[i]).filter(Boolean);if(!fin.length)fin=['ig'];}
+    this.setState({aiBusy:false,aiText:'',sub:'wizard',wizStep:3,wizAi:true,aiNote:r.note||'',wizType:type,cycleEdit:'use',wizTarget:tg,createMode:null,
+      wizApps:fin,wizMins:n(r.mins,30),wizPeriod:r.period==='hourly'?'hourly':'daily',
+      wizUse:n(r.use,10),wizRest:n(r.rest,30),wizNow:n(r.now,60),
+      wizRange:/^\d\d:\d\d–\d\d:\d\d$/.test(r.range||'')?r.range:'09:00–17:00',
+      wizDays:toDays(r,text)});
+  }
+
+  renderVals(){
+    const s=this.state, p=this.props;
+    const parent=p.parentName??'Priya';
+    const now=s.now;
+    const app=s.screen==='app';
+    const parentHome=()=>this.go({screen:'app',tab:'home',sub:null,sheet:null});
+    const permDefs=[['usage','Usage access','Shows screen time and knows when limits are reached.'],['access','Accessibility','Notices when a blocked app opens.'],['overlay','Display over apps','Shows the block screen on top.'],['notif','Notifications','Breaks, limits and requests.']];
+    const permList=permDefs.map(([k,t,w])=>{const on=s.perms[k];return{title:t,why:w,cta:on?'On':'Allow',ctaUpper:on?'ON':'ALLOW',bg:on?'rgba(198,244,50,.14)':TXT,fg:on?LIME:INK,led:on?LIME:'#3A3E35',glow:on?'0 0 10px rgba(198,244,50,.8)':'none',bd:on?'rgba(198,244,50,.3)':'rgba(255,255,255,.05)',seg:on?LIME:P2,grant:()=>on?null:k==='access'?this.setState({disclose:true}):this.setState(st=>({perms:{...st.perms,[k]:true}}))};});
+    const permCount=Object.values(s.perms).filter(Boolean).length;
+    const breakActive=!!s.breakEnds&&s.breakEnds>now;
+    const dev=s.devices.find(d=>d.id===s.remoteId);
+    const nav=[['home','HOME'],['block','BLOCK'],['devices','DEVICES'],['insights','INSIGHTS']].map(([id,label])=>{const on=s.tab===id&&s.sub!=='account';return{label,d:ICON[id],bg:on?LIME:'transparent',fg:on?INK:DIM,go:()=>this.go({tab:id,sub:null})};});
+    const mkRow=pr=>({...pr,short:SHORT[pr.type],chipBg:pr.on?CHIP[pr.type][0]:P2,chipFg:pr.on?INK:DIM,...tog(pr.on),toggle:()=>this.setState(st=>({profiles:st.profiles.map(x=>x.id===pr.id?{...x,on:!x.on}:x)}))});
+    const tgtOk=id=>id==='me'||s.devices.some(d=>d.id===id);
+    const bTarget=tgtOk(s.blockTarget)?s.blockTarget:'me', wTarget=tgtOk(s.wizTarget)?s.wizTarget:'me';
+    const tName=id=>id==='me'?'This phone':(s.devices.find(d=>d.id===id)?.name||'This phone');
+    const profileRows=s.profiles.filter(x=>x.target==='me').map(mkRow);
+    const blockProfileRows=s.profiles.filter(x=>x.target===bTarget).map(mkRow);
+    const KMAP={instagram:'ig',youtube:'yt',whatsapp:'wa',chrome:'ch'};
+    const appsFor=t=>t==='me'?APPS:(s.devices.find(d=>d.id===t)?.apps||KID);
+    const mapIds=(ids,t)=>{if(t==='me')return ids;const m=ids.map(i=>KMAP[i]||i).filter(i=>appsFor(t).some(a=>a.id===i));return m.length?m:[appsFor(t)[0].id];};
+    const maxH=Math.max(...HOURS);
+    const factor=[1,1.16,.9,1.3,.8,1.05,.95][Math.min(6,-s.day)];
+    const curHour=s.day===0?10:23;
+    const hrs=HOURS.map((h,i)=>s.day===0?h:HOURS[(i+(-s.day)*3)%24]);
+    const led=(rows,litC)=>hrs.map((v,i)=>{const lvl=i>curHour?0:Math.max(v>0?1:0,Math.round(v/maxH*rows));return{cells:Array.from({length:rows},(_,r)=>r<lvl?(i===curHour?TXT:litC):'#1F221C')};});
+    const totalMins=147*factor;
+    const gFrac=Math.min(1,147/240), aFrac=139/240;
+    const gauge={track:arc(150,150,124,-120,120),value:arc(150,150,124,-120,-120+240*gFrac),
+      ticks:Array.from({length:41},(_,i)=>{const a=-120+i*6,maj=i%10===0;const[x1,y1]=pt(150,150,maj?100:105,a),[x2,y2]=pt(150,150,110,a);return{x1,y1,x2,y2,c:a<=-120+240*gFrac?'rgba(198,244,50,.7)':'#33372F',w:maj?2.2:1.2};}),
+      avg:(()=>{const a=-120+240*aFrac;const[x1,y1]=pt(150,150,112,a),[x2,y2]=pt(150,150,136,a);return{x1,y1,x2,y2};})()};
+    const deviceRows=s.devices.map(d=>({name:d.name,initial:d.name[0],model:d.model,time:fmt(d.apps.reduce((a,b)=>a+b.mins,0)),battery:d.battery+'%',current:d.current,statusLine:`${d.battery}% · ${d.current.toUpperCase()}`,hasBadge:d.alert||d.request,badge:(d.alert?1:0)+(d.request?1:0)+'',alertLine:[d.alert&&'Accessibility turned off',d.request&&'1 request for more time'].filter(Boolean).join(' · '),open:()=>this.go({sub:'remote',remoteId:d.id})}));
+    const wizList=appsFor(wTarget);const wizSel=s.wizApps.map(id=>wizList.find(a=>a.id===id)?.name).filter(Boolean);
+    const appsTxt=wizSel.length?(wizSel.length>2?`${wizSel.slice(0,2).join(', ')} +${wizSel.length-2}`:wizSel.join(' and ')):'no apps yet';
+    const daysOn=s.wizDays.every(Boolean)?'every day':(s.wizDays.slice(0,5).every(Boolean)&&!s.wizDays[5]&&!s.wizDays[6])?'on weekdays':`on ${s.wizDays.map((v,i)=>v?['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][i]:null).filter(Boolean).join(', ')||'no days'}`;
+    const nowLabel=m=>m>=60?(m%60?`${Math.floor(m/60)} h ${m%60} min`:`${m/60} h`):`${m} min`;
+    const wizSummary=s.wizType==='limit'?`Lock ${appsTxt} after ${nowLabel(s.wizMins)} ${s.wizPeriod==='daily'?'a day':'an hour'}, ${daysOn}.`:s.wizType==='cycle'?`Each time you open ${appsTxt}, you get ${nowLabel(s.wizUse)}. Then it locks for ${nowLabel(s.wizRest)}, ${daysOn}.`:s.wizType==='schedule'?`Lock ${appsTxt} from ${s.wizRange.replace('–',' to ')}, ${daysOn}.`:`Lock ${appsTxt} for the next ${nowLabel(s.wizNow)}.`;
+    const wizNext=()=>{
+      if(s.wizStep<3)return this.setState({wizStep:s.wizStep+1});
+      const name={limit:'Time limit',schedule:'Scheduled block',now:'Quick block',cycle:'Use, then rest'}[s.wizType];
+      const desc=s.wizType==='limit'?`${nowLabel(s.wizMins)} ${s.wizPeriod==='daily'?'a day':'an hour'} · ${wizSel.join(', ')}`:s.wizType==='cycle'?`${dlabel(s.wizUse)} on, ${dlabel(s.wizRest)} off · ${wizSel.join(', ')}`:s.wizType==='schedule'?`${s.wizRange} · ${daysOn} · ${wizSel.join(', ')}`:`Next ${nowLabel(s.wizNow)} · ${wizSel.join(', ')}`;
+      this.setState(st=>({profiles:[{id:'p'+Date.now(),target:wTarget,type:st.wizType,name,desc,on:true},...st.profiles],sub:null,tab:'block',blockTab:'profiles',blockTarget:wTarget,createMode:null}));
+      this.toastMsg(`${name} is on · ${tName(wTarget)}`);
+    };
+    const openWizard=(o={})=>{const t=o.wizTarget??bTarget;const apps=mapIds(o.wizApps||['instagram','youtube'],t);this.go({sub:'wizard',wizAi:false,wizStep:1,wizType:'limit',cycleEdit:'use',wizMins:30,wizPeriod:'daily',wizDays:[1,1,1,1,1,0,0],...o,wizApps:apps,wizTarget:t});};
+    const df=this.dialField();
+    const dial=(()=>{if(!df)return{ticks:[],presets:[]};const cfg=DIALS[df];const v=s[df];const frac=v/cfg.max;const C=2*Math.PI*100;const[kx,ky]=pt(120,120,100,frac*360);
+      const big=v>=60?(v%60?`${Math.floor(v/60)}:${String(v%60).padStart(2,'0')}`:`${v/60}`):`${v}`;const unit=v>=60?(v%60?'HOURS':(v===60?'HOUR':'HOURS')):'MINUTES';
+      return{dash:`${(frac*C).toFixed(1)} ${C.toFixed(1)}`,kx,ky,big,unit,fs:big.length<=2?'54px':big.length===3?'44px':'36px',unitLower:unit==='MINUTES'?'min':(unit==='HOUR'?'hour':'hour'),
+        ticks:Array.from({length:60},(_,i)=>{const a=i*6,maj=i%5===0;const[x1,y1]=pt(120,120,maj?76:82,a),[x2,y2]=pt(120,120,88,a);return{x1,y1,x2,y2,c:a<=frac*360?LIME:'#33372F',w:maj?2.4:1.3};}),
+        presets:cfg.presets.map(m=>({label:dlabel(m),...sel(v===m),pick:()=>this.setState({[df]:m})})),down:e=>this.dialDown(e)};})();
+    const rApps=dev?(()=>{const mx=Math.max(...dev.apps.map(a=>a.mins));return dev.apps.map(a=>({...a,letter:a.name[0],time:fmt(a.mins),pct:(a.mins/mx*100)+'%',barC:a.blocked?'#FF5A47':LIME,...tog(a.blocked),toggle:()=>{this.updDev(dev.id,d=>({...d,apps:d.apps.map(x=>x.id===a.id?{...x,blocked:!x.blocked}:x)}));this.toastMsg(`${a.name} ${!a.blocked?'locked':'unlocked'} on ${dev.name}`);}}));})():[];
+    const rFocusOn=!!dev&&!!dev.focusEnds&&dev.focusEnds>now;
+    const midnight=new Date(now);midnight.setHours(24,0,0,0);
+    const dDate=new Date(now);dDate.setDate(dDate.getDate()+s.day);
+    const breakTotal=s.breakLen*60000, breakDone=breakActive?1-(s.breakEnds-now)/breakTotal:0;
+
+    return {
+      showPanel:p.showFlowPanel??true, parent, parentUpper:parent.toUpperCase(), initial:parent[0], accountEmail:(s.email||parent.toLowerCase()+'@gmail.com'),
+      statusBg:s.screen==='blocked'?'#2A120E':s.sub==='scan'?'#000':'#0E0F0D',
+      jumps:[
+        {n:'01',label:'Onboarding',hint:'Welcome → sign in → system check',go:()=>this.go({screen:'welcome',sub:null,sheet:null})},
+        {n:'02',label:'Home',hint:'Gauge, Take a Break dial',go:parentHome},
+        {n:'03',label:'Create a block',hint:'4 types · dial · AI',go:()=>{this.go({screen:'app',tab:'block',sheet:null});openWizard();}},
+        {n:'04',label:"Aarav's phone",hint:'Remote controls, request, alert',go:()=>this.go({screen:'app',tab:'devices',sub:'remote',sheet:null,remoteId:s.devices[0]?.id})},
+        {n:'05',label:'Link a phone',hint:"Scan your child's QR code",go:()=>this.go({screen:'app',tab:'devices',sub:'add',sheet:null})},
+        {n:'06',label:'Kids app',hint:'Linking, blocked screen',go:()=>this.go({screen:'childqr',childReq:'none',sheet:null})},
+      ],
+      welcomeTicks:WELCOME_TICKS,
+      isWelcome:s.screen==='welcome', isSignin:s.screen==='signin', isPerms:s.screen==='perms',
+      isChildQr:s.screen==='childqr', isChildConfirm:s.screen==='childconfirm', isChildHome:s.screen==='childhome', isBlocked:s.screen==='blocked',
+      tHome:app&&!s.sub&&s.tab==='home', tBlock:app&&!s.sub&&s.tab==='block', tDevices:app&&!s.sub&&s.tab==='devices', tInsights:app&&!s.sub&&s.tab==='insights',
+      sWizard:app&&s.sub==='wizard', sAdd:app&&s.sub==='add', sScan:app&&s.sub==='scan', sShowQr:app&&s.sub==='showqr', sConfirm:app&&s.sub==='confirm', sRemote:app&&s.sub==='remote'&&!!dev, sAccount:app&&s.sub==='account',
+      showNav:app&&(!s.sub||s.sub==='remote'||s.sub==='account'),
+      stop:e=>e.stopPropagation(),
+      toWelcome:()=>this.go({screen:'welcome'}), toSignin:()=>this.go({screen:'signin',err:''}),
+      toChildQr:()=>this.go({screen:'childqr',childReq:'none'}), toChildConfirm:()=>this.go({screen:'childconfirm'}),
+      toChildHome:()=>this.go({screen:'childhome'}), toBlocked:()=>this.go({screen:'blocked',childReq:s.childReq==='sent'?'sent':'none'}),
+      childUnlink:()=>{this.go({screen:'welcome'});this.toastMsg(`Unlinked. ${parent} has been notified.`);},
+      childWaiting:s.childReq==='sent', childReqMins:s.childReqMins,
+      reqNone:s.childReq==='none', reqPick:s.childReq==='pick', reqSent:s.childReq==='sent', reqAsk:()=>this.go({childReq:'pick'}),
+      reqOpts:[15,30,60].map(m=>({label:dlabel(m),pick:()=>this.go({childReq:'sent',childReqMins:m})})),
+      midnightLeft:hms(midnight-now),
+      consentList:['See screen time and the app that’s open','See battery and online status','Lock and unlock apps','Start focus sessions','Answer your requests for more time'],
+      qr:QR,
+      authTitle:s.authMode==='signin'?'Sign in':'Create account', authCta:s.authMode==='signin'?'Sign in':'Create account',
+      authSwitch:s.authMode==='signin'?'New here? Create an account':'Have an account? Sign in',
+      isSigninMode:s.authMode==='signin', toggleAuth:()=>this.go({authMode:s.authMode==='signin'?'signup':'signin',err:''}),
+      email:s.email, pw:s.pw, onEmail:e=>this.setState({email:e.target.value,err:''}), onPw:e=>this.setState({pw:e.target.value,err:''}),
+      hasErr:!!s.err, err:s.err,
+      forgot:()=>{if(!s.email.includes('@'))return this.setState({err:'Enter your email first, then tap Forgot password.'});this.toastMsg(`Reset link sent to ${s.email}`);},
+      googleSignin:()=>this.go({screen:'perms'}),
+      emailSubmit:()=>{if(!/^\S+@\S+\.\S+$/.test(s.email))return this.setState({err:'Enter a valid email address.'});if(s.pw.length<6)return this.setState({err:'Password needs at least 6 characters.'});this.go({screen:'perms',err:''});},
+      permList, permCount, permCta:permCount===4?'All set · Continue':'Continue for now', permBtnBg:permCount===4?LIME:P2, permBtnFg:permCount===4?INK:TXT,
+      finishPerms:()=>{parentHome();if(permCount<4)this.toastMsg('Blocking needs all 4. Finish in Account.');},
+      nav,
+      toAccount:()=>this.go({sub:'account'}), toInsights:()=>this.go({tab:'insights'}), toBlock:()=>this.go({tab:'block'}), toDevices:()=>this.go({tab:'devices'}),
+      toAdd:()=>this.go({sub:'add'}), toScan:()=>this.go({sub:'scan'}), toShowQr:()=>this.go({sub:'showqr'}), toConfirm:()=>this.go({sub:'confirm'}), closeSub:()=>this.go({sub:null}),
+      newName:s.newName, onNewName:e=>this.setState({newName:e.target.value}),
+      finishLink:()=>{const id='d'+Date.now();this.setState(st=>({devices:[...st.devices,{id,name:st.newName||'New phone',model:'Android · Kids app',battery:88,current:'Home screen',alert:false,request:false,focusEnds:null,apps:KID.map(a=>({...a,blocked:false}))}],sub:'remote',remoteId:id,tab:'devices'}));this.toastMsg('Phone linked');},
+      gauge, ledMini:led(5,LIME), ledBig:led(10,LIME), avgPos:(139/24/maxH*100).toFixed(0)+'%',
+      breakActive, breakIdle:!breakActive, breakLeft:breakActive?mmss(s.breakEnds-now):'',
+      breakSegs:Array.from({length:30},(_,i)=>i/30<breakDone?'rgba(14,15,13,.25)':INK),
+      isBreakSheet:app&&s.sheet==='break', openBreak:()=>this.go({sheet:'break'}), closeSheet:()=>this.go({sheet:null}),
+      startBreak:()=>{const m=s.breakPick;this.setState({sheet:null,breakEnds:Date.now()+m*60000,breakLen:m,now:Date.now()});this.toastMsg(`Break started · ${nowLabel(m)}`);},
+      endBreak:()=>this.setState({breakEnds:null}),
+      dial, showDial:['limit','cycle','now'].includes(s.wizType),
+      profileRows, deviceRows, noDevices:s.devices.length===0, deviceCount:s.devices.length,
+      newProfile:()=>openWizard(), blockProfileRows, targetName:tName(bTarget),
+      targets:[{id:'me',name:'This phone'},...s.devices.map(d=>({id:d.id,name:d.name}))].map(t=>{const on=t.id===bTarget;const c=s.profiles.filter(x=>x.target===t.id&&x.on).length;return{...t,initial:t.id==='me'?'ME':t.name[0],count:c+' ACTIVE',bg:on?'rgba(198,244,50,.1)':'#171915',bd:on?LIME:'rgba(255,255,255,.08)',fg:'#F2F4EC',chipBg:on?LIME:'#262922',chipFg:on?INK:TXT,go:()=>this.go({blockTarget:t.id})};}),
+      wizTargets:[{id:'me',name:'This phone'},...s.devices.map(d=>({id:d.id,name:d.name}))].map(t=>{const on=t.id===wTarget;return{...t,bg:on?TXT:'transparent',fg:on?INK:DIM,bd:on?TXT:'rgba(255,255,255,.14)',go:()=>this.setState(st=>({wizTarget:t.id,wizApps:mapIds(st.wizApps.map(i=>Object.keys(KMAP).find(k=>KMAP[k]===i)||i),t.id)}))};}),
+      toggleAi:()=>this.go({createMode:s.createMode==='ai'?null:'ai'}), aiBtnBg:s.createMode==='ai'?'rgba(198,244,50,.12)':'#171915', aiBtnBd:s.createMode==='ai'?LIME:'rgba(255,255,255,.14)',
+      rProfiles:dev?s.profiles.filter(x=>x.target===dev.id).map(mkRow):[], rNewBlock:()=>dev&&openWizard({wizTarget:dev.id}),
+      blockTabs:[['profiles','Blocks'],['apps','All apps']].map(([id,label])=>({label,...seg(s.blockTab===id),go:()=>this.go({blockTab:id})})),
+      btProfiles:s.blockTab==='profiles', btApps:s.blockTab==='apps',
+      cmAi:s.createMode==='ai', cmManual:false,
+      homeNewBlock:()=>openWizard({wizTarget:'me'}), homeAiBlock:()=>this.go({tab:'block',blockTab:'profiles',createMode:'ai',blockTarget:'me'}), homeNewBlockMe:null,
+      createTabs:[['manual','Step by step','01–03'],['ai','Describe it','AI']].map(([id,label,tag])=>{const on=(s.createMode??'manual')===id;return{label,tag,bg:on?'#F2F4EC':'transparent',fg:on?'#0E0F0D':'#A6AB9D',tagBg:on?'#0E0F0D':'#262922',tagFg:on?'#C6F432':'#A6AB9D',go:()=>this.go({createMode:id})};}),
+      manualTypes:TYPES.map(t=>({name:t.name,short:SHORT[t.id],chipBg:CHIP[t.id][0],hint:{limit:'e.g. 30 min a day',cycle:'e.g. 10 min on, 30 off',schedule:'e.g. 9:00–17:00',now:'e.g. next 1 hour'}[t.id],go:()=>openWizard({wizType:t.id,wizStep:2})})),
+      toAiMode:()=>this.go({sub:null,tab:'block',blockTab:'profiles',createMode:'ai',blockTarget:wTarget}),
+      templates:[
+        {short:'CYC',code:LIME,name:'Mindful scrolling',desc:'10 min each time, then locked for 30.',use:()=>openWizard({wizType:'cycle',wizUse:10,wizRest:30,wizApps:['instagram','youtube','reddit'],wizDays:[1,1,1,1,1,1,1],wizStep:3})},
+        {short:'HRS',code:'#B9A7FF',name:'Study time',desc:'Social apps locked 16:00–20:00 on school days.',use:()=>openWizard({wizType:'schedule',wizRange:'16:00–20:00',wizApps:['instagram','youtube','reddit'],wizStep:3})},
+        {short:'LIM',code:'#FF9A8B',name:'Social limit',desc:'30 minutes a day across social apps.',use:()=>openWizard({wizType:'limit',wizApps:['instagram','reddit','x'],wizDays:[1,1,1,1,1,1,1],wizStep:3})},
+        {short:'HRS',code:'#B9A7FF',name:'Bedtime',desc:'Everything except calls, 22:00–07:00.',use:()=>openWizard({wizType:'schedule',wizRange:'22:00–07:00',wizApps:APPS.map(a=>a.id),wizDays:[1,1,1,1,1,1,1],wizStep:3})}],
+      appRows:s.apps.map(a=>({...a,letter:a.name[0],line:`${fmt(a.mins)} · ${a.launches} OPENS`,cta:a.blocked?'LOCKED':'LOCK',bg:a.blocked?'rgba(255,90,71,.16)':'transparent',fg:a.blocked?'#FF7A66':TXT,bd:a.blocked?'1px solid rgba(255,90,71,.35)':'1px solid rgba(255,255,255,.14)',toggle:()=>this.setState(st=>({apps:st.apps.map(x=>x.id===a.id?{...x,blocked:!x.blocked}:x)}))})),
+      dayLabel:s.day===0?'Today':s.day===-1?'Yesterday':dDate.toLocaleDateString('en-GB',{weekday:'long'}),
+      dayDate:dDate.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).toUpperCase(),
+      dayPrev:()=>this.setState({day:Math.max(-6,s.day-1)}), dayNext:()=>this.setState({day:Math.min(0,s.day+1)}), nextOpacity:s.day===0?.3:1,
+      metricTabs:[['time','Screen time'],['launches','Opens'],['unlocks','Unlocks']].map(([id,label])=>({label,...seg(s.metric===id),go:()=>this.go({metric:id})})),
+      metricTotal:s.metric==='time'?fmt(totalMins):String(Math.round((s.metric==='launches'?63:48)*factor)),
+      metricSub:s.metric==='time'?'- - - AVG 2h 19m':s.metric==='launches'?'- - - AVG 58':'- - - AVG 51',
+      insightApps:s.apps.filter(a=>a.mins>0).map(a=>{const v=s.metric==='time'?a.mins*factor:a.launches*factor*(s.metric==='unlocks'?.6:1);const mx=s.metric==='time'?41*factor:21*factor;return{name:a.name,letter:a.name[0],tint:a.tint,val:s.metric==='time'?fmt(v):Math.round(v)+'',p:Math.min(100,v/mx*100)};}).sort((a,b)=>b.p-a.p).map((a,i)=>({...a,rank:String(i+1).padStart(2,'0'),pct:a.p+'%'})),
+      wizStep:s.wizStep, wizDots:[1,2,3].map(i=>({bg:i<=s.wizStep?LIME:P2})),
+      wizBack:()=>s.wizStep>1?this.setState({wizStep:s.wizStep-1}):this.go({sub:null}),
+      w1:s.wizStep===1, w2:s.wizStep===2, w3:s.wizStep===3,
+      wizTypes:TYPES.map(t=>({...t,short:SHORT[t.id],chipBg:CHIP[t.id][0],chipFg:INK,bd:s.wizType===t.id?LIME:'rgba(255,255,255,.06)',pick:()=>this.setState({wizType:t.id,wizStep:2,cycleEdit:'use'})})),
+      wizAppCount:s.wizApps.length,
+      wizAppRows:wizList.map(a=>{const on=s.wizApps.includes(a.id);return{...a,letter:a.name[0],time:fmt(a.mins),bg:on?'rgba(198,244,50,.1)':P1,bd:on?LIME:'rgba(255,255,255,.06)',boxBg:on?LIME:'transparent',toggle:()=>this.setState(st=>({wizApps:on?st.wizApps.filter(x=>x!==a.id):[...st.wizApps,a.id]}))};}),
+      w3Title:s.wizAi?'Check your block':{limit:'How much time?',schedule:'When should it lock?',now:'Lock for how long?',cycle:'On for, off for'}[s.wizType],
+      wizFromAi:s.wizAi, aiNote:s.aiNote||'Here is what I understood. Change anything before turning it on.', wizTypeName:TYPES.find(t=>t.id===s.wizType).name, wizChangeType:()=>this.go({wizStep:1,wizAi:false}),
+      wLimit:s.wizType==='limit', wSchedule:s.wizType==='schedule', wNow:s.wizType==='now', wCycle:s.wizType==='cycle', showDays:s.wizType!=='now',
+      cycleTabs:[['use','USE FOR',s.wizUse],['rest','THEN LOCKED',s.wizRest]].map(([id,label,v])=>{const on=s.cycleEdit===id;return{label,val:nowLabel(v),bg:on?'rgba(198,244,50,.1)':P1,bd:on?LIME:'rgba(255,255,255,.06)',fg:on?LIME:TXT,go:()=>this.go({cycleEdit:id})};}),
+      periodTabs:[['daily','Per day'],['hourly','Per hour']].map(([id,label])=>({label,...seg(s.wizPeriod===id),go:()=>this.go({wizPeriod:id})})),
+      rangeOpts:[...new Set(['09:00–17:00','16:00–20:00','22:00–07:00',s.wizRange])].map(r=>({label:r,hint:{'09:00–17:00':'Work','16:00–20:00':'Study','22:00–07:00':'Night'}[r]||'Custom',...sel(s.wizRange===r),pick:()=>this.go({wizRange:r})})),
+      dayChips:DAYS.map((d,i)=>{const on=!!s.wizDays[i];return{label:d,bg:on?TXT:P1,fg:on?INK:DIM,bd:on?TXT:'rgba(255,255,255,.08)',toggle:()=>this.setState(st=>({wizDays:st.wizDays.map((v,j)=>j===i?(v?0:1):v)}))};}),
+      wizSummary, wizCta:s.wizStep===3?'Turn on block':(s.wizStep===2?`Continue with ${s.wizApps.length} app${s.wizApps.length===1?'':'s'}`:'Continue'), wizNext:s.wizStep===2&&!s.wizApps.length?()=>this.toastMsg('Pick at least one app'):wizNext,
+      aiText:s.aiText, aiBusy:s.aiBusy, aiIdle:!s.aiBusy, onAiText:e=>this.setState({aiText:e.target.value}), aiGo:()=>this.runAi(s.aiText),
+      aiExamples:['Instagram 10 min, then lock 1 hour','No YouTube on school days 8am–3pm','Social media 45 min a day'].map(t=>({label:t,use:()=>this.setState({aiText:t})})),
+      rName:dev?.name, rBattery:dev?dev.battery+'%':'', rCurrentUpper:dev?('USING '+dev.current.toUpperCase()):'', rTime:dev?fmt(dev.apps.reduce((a,b)=>a+b.mins,0)).toUpperCase():'',
+      rHasAlert:!!dev?.alert, rHasReq:!!dev?.request, rApps,
+      dismissAlert:()=>dev&&this.updDev(dev.id,d=>({...d,alert:false})),
+      approveOpts:[['15m',15],['30m',30],['1h',60],['NO',0]].map(([label,m])=>({label,bg:m?'#FFB547':'transparent',fg:m?INK:TXT,bd:m?'none':'1px solid rgba(255,255,255,.2)',go:()=>{this.updDev(dev.id,d=>({...d,request:false}));this.toastMsg(m?`Approved ${label} of Instagram`:'Request denied');}})),
+      rFocusOn, rFocusOff:!rFocusOn, rFocusLeft:rFocusOn?mmss(dev.focusEnds-now):'',
+      rFocusTitle:rFocusOn?'FOCUS SESSION RUNNING':'START A FOCUS SESSION',
+      rFocusBg:rFocusOn?LIME:P1, rFocusFg:rFocusOn?INK:TXT,
+      focusOpts:[25,50,90].map(m=>({label:m+'m',start:()=>{this.updDev(dev.id,d=>({...d,focusEnds:Date.now()+m*60000}));this.setState({now:Date.now()});this.toastMsg(`Focus started on ${dev.name}`);}})),
+      stopFocus:()=>this.updDev(dev.id,d=>({...d,focusEnds:null})),
+      parentUnlink:()=>{const n=dev.name;this.setState(st=>({devices:st.devices.filter(d=>d.id!==dev.id),sub:null,tab:'devices'}));this.toastMsg(`${n} unlinked`);},
+      signOut:()=>this.go({screen:'welcome',sub:null,tab:'home'}),
+      hasToast:!!s.toast, toast:s.toast,
+      isDisclose:!!s.disclose,
+      discloseAgree:()=>this.setState(st=>({disclose:false,perms:{...st.perms,access:true}})),
+      discloseNo:()=>this.setState({disclose:false}),
+      deleteAccount:()=>{this.go({screen:'welcome',sub:null,tab:'home',devices:[]});this.toastMsg('Account and all data deleted.');},
+    };
+  }
+}
+</script>
+</body>
+</html>
