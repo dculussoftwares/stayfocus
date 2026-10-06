@@ -64,10 +64,14 @@ reviews:
       instructions: |
         Public repo: third-party actions pinned to full commit SHAs, minimal `permissions`, secrets never exposed to
         pull requests from forks, no untrusted input interpolated into `run:` scripts.
-    - path: "backlog/**/*.md"
+    - path: "backlog/*/stories/*.md"
       instructions: |
-        Backlog-as-code: front matter needs id, title, epic, size, modules, depends, labels; every `depends` id must exist and
+        Backlog story: front matter needs id, title, epic, size, modules, depends, labels; every `depends` id must exist and
         there must be no cycles. docs/agents/PHASE1_EXECUTION.md must be regenerated (python3 scripts/backlog/waves.py).
+    - path: "backlog/*/epics/*.md"
+      instructions: |
+        Backlog epic: front matter has only id and title (by design; stories carry the rest). Check that the epic text and
+        exit criteria agree with its stories.
 
 knowledge_base:
   code_guidelines:

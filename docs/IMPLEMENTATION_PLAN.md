@@ -111,8 +111,8 @@ M1 ──┬── M2 ───────────────────�
 
 ### Definition of done (every story)
 
-- Pre-commit hooks pass (`pre-commit run --all-files`), `./gradlew ciCheck` passes locally (before M1-02 lands: `./gradlew assembleDebug`),
-  and every CI job behind `ci-pass` is green on the PR.
+- `./gradlew ciCheck` passes locally (before M1-02 lands: `./gradlew assembleDebug`), and every CI job behind `ci-pass` is green
+  on the PR. Once M1-14 has landed, the pre-commit hooks must also pass (`pre-commit run --all-files`).
 - New logic has unit tests. Pure logic (evaluator, parsers, formatters, aggregation) is test-first.
 - UI matches the prototype: colours, type, spacing, radii and copy. Copy is **final**, so don't reword it.
   Strings go in `strings.xml`.

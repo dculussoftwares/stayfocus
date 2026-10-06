@@ -27,7 +27,7 @@ Stories in the same wave run **in parallel**.
    can't self-approve.
 4. Infra stories (`infra` label) get a Terraform plan comment on the PR and apply on merge through GitHub Actions. They need
    the secrets from `docs/INFRASTRUCTURE.md` (and from M1-13 on, the GCP bootstrap).
-5. Once story M1-12 is merged, `main` enforces this: PRs only, CI `build` green, every review thread resolved, and an approval.
+5. Once story M1-12 is merged, `main` enforces this: PRs only, the `ci-pass` check green, every review thread resolved, and an approval.
 
 ### The kanban flow
 
@@ -137,7 +137,7 @@ closed, and the card in Done on the kanban board (org project #11).
    - Never commit secrets, google-services.json, keystores, Terraform state or personal data (public repo).
 
 7. Verify locally before every push
-   - Hooks: scripts/dev/setup-hooks.sh once per worktree (from M1-14), then pre-commit run --all-files.
+   - Hooks (only once M1-14 has landed): scripts/dev/setup-hooks.sh once per worktree, then pre-commit run --all-files.
    - Android: ./gradlew ciCheck (static analysis, unit tests + coverage, screenshot tests, build; from M1-02;
      before that, ./gradlew assembleDebug). For UI/navigation changes, also run the instrumented tests
      (./gradlew ciDevicesGroupDebugAndroidTest, from M1-16).
@@ -242,8 +242,8 @@ the current wave, paste Prompt B into each, and move to the next wave when every
 |---|---|---|
 | 1 | `M1-01` | 1 |
 | 2 | `M1-02`, `M1-03`, `M1-04`, `M1-14`, `M2-02`, `M3-02`, `M6-02` | 7 |
-| 3 | `M1-05`, `M1-06`, `M1-07`, `M1-08`, `M1-10`, `M1-12`, `M1-13`, `M1-15`, `M2-01`, `M3-01`, `M9-01`, `M10-03` | 12 |
-| 4 | `M1-09`, `M1-11`, `M2-03`, `M3-03`, `M6-01`, `M6-07`, `M9-02`, 🧑 `M10-07` | 8 |
+| 3 | `M1-05`, `M1-06`, `M1-07`, `M1-08`, `M1-10`, `M1-12`, `M1-13`, `M2-01`, `M3-01`, `M9-01`, `M10-03` | 11 |
+| 4 | `M1-09`, `M1-11`, `M1-15`, `M2-03`, `M3-03`, `M6-01`, `M6-07`, `M9-02`, 🧑 `M10-07` | 9 |
 | 5 | `M1-16`, `M2-04`, `M3-05`, `M4-01`, `M5-01`, `M5-03`, `M7-01`, `M10-01` | 8 |
 | 6 | `M2-05`, `M2-06`, `M2-07`, `M2-08`, `M4-02`, `M4-05`, `M5-02`, `M5-06`, `M7-02`, `M7-03`, `M9-03` | 11 |
 | 7 | `M2-09`, `M3-04`, `M4-03`, `M5-04`, `M6-03`, `M6-04`, `M9-04` | 7 |
@@ -276,13 +276,13 @@ the current wave, paste Prompt B into each, and move to the next wave when every
 | 3 | `M1-10` | M | Room database schema v1 | M1-03 |
 | 3 | `M1-12` | S | GitHub repository settings as code | M1-02 |
 | 3 | `M1-13` | L | GCP/Firebase Terraform foundation (dev environment) | M1-02 |
-| 3 | `M1-15` | M | Security and supply-chain scanning | M1-02 |
 | 3 | `M2-01` | L | Rule evaluator (pure Kotlin) | M1-03 |
 | 3 | `M3-01` | L | UsageStats data source | M1-03 |
 | 3 | `M9-01` | M | AI result contract and normalisation | M1-03 |
 | 3 | `M10-03` | M | Release build and signing pipeline | M1-02 |
 | 4 | `M1-09` | L | App navigation shell: 4 tabs, sub-screens, sheets | M1-05, M1-06 |
 | 4 | `M1-11` | M | DataStore settings and repository layer | M1-10 |
+| 4 | `M1-15` | M | Security and supply-chain scanning | M1-02, M1-12 |
 | 4 | `M2-03` | M | Block screen | M1-05, M1-06 |
 | 4 | `M3-03` | M | Usage repository: 7-day cache and averages | M3-01, M1-10 |
 | 4 | `M6-01` | L | Terraform: Firebase project, Android apps and Auth providers | M1-13 |
