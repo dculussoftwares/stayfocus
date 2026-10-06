@@ -76,7 +76,8 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
    comment `@coderabbitai review` once.
    **If CodeRabbit says "Review rate limited"**: wait the stated time once (at most ~10 min), re-request once, and if it
    is still limited, use the Gemini fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
-   `/gemini review`, wait up to ~10 min, collect `gemini-code-assist[bot]` comments (inline + PR comments) and handle
+   `/gemini review` (again after **every** push; Gemini may not re-review on its own), wait up to ~10 min (if it still
+   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `gemini not responding`), collect `gemini-code-assist[bot]` comments (inline + PR comments) and handle
    them exactly like CodeRabbit's (step 3). Gemini never approves.
 2. Collect CodeRabbit findings: inline comments
    `gh api repos/dculussoftwares/stayfocus/pulls/<PR>/comments --paginate` (author `coderabbitai[bot]`), its review bodies
