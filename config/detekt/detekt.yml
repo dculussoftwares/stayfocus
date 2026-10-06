@@ -4,6 +4,8 @@ style:
     ignorePropertyDeclaration: true
     ignoreCompanionObjectPropertyDeclaration: true
     ignoreNamedArgument: true
+    # Time and percentage maths (minutes, seconds, hours) is the app's domain.
+    ignoreNumbers: ['-1', '0', '1', '2', '24', '60', '100', '127', '0x7F', '1000', '3600']
     ignoreExtensionFunctions: true
     excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Preview*.kt']
   MaxLineLength:

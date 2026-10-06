@@ -1,6 +1,10 @@
 package com.dculus.stayfocused.core.model
 
-data class DialConfig(val max: Int, val step: Int, val presets: List<Int>)
+data class DialConfig(
+    val max: Int,
+    val step: Int,
+    val presets: List<Int>,
+)
 
 object DialConfigs {
     val Break = DialConfig(max = 120, step = 5, presets = listOf(15, 30, 60, 120))
