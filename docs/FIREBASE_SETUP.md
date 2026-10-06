@@ -33,6 +33,7 @@ only when a Firebase app was initialised from that file.
 Both apps install App Check at startup (`AppCheckInstaller`), so Firestore and the callable Functions can enforce it:
 
 - **Release builds** use the Play Integrity provider. Link the project to your Play app in the Firebase console.
-- **Debug builds** use the debug provider. Either read the token from Logcat (tag `DebugAppCheckProvider`) and register it
-  in the console, or supply your own token at build time through the `APP_CHECK_DEBUG_TOKEN` environment variable (or
-  `-PappCheckDebugToken=...`). It is a secret: keep it in your shell or CI secrets, never in the repo.
+- **Debug builds** use the debug provider. The SDK generates a token per install and logs it (Logcat tag
+  `DebugAppCheckProvider`); register it in the Firebase console. No token is built into an APK: a token-bearing APK could be
+  extracted and used from an unverified device. Treat registered debug tokens as secrets, never share debug builds that
+  ran with one, and delete tokens when you finish debugging.
