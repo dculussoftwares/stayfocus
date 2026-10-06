@@ -1,0 +1,70 @@
+# Infrastructure
+
+## The rule
+
+**Every resource is created and changed only through Terraform, applied by GitHub Actions.**
+That covers GitHub (labels, milestones, backlog issues, repo settings, Pages) and GCP/Firebase
+(projects, Firestore, Auth, rules, App Check, the 5 Cloud Functions, budgets). Nobody clicks in a console
+to create or change infrastructure. A change is a PR. The plan is posted on the PR, and the apply runs on merge.
+
+Terraform state lives in **HCP Terraform**. Workspaces use **Local execution mode**: HCP stores the state and locks,
+and plan/apply run inside GitHub Actions.
+
+Things Terraform can't do are handled, in order of preference, by:
+1. A scripted, idempotent step in the same workflow (for example `scripts/backlog/sync_project.py` for the Projects v2 board,
+   sub-issues and issue dependencies, which the GitHub provider doesn't support).
+2. A `needs-human` story, for things with no API at all (Google Play Console, recruiting testers).
+
+| Root module | Manages | Workflow | HCP workspace |
+|---|---|---|---|
+| `infra/github` | Labels, milestones, epics/stories from `backlog/`, repo settings (M1-12), Pages (M6-07) | `.github/workflows/backlog.yml` | `stayfocus-github` |
+| `infra/bootstrap` | GCP projects, billing link, Workload Identity Federation, deploy service account (M1-13, M10-04) | `infra-bootstrap.yml` (manual) | `stayfocus-bootstrap` |
+| `infra/firebase` | Firebase/GCP resources, added milestone by milestone (M1-13, M6-01, M7-01, M7-02, M8-05, M9-03, M10-04) | `infra-firebase.yml` | `stayfocus-firebase-dev`, `-prod` |
+
+Infrastructure is built **phase by phase**: each milestone's `infra`-labelled stories add only the resources that milestone needs.
+
+## One-time bootstrap (manual, done once by a maintainer)
+
+These are the only manual steps, and they create credentials, not infrastructure:
+
+1. **HCP Terraform:** create (or reuse) an organization. Set its **default execution mode to Local**, so that workspaces
+   created by `terraform init` run in Actions. Create a team or org API token.
+2. **GitHub repository settings → Secrets and variables → Actions:**
+   - variable `TF_CLOUD_ORGANIZATION` = the HCP organization name
+   - secret `TF_API_TOKEN` = the HCP API token
+   No GitHub token secret is needed for issues, labels, milestones, sub-issues or dependencies: the workflow uses the
+   built-in, short-lived `GITHUB_TOKEN` (`issues: write`).
+3. **GitHub App for the project board** (optional at first; the board step is skipped without it). `GITHUB_TOKEN` can't
+   access org-level Projects v2, and this is a public repo, so use an App rather than a personal access token:
+   create an org-owned GitHub App "stayfocus-automation" with *Organization → Projects: Read and write* and
+   *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/stayfocus` only. Then add:
+   - variable `BACKLOG_APP_CLIENT_ID` = the App's client ID
+   - secret `BACKLOG_APP_PRIVATE_KEY` = an App private key
+
+   Story M1-12 adds *Repository → Administration* and *Pages* permissions to the same App, and switches the
+   Terraform GitHub provider to it for repo settings.
+4. **GitHub environment** `backlog` (Settings → Environments), with `main` as the only deployment branch. Optionally add
+   required reviewers so applies need approval.
+5. Run the **backlog** workflow (merge to `main`, or *Run workflow*). It creates the HCP workspace on first `init`,
+   then labels, milestones, the 10 epics and 74 stories, the sub-issue and "blocked by" links, and the
+   "Stay Focused · Phase 1" board (if the App is set up).
+
+**Public repo hygiene:** no secrets, tokens, `google-services.json`, keystores or Terraform state in git (see `.gitignore`).
+Fork PRs never get secrets (the plan job only runs for branches in this repo). Third-party actions are pinned to commit SHAs.
+
+GCP bootstrap (billing account, the WIF pool, deploy service account) is part of story **M1-13**.
+
+## Editing the backlog
+
+- Stories: `backlog/phase1/stories/Mxx-yy.md`. Epics: `backlog/phase1/epics/Mxx.md`.
+  YAML front matter (`id`, `title`, `epic`, `size`, `modules`, `depends`, `labels`) + Markdown body.
+- To add a story: add a file, give it a new id, and list its `depends`. Open a PR and check the plan comment.
+- Don't edit issue titles or descriptions on GitHub; Terraform overwrites them. Progress goes in PRs and comments.
+  Assignees, state (open/closed) and board Status are not managed by Terraform.
+- Board Status: the sync sets **Backlog** or **Ready** (Ready means every dependency is closed) for new items, promotes Backlog → Ready
+  when dependencies close, and sets Done when an issue closes. Moving a card to *In progress* or *In review* is up to whoever works on it.
+
+## Forks
+
+Forks point `infra/*` at their own HCP organization, GitHub repo (`-var owner=... -var repository=...`) and GCP project.
+The Android apps build without any of it (no `google-services.json` → Firebase features off).

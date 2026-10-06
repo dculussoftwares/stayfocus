@@ -1,0 +1,161 @@
+name: backlog
+
+# Backlog and GitHub repo settings as code (infra/github, HCP Terraform state).
+#  - PR: terraform plan, posted as a PR comment.
+#  - Merge to main / manual run: terraform apply, then link sub-issues and "blocked by"
+#    dependencies, then (if a GitHub App is configured) sync the org Projects v2 board.
+#  - Issue closed/reopened: re-sync board statuses only (Backlog -> Ready when deps close).
+#
+# Credentials (public repo: least privilege, no long-lived personal tokens):
+#  - Issues, labels, milestones, sub-issues, dependencies: the built-in GITHUB_TOKEN.
+#  - Projects v2 board (and repo settings from M1-12): a GitHub App installed on this repo
+#    (vars.BACKLOG_APP_CLIENT_ID + secrets.BACKLOG_APP_PRIVATE_KEY), minting 1-hour tokens.
+#    The board steps are skipped while the App isn't configured.
+#  - HCP Terraform: secrets.TF_API_TOKEN (team token scoped to the stayfocus workspaces).
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  pull_request:
+    paths:
+      - "backlog/**"
+      - "infra/github/**"
+      - "scripts/backlog/**"
+      - ".github/workflows/backlog.yml"
+  push:
+    branches: [main]
+    paths:
+      - "backlog/**"
+      - "infra/github/**"
+      - "scripts/backlog/**"
+      - ".github/workflows/backlog.yml"
+  issues:
+    types: [closed, reopened]
+  workflow_dispatch:
+
+concurrency:
+  group: backlog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  TF_WORKSPACE: ${{ vars.TF_WORKSPACE_GITHUB || 'stayfocus-github' }}
+  TF_IN_AUTOMATION: "true"
+
+defaults:
+  run:
+    working-directory: infra/github
+
+jobs:
+  plan:
+    # Secrets are never exposed to PRs from forks.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+      - run: terraform init -input=false
+      - run: terraform validate
+      - run: python3 -m py_compile ../../scripts/backlog/sync_project.py
+      - id: plan
+        run: |
+          set -o pipefail
+          terraform plan -input=false -no-color -lock=false | tee plan.txt
+      - name: Comment plan on PR
+        if: always() && steps.plan.outcome != 'skipped'
+        run: |
+          {
+            echo "### Backlog / GitHub Terraform plan"
+            echo
+            grep -E '^(Plan:|No changes\.|Error)' plan.txt || echo "Plan did not complete; see the job log."
+            echo
+            echo "<details><summary>Full plan</summary>"
+            echo
+            echo '```'
+            tail -c 60000 plan.txt
+            echo '```'
+            echo "</details>"
+          } > comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md --edit-last \
+            || gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
+
+  apply:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: backlog
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - run: terraform init -input=false
+      - run: terraform apply -input=false -auto-approve
+      - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
+      - name: Link sub-issues and dependencies
+        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" relations
+      - name: Mint GitHub App token for the project board
+        id: app
+        if: vars.BACKLOG_APP_CLIENT_ID != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: Sync project board
+        if: steps.app.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
+      - name: Board skipped
+        if: steps.app.outcome == 'skipped'
+        run: echo "::notice::Project board not synced; set vars.BACKLOG_APP_CLIENT_ID and secrets.BACKLOG_APP_PRIVATE_KEY (docs/INFRASTRUCTURE.md)."
+
+  sync-status:
+    if: github.event_name == 'issues' && vars.BACKLOG_APP_CLIENT_ID != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - run: terraform init -input=false
+      - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
