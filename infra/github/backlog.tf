@@ -104,7 +104,7 @@ resource "github_issue" "story" {
     ? "> **Depends on:** nothing. Ready to start."
     : "> **Depends on:** ${join(", ", [for d in each.value.meta.depends : "**${d}** ${local.stories[d].meta.title}"])} (linked as \"blocked by\")",
     "",
-    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and the design handoff in `design_handoff_stay_focused_phase1/`. Workflow: Prompt B in `docs/agents/PHASE1_EXECUTION.md`. Move this card to *In progress* when you start and *In review* when your PR is open. The PR says `Closes #<this issue>` and merges only after CodeRabbit approves and CI is green.",
+    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and the design handoff in `design_handoff_stay_focused_phase1/`. Workflow: `.claude/agents/story-worker.md` (run it with `/story <ID>` or `/wave <N>` in Claude Code). Move this card to *In progress* when you start and *In review* when your PR is open. The PR says `Closes #<this issue>` and merges only after CodeRabbit approves and CI is green.",
     "",
     trimspace(each.value.body),
     "",

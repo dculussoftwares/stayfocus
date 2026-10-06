@@ -19,7 +19,8 @@ Phase 1 is planned, not built yet. The Android code starts with story **M1-01** 
 | `.github/workflows/backlog.yml` | Plan on PR, apply on merge to `main`; board status sync when issues close |
 | `.coderabbit.yaml` | CodeRabbit review config (required reviewer on every PR) |
 | `scripts/backlog/board.py` | Move a card on the kanban board / list Ready cards |
-| `docs/agents/PHASE1_EXECUTION.md` | Agent prompts (orchestrator, story worker, wave) + the parallel wave order |
+| `docs/agents/PHASE1_EXECUTION.md` | How to run the backlog (`/wave`, `/next-wave`, `/story`), CodeRabbit rules, the 16-wave order |
+| `.claude/commands/`, `.claude/agents/story-worker.md` | The `/wave`, `/next-wave`, `/story` commands and the per-story subagent |
 
 ## Commands
 
@@ -41,16 +42,19 @@ Backlog / infra (never apply locally; Actions plans on the PR and applies on mer
 terraform -chdir=infra/github fmt -recursive && terraform -chdir=infra/github validate
 python3 scripts/backlog/waves.py --check          # wave table in sync with backlog/
 python3 scripts/backlog/board.py ready             # Ready cards on the kanban board
+python3 scripts/backlog/waves.py --status         # progress per wave + NEXT_WAVE
+python3 scripts/backlog/waves.py --wave 3          # one wave's stories, issues and state
 ```
 
 ## Working on a story
 
-Follow **Prompt B** in `docs/agents/PHASE1_EXECUTION.md`. In short:
+Use **`/wave <N>`** (a whole wave, parallel workers), **`/next-wave`** or **`/story <ID>`** (one story). One session per wave;
+`/clear` between waves. The procedure each worker follows is `.claude/agents/story-worker.md`. In short:
 1. Pick a Ready card, then `gh issue view <n>`: read the scope, acceptance criteria and "Depends on".
 2. `python3 scripts/backlog/board.py status <n> "In progress"`, then branch `m<N>/<n>-<slug>` from `origin/main`.
 3. Implement only the scope and run the Definition-of-done command.
 4. Open a PR (`[Mx-yy] <title>`, body `Closes #<n>`) and move the card to *In review*. Work through CodeRabbit's review
-   (fix or answer every comment; never `@coderabbitai approve`), then squash-merge once CI is green and CodeRabbit approved.
+   (fix or answer every comment; never `@coderabbitai approve`), then squash-merge once the merge gate is met.
    Don't edit the issue body; Terraform owns it (commit changes to `backlog/phase1/` instead).
 
 ## Notes for Claude
