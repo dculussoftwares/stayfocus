@@ -45,6 +45,21 @@ class TimeRangeTest {
         assertEquals("09:00–17:00", TimeRange.parse("09:00–17:00").format())
         assertEquals("22:05–07:30", TimeRange(t("22:05"), t("07:30")).format())
         assertFailsWith<IllegalArgumentException> { TimeRange.parse("09:00-17:00") }
+        assertFailsWith<IllegalArgumentException> { TimeRange.parse("09:00:30–17:00") }
+        assertFailsWith<IllegalArgumentException> { TimeRange(t("09:00:30"), t("17:00")) }
+    }
+
+    @Test
+    fun formatIsLocaleIndependent() {
+        val original = java.util.Locale.getDefault()
+        try {
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("ar-SA-u-nu-arab"))
+            val r = TimeRange(t("09:05"), t("17:30"))
+            assertEquals("09:05–17:30", r.format())
+            assertEquals(r, TimeRange.parse(r.format()))
+        } finally {
+            java.util.Locale.setDefault(original)
+        }
     }
 
     @Test
