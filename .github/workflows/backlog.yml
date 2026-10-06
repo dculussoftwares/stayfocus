@@ -49,9 +49,16 @@ defaults:
     working-directory: infra/github
 
 jobs:
+  bootstrap-check:
+    # Runs only while the one-time bootstrap (docs/INFRASTRUCTURE.md) is missing, instead of failing every run.
+    if: vars.TF_CLOUD_ORGANIZATION == '' && github.event_name != 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "::warning title=Backlog not applied::Set repo variable TF_CLOUD_ORGANIZATION and secret TF_API_TOKEN (docs/INFRASTRUCTURE.md, bootstrap), then re-run this workflow."
+
   plan:
     # Secrets are never exposed to PRs from forks.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -95,7 +102,7 @@ jobs:
             || gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
 
   apply:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != ''
     runs-on: ubuntu-latest
     environment: backlog
     permissions:
@@ -135,7 +142,7 @@ jobs:
         run: echo "::notice::Project board not synced; set vars.BACKLOG_APP_CLIENT_ID and secrets.BACKLOG_APP_PRIVATE_KEY (docs/INFRASTRUCTURE.md)."
 
   sync-status:
-    if: github.event_name == 'issues' && vars.BACKLOG_APP_CLIENT_ID != ''
+    if: github.event_name == 'issues' && vars.BACKLOG_APP_CLIENT_ID != '' && vars.TF_CLOUD_ORGANIZATION != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
