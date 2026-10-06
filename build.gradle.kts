@@ -70,9 +70,10 @@ subprojects {
     plugins.withId("com.android.library") { apply(plugin = "io.github.takahirom.roborazzi") }
     plugins.withId("com.android.application") { apply(plugin = "io.github.takahirom.roborazzi") }
 
-    // Minimum line coverage for the logic modules (the overall 60% bound is in the root `kover` block).
-    if (path == ":core:model" || path == ":core:blocking") {
-        extensions.configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+    extensions.configure<kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension> {
+        reports.filters.excludes { excludeFromCoverage() }
+        // Minimum line coverage for the logic modules (the overall 60% bound is in the root `kover` block).
+        if (path == ":core:model" || path == ":core:blocking") {
             reports.verify.rule("Logic line coverage") { minBound(80) }
         }
     }
@@ -80,30 +81,33 @@ subprojects {
 
 kover {
     reports {
-        filters.excludes {
-            // Android entry points, generated code and previews are covered by UI/screenshot/E2E tests, not line coverage.
-            classes(
-                "*.BuildConfig",
-                "*.R",
-                "*.R$*",
-                "*ComposableSingletons*",
-                "*_Factory",
-                "*_Factory$*",
-                "*_HiltModules*",
-                "*_MembersInjector",
-                "Hilt_*",
-                "*.Hilt_*",
-                "dagger.hilt.*",
-                "hilt_aggregated_deps.*",
-                "*.Placeholder", // empty module placeholders; delete this line when the modules get real code
-                "*.MainActivity",
-                "*.StayFocusedApp",
-                "*.StayFocusedKidsApp",
-            )
-            annotatedBy("androidx.compose.ui.tooling.preview.Preview", "javax.annotation.processing.Generated")
-        }
+        filters.excludes { excludeFromCoverage() }
         verify.rule("Overall line coverage") { minBound(60) }
     }
+}
+
+// Android entry points, generated code and previews are covered by UI/screenshot/E2E tests, not line coverage.
+// Applied to the merged report (root) and to every module's own report, which the per-module bounds use.
+fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
+    classes(
+        "*.BuildConfig",
+        "*.R",
+        "*.R$*",
+        "*ComposableSingletons*",
+        "*_Factory",
+        "*_Factory$*",
+        "*_HiltModules*",
+        "*_MembersInjector",
+        "Hilt_*",
+        "*.Hilt_*",
+        "dagger.hilt.*",
+        "hilt_aggregated_deps.*",
+        "*.Placeholder", // empty module placeholders; delete this line when the modules get real code
+        "*.MainActivity",
+        "*.StayFocusedApp",
+        "*.StayFocusedKidsApp",
+    )
+    annotatedBy("androidx.compose.ui.tooling.preview.Preview", "javax.annotation.processing.Generated")
 }
 
 // Aggregates so CI jobs and `ciCheck` run the same thing. Android modules use `lint`/`testDebugUnitTest`,
