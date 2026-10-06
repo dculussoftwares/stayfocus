@@ -30,6 +30,10 @@ Android (available as the M1 stories land):
 scripts/dev/setup-hooks.sh                                           # install pre-commit + pre-push hooks (M1-14)
 ./gradlew assembleDebug                                              # both apps
 ./gradlew ciCheck                                                    # everything CI runs (M1-02) = Definition of done
+./gradlew spotlessApply                                              # auto-format Kotlin (ktlint + Compose rules)
+./gradlew detekt lintAll                                             # static analysis (config/detekt/detekt.yml)
+./gradlew unitTests koverXmlReport koverVerify                       # JVM + Robolectric tests, coverage gate (80% logic modules, 60% overall)
+./gradlew verifyScreenshots                                          # Roborazzi: compare against committed baselines
 ./gradlew :core:blocking:testDebugUnitTest --tests '*RuleEvaluator*' # one test class
 ./gradlew recordRoborazziDebug                                       # update screenshot baselines
 ./gradlew ciDevicesGroupDebugAndroidTest                             # instrumented tests on managed emulators (M1-16)

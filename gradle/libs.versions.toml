@@ -19,9 +19,15 @@ turbine = "1.2.1"
 mockk = "1.14.11"
 robolectric = "4.17"
 roborazzi = "1.76.0"
+spotless = "8.10.3"
+ktlint = "1.8.0"
+composeRulesKtlint = "0.6.7"
+detekt = "2.0.0-alpha.6"
+kover = "0.9.11"
 
 [libraries]
 # Build-logic only
+android-gradleCommonApi = { module = "com.android.tools.build:gradle-common-api", version.ref = "agp" }
 android-gradlePlugin = { module = "com.android.tools.build:gradle", version.ref = "agp" }
 kotlin-gradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-composeGradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
@@ -60,6 +66,9 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 
+# Quality (ktlint compose rules are referenced from the spotless config)
+compose-rules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref = "composeRulesKtlint" }
+
 # Test
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 turbine = { module = "app.cash.turbine:turbine", version.ref = "turbine" }
@@ -78,3 +87,6 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
+spotless = { id = "com.diffplug.spotless", version.ref = "spotless" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
