@@ -1,0 +1,219 @@
+name: ci
+
+# Automated half of the PR gate (CodeRabbit is the reviewing half). `ci-pass` is the single required status check.
+# `./gradlew ciCheck` runs the same Gradle tasks locally. No secrets are needed, so fork PRs work.
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # The build uses Gradle toolchains; JDK 17 is also the JDK that runs Gradle.
+  JAVA_VERSION: "17"
+
+jobs:
+  static-analysis:
+    name: static-analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Spotless, detekt, feature isolation, Android Lint
+        run: ./gradlew spotlessCheck detekt checkFeatureIsolation lintAll --continue --configuration-cache
+      - name: Collect SARIF reports
+        if: ${{ !cancelled() }}
+        run: |
+          mkdir -p sarif
+          cp build/reports/detekt/detekt.sarif sarif/detekt.sarif || true
+          find . -path ./sarif -prune -o -name 'lint-results-debug.sarif' -print | while read -r f; do
+            cp "$f" "sarif/lint-$(echo "$f" | tr '/.' '--').sarif"
+          done
+      - name: Upload SARIF (code scanning)
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: sarif
+          category: static-analysis
+      - name: Upload reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: static-analysis-reports
+          path: |
+            build/reports/detekt/
+            **/build/reports/lint-results-debug.html
+          retention-days: 7
+
+  unit-tests:
+    name: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Unit tests and coverage
+        run: ./gradlew unitTests koverXmlReport koverVerify --continue --configuration-cache
+      - name: Publish test results
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
+        continue-on-error: true
+        uses: mikepenz/action-junit-report@b7b80d7ac5b1da46d6aaff9fb57ad50d8453bcb3 # v6.6.0
+        with:
+          report_paths: "**/build/test-results/**/TEST-*.xml"
+          check_name: Unit test results
+          require_tests: false
+      - name: Coverage summary on the PR
+        if: ${{ !cancelled() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork != true }}
+        continue-on-error: true
+        uses: madrapps/jacoco-report@e51ce1f46f7f8b5331593f935e59cbaf44b84920 # v1.8.0
+        with:
+          paths: ${{ github.workspace }}/build/reports/kover/report.xml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: Coverage (Kover)
+          min-coverage-overall: 60
+          min-coverage-changed-files: 60
+          update-comment: true
+      - name: Coverage summary in the job summary
+        if: ${{ !cancelled() }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import os, re
+          p = "build/reports/kover/report.xml"
+          print("### Coverage (Kover)")
+          if os.path.exists(p):
+              counters = re.findall(r'<counter type="LINE" missed="(\d+)" covered="(\d+)"/>', open(p).read())
+              if counters:
+                  missed, covered = map(int, counters[-1])
+                  total = missed + covered
+                  print(f"Line coverage: {covered}/{total} ({(100 * covered / total) if total else 100:.1f}%)")
+          else:
+              print("No coverage report.")
+          PY
+      - name: Upload test reports
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unit-test-reports
+          path: |
+            **/build/reports/tests/
+            build/reports/kover/
+          retention-days: 7
+
+  screenshot-tests:
+    name: screenshot-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Verify Roborazzi screenshots against committed baselines
+        run: ./gradlew verifyScreenshots --configuration-cache
+      - name: Upload screenshot diffs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: screenshot-diffs
+          path: |
+            **/build/outputs/roborazzi/
+            **/build/reports/roborazzi/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      # No google-services.json: the project must build without it.
+      - name: Assemble debug APKs (app and kids)
+        run: ./gradlew :app:assembleDebug :kids:assembleDebug --configuration-cache
+      - name: Upload APKs
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: debug-apks
+          path: |
+            app/build/outputs/apk/debug/*.apk
+            kids/build/outputs/apk/debug/*.apk
+          retention-days: 7
+
+  pre-commit:
+    name: pre-commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # The hook config arrives with M1-14; until then the steps below are skipped (the job still succeeds).
+      - name: Check for a pre-commit config
+        id: config
+        run: |
+          if [ -f .pre-commit-config.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
+      - if: steps.config.outputs.present == 'true'
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+      - if: steps.config.outputs.present == 'true'
+        run: |
+          pip install pre-commit
+          pre-commit run --all-files --show-diff-on-failure
+
+  # The single required status check (branch protection, M1-12). Fails if any job failed or was cancelled.
+  ci-pass:
+    name: ci-pass
+    if: ${{ always() }}
+    needs: [static-analysis, unit-tests, screenshot-tests, build, pre-commit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to succeed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ]; then
+              echo "::error::A required job finished as '$r'."
+              exit 1
+            fi
+          done

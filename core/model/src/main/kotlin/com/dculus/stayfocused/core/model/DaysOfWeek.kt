@@ -4,7 +4,9 @@ import java.time.DayOfWeek
 
 /** Bitmask of days: bit 0 = Monday ... bit 6 = Sunday. */
 @JvmInline
-value class DaysOfWeek(val mask: Int) {
+value class DaysOfWeek(
+    val mask: Int,
+) {
     init {
         require(mask in 0..0x7F) { "mask out of range: $mask" }
     }
@@ -19,7 +21,6 @@ value class DaysOfWeek(val mask: Int) {
         val WEEKDAYS = DaysOfWeek(0b0011111)
         val WEEKENDS = DaysOfWeek(0b1100000)
 
-        fun of(vararg days: DayOfWeek): DaysOfWeek =
-            DaysOfWeek(days.fold(0) { acc, d -> acc or (1 shl (d.value - 1)) })
+        fun of(vararg days: DayOfWeek): DaysOfWeek = DaysOfWeek(days.fold(0) { acc, d -> acc or (1 shl (d.value - 1)) })
     }
 }

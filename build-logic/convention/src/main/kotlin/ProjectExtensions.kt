@@ -13,6 +13,18 @@ internal const val TARGET_SDK = 36
 internal const val MIN_SDK = 26
 internal const val JAVA_VERSION = 17
 
+/** Lint checks that map to Google Play policy or target-SDK requirements. */
+internal val PLAY_LINT_CHECKS =
+    setOf(
+        "ExpiredTargetSdkVersion",
+        "OldTargetApi",
+        "QueryAllPackagesPermission",
+        "ScopedStorage",
+        "ProtectedPermissions",
+        "MissingPermission",
+        "HardwareIds",
+    )
+
 internal val Project.libs: VersionCatalog
     get() = extensions.getByType<VersionCatalogsExtension>().named("libs")
 
@@ -27,6 +39,16 @@ internal fun Project.configureAndroid() {
         defaultConfig.minSdk = MIN_SDK
         compileOptions.sourceCompatibility = JavaVersion.VERSION_17
         compileOptions.targetCompatibility = JavaVersion.VERSION_17
+        lint.apply {
+            abortOnError = true
+            checkDependencies = true
+            // Play-relevant checks are errors, never warnings.
+            error += PLAY_LINT_CHECKS
+            sarifReport = true
+            htmlReport = true
+        }
+        // Roborazzi / Robolectric need merged resources on the unit-test classpath.
+        testOptions.unitTests.isIncludeAndroidResources = true
     }
     configureKotlin()
 }

@@ -1,0 +1,33 @@
+# Overrides on top of detekt's defaults (buildUponDefaultConfig = true). Compose-friendly.
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    ignoreNamedArgument: true
+    # Time and percentage maths (minutes, seconds, hours) is the app's domain.
+    ignoreNumbers: ['-1', '0', '1', '2', '24', '60', '100', '127', '0x7F', '1000', '3600']
+    ignoreExtensionFunctions: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/*Test.kt', '**/*Preview*.kt']
+  MaxLineLength:
+    maxLineLength: 120
+  UnusedPrivateProperty:
+    ignoreAnnotated: ['Preview']
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+
+complexity:
+  LongParameterList:
+    # Composables take many parameters (state, callbacks, Modifier); raised from detekt's default of 6.
+    allowedFunctionParameters: 10
+    allowedConstructorParameters: 7
+    ignoreDefaultParameters: true
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    ignoreAnnotatedFunctions: ['Preview']

@@ -31,24 +31,40 @@ fun hms(millis: Long): String {
 }
 
 /** Dial/preset label: "15m" / "1h" / "1h30". */
-fun dialLabel(minutes: Int): String = when {
-    minutes < 60 -> "${minutes}m"
-    minutes % 60 != 0 -> "${minutes / 60}h${minutes % 60}"
-    else -> "${minutes / 60}h"
-}
+fun dialLabel(minutes: Int): String =
+    when {
+        minutes < 60 -> "${minutes}m"
+        minutes % 60 != 0 -> "${minutes / 60}h${minutes % 60}"
+        else -> "${minutes / 60}h"
+    }
 
 /** Sentence label: "45 min" / "1 h" / "1 h 30 min". */
-fun durationLabel(minutes: Int): String = when {
-    minutes < 60 -> "$minutes min"
-    minutes % 60 != 0 -> "${minutes / 60} h ${minutes % 60} min"
-    else -> "${minutes / 60} h"
-}
+fun durationLabel(minutes: Int): String =
+    when {
+        minutes < 60 -> "$minutes min"
+        minutes % 60 != 0 -> "${minutes / 60} h ${minutes % 60} min"
+        else -> "${minutes / 60} h"
+    }
 
 /** "every day" / "on weekdays" / "on Mon, Wed" / "no days". */
-fun daysSummary(days: DaysOfWeek): String = when {
-    days == DaysOfWeek.ALL -> "every day"
-    days == DaysOfWeek.WEEKDAYS -> "on weekdays"
-    days.isEmpty -> "no days"
-    else -> "on " + DayOfWeek.entries.filter { it in days }
-        .joinToString(", ") { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }
-}
+fun daysSummary(days: DaysOfWeek): String =
+    when {
+        days == DaysOfWeek.ALL -> {
+            "every day"
+        }
+
+        days == DaysOfWeek.WEEKDAYS -> {
+            "on weekdays"
+        }
+
+        days.isEmpty -> {
+            "no days"
+        }
+
+        else -> {
+            "on " +
+                DayOfWeek.entries
+                    .filter { it in days }
+                    .joinToString(", ") { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }
+        }
+    }

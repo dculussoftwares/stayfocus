@@ -11,7 +11,9 @@ enum class BlockSource { MANUAL, TEMPLATE, AI }
 sealed interface BlockTarget {
     data object ThisPhone : BlockTarget
 
-    data class Device(val deviceId: String) : BlockTarget
+    data class Device(
+        val deviceId: String,
+    ) : BlockTarget
 }
 
 data class Block(
