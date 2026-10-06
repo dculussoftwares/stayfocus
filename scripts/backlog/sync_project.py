@@ -71,7 +71,9 @@ def rest(method: str, path: str, fields: dict | None = None, check: bool = True)
 
 def graphql(query: str, **variables):
     payload = json.dumps({"query": query, "variables": variables})
-    res = gh("api", "graphql", "--input", "-", input_=payload)
+    res = gh("api", "graphql", "--input", "-", input_=payload, check=False)
+    if res.returncode != 0 and not res.stdout.strip().startswith("{"):
+        raise RuntimeError(f"GraphQL request failed: {res.stderr.strip()}")
     data = json.loads(res.stdout)
     if data.get("errors"):
         raise RuntimeError(json.dumps(data["errors"], indent=2))
@@ -167,9 +169,14 @@ def ensure_project() -> str:
         raise SystemExit(f"org project #{PROJECT_NUMBER} not found or not accessible to this token")
     print(f"project: #{proj['number']} {proj['title']}")
     if REPO not in {r["name"] for r in proj["repositories"]["nodes"]}:
-        mutate("""mutation($p:ID!,$r:ID!){linkProjectV2ToRepository(input:{projectId:$p,repositoryId:$r}){clientMutationId}}""",
-               p=proj["id"], r=data["repository"]["id"])
-        print(f"project: linked {OWNER}/{REPO}")
+        try:
+            mutate("""mutation($p:ID!,$r:ID!){linkProjectV2ToRepository(input:{projectId:$p,repositoryId:$r}){clientMutationId}}""",
+                   p=proj["id"], r=data["repository"]["id"])
+            print(f"project: linked {OWNER}/{REPO}")
+        except RuntimeError as e:
+            # Linking only adds the project to the repo's Projects tab; it needs repo admin rights the
+            # project-only token doesn't have. Items can be added without it.
+            print(f"warning: could not link the repo to the project ({e}); link it once in the project settings")
     return proj["id"]
 
 
