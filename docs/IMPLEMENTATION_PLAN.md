@@ -4,7 +4,7 @@ This is the engineering plan for Phase 1 (v1.0). Product scope, screens and desi
 [`design_handoff_stay_focused_phase1/README.md`](../design_handoff_stay_focused_phase1/README.md). Read that first.
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
-**"Stay Focused · Phase 1" GitHub Project kanban board** for `dculussoftwares/stayfocus`. Every story is meant to be
+**GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/stayfocus`. Every story is meant to be
 picked up and finished by one coding agent or developer, committed **directly to `main`**. This document is the shared
 contract all stories refer to. Agent prompts and the parallel execution order are in
 [`docs/agents/PHASE1_EXECUTION.md`](agents/PHASE1_EXECUTION.md).

@@ -6,7 +6,7 @@ Runs in GitHub Actions after `terraform apply` in infra/github (see
 
   1. Sub-issues: each story becomes a sub-issue of its epic.
   2. Dependencies: each story is marked "blocked by" the stories it depends on.
-  3. Projects v2 board: creates the org project if missing, links the repo,
+  3. Projects v2 board: uses the existing org project (#11), links the repo,
      ensures the custom fields, adds every issue, sets Type / Size / Story ID,
      and sets an initial Status. Status values already set by people are never
      overwritten, with one exception: Backlog -> Ready once all dependencies are closed.
@@ -27,7 +27,8 @@ import sys
 
 OWNER = os.environ.get("BACKLOG_OWNER", "dculussoftwares")
 REPO = os.environ.get("BACKLOG_REPO", "stayfocus")
-PROJECT_TITLE = os.environ.get("BACKLOG_PROJECT_TITLE", "Stay Focused · Phase 1")
+# The board is an existing org project: https://github.com/orgs/dculussoftwares/projects/11
+PROJECT_NUMBER = int(os.environ.get("BACKLOG_PROJECT_NUMBER") or 11)
 DRY_RUN = os.environ.get("DRY_RUN") == "1"
 
 STATUS_OPTIONS = [
@@ -154,26 +155,21 @@ FIELDS_QUERY = """query($id:ID!){node(id:$id){... on ProjectV2{
 
 
 def ensure_project() -> str:
+    """Use the existing board (PROJECT_NUMBER) and make sure the repo is linked to it. Never creates a project."""
     data = graphql(
-        """query($org:String!,$repo:String!,$q:String!){
-             organization(login:$org){id projectsV2(first:50,query:$q){nodes{id title number}}}
+        """query($org:String!,$repo:String!,$n:Int!){
+             organization(login:$org){projectV2(number:$n){id title number repositories(first:50){nodes{name}}}}
              repository(owner:$org,name:$repo){id}}""",
-        org=OWNER, repo=REPO, q=PROJECT_TITLE,
+        org=OWNER, repo=REPO, n=PROJECT_NUMBER,
     )
-    repo_id = data["repository"]["id"]
-    for p in data["organization"]["projectsV2"]["nodes"]:
-        if p["title"] == PROJECT_TITLE:
-            print(f"project: found #{p['number']}")
-            return p["id"]
-    created = mutate(
-        """mutation($owner:ID!,$title:String!,$repo:ID!){
-             createProjectV2(input:{ownerId:$owner,title:$title,repositoryId:$repo}){projectV2{id number url}}}""",
-        owner=data["organization"]["id"], title=PROJECT_TITLE, repo=repo_id,
-    )
-    if created is None:
-        raise SystemExit("[dry-run] project does not exist yet; stopping before board sync")
-    proj = created["createProjectV2"]["projectV2"]
-    print(f"project: created #{proj['number']} {proj['url']}")
+    proj = data["organization"]["projectV2"]
+    if proj is None:
+        raise SystemExit(f"org project #{PROJECT_NUMBER} not found or not accessible to this token")
+    print(f"project: #{proj['number']} {proj['title']}")
+    if REPO not in {r["name"] for r in proj["repositories"]["nodes"]}:
+        mutate("""mutation($p:ID!,$r:ID!){linkProjectV2ToRepository(input:{projectId:$p,repositoryId:$r}){clientMutationId}}""",
+               p=proj["id"], r=data["repository"]["id"])
+        print(f"project: linked {OWNER}/{REPO}")
     return proj["id"]
 
 

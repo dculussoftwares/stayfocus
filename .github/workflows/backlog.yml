@@ -8,9 +8,9 @@ name: backlog
 #
 # Credentials (public repo: least privilege, no long-lived personal tokens):
 #  - Issues, labels, milestones, sub-issues, dependencies: the built-in GITHUB_TOKEN.
-#  - Projects v2 board (and repo settings from M1-12): a GitHub App installed on this repo
-#    (vars.BACKLOG_APP_CLIENT_ID + secrets.BACKLOG_APP_PRIVATE_KEY), minting 1-hour tokens.
-#    The board steps are skipped while the App isn't configured.
+#  - Projects v2 board (org project #11) and repo settings from M1-12: preferably a GitHub App
+#    (vars.BACKLOG_APP_CLIENT_ID + secrets.BACKLOG_APP_PRIVATE_KEY, 1-hour tokens); otherwise a fine-grained
+#    PAT in secrets.BACKLOG_PROJECT_TOKEN (org Projects read/write only). Board steps skip if neither exists.
 #  - HCP Terraform: secrets.TF_API_TOKEN (team token scoped to the stayfocus workspaces).
 # Third-party actions are pinned to commit SHAs.
 
@@ -135,17 +135,18 @@ jobs:
           client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
           private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
-      - name: Sync project board
-        if: steps.app.outcome == 'success'
+      - name: Sync project board (org project #11)
         env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
-      - name: Board skipped
-        if: steps.app.outcome == 'skipped'
-        run: echo "::notice::Project board not synced; set vars.BACKLOG_APP_CLIENT_ID and secrets.BACKLOG_APP_PRIVATE_KEY (docs/INFRASTRUCTURE.md)."
+          GH_TOKEN: ${{ steps.app.outputs.token || secrets.BACKLOG_PROJECT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::Project board not synced: configure the GitHub App or secrets.BACKLOG_PROJECT_TOKEN (docs/INFRASTRUCTURE.md)."
+            exit 0
+          fi
+          python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
 
   sync-status:
-    if: github.event_name == 'issues' && vars.BACKLOG_APP_CLIENT_ID != '' && vars.TF_CLOUD_ORGANIZATION != ''
+    if: github.event_name == 'issues' && vars.TF_CLOUD_ORGANIZATION != ''
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -161,11 +162,14 @@ jobs:
       - run: terraform init -input=false
       - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
       - id: app
+        if: vars.BACKLOG_APP_CLIENT_ID != ''
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
           client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
           private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
       - env:
-          GH_TOKEN: ${{ steps.app.outputs.token }}
-        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
+          GH_TOKEN: ${{ steps.app.outputs.token || secrets.BACKLOG_PROJECT_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then echo "::notice::No project credential; board status not synced."; exit 0; fi
+          python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board

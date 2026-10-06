@@ -1,7 +1,7 @@
 # Phase 1 execution: prompts and order
 
 How to get coding agents to build all of Phase 1 from the GitHub issues. Work is tracked on the **GitHub Project kanban board**
-"Stay Focused · Phase 1" (columns: Backlog → Ready → In progress → Done). Agents **commit directly to `main`**;
+[org project #11](https://github.com/orgs/dculussoftwares/projects/11) (columns: Backlog → Ready → In progress → Done). Agents **commit directly to `main`**;
 the commit that finishes a story says `Closes #<issue>`, which closes the issue and moves its card to Done.
 Stories in the same wave run **in parallel**.
 
@@ -48,7 +48,7 @@ Paste into Claude Code from the repo root. Change the wave range or concurrency 
 You are the orchestrator for Stay Focused Phase 1 in the repo dculussoftwares/stayfocus.
 Goal: implement every story in docs/agents/PHASE1_EXECUTION.md, wave by wave, from wave 1 to wave 16.
 All work is committed directly to main. Each story ends with its issue closed by a "Closes #N" commit and
-its card in Done on the "Stay Focused · Phase 1" kanban board.
+its card in Done on the kanban board (https://github.com/orgs/dculussoftwares/projects/11).
 
 Read first: AGENTS.md, docs/IMPLEMENTATION_PLAN.md, docs/INFRASTRUCTURE.md, and the "Execution order" table
 in docs/agents/PHASE1_EXECUTION.md.
@@ -89,7 +89,7 @@ Replace `{{STORY_ID}}` (e.g. `M1-01`). This works on its own with any coding age
 ````text
 You are implementing story {{STORY_ID}} of Stay Focused (repo dculussoftwares/stayfocus, public, GPL-3.0).
 Finish it completely: code + tests, committed directly to main, CI green on main, the issue closed, and the
-card in Done on the "Stay Focused · Phase 1" kanban board.
+card in Done on the kanban board (https://github.com/orgs/dculussoftwares/projects/11).
 
 1. Find the issue
    gh issue list --repo dculussoftwares/stayfocus --state all --limit 200 --json number,title,state \
@@ -179,7 +179,7 @@ Use this to drive one wave at a time, or to run waves in several terminals or to
 
 ````text
 Run wave {{W}} of docs/agents/PHASE1_EXECUTION.md for dculussoftwares/stayfocus (commits go directly to main;
-progress is tracked on the "Stay Focused · Phase 1" kanban board).
+progress is tracked on the kanban board (https://github.com/orgs/dculussoftwares/projects/11)).
 1. From the "Execution order" table, take the stories in wave {{W}}. Check they're all in Ready
    (python3 scripts/backlog/board.py ready). If any is still in Backlog, stop and list its open dependencies.
 2. Start one worker per story (at most 4 in parallel, each in its own git worktree) with Prompt B and

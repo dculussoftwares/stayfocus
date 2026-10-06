@@ -9,7 +9,7 @@ Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a compan
 
 **Rules**
 - Commit **directly to `main`** (no feature branches or PRs). The commit that finishes a story ends with `Closes #<issue>`.
-- Track work on the **"Stay Focused · Phase 1" kanban board**: pick from *Ready*, move to *In progress* (`scripts/backlog/board.py`); *Done* happens when the issue closes.
+- Track work on the **kanban board** (https://github.com/orgs/dculussoftwares/projects/11): pick from *Ready*, move to *In progress* (`scripts/backlog/board.py`); *Done* happens when the issue closes.
 - Prompts and the parallel execution order are in `docs/agents/PHASE1_EXECUTION.md`.
 - Don't start a story whose "Depends on" issues are still open.
 - Stay inside the story's scope; open a new issue for anything else you find.

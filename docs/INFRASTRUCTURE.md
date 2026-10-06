@@ -36,7 +36,9 @@ These are the only manual steps, and they create credentials, not infrastructure
    - secret `TF_API_TOKEN` = the HCP API token
    No GitHub token secret is needed for issues, labels, milestones, sub-issues or dependencies: the workflow uses the
    built-in, short-lived `GITHUB_TOKEN` (`issues: write`).
-3. **GitHub App for the project board** (optional at first; the board step is skipped without it). `GITHUB_TOKEN` can't
+3. **Credential for the kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11), already created). Optional at first; the board step is skipped without it.
+   Quick option: a fine-grained PAT (resource owner `dculussoftwares`, *Organization → Projects: Read and write* only, 1-year expiry) in the secret `BACKLOG_PROJECT_TOKEN`.
+   Preferred option: `GITHUB_TOKEN` can't
    access org-level Projects v2, and this is a public repo, so use an App rather than a personal access token:
    create an org-owned GitHub App "stayfocus-automation" with *Organization → Projects: Read and write* and
    *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/stayfocus` only. Then add:
@@ -49,7 +51,7 @@ These are the only manual steps, and they create credentials, not infrastructure
    required reviewers so applies need approval.
 5. Run the **backlog** workflow (merge to `main`, or *Run workflow*). It creates the HCP workspace on first `init`,
    then labels, milestones, the 10 epics and 74 stories, the sub-issue and "blocked by" links, and the
-   "Stay Focused · Phase 1" board (if the App is set up).
+   kanban board #11 (if a board credential is set).
 
 **Public repo hygiene:** no secrets, tokens, `google-services.json`, keystores or Terraform state in git (see `.gitignore`).
 Fork PRs never get secrets (the plan job only runs for branches in this repo). Third-party actions are pinned to commit SHAs.

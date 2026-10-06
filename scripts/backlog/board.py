@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Move a story's card on the "Stay Focused · Phase 1" kanban board.
+"""Move a story's card on the kanban board (org project #11).
 
 Usage:
   python3 scripts/backlog/board.py status <issue-number> "<Status>"   # Backlog | Ready | In progress | In review | Done
@@ -17,7 +17,7 @@ import sys
 
 OWNER = os.environ.get("BACKLOG_OWNER", "dculussoftwares")
 REPO = os.environ.get("BACKLOG_REPO", "stayfocus")
-PROJECT_TITLE = os.environ.get("BACKLOG_PROJECT_TITLE", "Stay Focused · Phase 1")
+PROJECT_NUMBER = int(os.environ.get("BACKLOG_PROJECT_NUMBER") or 11)  # https://github.com/orgs/dculussoftwares/projects/11
 
 
 def graphql(query: str, **variables):
@@ -32,13 +32,13 @@ def graphql(query: str, **variables):
 
 
 def project() -> dict:
-    data = graphql("""query($org:String!,$q:String!){organization(login:$org){projectsV2(first:20,query:$q){nodes{
-        id title fields(first:50){nodes{... on ProjectV2SingleSelectField{id name options{id name}}}}}}}}""",
-                   org=OWNER, q=PROJECT_TITLE)
-    for p in data["organization"]["projectsV2"]["nodes"]:
-        if p["title"] == PROJECT_TITLE:
-            return p
-    raise SystemExit(f"project {PROJECT_TITLE!r} not found; has the backlog workflow run?")
+    data = graphql("""query($org:String!,$n:Int!){organization(login:$org){projectV2(number:$n){
+        id title fields(first:50){nodes{... on ProjectV2SingleSelectField{id name options{id name}}}}}}}""",
+                   org=OWNER, n=PROJECT_NUMBER)
+    p = data["organization"]["projectV2"]
+    if p is None:
+        raise SystemExit(f"org project #{PROJECT_NUMBER} not found; check the token has the project scope")
+    return p
 
 
 def item_for_issue(project_id: str, number: int) -> str:
