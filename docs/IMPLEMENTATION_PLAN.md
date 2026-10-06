@@ -106,7 +106,7 @@ M1 ──┬── M2 ───────────────────�
    criteria ticked, and pending manual checks. Move the card to `In review`.
 7. **CodeRabbit reviews the PR** (config: `.coderabbit.yaml`). Fix or answer **every** comment and resolve the threads.
    Never self-approve (`@coderabbitai approve`) or dismiss its review.
-8. **Merge** (squash) only when CI is green and CodeRabbit's latest review on the current HEAD is *Approved*. The merge closes
+8. **Merge** (squash) only when the merge gate is met (CI green, `CodeRabbit` check done, 0 unresolved threads, CodeRabbit approved or no new actionable comments on HEAD; see `docs/agents/PHASE1_EXECUTION.md`). The merge closes
    the issue, and the board moves the card to `Done` and promotes newly unblocked cards to `Ready`.
 
 ### Definition of done (every story)

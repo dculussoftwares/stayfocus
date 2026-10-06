@@ -7,12 +7,15 @@ other, so they can run in parallel; a wave starts only when every story in the e
 Usage:
   python3 scripts/backlog/waves.py            # rewrite the block between the waves markers
   python3 scripts/backlog/waves.py --check    # exit 1 if the doc is out of date (for CI)
+  python3 scripts/backlog/waves.py --wave N   # one wave's stories with issue number, state and needs-human flag (uses gh)
+  python3 scripts/backlog/waves.py --status   # open/closed per wave and the next wave to run (uses gh)
 """
 
 from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -89,7 +92,53 @@ def render(stories: dict[str, dict]) -> str:
     return "\n".join(lines)
 
 
+def issue_states() -> dict[str, dict]:
+    """Story id -> {number, state} from GitHub (titles start with "[Mx-yy]")."""
+    out = subprocess.run(
+        ["gh", "issue", "list", "--repo", "dculussoftwares/stayfocus", "--state", "all", "--limit", "300",
+         "--label", "type:story", "--json", "number,title,state"],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    states = {}
+    for issue in json.loads(out):
+        m = re.match(r"^\[(M\d+-\d+)\]", issue["title"])
+        if m:
+            states[m[1]] = {"number": issue["number"], "state": issue["state"]}
+    return states
+
+
+def print_wave(n: int) -> None:
+    stories = load()
+    ids = waves(stories).get(n)
+    if not ids:
+        raise SystemExit(f"no wave {n}")
+    states = issue_states()
+    for i in ids:
+        st = states.get(i, {"number": "?", "state": "MISSING"})
+        human = "needs-human" if "needs-human" in stories[i]["labels"] else ""
+        deps = ",".join(stories[i]["deps"]) or "-"
+        print(f"{i}\t#{st['number']}\t{st['state']}\t{stories[i]['size']}\t{human or '-'}\tdeps={deps}\t{stories[i]['title']}")
+
+
+def print_status() -> None:
+    stories = load()
+    states = issue_states()
+    next_wave = None
+    for lv, ids in waves(stories).items():
+        open_ids = [i for i in ids if states.get(i, {}).get("state") != "CLOSED"]
+        if open_ids and next_wave is None:
+            next_wave = lv
+        print(f"wave {lv:>2}: {len(ids) - len(open_ids)}/{len(ids)} closed" + (f"  open: {', '.join(open_ids)}" if open_ids else ""))
+    print(f"NEXT_WAVE={next_wave if next_wave is not None else 'done'}")
+
+
 def main() -> None:
+    if "--wave" in sys.argv:
+        print_wave(int(sys.argv[sys.argv.index("--wave") + 1]))
+        return
+    if "--status" in sys.argv:
+        print_status()
+        return
     block = render(load())
     doc = DOC.read_text()
     new = re.sub(re.escape(START) + r".*?" + re.escape(END), lambda _: block, doc, flags=re.S)
