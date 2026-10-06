@@ -1,0 +1,7 @@
+# Pending manual checks
+
+Acceptance criteria that need a device, an emulator image or a person. Tick them off and delete the entry once done.
+
+| Story | Check | How |
+|---|---|---|
+| M1-01 | Both apps install side by side and launch on API 26 and API 36 emulators | `./gradlew assembleDebug`, then `adb install app/build/outputs/apk/debug/app-debug.apk` and `adb install kids/build/outputs/apk/debug/kids-debug.apk` on each emulator and open both: each shows its placeholder text. Automated by Gradle Managed Devices in M1-16 |
