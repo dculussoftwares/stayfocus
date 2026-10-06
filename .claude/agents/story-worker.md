@@ -93,7 +93,7 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
 
 ## 9. Merge gate, then merge
 Merge only when **all** of these hold for the current HEAD:
-- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed");
+- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Gemini fallback, where `ci-pass` and the other CI checks are what count;
 - **0 unresolved review threads**;
 - CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit rate limited and Gemini fallback used) Gemini
   has reviewed HEAD and no `critical`/`high` finding is open, and any CodeRabbit review on HEAD has no unaddressed comments — **or**, if its approval hasn't updated within ~20 min after
