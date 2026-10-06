@@ -8,7 +8,7 @@ import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.gradle.dsl.KotlinBaseExtension
 
-internal const val COMPILE_SDK = 36
+internal const val COMPILE_SDK = 37
 internal const val TARGET_SDK = 36
 internal const val MIN_SDK = 26
 internal const val JAVA_VERSION = 17

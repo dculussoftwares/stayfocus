@@ -13,6 +13,7 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.coil.compose)
 
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
