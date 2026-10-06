@@ -154,7 +154,18 @@ tasks.register("ciCheck") {
     group = "verification"
     description =
         "Runs spotlessCheck, detekt, lint, unit tests, Kover verification, screenshot tests and assembleDebug."
-    dependsOn("spotlessCheck", "detekt", lintAll, unitTests, "koverXmlReport", "koverVerify", verifyScreenshots)
+    dependsOn(
+        "spotlessCheck",
+        "detekt",
+        checkFeatureIsolation,
+        lintAll,
+        unitTests,
+        "koverXmlReport",
+        "koverVerify",
+        verifyScreenshots,
+    )
+    // Per-module coverage bounds (80% for the logic modules) live on the module tasks, not the root one.
+    dependsOn(":core:model:koverVerify", ":core:blocking:koverVerify")
     dependsOn(subprojects.filter { it.path == ":app" || it.path == ":kids" }.map { "${it.path}:assembleDebug" })
 }
 

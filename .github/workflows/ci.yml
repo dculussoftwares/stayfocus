@@ -37,8 +37,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
-      - name: Spotless, detekt, Android Lint
-        run: ./gradlew spotlessCheck detekt lintAll --continue --configuration-cache
+      - name: Spotless, detekt, feature isolation, Android Lint
+        run: ./gradlew spotlessCheck detekt checkFeatureIsolation lintAll --continue --configuration-cache
       - name: Collect SARIF reports
         if: ${{ !cancelled() }}
         run: |
