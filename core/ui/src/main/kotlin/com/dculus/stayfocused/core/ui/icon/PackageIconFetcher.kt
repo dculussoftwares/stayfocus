@@ -39,11 +39,16 @@ internal class PackageIconFetcher(
         )
     }
 
-    class Factory(private val context: Context) : Fetcher.Factory<Uri> {
-        override fun create(data: Uri, options: Options, imageLoader: ImageLoader): Fetcher? {
-            if (data.scheme != PACKAGE_SCHEME) return null
-            val pkg = data.path?.takeIf { it.isNotBlank() } ?: return null
-            return PackageIconFetcher(context.applicationContext, pkg)
+    class Factory(
+        private val context: Context,
+    ) : Fetcher.Factory<Uri> {
+        override fun create(
+            data: Uri,
+            options: Options,
+            imageLoader: ImageLoader,
+        ): Fetcher? {
+            val pkg = data.path?.takeIf { data.scheme == PACKAGE_SCHEME && it.isNotBlank() }
+            return pkg?.let { PackageIconFetcher(context.applicationContext, it) }
         }
     }
 }

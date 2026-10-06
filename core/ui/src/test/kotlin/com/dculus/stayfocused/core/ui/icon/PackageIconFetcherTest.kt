@@ -32,19 +32,20 @@ class PackageIconFetcherTest {
     }
 
     @Test
-    fun `fetches the launcher icon for an installed package`() = runBlocking {
-        val info = ApplicationInfo().apply { packageName = "com.example" }
-        shadowOf(context.packageManager).installPackage(
-            android.content.pm.PackageInfo().apply {
-                packageName = "com.example"
-                applicationInfo = info
-            },
-        )
-        shadowOf(context.packageManager).setApplicationIcon("com.example", ColorDrawable(0xFFFF0000.toInt()))
+    fun `fetches the launcher icon for an installed package`() =
+        runBlocking {
+            val info = ApplicationInfo().apply { packageName = "com.example" }
+            shadowOf(context.packageManager).installPackage(
+                android.content.pm.PackageInfo().apply {
+                    packageName = "com.example"
+                    applicationInfo = info
+                },
+            )
+            shadowOf(context.packageManager).setApplicationIcon("com.example", ColorDrawable(0xFFFF0000.toInt()))
 
-        val fetcher = factory.create(packageIconUri("com.example"), Options(context), ImageLoader(context))!!
-        assertTrue(fetcher.fetch() is ImageFetchResult)
-    }
+            val fetcher = factory.create(packageIconUri("com.example"), Options(context), ImageLoader(context))!!
+            assertTrue(fetcher.fetch() is ImageFetchResult)
+        }
 
     @Test
     fun `tile letter comes from the label, else the package`() {

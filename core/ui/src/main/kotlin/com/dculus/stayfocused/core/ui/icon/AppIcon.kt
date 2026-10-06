@@ -52,24 +52,31 @@ fun AppIcon(
         imageLoader = loader,
         contentDescription = label,
         contentScale = ContentScale.Fit,
-        modifier = modifier
-            .size(size)
-            .clip(RoundedCornerShape(cornerRadius)),
+        modifier =
+            modifier
+                .size(size)
+                .clip(RoundedCornerShape(cornerRadius)),
         loading = { tile() },
         error = { tile() },
     )
 }
 
 @Composable
-private fun LetterTile(pkg: String, label: String?, size: Dp, cornerRadius: Dp) {
+private fun LetterTile(
+    pkg: String,
+    label: String?,
+    size: Dp,
+    cornerRadius: Dp,
+) {
     val colors = StayFocusedTheme.colors
     val tints = colors.appTints
     val tint = tints[Math.floorMod(pkg.hashCode(), tints.size)]
     Box(
-        modifier = Modifier
-            .size(size)
-            .clip(RoundedCornerShape(cornerRadius))
-            .background(tint),
+        modifier =
+            Modifier
+                .size(size)
+                .clip(RoundedCornerShape(cornerRadius))
+                .background(tint),
         contentAlignment = Alignment.Center,
     ) {
         Text(
@@ -96,7 +103,10 @@ internal fun AppIconPreview() {
 }
 
 /** First letter of [label] (or of the package's last segment), upper-cased. */
-internal fun tileLetter(label: String?, pkg: String): String {
+internal fun tileLetter(
+    label: String?,
+    pkg: String,
+): String {
     val source = label?.trim().orEmpty().ifEmpty { pkg.substringAfterLast('.') }
     return source.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?"
 }
@@ -108,12 +118,15 @@ internal object PackageIconLoader {
     @Volatile
     private var instance: ImageLoader? = null
 
-    fun get(context: Context): ImageLoader = instance ?: synchronized(this) {
-        instance ?: build(context.applicationContext).also { instance = it }
-    }
+    fun get(context: Context): ImageLoader =
+        instance ?: synchronized(this) {
+            instance ?: build(context.applicationContext).also { instance = it }
+        }
 
-    private fun build(context: Context): ImageLoader = ImageLoader.Builder(context)
-        .components { add(PackageIconFetcher.Factory(context)) }
-        .memoryCache { MemoryCache.Builder().maxSizePercent(context, MEMORY_CACHE_PERCENT).build() }
-        .build()
+    private fun build(context: Context): ImageLoader =
+        ImageLoader
+            .Builder(context)
+            .components { add(PackageIconFetcher.Factory(context)) }
+            .memoryCache { MemoryCache.Builder().maxSizePercent(context, MEMORY_CACHE_PERCENT).build() }
+            .build()
 }
