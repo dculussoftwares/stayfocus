@@ -27,7 +27,7 @@ Phase 1 is planned, not built yet. The Android code starts with story **M1-01** 
 Android (available as the M1 stories land):
 
 ```bash
-scripts/dev/setup-hooks.sh                                           # install pre-commit + pre-push hooks (M1-14)
+scripts/dev/setup-hooks.sh                                           # install pre-commit + pre-push hooks, once per clone/worktree
 ./gradlew assembleDebug                                              # both apps
 ./gradlew ciCheck                                                    # everything CI runs (M1-02) = Definition of done
 ./gradlew spotlessApply                                              # auto-format Kotlin (ktlint + Compose rules)

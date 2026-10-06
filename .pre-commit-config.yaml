@@ -1,0 +1,62 @@
+# Local + CI quality gate. Install once per clone/worktree: scripts/dev/setup-hooks.sh
+# CI runs `pre-commit run --all-files` (job `pre-commit` in .github/workflows/ci.yml).
+# Hook revisions are pinned; `pre-commit autoupdate` / Dependabot bump them (M1-15).
+minimum_pre_commit_version: "3.2.0"
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: mixed-line-ending
+        args: [--fix=lf]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+
+  - repo: local
+    hooks:
+      - id: forbidden-files
+        name: block secrets and signing material (google-services.json, keystores, tfstate, .env)
+        entry: scripts/dev/hooks/forbidden-files.sh
+        language: script
+        files: .*
+      - id: ktlint
+        name: ktlint (same version and rules as Spotless)
+        entry: scripts/dev/hooks/ktlint.sh
+        language: script
+        types_or: [kotlin]
+      - id: terraform
+        name: terraform fmt + validate + tflint
+        entry: scripts/dev/hooks/terraform.sh
+        language: script
+        files: ^infra/
+        require_serial: true
+      - id: backlog-waves
+        name: wave table in sync with backlog/
+        entry: python3 scripts/backlog/waves.py --check
+        language: system
+        files: ^backlog/
+        pass_filenames: false
+      - id: gradle-pre-push
+        name: spotlessCheck + detekt + unit tests
+        entry: ./gradlew spotlessCheck detekt testDebugUnitTest --configuration-cache
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]

@@ -182,21 +182,27 @@ jobs:
   pre-commit:
     name: pre-commit
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      # The hook config arrives with M1-14; until then the steps below are skipped (the job still succeeds).
-      - name: Check for a pre-commit config
-        id: config
-        run: |
-          if [ -f .pre-commit-config.yaml ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; fi
-      - if: steps.config.outputs.present == 'true'
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: "3.12"
-      - if: steps.config.outputs.present == 'true'
-        run: |
+      # ktlint hook needs a JDK; terraform/tflint hooks need terraform.
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          terraform_wrapper: false
+      - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: |
           pip install pre-commit
+          # The Gradle pre-push hook is covered by the static-analysis and unit-tests jobs.
           pre-commit run --all-files --show-diff-on-failure
 
   # The single required status check (branch protection, M1-12). Fails if any job failed or was cancelled.
