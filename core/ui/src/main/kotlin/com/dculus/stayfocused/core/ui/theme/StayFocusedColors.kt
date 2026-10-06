@@ -1,3 +1,6 @@
+// Design tokens are literal handoff values; the CompositionLocal is the design-system entry point.
+@file:Suppress("MagicNumber", "ktlint:compose:compositionlocal-allowlist")
+
 package com.dculus.stayfocused.core.ui.theme
 
 import androidx.compose.runtime.Immutable
@@ -24,15 +27,16 @@ data class StayFocusedColors(
     val alert: Color = Color(0xFFFF5A47),
     val alertText: Color = Color(0xFFFF7A66),
     val warning: Color = Color(0xFFFFB547),
-    val appTints: List<Color> = listOf(
-        Color(0xFFFF9A8B),
-        Color(0xFFFF7A66),
-        Color(0xFFFFB547),
-        Color(0xFF7EE0A1),
-        Color(0xFF9DC3FF),
-        Color(0xFFD9DCD2),
-        Color(0xFFB9A7FF),
-    ),
+    val appTints: List<Color> =
+        listOf(
+            Color(0xFFFF9A8B),
+            Color(0xFFFF7A66),
+            Color(0xFFFFB547),
+            Color(0xFF7EE0A1),
+            Color(0xFF9DC3FF),
+            Color(0xFFD9DCD2),
+            Color(0xFFB9A7FF),
+        ),
 ) {
     /** Text/icon colour on top of [accent] (the lime button). */
     val onAccent: Color get() = background

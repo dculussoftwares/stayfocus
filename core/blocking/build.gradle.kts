@@ -5,6 +5,10 @@ plugins {
 
 android {
     namespace = "com.dculus.stayfocused.core.blocking"
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -15,4 +19,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.robolectric)
 }

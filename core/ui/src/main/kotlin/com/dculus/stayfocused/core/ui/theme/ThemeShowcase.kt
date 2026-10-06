@@ -28,10 +28,11 @@ internal fun ThemeShowcase() {
     val t = StayFocusedTheme.type
     val s = StayFocusedTheme.spacing
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(c.background)
-            .padding(s.screen),
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .background(c.background)
+                .padding(s.screen),
         verticalArrangement = Arrangement.spacedBy(s.gap16),
     ) {
         Text("COLOURS", style = t.label, color = c.tertiary)
@@ -40,12 +41,23 @@ internal fun ThemeShowcase() {
             verticalArrangement = Arrangement.spacedBy(s.gap8),
         ) {
             listOf(
-                "background" to c.background, "panel" to c.panel, "gradStart" to c.panelGradientStart,
-                "gradEnd" to c.panelGradientEnd, "track" to c.track, "hair06" to c.hairline06,
-                "hair08" to c.hairline08, "hair10" to c.hairline10, "hair14" to c.hairline14,
-                "text" to c.text, "secondary" to c.secondary, "tertiary" to c.tertiary,
-                "accent" to c.accent, "accentHov" to c.accentHover, "alert" to c.alert,
-                "alertText" to c.alertText, "warning" to c.warning,
+                "background" to c.background,
+                "panel" to c.panel,
+                "gradStart" to c.panelGradientStart,
+                "gradEnd" to c.panelGradientEnd,
+                "track" to c.track,
+                "hair06" to c.hairline06,
+                "hair08" to c.hairline08,
+                "hair10" to c.hairline10,
+                "hair14" to c.hairline14,
+                "text" to c.text,
+                "secondary" to c.secondary,
+                "tertiary" to c.tertiary,
+                "accent" to c.accent,
+                "accentHov" to c.accentHover,
+                "alert" to c.alert,
+                "alertText" to c.alertText,
+                "warning" to c.warning,
             ).forEach { (name, color) -> Swatch(name, color) }
             c.appTints.forEachIndexed { i, color -> Swatch("tint$i", color) }
         }
@@ -65,15 +77,18 @@ internal fun ThemeShowcase() {
         Text("SHAPES", style = t.label, color = c.tertiary)
         Row(horizontalArrangement = Arrangement.spacedBy(s.gap8)) {
             listOf(
-                "chip" to StayFocusedTheme.shapes.chip, "input" to StayFocusedTheme.shapes.input,
-                "card" to StayFocusedTheme.shapes.card, "hero" to StayFocusedTheme.shapes.hero,
+                "chip" to StayFocusedTheme.shapes.chip,
+                "input" to StayFocusedTheme.shapes.input,
+                "card" to StayFocusedTheme.shapes.card,
+                "hero" to StayFocusedTheme.shapes.hero,
                 "sheet" to StayFocusedTheme.shapes.sheet,
             ).forEach { (name, shape) ->
                 Box(
-                    modifier = Modifier
-                        .size(56.dp)
-                        .background(c.panel, shape)
-                        .border(1.dp, c.hairline14, shape),
+                    modifier =
+                        Modifier
+                            .size(56.dp)
+                            .background(c.panel, shape)
+                            .border(1.dp, c.hairline14, shape),
                 ) { Text(name, style = t.labelS, color = c.secondary, modifier = Modifier.padding(4.dp)) }
             }
         }
@@ -81,22 +96,29 @@ internal fun ThemeShowcase() {
 }
 
 @Composable
-private fun Swatch(name: String, color: Color) {
+private fun Swatch(
+    name: String,
+    color: Color,
+) {
     val c = StayFocusedTheme.colors
     Column(modifier = Modifier.width(72.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .size(36.dp)
-                .background(color, RoundedCornerShape(8.dp))
-                .border(1.dp, c.hairline14, RoundedCornerShape(8.dp)),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .size(36.dp)
+                    .background(color, RoundedCornerShape(8.dp))
+                    .border(1.dp, c.hairline14, RoundedCornerShape(8.dp)),
         )
         Text(name, style = StayFocusedTheme.type.labelS, color = c.secondary)
     }
 }
 
 @Composable
-private fun TypeRow(name: String, style: TextStyle) {
+private fun TypeRow(
+    name: String,
+    style: TextStyle,
+) {
     Text(name, style = style, color = StayFocusedTheme.colors.text)
 }
 

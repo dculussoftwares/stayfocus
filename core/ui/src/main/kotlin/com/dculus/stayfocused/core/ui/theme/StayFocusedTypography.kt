@@ -1,3 +1,6 @@
+// Design tokens are literal handoff values; the CompositionLocal is the design-system entry point.
+@file:Suppress("MagicNumber", "ktlint:compose:compositionlocal-allowlist")
+
 package com.dculus.stayfocused.core.ui.theme
 
 import android.content.Context
@@ -26,34 +29,48 @@ data class StayFocusedFontFamilies(
 )
 
 @OptIn(ExperimentalTextApi::class)
-private fun variable(resId: Int, weight: Int) = Font(
+private fun variable(
+    resId: Int,
+    weight: Int,
+) = Font(
     resId = resId,
     weight = FontWeight(weight),
     variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
 )
 
 private val bundledDisplay = FontFamily(variable(R.font.space_grotesk, 600))
-private val bundledBody = FontFamily(
-    listOf(400, 500, 700, 800).map { variable(R.font.plus_jakarta_sans, it) },
-)
-private val bundledMono = FontFamily(
-    listOf(500, 600, 700).map { variable(R.font.geist_mono, it) },
-)
+private val bundledBody =
+    FontFamily(
+        listOf(400, 500, 700, 800).map { variable(R.font.plus_jakarta_sans, it) },
+    )
+private val bundledMono =
+    FontFamily(
+        listOf(500, 600, 700).map { variable(R.font.geist_mono, it) },
+    )
 
 val BundledFontFamilies = StayFocusedFontFamilies(bundledDisplay, bundledBody, bundledMono)
 
 private val clashFiles = listOf("ClashDisplay-Semibold.otf" to 600)
-private val satoshiFiles = listOf(
-    "Satoshi-Regular.otf" to 400,
-    "Satoshi-Medium.otf" to 500,
-    "Satoshi-Bold.otf" to 700,
-    "Satoshi-Black.otf" to 800,
-)
+private val satoshiFiles =
+    listOf(
+        "Satoshi-Regular.otf" to 400,
+        "Satoshi-Medium.otf" to 500,
+        "Satoshi-Bold.otf" to 700,
+        "Satoshi-Black.otf" to 800,
+    )
 
 /** Real Clash Display / Satoshi when all their files are in assets, otherwise the bundled OFL substitutes. */
 fun loadFontFamilies(context: Context): StayFocusedFontFamilies {
-    val present = context.assets.list("fonts")?.toSet().orEmpty()
-    fun family(files: List<Pair<String, Int>>, fallback: FontFamily): FontFamily =
+    val present =
+        context.assets
+            .list("fonts")
+            ?.toSet()
+            .orEmpty()
+
+    fun family(
+        files: List<Pair<String, Int>>,
+        fallback: FontFamily,
+    ): FontFamily =
         if (files.all { it.first in present }) {
             FontFamily(
                 files.map { (name, weight) ->
@@ -89,21 +106,33 @@ data class StayFocusedTypography(
 )
 
 fun stayFocusedTypography(families: StayFocusedFontFamilies = BundledFontFamilies): StayFocusedTypography {
-    fun display(size: Int, spacing: Float) = TextStyle(
+    fun display(
+        size: Int,
+        spacing: Float,
+    ) = TextStyle(
         fontFamily = families.display,
         fontWeight = FontWeight.SemiBold,
         fontSize = size.sp,
         lineHeight = (size * 1.1f).sp,
         letterSpacing = spacing.em,
     )
-    fun body(size: Float, weight: FontWeight) = TextStyle(
+
+    fun body(
+        size: Float,
+        weight: FontWeight,
+    ) = TextStyle(
         fontFamily = families.body,
         fontWeight = weight,
         fontSize = size.sp,
         lineHeight = (size * 1.4f).sp,
         letterSpacing = 0.em,
     )
-    fun mono(size: Float, spacing: Float, weight: FontWeight) = TextStyle(
+
+    fun mono(
+        size: Float,
+        spacing: Float,
+        weight: FontWeight,
+    ) = TextStyle(
         fontFamily = families.mono,
         fontWeight = weight,
         fontSize = size.sp,

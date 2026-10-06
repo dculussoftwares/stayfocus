@@ -12,7 +12,12 @@ private class FakeEnv : ForegroundEnvironment {
     var now = 1_000L
 
     override fun imePackages() = imes
-    override fun isActivity(packageName: String, className: String) = activityAnswer(packageName, className)
+
+    override fun isActivity(
+        packageName: String,
+        className: String,
+    ) = activityAnswer(packageName, className)
+
     override fun nowMillis() = now
 }
 

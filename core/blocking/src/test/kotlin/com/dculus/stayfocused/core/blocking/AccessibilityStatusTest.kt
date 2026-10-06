@@ -1,8 +1,8 @@
 package com.dculus.stayfocused.core.blocking
 
+import org.junit.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.junit.Test
 
 class AccessibilityStatusTest {
     private val full = "com.dculus.stayfocused/com.dculus.stayfocused.core.blocking.ForegroundAppService"

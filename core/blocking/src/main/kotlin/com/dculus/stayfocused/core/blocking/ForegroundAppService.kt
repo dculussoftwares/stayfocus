@@ -14,11 +14,15 @@ import javax.inject.Inject
 class ForegroundAppService : AccessibilityService() {
     @Inject lateinit var tracker: ForegroundAppTracker
 
-    private val screenOffReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (intent.action == Intent.ACTION_SCREEN_OFF) tracker.onScreenOff()
+    private val screenOffReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(
+                context: Context,
+                intent: Intent,
+            ) {
+                if (intent.action == Intent.ACTION_SCREEN_OFF) tracker.onScreenOff()
+            }
         }
-    }
     private var receiverRegistered = false
 
     override fun onServiceConnected() {

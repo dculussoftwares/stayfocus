@@ -1,3 +1,6 @@
+// Design tokens are literal handoff values; the CompositionLocal is the design-system entry point.
+@file:Suppress("ktlint:compose:compositionlocal-allowlist")
+
 package com.dculus.stayfocused.core.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape

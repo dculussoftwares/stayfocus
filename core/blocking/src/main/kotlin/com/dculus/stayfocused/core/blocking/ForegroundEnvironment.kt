@@ -12,7 +12,10 @@ interface ForegroundEnvironment {
      * Whether [className] is an Activity of [packageName]. Returns `null` when that can't be determined
      * (lookup failed, e.g. package visibility); the tracker then treats the window as an activity.
      */
-    fun isActivity(packageName: String, className: String): Boolean?
+    fun isActivity(
+        packageName: String,
+        className: String,
+    ): Boolean?
 
     fun nowMillis(): Long
 }

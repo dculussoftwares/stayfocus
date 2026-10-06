@@ -18,7 +18,11 @@ object AccessibilityStatus {
     }
 
     /** Pure decision: the system master switch must be on and the service must be in the enabled list. */
-    internal fun isEnabled(masterSwitchOn: Boolean, enabledServices: String?, vararg names: String): Boolean {
+    internal fun isEnabled(
+        masterSwitchOn: Boolean,
+        enabledServices: String?,
+        vararg names: String,
+    ): Boolean {
         if (!masterSwitchOn || enabledServices.isNullOrEmpty()) return false
         return enabledServices.split(':').any { entry -> names.any { it.equals(entry, ignoreCase = true) } }
     }
