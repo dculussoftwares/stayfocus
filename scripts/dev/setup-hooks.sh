@@ -10,6 +10,8 @@ if ! command -v pre-commit >/dev/null; then
     brew install pre-commit
   elif command -v pip3 >/dev/null; then
     pip3 install --user pre-commit
+    PATH="$(python3 -m site --user-base)/bin:$PATH"
+    export PATH
   else
     echo "Install pre-commit first (pipx install pre-commit, or brew install pre-commit)." >&2
     exit 1

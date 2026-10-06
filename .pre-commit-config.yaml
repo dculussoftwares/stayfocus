@@ -36,6 +36,8 @@ repos:
         entry: scripts/dev/hooks/forbidden-files.sh
         language: script
         files: .*
+        # Symlinks named like secrets must be caught too (local hooks default to regular files only).
+        types_or: [file, symlink]
       - id: ktlint
         name: ktlint (same version and rules as Spotless)
         entry: scripts/dev/hooks/ktlint.sh
