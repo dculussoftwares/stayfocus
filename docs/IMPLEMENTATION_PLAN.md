@@ -4,8 +4,10 @@ This is the engineering plan for Phase 1 (v1.0). Product scope, screens and desi
 [`design_handoff_stay_focused_phase1/README.md`](../design_handoff_stay_focused_phase1/README.md). Read that first.
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
-GitHub Project board for `dculussoftwares/stayfocus`. Every story is meant to be picked up and finished by
-one coding agent or developer in one PR. This document is the shared contract all stories refer to.
+**"Stay Focused · Phase 1" GitHub Project kanban board** for `dculussoftwares/stayfocus`. Every story is meant to be
+picked up and finished by one coding agent or developer, committed **directly to `main`**. This document is the shared
+contract all stories refer to. Agent prompts and the parallel execution order are in
+[`docs/agents/PHASE1_EXECUTION.md`](agents/PHASE1_EXECUTION.md).
 
 ---
 
@@ -92,17 +94,19 @@ M1 ──┬── M2 ───────────────────�
 
 ## 4. Story workflow (for agents and humans)
 
-1. **Pick** a story on the board in the `Ready` column whose "Depends on" issues are all closed.
-   Assign yourself and move it to `In progress`.
-2. **Branch** from `main`: `m<N>/<issue-number>-<short-slug>` (e.g. `m1/12-room-schema`).
+1. **Pick** a card in the board's `Ready` column (`python3 scripts/backlog/board.py ready`). Ready means every
+   "Depends on" issue is closed. Assign yourself and move it: `python3 scripts/backlog/board.py status <N> "In progress"`.
+2. **Sync** `main`: `git pull --rebase origin main`. There are no feature branches or PRs; work lands directly on `main`.
 3. **Read** the story's *Design reference*: the handoff README section and the prototype (open
    `design_handoff_stay_focused_phase1/Stay Focused Phase 1 Prototype v2.dc.html` in Chrome; the left panel jumps to each flow).
    Prototype logic (dial maths, AI prompt, summary sentences) is in the `<script>` block of that file.
-4. **Build** only what the story's *Scope* says. Anything else goes in a new issue, not in this PR.
-5. **Verify** with the *Definition of done* below, plus the story's acceptance criteria.
-6. **PR** titled `[M<N>] <story title> (#<issue>)` with `Closes #<issue>` in the body. Fill in the PR template:
-   what changed, how it was tested, screenshots for UI.
-7. Move the card to `In review`. It moves to `Done` on merge.
+4. **Build** only what the story's *Scope* says. List anything else as a follow-up (a new story file in `backlog/phase1/`).
+5. **Verify** locally with the *Definition of done* below, plus the story's acceptance criteria. `main` must stay green.
+6. **Commit to `main`** with the message `[M<N>-<nn>] <story title>`, a short body (what changed, how it was tested,
+   pending manual checks) and `Closes #<issue>` as the last line. Then `git pull --rebase` and `git push origin HEAD:main`; never force-push.
+7. **Watch CI on `main`** and fix forward right away if it goes red. The `Closes #` commit closes the issue, and the board
+   moves the card to `Done` and promotes newly unblocked cards to `Ready`. Add a closing comment on the issue that ticks
+   each acceptance criterion.
 
 ### Definition of done (every story)
 
@@ -113,7 +117,8 @@ M1 ──┬── M2 ───────────────────�
 - New UI components have a `@Preview` and, in `:core:ui`, a Roborazzi screenshot test.
 - No new permission, manifest flag or Play-relevant declaration unless the story says so.
 - Builds without `google-services.json`.
-- The story's acceptance-criteria checkboxes are all ticked in the PR description.
+- CI on `main` is green for the story's commit, and every acceptance criterion is ticked in the issue's closing comment
+  (anything needing a real device or a person is listed in `docs/qa/pending-manual-checks.md`).
 
 ---
 

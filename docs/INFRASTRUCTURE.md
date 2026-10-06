@@ -5,7 +5,9 @@
 **Every resource is created and changed only through Terraform, applied by GitHub Actions.**
 That covers GitHub (labels, milestones, backlog issues, repo settings, Pages) and GCP/Firebase
 (projects, Firestore, Auth, rules, App Check, the 5 Cloud Functions, budgets). Nobody clicks in a console
-to create or change infrastructure. A change is a PR. The plan is posted on the PR, and the apply runs on merge.
+to create or change infrastructure. A change is a commit to `main`: run `terraform fmt`/`validate` locally, push, and
+Actions applies it (the plan is printed in the apply log). For a review gate, require reviewers on the GitHub environment
+(`backlog`, `dev`, `prod`); then every apply waits for approval. PRs from forks still get a plan comment.
 
 Terraform state lives in **HCP Terraform**. Workspaces use **Local execution mode**: HCP stores the state and locks,
 and plan/apply run inside GitHub Actions.
@@ -58,8 +60,8 @@ GCP bootstrap (billing account, the WIF pool, deploy service account) is part of
 
 - Stories: `backlog/phase1/stories/Mxx-yy.md`. Epics: `backlog/phase1/epics/Mxx.md`.
   YAML front matter (`id`, `title`, `epic`, `size`, `modules`, `depends`, `labels`) + Markdown body.
-- To add a story: add a file, give it a new id, and list its `depends`. Open a PR and check the plan comment.
-- Don't edit issue titles or descriptions on GitHub; Terraform overwrites them. Progress goes in PRs and comments.
+- To add a story: add a file, give it a new id, list its `depends`, run `python3 scripts/backlog/waves.py`, and commit to `main`.
+- Don't edit issue titles or descriptions on GitHub; Terraform overwrites them. Progress goes on the kanban board and in issue comments.
   Assignees, state (open/closed) and board Status are not managed by Terraform.
 - Board Status: the sync sets **Backlog** or **Ready** (Ready means every dependency is closed) for new items, promotes Backlog → Ready
   when dependencies close, and sets Done when an issue closes. Moving a card to *In progress* or *In review* is up to whoever works on it.
