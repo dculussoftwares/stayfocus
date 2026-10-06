@@ -2,7 +2,7 @@
 #
 # Each file in backlog/phase1/{epics,stories} is one issue: YAML front matter
 # (id, title, epic, size, modules, depends, labels) followed by the Markdown body.
-# Edit the files and commit to main; the backlog workflow applies on push.
+# Edit the files in a PR; the backlog workflow plans on the PR and applies on merge.
 #
 # Not covered by the GitHub provider, so scripts/backlog/sync_project.py
 # handles them after apply: the Projects v2 board, sub-issues (epic -> story)
@@ -34,11 +34,11 @@ locals {
     epic_id => sort([for id, s in local.stories : id if s.meta.epic == epic_id])
   }
 
-  managed_note = "_This issue is managed by Terraform. Edit `%s` and commit to `main` instead of changing this description; manual edits are overwritten on the next apply. Track progress on the kanban board and in comments._"
+  managed_note = "_This issue is managed by Terraform. Edit `%s` in a PR instead of changing this description; manual edits are overwritten on the next apply. Track progress on the kanban board and in comments._"
 
   label_defs = {
     "type:epic"   = { color = "5319e7", description = "Milestone-level epic; stories are its sub-issues" }
-    "type:story"  = { color = "1d76db", description = "One commit-sized unit of work an agent can finish" }
+    "type:story"  = { color = "1d76db", description = "One PR-sized unit of work an agent can finish" }
     "size:S"      = { color = "c2e0c6", description = "Up to half a day" }
     "size:M"      = { color = "fef2c0", description = "About 1-2 days" }
     "size:L"      = { color = "f9d0c4", description = "About 3-5 days; split if it grows" }
@@ -104,7 +104,7 @@ resource "github_issue" "story" {
     ? "> **Depends on:** nothing. Ready to start."
     : "> **Depends on:** ${join(", ", [for d in each.value.meta.depends : "**${d}** ${local.stories[d].meta.title}"])} (linked as \"blocked by\")",
     "",
-    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and the design handoff in `design_handoff_stay_focused_phase1/`. Workflow: Prompt B in `docs/agents/PHASE1_EXECUTION.md`. Move this card to *In progress* when you start, commit directly to `main`, and end the final commit message with `Closes #<this issue>`.",
+    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and the design handoff in `design_handoff_stay_focused_phase1/`. Workflow: Prompt B in `docs/agents/PHASE1_EXECUTION.md`. Move this card to *In progress* when you start and *In review* when your PR is open. The PR says `Closes #<this issue>` and merges only after CodeRabbit approves and CI is green.",
     "",
     trimspace(each.value.body),
     "",

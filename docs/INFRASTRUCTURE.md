@@ -5,9 +5,9 @@
 **Every resource is created and changed only through Terraform, applied by GitHub Actions.**
 That covers GitHub (labels, milestones, backlog issues, repo settings, Pages) and GCP/Firebase
 (projects, Firestore, Auth, rules, App Check, the 5 Cloud Functions, budgets). Nobody clicks in a console
-to create or change infrastructure. A change is a commit to `main`: run `terraform fmt`/`validate` locally, push, and
-Actions applies it (the plan is printed in the apply log). For a review gate, require reviewers on the GitHub environment
-(`backlog`, `dev`, `prod`); then every apply waits for approval. PRs from forks still get a plan comment.
+to create or change infrastructure. A change is a PR: the Terraform plan is posted on the PR, CodeRabbit reviews the code,
+and the apply runs when it merges to `main`. For an extra gate on applies, require reviewers on the GitHub environment
+(`backlog`, `dev`, `prod`).
 
 Terraform state lives in **HCP Terraform**. Workspaces use **Local execution mode**: HCP stores the state and locks,
 and plan/apply run inside GitHub Actions.
@@ -50,7 +50,7 @@ These are the only manual steps, and they create credentials, not infrastructure
 4. **GitHub environment** `backlog` (Settings → Environments), with `main` as the only deployment branch. Optionally add
    required reviewers so applies need approval.
 5. Run the **backlog** workflow (merge to `main`, or *Run workflow*). It creates the HCP workspace on first `init`,
-   then labels, milestones, the 10 epics and 74 stories, the sub-issue and "blocked by" links, and the
+   then labels, milestones, all epics and stories from `backlog/`, the sub-issue and "blocked by" links, and the
    kanban board #11 (if a board credential is set).
 
 **Public repo hygiene:** no secrets, tokens, `google-services.json`, keystores or Terraform state in git (see `.gitignore`).
@@ -62,7 +62,7 @@ GCP bootstrap (billing account, the WIF pool, deploy service account) is part of
 
 - Stories: `backlog/phase1/stories/Mxx-yy.md`. Epics: `backlog/phase1/epics/Mxx.md`.
   YAML front matter (`id`, `title`, `epic`, `size`, `modules`, `depends`, `labels`) + Markdown body.
-- To add a story: add a file, give it a new id, list its `depends`, run `python3 scripts/backlog/waves.py`, and commit to `main`.
+- To add a story: add a file, give it a new id, list its `depends`, run `python3 scripts/backlog/waves.py`, and open a PR (check the plan comment).
 - Don't edit issue titles or descriptions on GitHub; Terraform overwrites them. Progress goes on the kanban board and in issue comments.
   Assignees, state (open/closed) and board Status are not managed by Terraform.
 - Board Status: the sync sets **Backlog** or **Ready** (Ready means every dependency is closed) for new items, promotes Backlog → Ready

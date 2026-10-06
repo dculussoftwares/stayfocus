@@ -5,7 +5,7 @@ This is the engineering plan for Phase 1 (v1.0). Product scope, screens and desi
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
 **GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/stayfocus`. Every story is meant to be
-picked up and finished by one coding agent or developer, committed **directly to `main`**. This document is the shared
+picked up and finished by one coding agent or developer in **one pull request, reviewed by CodeRabbit**. This document is the shared
 contract all stories refer to. Agent prompts and the parallel execution order are in
 [`docs/agents/PHASE1_EXECUTION.md`](agents/PHASE1_EXECUTION.md).
 
@@ -31,8 +31,8 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Open source | GPL-3.0. Forks bring their own `google-services.json`; the app **must build and run without it** (Firebase features disabled) |
 | Fonts | Clash Display + Satoshi (Fontshare) bundled pending a license check for OSS redistribution; Geist Mono (OFL) |
 | "Use, then rest" | The *use* window counts **foreground time only**. When used up, the app locks for *rest* minutes; the next open after that starts a new window |
-| Tests | JUnit4 + Turbine + MockK for unit tests; Compose UI tests; Roborazzi screenshot tests for `:core:ui`; Firestore emulator tests for rules/functions |
-| Lint | Spotless (ktlint) + detekt + Android Lint, all run in CI |
+| Tests | JUnit4 + Turbine + MockK unit tests (JVM + Robolectric) with Kover coverage; Roborazzi screenshot tests; Compose UI / instrumented tests on Gradle Managed Devices (API 26 + 36); **Maestro** end-to-end flows; Firestore emulator tests for rules/functions; Jest for Functions |
+| Quality gates | **Pre-commit hooks** (gitleaks, ktlint, terraform fmt/tflint, actionlint, YAML) + pre-push (detekt, unit tests); **CI** (`ci-pass`): Spotless/ktlint, detekt, Android Lint, unit tests + coverage, screenshot tests, instrumented tests, build; **security**: CodeQL, dependency review, Dependabot, gitleaks, Trivy (IaC), zizmor (workflows); **CodeRabbit** review on every PR |
 
 ---
 
@@ -96,28 +96,31 @@ M1 ──┬── M2 ───────────────────�
 
 1. **Pick** a card in the board's `Ready` column (`python3 scripts/backlog/board.py ready`). Ready means every
    "Depends on" issue is closed. Assign yourself and move it: `python3 scripts/backlog/board.py status <N> "In progress"`.
-2. **Sync** `main`: `git pull --rebase origin main`. There are no feature branches or PRs; work lands directly on `main`.
+2. **Branch** from `main`: `m<N>/<issue-number>-<short-slug>` (e.g. `m1/27-room-schema`).
 3. **Read** the story's *Design reference*: the handoff README section and the prototype (open
    `design_handoff_stay_focused_phase1/Stay Focused Phase 1 Prototype v2.dc.html` in Chrome; the left panel jumps to each flow).
    Prototype logic (dial maths, AI prompt, summary sentences) is in the `<script>` block of that file.
 4. **Build** only what the story's *Scope* says. List anything else as a follow-up (a new story file in `backlog/phase1/`).
-5. **Verify** locally with the *Definition of done* below, plus the story's acceptance criteria. `main` must stay green.
-6. **Commit to `main`** with the message `[M<N>-<nn>] <story title>`, a short body (what changed, how it was tested,
-   pending manual checks) and `Closes #<issue>` as the last line. Then `git pull --rebase` and `git push origin HEAD:main`; never force-push.
-7. **Watch CI on `main`** and fix forward right away if it goes red. The `Closes #` commit closes the issue, and the board
-   moves the card to `Done` and promotes newly unblocked cards to `Ready`. Add a closing comment on the issue that ticks
-   each acceptance criterion.
+5. **Verify** locally with the *Definition of done* below, plus the story's acceptance criteria.
+6. **Open a PR** titled `[M<N>-<nn>] <story title>` with `Closes #<issue>`, what changed, how it was tested, the acceptance
+   criteria ticked, and pending manual checks. Move the card to `In review`.
+7. **CodeRabbit reviews the PR** (config: `.coderabbit.yaml`). Fix or answer **every** comment and resolve the threads.
+   Never self-approve (`@coderabbitai approve`) or dismiss its review.
+8. **Merge** (squash) only when CI is green and CodeRabbit's latest review on the current HEAD is *Approved*. The merge closes
+   the issue, and the board moves the card to `Done` and promotes newly unblocked cards to `Ready`.
 
 ### Definition of done (every story)
 
-- `./gradlew spotlessCheck detekt lint testDebugUnitTest assembleDebug` passes locally and in CI.
+- Pre-commit hooks pass (`pre-commit run --all-files`), `./gradlew ciCheck` passes locally (before M1-02 lands: `./gradlew assembleDebug`),
+  and every CI job behind `ci-pass` is green on the PR.
 - New logic has unit tests. Pure logic (evaluator, parsers, formatters, aggregation) is test-first.
 - UI matches the prototype: colours, type, spacing, radii and copy. Copy is **final**, so don't reword it.
   Strings go in `strings.xml`.
-- New UI components have a `@Preview` and, in `:core:ui`, a Roborazzi screenshot test.
+- New UI components have a `@Preview` and, in `:core:ui`, a Roborazzi screenshot test. Coverage stays above the Kover thresholds.
+- A story that adds or changes a user journey adds or extends a Maestro flow in `e2e/flows/` (and instrumented tests where useful).
 - No new permission, manifest flag or Play-relevant declaration unless the story says so.
 - Builds without `google-services.json`.
-- CI on `main` is green for the story's commit, and every acceptance criterion is ticked in the issue's closing comment
+- CI is green, CodeRabbit approved the PR with no unresolved threads, and every acceptance criterion is ticked in the PR
   (anything needing a real device or a person is listed in `docs/qa/pending-manual-checks.md`).
 
 ---
