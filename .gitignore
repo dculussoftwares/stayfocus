@@ -29,3 +29,6 @@ __pycache__/
 .DS_Store
 .claude/settings.local.json
 .claude/worktrees/
+
+# Non-redistributable fonts (see docs/FONTS.md); fetched locally by scripts/dev/fetch-fonts.sh
+/core/ui/src/main/assets/fonts/
