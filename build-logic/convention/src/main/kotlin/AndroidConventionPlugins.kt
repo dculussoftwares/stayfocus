@@ -9,6 +9,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply(libs.plugin("android-application"))
             configureAndroid()
+            applyGoogleServicesIfConfigured()
             extensions.configure<ApplicationExtension> {
                 defaultConfig.targetSdk = TARGET_SDK
             }

@@ -75,3 +75,15 @@ internal fun Project.configureCompose() {
         add("debugImplementation", libs.library("androidx-compose-ui-tooling"))
     }
 }
+
+/**
+ * Applies the google-services plugin only when this app module has a `google-services.json`.
+ * Forks and CI build without the file; Firebase then stays uninitialised (see `FirebaseAvailability`).
+ */
+internal fun Project.applyGoogleServicesIfConfigured() {
+    if (file("google-services.json").exists()) {
+        pluginManager.apply(libs.plugin("google-services"))
+    } else {
+        logger.lifecycle("$path: no google-services.json, building without Firebase configuration.")
+    }
+}
