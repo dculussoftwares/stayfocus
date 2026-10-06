@@ -1,7 +1,31 @@
+# IDE (the .idea directory is local only)
 /.idea/
+*.iml
+
+# Gradle / Android
+.gradle/
+build/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.apk
+*.aab
+*.hprof
+.kotlin/
+
+# Secrets and signing: never commit
+**/google-services.json
+*.keystore
+*.jks
+
+# Terraform
 .terraform/
 *.tfstate
 *.tfstate.*
+
+# Misc
 __pycache__/
+.DS_Store
 .claude/settings.local.json
 .claude/worktrees/
