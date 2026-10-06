@@ -14,7 +14,7 @@ Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a compan
 - Run work with `/wave <N>`, `/next-wave` or `/story <ID>` (Claude Code). The per-story procedure is `.claude/agents/story-worker.md`; the parallel wave order is in `docs/agents/PHASE1_EXECUTION.md`.
 - Don't start a story whose "Depends on" issues are still open.
 - Stay inside the story's scope; open a new issue for anything else you find.
-- Install the git hooks once per clone/worktree (`scripts/dev/setup-hooks.sh`, from M1-14). Run `./gradlew ciCheck` (from M1-02; before that, `./gradlew assembleDebug`) before every push. Never push to `main` directly or force-push it.
+- Install the git hooks once per clone/worktree (`scripts/dev/setup-hooks.sh`; `pre-commit run --all-files` must pass). Run `./gradlew ciCheck` (from M1-02; before that, `./gradlew assembleDebug`) before every push. Never push to `main` directly or force-push it.
 - The project must build without `google-services.json`.
 - Never add permissions, manifest flags or `QUERY_ALL_PACKAGES` unless the story says so (Play policy).
 - Infrastructure (GitHub settings, GCP/Firebase) changes **only** through Terraform in `infra/`, applied by GitHub Actions. Never use a console, `gcloud ... create`, or `firebase deploy`. See `docs/INFRASTRUCTURE.md`.

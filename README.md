@@ -21,6 +21,14 @@ the JDK 17 toolchain on its own.
 
 The project builds without `google-services.json`. Forks that want Firebase bring their own file; never commit it.
 
+## Commit and push hooks
+
+Install once per clone (and once per worktree): `scripts/dev/setup-hooks.sh`. It installs [pre-commit](https://pre-commit.com)
+and registers the commit and push hooks. Commit: whitespace/YAML/JSON hygiene, gitleaks, ktlint, `terraform fmt`/`validate`/tflint
+for `infra/`, actionlint, and a guard against `google-services.json`, keystores, `*.tfstate` and `.env*`. Push:
+`./gradlew spotlessCheck detekt testDebugUnitTest`. Run the commit checks on everything with `pre-commit run --all-files` (and the push checks with
+`pre-commit run --hook-stage pre-push --all-files`); CI runs the commit checks. ktlint needs a JDK and the Terraform hook needs `terraform` on your PATH.
+
 ## Modules
 
 `:app` (Stay Focused) and `:kids` (Stay Focused Kids) sit on top of `:core:*` (model, ui, data, usage, blocking, sync,
