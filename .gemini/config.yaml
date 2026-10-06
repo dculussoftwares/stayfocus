@@ -1,0 +1,16 @@
+# Gemini Code Assist: fallback reviewer when CodeRabbit is rate limited (docs/agents/PHASE1_EXECUTION.md).
+have_fun: false
+code_review:
+  disable: false
+  comment_severity_threshold: MEDIUM
+  max_review_comments: -1
+  pull_request_opened:
+    help: false
+    summary: true
+    code_review: true
+ignore_patterns:
+  - "design_handoff_stay_focused_phase1/**"
+  - "**/*.png"
+  - "**/*.lock.hcl"
+  - "**/schemas/**/*.json"
+  - "**/src/test/snapshots/**"
