@@ -12,25 +12,26 @@ class StayFocusedColorsTest {
 
     @Test
     fun `colour roles match the handoff table`() {
-        val expected = mapOf(
-            "background" to (c.background to "#FF0E0F0D"),
-            "panel" to (c.panel to "#FF171915"),
-            "panelGradientStart" to (c.panelGradientStart to "#FF1A1C17"),
-            "panelGradientEnd" to (c.panelGradientEnd to "#FF141611"),
-            "track" to (c.track to "#FF262922"),
-            "hairline06" to (c.hairline06 to "#0FFFFFFF"),
-            "hairline08" to (c.hairline08 to "#14FFFFFF"),
-            "hairline10" to (c.hairline10 to "#1AFFFFFF"),
-            "hairline14" to (c.hairline14 to "#24FFFFFF"),
-            "text" to (c.text to "#FFF2F4EC"),
-            "secondary" to (c.secondary to "#FFA6AB9D"),
-            "tertiary" to (c.tertiary to "#FF6E7367"),
-            "accent" to (c.accent to "#FFC6F432"),
-            "accentHover" to (c.accentHover to "#FFD6FF55"),
-            "alert" to (c.alert to "#FFFF5A47"),
-            "alertText" to (c.alertText to "#FFFF7A66"),
-            "warning" to (c.warning to "#FFFFB547"),
-        )
+        val expected =
+            mapOf(
+                "background" to (c.background to "#FF0E0F0D"),
+                "panel" to (c.panel to "#FF171915"),
+                "panelGradientStart" to (c.panelGradientStart to "#FF1A1C17"),
+                "panelGradientEnd" to (c.panelGradientEnd to "#FF141611"),
+                "track" to (c.track to "#FF262922"),
+                "hairline06" to (c.hairline06 to "#0FFFFFFF"),
+                "hairline08" to (c.hairline08 to "#14FFFFFF"),
+                "hairline10" to (c.hairline10 to "#1AFFFFFF"),
+                "hairline14" to (c.hairline14 to "#24FFFFFF"),
+                "text" to (c.text to "#FFF2F4EC"),
+                "secondary" to (c.secondary to "#FFA6AB9D"),
+                "tertiary" to (c.tertiary to "#FF6E7367"),
+                "accent" to (c.accent to "#FFC6F432"),
+                "accentHover" to (c.accentHover to "#FFD6FF55"),
+                "alert" to (c.alert to "#FFFF5A47"),
+                "alertText" to (c.alertText to "#FFFF7A66"),
+                "warning" to (c.warning to "#FFFFB547"),
+            )
         expected.forEach { (name, pair) -> assertEquals(name, pair.second, hex(pair.first.toArgb())) }
     }
 

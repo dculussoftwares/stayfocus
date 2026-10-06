@@ -122,6 +122,10 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.stayfocused.core.model.TemporaryAllowance",
         "com.dculus.stayfocused.core.model.UnlockRequest*",
         "*.Placeholder", // empty module placeholders; delete this line when the modules get real code
+        // Android adapters in :core:blocking (system service, Settings/PackageManager lookups); the logic they
+        // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
+        "com.dculus.stayfocused.core.blocking.ForegroundAppService*",
+        "com.dculus.stayfocused.core.blocking.AndroidForegroundEnvironment",
         "*.MainActivity",
         "*.StayFocusedApp",
         "*.StayFocusedKidsApp",
