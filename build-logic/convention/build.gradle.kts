@@ -15,6 +15,7 @@ dependencies {
     compileOnly(libs.kotlin.composeGradlePlugin)
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
+    compileOnly(libs.google.services.gradlePlugin)
 }
 
 gradlePlugin {
