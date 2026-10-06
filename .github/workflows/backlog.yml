@@ -20,6 +20,7 @@ on:
       - "backlog/**"
       - "infra/github/**"
       - "scripts/backlog/**"
+      - "scripts/infra/**"
       - ".github/workflows/backlog.yml"
   push:
     branches: [main]
@@ -27,6 +28,7 @@ on:
       - "backlog/**"
       - "infra/github/**"
       - "scripts/backlog/**"
+      - "scripts/infra/**"
       - ".github/workflows/backlog.yml"
   issues:
     types: [closed, reopened]
@@ -79,6 +81,10 @@ jobs:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
       - run: terraform fmt -check -recursive
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
       - run: terraform init -input=false
       - run: terraform validate
       - run: python3 -m py_compile ../../scripts/backlog/sync_project.py
@@ -122,6 +128,10 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
       - run: terraform init -input=false
       - run: terraform apply -input=false -auto-approve
       - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
@@ -159,6 +169,10 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
       - run: terraform init -input=false
       - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
       - id: app
