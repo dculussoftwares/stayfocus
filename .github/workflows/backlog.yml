@@ -53,6 +53,9 @@ jobs:
     # Runs only while the one-time bootstrap (docs/INFRASTRUCTURE.md) is missing, instead of failing every run.
     if: vars.TF_CLOUD_ORGANIZATION == '' && github.event_name != 'issues'
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
     steps:
       - run: echo "::warning title=Backlog not applied::Set repo variable TF_CLOUD_ORGANIZATION and secret TF_API_TOKEN (docs/INFRASTRUCTURE.md, bootstrap), then re-run this workflow."
 
