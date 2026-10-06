@@ -12,4 +12,7 @@ dependencies {
     implementation(project(":core:data"))
     implementation(project(":core:usage"))
     implementation(project(":core:ui"))
+    implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(kotlin("test"))
 }

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="foreground_service_description">Stay Focused sees which app is on your screen so it can block the apps you choose. It never reads messages, passwords or typing, and nothing leaves this phone.</string>
+</resources>

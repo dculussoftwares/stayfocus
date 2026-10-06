@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Minimum capabilities only. Never set the accessibility-tool flag (Play policy) and keep
+  canRetrieveWindowContent=false: the service only learns which window came to the front.
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/foreground_service_description"
+    android:notificationTimeout="100" />
