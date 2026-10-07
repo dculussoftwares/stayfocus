@@ -35,6 +35,12 @@ class BlockScreenLauncher
         private val handler = Handler(Looper.getMainLooper())
         private var service: AccessibilityService? = null
         private var overlay: AccessibilityOverlay? = null
+        private var lastToken = 0L
+
+        init {
+            // The activity made it to the screen (possibly late): the fallback overlay must not stay on top of it.
+            BlockScreenState.onVisible = { handler.post { removeOverlay() } }
+        }
 
         /** Called by the service when it connects. */
         fun attach(service: AccessibilityService) {
@@ -43,8 +49,7 @@ class BlockScreenLauncher
 
         /** Called by the service when it unbinds or is destroyed. */
         fun detach() {
-            handler.removeCallbacksAndMessages(null)
-            dismissOverlay()
+            invalidate()
             service = null
         }
 
@@ -57,10 +62,19 @@ class BlockScreenLauncher
 
         /** Removes the fallback overlay, if showing. The engine calls this when the user leaves the blocked app. */
         fun dismissOverlay() {
-            handler.post {
-                overlay?.remove()
-                overlay = null
-            }
+            handler.post { invalidate() }
+        }
+
+        /** Drops the pending launch check, makes a late-starting activity finish, and removes the overlay. */
+        private fun invalidate() {
+            BlockScreenState.activeToken = 0L
+            handler.removeCallbacksAndMessages(null)
+            removeOverlay()
+        }
+
+        private fun removeOverlay() {
+            overlay?.remove()
+            overlay = null
         }
 
         private fun showOnMain(
@@ -68,14 +82,17 @@ class BlockScreenLauncher
             decision: Decision.Block,
         ) {
             val svc = service ?: return
-            val request = BlockRequest(pkg, appLabel(pkg), decision)
+            handler.removeCallbacksAndMessages(null)
+            val token = ++lastToken
+            BlockScreenState.activeToken = token
+            val request = BlockRequest(pkg, appLabel(pkg), decision, token)
             svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
             if (!startBlockActivity(request)) {
                 showOverlay(svc, request)
                 return
             }
             handler.postDelayed({
-                if (!BlockScreenState.visible) showOverlay(svc, request)
+                if (!BlockScreenState.visible && BlockScreenState.activeToken == token) showOverlay(svc, request)
             }, LAUNCH_CHECK_MS)
         }
 
@@ -97,8 +114,10 @@ class BlockScreenLauncher
         ) {
             overlay?.remove()
             overlay =
-                AccessibilityOverlay(svc, request, decisionSource, extras.orElse(null)) { overlay = null }
-                    .also { it.add() }
+                AccessibilityOverlay(svc, request, decisionSource, extras.orElse(null)) {
+                    overlay = null
+                    BlockScreenState.activeToken = 0L
+                }.also { it.add() }
         }
 
         private fun appLabel(pkg: String): String? =

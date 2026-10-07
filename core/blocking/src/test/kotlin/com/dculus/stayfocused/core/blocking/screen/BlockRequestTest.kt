@@ -34,6 +34,23 @@ class BlockRequestTest {
     }
 
     @Test
+    fun `tracker ignores the real block activity class`() {
+        assertEquals(
+            BlockActivity::class.java.name,
+            com.dculus.stayfocused.core.blocking.ForegroundAppTracker.BLOCK_SCREEN_CLASS,
+        )
+    }
+
+    @Test
+    fun `stale tokens are rejected`() {
+        BlockScreenState.activeToken = 7L
+        assertEquals(true, BlockScreenState.accepts(7L))
+        assertEquals(true, BlockScreenState.accepts(0L))
+        assertEquals(false, BlockScreenState.accepts(6L))
+        BlockScreenState.activeToken = 0L
+    }
+
+    @Test
     fun `malformed intents are rejected`() {
         assertNull(BlockRequest.from(null))
         assertNull(BlockRequest.from(Intent()))

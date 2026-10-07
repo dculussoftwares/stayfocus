@@ -10,6 +10,9 @@ private const val MS_PER_SECOND = 1000L
 private const val SECONDS_PER_MINUTE = 60L
 private const val SECONDS_PER_HOUR = 3600L
 
+/** Longest span shown as `m:ss`; mmss rounds up, so anything above 59:59 would print "60:00". */
+private const val MMSS_MAX_MS = (SECONDS_PER_HOUR - 1) * MS_PER_SECOND
+
 /** `m:ss`, rounding up so the display never shows 0:00 while time is left (prototype `mmss`). */
 fun mmss(ms: Long): String {
     val s = maxOf(0L, (ms + MS_PER_SECOND - 1) / MS_PER_SECOND)
@@ -59,7 +62,7 @@ fun timeLineFor(
 
         else -> {
             val left = maxOf(0L, until.toEpochMilli() - now.toEpochMilli())
-            BlockTimeLine.Countdown(if (left < SECONDS_PER_HOUR * MS_PER_SECOND) mmss(left) else hms(left))
+            BlockTimeLine.Countdown(if (left <= MMSS_MAX_MS) mmss(left) else hms(left))
         }
     }
 }

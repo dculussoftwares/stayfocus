@@ -45,6 +45,22 @@ class BlockCountdownTest {
     }
 
     @Test
+    fun `countdown never shows 60 minutes`() {
+        assertEquals(
+            BlockTimeLine.Countdown("59:59"),
+            timeLineFor(block(BlockReason.BREAK, now.plusSeconds(3599)), now, utc),
+        )
+        assertEquals(
+            BlockTimeLine.Countdown("00:59:59"),
+            timeLineFor(block(BlockReason.BREAK, now.plusMillis(3_599_500)), now, utc),
+        )
+        assertEquals(
+            BlockTimeLine.Countdown("01:00:00"),
+            timeLineFor(block(BlockReason.BREAK, now.plusSeconds(3600)), now, utc),
+        )
+    }
+
+    @Test
     fun `schedule and timed manual lock show a clock time`() {
         val until = Instant.parse("2026-10-07T18:30:00Z")
         assertEquals(BlockTimeLine.Until("18:30"), timeLineFor(block(BlockReason.SCHEDULE, until), now, utc))

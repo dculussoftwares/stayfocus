@@ -9,7 +9,6 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,7 +18,6 @@ import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import java.time.Instant
 import java.util.Optional
 import javax.inject.Inject
@@ -29,6 +27,8 @@ data class BlockRequest(
     val pkg: String,
     val appLabel: String?,
     val decision: Decision.Block,
+    /** Identifies one launch; a request whose token is no longer current is stale and gets dropped. */
+    val token: Long = 0L,
 ) {
     fun toIntent(context: Context): Intent =
         Intent(context, BlockActivity::class.java)
@@ -37,6 +37,7 @@ data class BlockRequest(
             .putExtra(EXTRA_REASON, decision.reason.name)
             .putExtra(EXTRA_BLOCK_ID, decision.blockId)
             .putExtra(EXTRA_UNTIL, decision.until?.toEpochMilli() ?: NO_END)
+            .putExtra(EXTRA_TOKEN, token)
 
     companion object {
         private const val EXTRA_PKG = "pkg"
@@ -44,6 +45,7 @@ data class BlockRequest(
         private const val EXTRA_REASON = "reason"
         private const val EXTRA_BLOCK_ID = "blockId"
         private const val EXTRA_UNTIL = "untilMs"
+        private const val EXTRA_TOKEN = "token"
         private const val NO_END = -1L
 
         fun from(intent: Intent?): BlockRequest? {
@@ -67,6 +69,17 @@ data class BlockRequest(
 internal object BlockScreenState {
     @Volatile
     var visible: Boolean = false
+
+    /** Token of the launch the launcher currently stands behind; 0 = none. */
+    @Volatile
+    var activeToken: Long = 0L
+
+    /** Set by the launcher: the activity made it on screen, so a fallback overlay is no longer needed. */
+    @Volatile
+    var onVisible: (() -> Unit)? = null
+
+    /** Token 0 is for launches that don't go through the launcher. */
+    fun accepts(token: Long): Boolean = token == 0L || token == activeToken
 }
 
 /**
@@ -84,7 +97,7 @@ class BlockActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val first = BlockRequest.from(intent)
-        if (first == null) {
+        if (first == null || !BlockScreenState.accepts(first.token)) {
             finish()
             return
         }
@@ -96,12 +109,18 @@ class BlockActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        BlockRequest.from(intent)?.let { request = it }
+        val next = BlockRequest.from(intent)
+        if (next == null || !BlockScreenState.accepts(next.token)) {
+            finishAndRemoveTask()
+        } else {
+            request = next
+        }
     }
 
     override fun onStart() {
         super.onStart()
         BlockScreenState.visible = true
+        BlockScreenState.onVisible?.invoke()
     }
 
     override fun onStop() {
