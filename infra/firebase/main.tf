@@ -6,7 +6,8 @@ locals {
     "serviceusage.googleapis.com",
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
-    "firebase.googleapis.com",
+    # firebase.googleapis.com is added by M6-01 together with the Firebase role that tf-deploy needs for it:
+    # enabling it with serviceUsageAdmin alone returned 403 on the first apply.
   ]
 }
 
