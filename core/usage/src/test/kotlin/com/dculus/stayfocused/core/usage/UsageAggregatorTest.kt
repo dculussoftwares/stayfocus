@@ -427,7 +427,7 @@ class UsageAggregatorTest {
                 day = dstDay,
             )
         assertEquals(2 * HOUR, stats.totalMillis)
-        assertEquals(HOUR, stats.hourlyMillis[1])
+        assertEquals(2 * HOUR, stats.hourlyMillis[1])
     }
 
     @Test
