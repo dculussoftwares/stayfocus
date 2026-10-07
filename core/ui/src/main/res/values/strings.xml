@@ -19,5 +19,4 @@
     <string name="sf_dial_minutes">MINUTES</string>
     <string name="sf_dial_hour">HOUR</string>
     <string name="sf_dial_hours">HOURS</string>
-    <string name="sf_gauge_description">Screen time %1$s, average %2$s</string>
 </resources>

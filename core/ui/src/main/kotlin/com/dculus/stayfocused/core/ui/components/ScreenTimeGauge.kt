@@ -19,14 +19,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.model.formatMinutes
-import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import kotlin.math.cos
 import kotlin.math.sin
@@ -68,12 +64,11 @@ fun ScreenTimeGauge(
     val max = maxMins.coerceAtLeast(1)
     val valueFrac = (valueMins.toFloat() / max).coerceIn(0f, 1f)
     val avgFrac = (avgMins.toFloat() / max).coerceIn(0f, 1f)
-    val description = stringResource(R.string.sf_gauge_description, formatMinutes(valueMins), formatMinutes(avgMins))
     Box(
         modifier =
             modifier
                 .size(GaugeWidth, GaugeHeight)
-                .semantics(mergeDescendants = true) { contentDescription = description },
+                .semantics(mergeDescendants = true) { },
     ) {
         Canvas(Modifier.size(GaugeWidth, GaugeHeight).clip(RectangleShape).clearAndSetSemantics { }) {
             val s = size.width / GAUGE_W
