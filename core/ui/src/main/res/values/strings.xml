@@ -16,4 +16,7 @@
     <string name="sf_password_show_description">Show password</string>
     <string name="sf_password_hide_description">Hide password</string>
     <string name="sf_loading">Loading</string>
+    <string name="sf_dial_minutes">MINUTES</string>
+    <string name="sf_dial_hour">HOUR</string>
+    <string name="sf_dial_hours">HOURS</string>
 </resources>
