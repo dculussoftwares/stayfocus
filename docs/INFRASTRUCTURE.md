@@ -45,8 +45,10 @@ These are the only manual steps, and they create credentials, not infrastructure
    - variable `BACKLOG_APP_CLIENT_ID` = the App's client ID
    - secret `BACKLOG_APP_PRIVATE_KEY` = an App private key
 
-   Story M1-12 adds *Repository → Administration* and *Pages* permissions to the same App, and switches the
-   Terraform GitHub provider to it for repo settings.
+   Story M1-12 needs *Repository → Administration* and *Pages: Read and write* on the same App (add them in the App's
+   settings and accept the new permissions on the installation). The apply job mints an App token and passes it to
+   the Terraform GitHub provider as `GITHUB_TOKEN`; plans keep the read-only built-in token. Without the App, applying
+   the repo settings fails.
 4. **GitHub environment** `backlog` (Settings → Environments), with `main` as the only deployment branch. Optionally add
    required reviewers so applies need approval.
 5. Run the **backlog** workflow (merge to `main`, or *Run workflow*). It creates the HCP workspace on first `init`,
@@ -117,6 +119,21 @@ Run the same bootstrap from your fork with your own billing account (the workflo
   Assignees, state (open/closed) and board Status are not managed by Terraform.
 - Board Status: the sync sets **Backlog** or **Ready** (Ready means every dependency is closed) for new items, promotes Backlog → Ready
   when dependencies close, and sets Done when an issue closes. Moving a card to *In progress* or *In review* is up to whoever works on it.
+
+## Repository settings and branch ruleset (M1-12)
+
+`infra/github/repository.tf` manages the repository (squash-only merges, delete branch on merge, auto-merge allowed;
+imported with an `import` block) and a ruleset on the default branch:
+
+- pull request required, stale approvals dismissed on push, **all review threads resolved**;
+- required status check: `ci-pass` (aggregate job in `ci.yml`);
+- linear history, no force pushes, no deletion; direct pushes are rejected for everyone;
+- the only bypass is the organisation admin role in `pull_request` mode (emergency merge of a PR).
+
+**Review mechanism: `required_approvals = 0`.** Qodo, the fallback reviewer, cannot approve, so a required approval
+would block fallback merges. The `CodeRabbit` check is not required either (it does not exist in fallback mode). The
+CodeRabbit/Qodo gate is enforced by the agent rules in `docs/agents/PHASE1_EXECUTION.md`; GitHub enforces `ci-pass` and
+resolved threads. Don't raise `required_approvals` without revisiting the fallback.
 
 ## Forks
 
