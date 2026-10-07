@@ -56,8 +56,12 @@ class DefaultUsageRepository
         private val blockEvents: BlockEventDao,
         private val clock: Clock,
     ) : UsageRepository {
-        /** Overridable in tests; the injected [Clock] is UTC, so the local zone is resolved here. */
-        internal var zone: ZoneId = ZoneId.systemDefault()
+        /**
+         * Resolved on every use so a device time-zone change is followed (as the data source does). Overridable in
+         * tests; the injected [Clock] is UTC, so the local zone is resolved here.
+         */
+        internal var zoneProvider: () -> ZoneId = { ZoneId.systemDefault() }
+        private val zone: ZoneId get() = zoneProvider()
 
         private val refreshRequests =
             MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)

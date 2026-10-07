@@ -4,6 +4,7 @@ import androidx.room.Room
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.data.db.BlockEventEntity
 import com.dculus.stayfocused.core.data.db.StayFocusedDatabase
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
@@ -16,6 +17,7 @@ import org.robolectric.RuntimeEnvironment
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -44,8 +46,10 @@ private class FakeAccess(
     override fun settingsIntent() = throw UnsupportedOperationException()
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class DefaultUsageRepositoryTest {
+    private var zone: ZoneId = ZoneOffset.UTC
     private val today = LocalDate.of(2026, 3, 10)
     private val clock = Clock.fixed(Instant.parse("2026-03-10T12:00:00Z"), ZoneOffset.UTC)
     private lateinit var db: StayFocusedDatabase
@@ -64,7 +68,7 @@ class DefaultUsageRepositoryTest {
         access = FakeAccess()
         repository =
             DefaultUsageRepository(dataSource, RoomUsageCache(db.usageDao()), access, db.blockEventDao(), clock)
-                .apply { zone = ZoneOffset.UTC }
+                .apply { zoneProvider = { zone } }
     }
 
     @After

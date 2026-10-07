@@ -25,7 +25,6 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 private class RecordingRepository(
@@ -89,9 +88,9 @@ class UsageCacheWorkerTest {
     }
 
     @Test
-    fun `worker lets unexpected failures through`() {
+    fun `worker retries transient failures`() {
         val repository = RecordingRepository { error("boom") }
-        assertFailsWith<IllegalStateException> { runWorker(repository) }
+        assertEquals(ListenableWorker.Result.retry(), runWorker(repository))
     }
 
     @Test
@@ -119,7 +118,7 @@ class UsageCacheWorkerTest {
             WorkManagerTestInitHelper.initializeTestWorkManager(context, config)
             val workManager = WorkManager.getInstance(context)
             val clock = Clock.fixed(Instant.parse("2026-03-10T12:00:00Z"), ZoneOffset.UTC)
-            val scheduler = UsageCacheScheduler(workManager, clock).apply { zone = ZoneOffset.UTC }
+            val scheduler = UsageCacheScheduler({ workManager }, clock).apply { zoneProvider = { ZoneOffset.UTC } }
 
             scheduler.schedule()
             scheduler.schedule() // idempotent: unique work, KEEP

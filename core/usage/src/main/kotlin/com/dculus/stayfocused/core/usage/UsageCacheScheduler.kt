@@ -6,6 +6,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import dagger.Lazy
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalTime
@@ -30,15 +31,17 @@ internal fun delayUntilNext(
 class UsageCacheScheduler
     @Inject
     internal constructor(
-        private val workManager: WorkManager,
+        private val workManager: Lazy<WorkManager>,
         private val clock: Clock,
     ) {
-        internal var zone: ZoneId = ZoneId.systemDefault()
+        internal var zoneProvider: () -> ZoneId = { ZoneId.systemDefault() }
 
         /** Idempotent; call on every app start. */
         fun schedule() {
+            // Lazy: WorkManager initialises on demand and needs the Application's field injection to be finished.
+            val workManager = workManager.get()
             val constraints = Constraints.Builder().setRequiresBatteryNotLow(true).build()
-            val initialDelay = delayUntilNext(clock.instant().atZone(zone), DAILY_AT)
+            val initialDelay = delayUntilNext(clock.instant().atZone(zoneProvider()), DAILY_AT)
             workManager.enqueueUniquePeriodicWork(
                 DAILY_WORK_NAME,
                 ExistingPeriodicWorkPolicy.KEEP,
