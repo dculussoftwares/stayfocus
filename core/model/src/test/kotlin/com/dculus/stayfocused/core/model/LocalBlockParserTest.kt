@@ -168,6 +168,12 @@ class LocalBlockParserTest {
     }
 
     @Test
+    fun `a generic label is matched when it is the thing being blocked`() {
+        val camera = installed + AppInfo("com.android.camera", "Camera")
+        assertEquals(listOf("camera"), LocalBlockParser.parse("Block Camera for 20 minutes", camera).apps)
+    }
+
+    @Test
     fun `hour 24 is only valid as 24-00`() {
         assertEquals("limit", LocalBlockParser.parse("Block X from 24:30 to 9:00", installed).type)
         assertEquals("schedule", LocalBlockParser.parse("Block X from 24:00 to 9:00", installed).type)

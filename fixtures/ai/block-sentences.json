@@ -520,6 +520,17 @@
         "use": 10,
         "rest": 60
       }
+    },
+    {
+      "sentence": "Block Instagram for 1 hour, then allow 10 minutes",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 60
+      }
     }
   ]
 }

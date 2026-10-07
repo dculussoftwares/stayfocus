@@ -19,7 +19,7 @@ object LocalBlockParser {
     private val WEAK_CYCLE = Regex("\\b(?:lock|block)\\b.*\\bfor\\b|\\bafter\\b")
     private val DAILY = Regex("\\b(?:a|per|each|every)\\s+day\\b|\\bdaily\\b|\\btoday\\b")
     private val LOCK_WORD = Regex("\\b(?:lock|block|stop|ban)\\b")
-    private val AFTER = Regex("\\bafter\\b")
+    private val ALLOWANCE_WORD = Regex("\\b(?:after|allow|allowed|use|let)\\b")
     private val NOW_WORDS = Regex("\\bnow\\b|\\bnext\\b|right away|straight away|immediately")
     private val LOCK_FOR = Regex("\\b(?:lock|block|stop|ban|no)\\b.*\\bfor\\b")
     private val LIMIT_WORDS = Regex("\\b(?:limit|allow|allowed|max|at most|only|cap|no more than|up to)\\b")
@@ -70,7 +70,7 @@ object LocalBlockParser {
         val second = durations[1]
         val between = text.substring(first.end, second.start)
         val lockBefore = LOCK_WORD.containsMatchIn(text.substring(0, first.start))
-        val swap = lockBefore && AFTER.containsMatchIn(between) && !LOCK_WORD.containsMatchIn(between)
+        val swap = lockBefore && ALLOWANCE_WORD.containsMatchIn(between) && !LOCK_WORD.containsMatchIn(between)
         return if (swap) second.mins to first.mins else first.mins to second.mins
     }
 
@@ -137,6 +137,7 @@ internal object ParserApps {
             "spotify" to listOf("spotify"),
             "maps" to listOf("google maps", "maps"),
         )
+    private val TARGET_VERB = Regex("\\b(?:lock|block|stop|limit|ban|no|disable)\\s+(?:the\\s+)?$")
     private val SOCIAL = Regex("\\bsocials?(?:\\s+media)?\\b")
 
     /** Everyday words that are also labels of system apps; "on my phone" must not block the dialer. */
@@ -167,6 +168,12 @@ internal object ParserApps {
             "play",
         )
 
+    /** A generic word counts as an app only right after a block verb: "block camera", not "on my phone". */
+    private fun isTarget(
+        text: String,
+        range: IntRange,
+    ): Boolean = TARGET_VERB.containsMatchIn(text.substring(0, range.first))
+
     private data class Hit(
         val range: IntRange,
         val name: String,
@@ -188,9 +195,9 @@ internal object ParserApps {
         val labelHits = mutableListOf<Hit>()
         installed.forEach { app ->
             val label = app.label.lowercase(Locale.ROOT).trim()
-            if (label.length >= 2 && label !in GENERIC_LABELS) {
+            if (label.length >= 2) {
                 wordRanges(text, label)
-                    .filter { it !in groupRanges }
+                    .filter { it !in groupRanges && (label !in GENERIC_LABELS || isTarget(text, it)) }
                     .forEach { labelHits += Hit(it, idByPkg[app.pkg] ?: label) }
             }
         }
