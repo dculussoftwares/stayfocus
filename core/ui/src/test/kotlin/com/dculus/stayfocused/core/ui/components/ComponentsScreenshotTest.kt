@@ -54,6 +54,10 @@ class ComponentsScreenshotTest {
 
     @Test fun indicators() = shot("Indicators") { IndicatorsPreview() }
 
+    @Test fun bottomSheet() = shot("SfBottomSheet") { SfBottomSheetPreview() }
+
+    @Test fun toast() = shot("SfToast") { SfToastPreview() }
+
     @Test fun textFields() = shot("SfTextField") { SfTextFieldPreview() }
 
     @Test
