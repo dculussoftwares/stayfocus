@@ -25,7 +25,9 @@ class MainActivity : ComponentActivity() {
                 appStart.startGraph
                     .collectAsState()
                     .value
-                    ?.let { StayFocusedNavigation(startGraph = it) }
+                    ?.let {
+                        StayFocusedNavigation(startGraph = it, onFinishOnboarding = appStart::completeOnboarding)
+                    }
             }
         }
     }

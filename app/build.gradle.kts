@@ -40,6 +40,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.timber)
 
+    testImplementation(project(":core:testing"))
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)
     testImplementation(libs.kotlinx.coroutines.test)

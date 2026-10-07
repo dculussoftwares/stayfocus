@@ -50,6 +50,7 @@ import com.dculus.stayfocused.feature.onboarding.onboardingGraph
 fun StayFocusedNavigation(
     startGraph: StartGraph,
     modifier: Modifier = Modifier,
+    onFinishOnboarding: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
 ) {
     val destination = navController.currentBackStackEntryAsState().value?.destination
@@ -62,7 +63,7 @@ fun StayFocusedNavigation(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
     ) {
-        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph) }
+        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph, onFinishOnboarding) }
         if (destination.showsTabBar()) {
             SfTabBar(
                 items = tabItems,
@@ -78,6 +79,7 @@ fun StayFocusedNavigation(
 private fun AppNavHost(
     navController: NavHostController,
     startGraph: StartGraph,
+    onFinishOnboarding: () -> Unit,
 ) {
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
@@ -93,6 +95,7 @@ private fun AppNavHost(
         onboardingGraph(
             navController = navController,
             onFinished = {
+                onFinishOnboarding()
                 navController.navigate(MainGraph) { popUpTo(OnboardingGraph) { inclusive = true } }
             },
         )

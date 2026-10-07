@@ -1,12 +1,13 @@
 package com.dculus.stayfocused.navigation
 
+import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -14,7 +15,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppStartViewModelTest {
@@ -24,10 +24,7 @@ class AppStartViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun source(flow: Flow<Boolean>) =
-        object : OnboardingFlagSource {
-            override val onboardingComplete: Flow<Boolean> = flow
-        }
+    private fun settings(complete: Boolean = false) = FakeSettingsRepository(AppSettings(onboardingComplete = complete))
 
     @Test
     fun startGraphFollowsTheFlag() {
@@ -42,28 +39,21 @@ class AppStartViewModelTest {
     }
 
     @Test
-    fun stubReportsOnboardingIncomplete() {
-        assertEquals(StartGraph.ONBOARDING, AppStartViewModel(StubOnboardingFlagSource()).startGraph.value)
+    fun incompleteOnboardingStartsOnboarding() {
+        assertEquals(StartGraph.ONBOARDING, AppStartViewModel(settings(false)).startGraph.value)
     }
 
     @Test
     fun completedOnboardingStartsMain() {
-        assertEquals(StartGraph.MAIN, AppStartViewModel(source(flowOf(true))).startGraph.value)
+        assertEquals(StartGraph.MAIN, AppStartViewModel(settings(true)).startGraph.value)
     }
 
     @Test
-    fun laterFlagChangesDoNotMoveTheStartGraph() {
-        val flag = MutableSharedFlow<Boolean>(extraBufferCapacity = 2)
-        val viewModel = AppStartViewModel(source(flag))
-        flag.tryEmit(false)
-        flag.tryEmit(true)
+    fun completingOnboardingSavesTheFlagButKeepsTheStartGraph() {
+        val repository = settings(false)
+        val viewModel = AppStartViewModel(repository)
+        viewModel.completeOnboarding()
+        assertEquals(true, runBlocking { repository.settings.first().onboardingComplete })
         assertEquals(StartGraph.ONBOARDING, viewModel.startGraph.value)
-    }
-
-    @Test
-    fun startGraphIsNullUntilTheFlagLoads() {
-        val flag = MutableSharedFlow<Boolean>()
-        val viewModel = AppStartViewModel(source(flag))
-        assertNull(viewModel.startGraph.value)
     }
 }
