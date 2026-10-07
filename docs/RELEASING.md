@@ -1,6 +1,6 @@
 # Releasing
 
-A tag `vMAJOR.MINOR.PATCH` (optionally `-rc1` style suffix, which marks the GitHub Release as a pre-release) runs
+A tag `vMAJOR.MINOR.PATCH` (or `vMAJOR.MINOR.PATCH-rcN`, N 1..98, the only pre-release form; it marks the GitHub Release as a pre-release) runs
 `.github/workflows/release.yml`: signed AABs for `:app` and `:kids`, attached to a GitHub Release together with the R8
 mapping files, and uploaded to the Play **internal** track (draft) when a Play service account is configured.
 
@@ -11,7 +11,7 @@ git tag v0.2.0 && git push origin v0.2.0
 ## Version scheme
 
 `versionName` is the tag without the `v`. `versionCode = MAJOR*1_000_000 + MINOR*10_000 + PATCH*100 + build` (minor and patch 0..99). `build` is the
-trailing number of a pre-release suffix (`-rc1` gives 1) and 99 for a final tag, so `v0.2.0-rc1` < `v0.2.0` < `v0.2.1-rc1`.
+N of `-rcN` and 99 for a final tag, so `v0.2.0-rc1` < `v0.2.0` < `v0.2.1-rc1`.
 `-PversionBuild` (0..99) overrides it, e.g. to re-upload the same version to Play. Local builds default to `0.1.0`. Logic and tests: `build-logic/convention/.../ReleaseVersion.kt`.
 
 ## One-time setup (a person)

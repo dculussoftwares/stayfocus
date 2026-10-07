@@ -24,7 +24,7 @@ class ReleaseVersionTest {
 
     @Test
     fun `release sequence has strictly increasing codes`() {
-        val tags = listOf("0.1.0-rc1", "0.1.0-rc2", "0.1.0", "0.1.1-rc1", "0.1.1", "0.2.0-beta1", "0.2.0", "1.0.0")
+        val tags = listOf("0.1.0-rc1", "0.1.0-rc2", "0.1.0", "0.1.1-rc1", "0.1.1", "0.2.0-rc1", "0.2.0", "1.0.0")
         val codes = tags.map { ReleaseVersion.parse(it).code }
         assertEquals(codes.sorted(), codes)
         assertEquals(codes.distinct(), codes)
@@ -32,7 +32,19 @@ class ReleaseVersionTest {
 
     @Test
     fun `invalid input is rejected`() {
-        listOf("1.2", "latest", "v1.100.0", "v1.0.100", "v2100.0.0", "v99999999999.0.0", "v1.0.0-rc99").forEach {
+        listOf(
+            "1.2",
+            "latest",
+            "v1.100.0",
+            "v1.0.100",
+            "v2100.0.0",
+            "v99999999999.0.0",
+            "v1.0.0-rc99",
+            "v1.0.0-rc0",
+            "v0.2.0-rc2147483648",
+            "v0.2.0-beta1",
+            "v0.2.0-rc",
+        ).forEach {
             assertTrue(it, runCatching { ReleaseVersion.parse(it) }.isFailure)
         }
         assertTrue(runCatching { ReleaseVersion.parse("1.0.0", build = 100) }.isFailure)
