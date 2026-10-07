@@ -51,6 +51,12 @@ interface BlockDao {
     )
     suspend fun deleteCycleStateOfRemovedApps(blockId: String)
 
+    @Query("UPDATE blocks SET enabled = :enabled WHERE id = :id")
+    suspend fun setEnabled(
+        id: String,
+        enabled: Boolean,
+    )
+
     @Upsert
     suspend fun upsertBlock(block: BlockEntity)
 
@@ -71,6 +77,10 @@ interface LockedAppDao {
 
     @Upsert
     suspend fun upsert(app: LockedAppEntity)
+
+    /** Keeps the existing row (and its `since`) when the app is already locked for the target. */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(app: LockedAppEntity)
 
     @Query("DELETE FROM locked_apps WHERE pkg = :pkg AND target = :target")
     suspend fun delete(
