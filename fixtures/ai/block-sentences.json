@@ -580,6 +580,27 @@
           "sun"
         ]
       }
+    },
+    {
+      "sentence": "Limit Instagram to 30 minutes next 2 days",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 30,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Block Instagram for the next 30 minutes",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "instagram"
+        ],
+        "now": 30
+      }
     }
   ]
 }

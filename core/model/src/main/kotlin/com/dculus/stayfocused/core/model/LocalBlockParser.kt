@@ -20,11 +20,11 @@ object LocalBlockParser {
     private val DAILY = Regex("\\b(?:a|per|each|every)\\s+day\\b|\\bdaily\\b|\\btoday\\b")
     private val LOCK_WORD = Regex("\\b(?:lock|block|stop|ban)\\b")
     private val ALLOWANCE_WORD = Regex("\\b(?:after|allow|allowed|use|let)\\b")
+    private const val NEXT_AMOUNT =
+        "(?:\\d+(?:\\.\\d+)?\\s*|an?\\s+|half\\s+(?:an?\\s+)?|quarter\\s+(?:of\\s+)?(?:an?\\s+)?|" +
+            "(?:one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty|thirty|forty|fifty)\\s+)"
     private val NOW_WORDS =
-        Regex(
-            "\\bnow\\b|\\bnext\\s+(?:\\d|an?\\s|half|quarter|[a-z]+ (?:min|hour|hr))|" +
-                "right away|straight away|immediately",
-        )
+        Regex("\\bnow\\b|\\bnext\\s+${NEXT_AMOUNT}(?:min|hour|hr|h\\b|m\\b)|right away|straight away|immediately")
     private val LOCK_FOR = Regex("\\b(?:lock|block|stop|ban|no)\\b.*\\bfor\\b")
     private val LIMIT_WORDS = Regex("\\b(?:limit|allow|allowed|max|at most|only|cap|no more than|up to)\\b")
 
