@@ -6,6 +6,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
@@ -70,12 +72,25 @@ async function main() {
 
   show(false);
 
+  // Returning from the redirect fallback below.
+  getRedirectResult(auth)
+    .then((result) => {
+      if (result && result.user) afterSignIn(result.user);
+    })
+    .catch((error) => say(describe(error), true));
+
   $("google").addEventListener("click", async () => {
     say("");
+    const provider = new GoogleAuthProvider();
     try {
-      const result = await signInWithPopup(auth, new GoogleAuthProvider());
+      const result = await signInWithPopup(auth, provider);
       afterSignIn(result.user);
     } catch (error) {
+      if (error && error.code === "auth/popup-blocked") {
+        // Some mobile browsers block popups: fall back to a full-page redirect.
+        await signInWithRedirect(auth, provider);
+        return;
+      }
       say(describe(error), true);
     }
   });

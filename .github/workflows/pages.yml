@@ -1,7 +1,8 @@
 name: pages
 
+# Also runs after the infra-firebase and backlog (Pages enablement) applies, so the first deploy and config changes are picked up.
 # Deploys /web (privacy policy + account-deletion page) to GitHub Pages. Pages itself is enabled by Terraform
-# (infra/github, `pages { build_type = "workflow" }`).
+# (infra/github, `github_repository_pages`, build_type workflow).
 # The Firebase web config (public values) is read from the infra/firebase Terraform state (HCP Terraform) and written to
 # web/firebase-config.json. Without it (before infra-firebase has applied) the site still deploys; the deletion page then
 # tells people to delete the account in the app.
@@ -14,7 +15,7 @@ on:
       - "web/**"
       - ".github/workflows/pages.yml"
   workflow_run:
-    workflows: [infra-firebase]
+    workflows: [infra-firebase, backlog]
     types: [completed]
     branches: [main]
   workflow_dispatch:
@@ -50,8 +51,7 @@ jobs:
         run: |
           # Reads state only (no GCP credentials). Missing state or output is not an error: the site deploys without it.
           cd infra/firebase
-          terraform init -input=false >/dev/null
-          if terraform output -json firebase_web_config > ../../web/firebase-config.json; then
+          if terraform init -input=false >/dev/null && terraform output -json firebase_web_config > ../../web/firebase-config.json; then
             echo "Firebase web config written."
           else
             rm -f ../../web/firebase-config.json
