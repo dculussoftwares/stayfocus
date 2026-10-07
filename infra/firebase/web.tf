@@ -29,6 +29,30 @@ resource "google_firebase_web_app" "site" {
   deletion_policy = "DELETE"
 }
 
+resource "google_firebase_app_check_recaptcha_enterprise_config" "web" {
+  count    = var.app_check_site_key == "" ? 0 : 1
+  provider = google-beta
+
+  project  = var.project_id
+  app_id   = google_firebase_web_app.site.app_id
+  site_key = var.app_check_site_key
+}
+
+# Keep the production Pages origin in Firebase Authentication's allowlist so Google sign-in
+# works without a console-only post-deploy step. The remaining Auth settings are owned by M6-01.
+resource "google_identity_platform_config" "auth" {
+  project = var.project_id
+
+  authorized_domains = [
+    "localhost",
+    "${var.project_id}.firebaseapp.com",
+    "${var.project_id}.web.app",
+    "dculussoftwares.github.io",
+  ]
+
+  depends_on = [google_firebase_project.web]
+}
+
 data "google_firebase_web_app_config" "site" {
   provider = google-beta
 

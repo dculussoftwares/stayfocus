@@ -12,6 +12,7 @@ output "firebase_web_config" {
     storageBucket     = data.google_firebase_web_app_config.site.storage_bucket
     messagingSenderId = data.google_firebase_web_app_config.site.messaging_sender_id
     appId             = google_firebase_web_app.site.app_id
+    appCheckSiteKey   = var.app_check_site_key
     functionsRegion   = var.region
   }
 }

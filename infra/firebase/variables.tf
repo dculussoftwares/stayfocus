@@ -19,3 +19,9 @@ variable "env" {
     error_message = "env must be dev or prod."
   }
 }
+
+variable "app_check_site_key" {
+  description = "reCAPTCHA Enterprise site key used by Firebase App Check for the Pages web app."
+  type        = string
+  default     = ""
+}

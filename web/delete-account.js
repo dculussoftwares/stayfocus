@@ -3,6 +3,10 @@
 // The Firebase web config is public by design; it is written to firebase-config.json at deploy time.
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
+  initializeAppCheck,
+  ReCaptchaEnterpriseProvider,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js";
+import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
@@ -53,8 +57,16 @@ async function main() {
     $("unconfigured").hidden = false;
     return;
   }
-  const { functionsRegion, ...firebaseConfig } = config;
+  const { functionsRegion, appCheckSiteKey, ...firebaseConfig } = config;
   const app = initializeApp(firebaseConfig);
+  // The callable enforces App Check. The site key is supplied by Terraform in the
+  // public config, so the SDK attaches a token before any callable is invoked.
+  if (appCheckSiteKey) {
+    initializeAppCheck(app, {
+      provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
+      isTokenAutoRefreshEnabled: true,
+    });
+  }
   const auth = getAuth(app);
   const deleteAccount = httpsCallable(getFunctions(app, functionsRegion || "europe-west1"), "deleteAccount");
 

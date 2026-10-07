@@ -37,9 +37,10 @@ variable "region" {
 }
 
 variable "deploy_roles" {
-  description = "Project roles for the deploy service account. Least privilege: only what infra/firebase manages today (enabling APIs). Later infra stories add the roles they need (for example Firebase, Firestore, IAM) in their own PR."
+  description = "Project roles for the deploy service account. Includes Firebase project management for infra/firebase, plus API management."
   type        = list(string)
   default = [
     "roles/serviceusage.serviceUsageAdmin",
+    "roles/firebase.admin",
   ]
 }
