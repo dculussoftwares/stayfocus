@@ -3,7 +3,7 @@
 # Idempotent. Used by the Terraform workflows before `terraform init`.
 #
 # Env: TF_API_TOKEN (team token), TF_CLOUD_ORGANIZATION, TF_WORKSPACE
-#      ENSURE_MODE=check  fail (instead of fixing) when an existing workspace is not in Local execution mode;
+#      ENSURE_MODE=check  fail (instead of creating or fixing) when the workspace is missing or not in Local mode;
 #                         used by pull-request plan jobs, which must not change shared settings before merge.
 set -euo pipefail
 
@@ -35,6 +35,10 @@ case "$status" in
     fi
     ;;
   404)
+    if [ "${ENSURE_MODE:-fix}" = "check" ]; then
+      echo "::error::HCP workspace ${TF_WORKSPACE} does not exist yet. It is created by the apply job (run the workflow manually on main, or merge); PR plans never create workspaces."
+      exit 1
+    fi
     echo "Creating HCP workspace ${TF_CLOUD_ORGANIZATION}/${TF_WORKSPACE} (execution mode: local)"
     curl -sS --fail-with-body "${auth[@]}" -X POST "${api}/organizations/${TF_CLOUD_ORGANIZATION}/workspaces" \
       -d "{\"data\":{\"type\":\"workspaces\",\"attributes\":{\"name\":\"${TF_WORKSPACE}\",\"execution-mode\":\"local\",\"description\":\"Managed from GitHub Actions (${GITHUB_REPOSITORY:-dculussoftwares/stayfocus})\"}}}" \
