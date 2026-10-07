@@ -137,7 +137,10 @@ internal object ParserApps {
             "spotify" to listOf("spotify"),
             "maps" to listOf("google maps", "maps"),
         )
-    private val TARGET_VERB = Regex("\\b(?:lock|block|stop|limit|ban|no|disable)\\s+(?:the\\s+)?$")
+    private const val BLOCK_VERB = "\\b(?:lock|block|stop|limit|ban|disable|no)\\s+(?:the\\s+)?"
+    private const val APP_LIST_ITEM = "(?:[a-z0-9 ]{1,60}(?:,|\\band\\b)\\s*)*"
+    private val TARGET_VERB = Regex("$BLOCK_VERB$APP_LIST_ITEM(?:the\\s+)?$")
+    private val NEGATION = Regex("(?:n't|\\bnot|\\bnever|\\bexcept|\\bwithout)\\s*(?:\\w+\\s+)?$")
     private val SOCIAL = Regex("\\bsocials?(?:\\s+media)?\\b")
 
     /** Everyday words that are also labels of system apps; "on my phone" must not block the dialer. */
@@ -168,11 +171,18 @@ internal object ParserApps {
             "play",
         )
 
-    /** A generic word counts as an app only right after a block verb: "block camera", not "on my phone". */
+    /**
+     * A generic word counts as an app only when it is the object of a block verb, alone or in a list
+     * ("block camera", "block instagram and camera"), and the verb is not negated ("don't block camera").
+     * "on my phone" never counts.
+     */
     private fun isTarget(
         text: String,
         range: IntRange,
-    ): Boolean = TARGET_VERB.containsMatchIn(text.substring(0, range.first))
+    ): Boolean {
+        val verb = TARGET_VERB.find(text.substring(0, range.first)) ?: return false
+        return !NEGATION.containsMatchIn(text.substring(0, verb.range.first))
+    }
 
     private data class Hit(
         val range: IntRange,

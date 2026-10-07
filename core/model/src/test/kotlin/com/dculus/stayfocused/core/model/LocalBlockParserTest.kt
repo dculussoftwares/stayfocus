@@ -174,6 +174,19 @@ class LocalBlockParserTest {
     }
 
     @Test
+    fun `generic labels in a list of blocked apps count, negated ones do not`() {
+        val camera = installed + AppInfo("com.android.camera", "Camera")
+        assertEquals(
+            listOf("instagram", "camera"),
+            LocalBlockParser.parse("Block Instagram and Camera for 20 minutes", camera).apps,
+        )
+        assertEquals(
+            listOf("instagram"),
+            LocalBlockParser.parse("Block Instagram, but don't block Camera for 20 minutes", camera).apps,
+        )
+    }
+
+    @Test
     fun `hour 24 is only valid as 24-00`() {
         assertEquals("limit", LocalBlockParser.parse("Block X from 24:30 to 9:00", installed).type)
         assertEquals("schedule", LocalBlockParser.parse("Block X from 24:00 to 9:00", installed).type)
