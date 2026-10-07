@@ -143,7 +143,7 @@ Run the same bootstrap from your fork with your own billing account (the workflo
 imported with an `import` block) and a ruleset on the default branch:
 
 - pull request required, stale approvals dismissed on push, **all review threads resolved**;
-- required status checks: `ci-pass` (aggregate job in `ci.yml`) and `security-pass` (aggregate job in `security.yml`);
+- required status checks: `ci-pass` (aggregate job in `ci.yml`), `security-pass` (aggregate job in `security.yml`) and `gradle-dependency-graph` (`dependency-graph.yml`);
 - linear history, no force pushes, no deletion; direct pushes are rejected for everyone;
 - the only bypass is the organisation admin role in `pull_request` mode (emergency merge of a PR).
 
