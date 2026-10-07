@@ -28,6 +28,8 @@ internal class AccessibilityOverlay(
     private val decisionSource: BlockDecisionSource,
     private val extras: BlockScreenExtras?,
     private val onRemoved: () -> Unit,
+    /** The user (or an Allow decision) ended this block, as opposed to the activity taking over the screen. */
+    private val onFinished: () -> Unit,
 ) : LifecycleOwner,
     SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
@@ -50,7 +52,7 @@ internal class AccessibilityOverlay(
         root.setViewTreeSavedStateRegistryOwner(this)
         composeView.setContent {
             StayFocusedTheme {
-                BlockHost(request, decisionSource, extras, onGoHome = ::goHome, onAllow = ::remove)
+                BlockHost(request, decisionSource, extras, onGoHome = ::goHome, onAllow = ::finish)
             }
         }
         val params =
@@ -76,9 +78,14 @@ internal class AccessibilityOverlay(
         onRemoved()
     }
 
+    private fun finish() {
+        remove()
+        onFinished()
+    }
+
     private fun goHome() {
         // Keep the overlay if Home did not happen: removing it would expose the blocked app.
-        if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) remove()
+        if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) finish()
     }
 }
 

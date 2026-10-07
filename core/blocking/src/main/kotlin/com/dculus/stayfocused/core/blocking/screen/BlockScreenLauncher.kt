@@ -124,10 +124,14 @@ class BlockScreenLauncher
         ) {
             overlay?.remove()
             overlay =
-                AccessibilityOverlay(svc, request, decisionSource, extras.orElse(null)) {
-                    overlay = null
-                    BlockScreenState.activeToken = 0L
-                }.also { it.add() }
+                AccessibilityOverlay(
+                    svc,
+                    request,
+                    decisionSource,
+                    extras.orElse(null),
+                    onRemoved = { overlay = null },
+                    onFinished = { BlockScreenState.activeToken = 0L },
+                ).also { it.add() }
         }
 
         private fun appLabel(pkg: String): String? =
