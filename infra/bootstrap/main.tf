@@ -42,7 +42,7 @@ resource "google_service_account" "deploy" {
   depends_on = [google_project_service.bootstrap]
 }
 
-# Read-only identity for pull-request plans (any ref of this repository). It can read, never change.
+# Read-only identity for pull-request plans (any ref of this repository). It can only read service state; later infra stories add the read roles their resources need.
 resource "google_service_account" "plan" {
   for_each = var.environments
 
@@ -57,7 +57,7 @@ resource "google_project_iam_member" "plan" {
   for_each = var.environments
 
   project = google_project.env[each.key].project_id
-  role    = "roles/viewer"
+  role    = "roles/serviceusage.serviceUsageViewer"
   member  = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 

@@ -91,6 +91,7 @@ jobs:
       - name: Ensure HCP Terraform workspace
         env:
           TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          ENSURE_MODE: check
         run: ../../scripts/infra/ensure_tfc_workspace.sh
       - run: terraform init -input=false
       - id: plan

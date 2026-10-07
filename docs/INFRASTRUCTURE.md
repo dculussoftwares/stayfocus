@@ -73,7 +73,7 @@ GitHub Actions authenticates through WIF; **no service-account key** is used for
 | secret | `TF_API_TOKEN` | HCP token (already set) |
 | variable | `GCP_WIF_PROVIDER_DEV` | bootstrap output `wif_provider`, copied exactly (`projects/<number>/locations/global/workloadIdentityPools/github/providers/github`) |
 | variable | `GCP_DEPLOY_SA_DEV` | bootstrap output `deploy_service_acc` (`tf-deploy@stayfocus-dev.iam.gserviceaccount.com`) |
-| variable | `GCP_PLAN_SA_DEV` | bootstrap output `plan_service_acc`: read-only (`roles/viewer`) identity for PR plans |
+| variable | `GCP_PLAN_SA_DEV` | bootstrap output `plan_service_acc`: read-only (`serviceUsageViewer`) identity for PR plans |
 | variable | `GCP_PROJECT_ID_DEV` | optional, default `stayfocus-dev` (forks: your own unique project id) |
 | variable | `GCP_ORG_ID` | optional, GCP organization ID that owns the projects |
 | secret | `GCP_BILLING_ACCOUNT` | billing account ID, bootstrap only |
@@ -106,8 +106,7 @@ Firebase stories need; add roles there when a later infra story needs more.
 ### Forks
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
-`GCP_PROJECT_ID_DEV` to a unique project id, then set the `GCP_*` variables and `TF_CLOUD_ORGANIZATION` to point at
-your own project.
+`GCP_PROJECT_ID_DEV` to a unique project id, then set the `GCP_*` variables to point at your own project. Set `TF_CLOUD_ORGANIZATION` to your own HCP organization.
 
 ## Editing the backlog
 
