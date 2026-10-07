@@ -19,6 +19,7 @@ data class StayFocusedColors(
     val hairline08: Color = Color(0x14FFFFFF),
     val hairline10: Color = Color(0x1AFFFFFF),
     val hairline14: Color = Color(0x24FFFFFF),
+    val transparent: Color = Color.Transparent,
     val text: Color = Color(0xFFF2F4EC),
     val secondary: Color = Color(0xFFA6AB9D),
     val tertiary: Color = Color(0xFF6E7367),

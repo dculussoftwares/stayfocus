@@ -153,9 +153,9 @@ private fun RowScope.SegmentedTab(
         modifier =
             Modifier
                 .weight(1f)
-                .heightIn(min = 40.dp)
+                .heightIn(min = 48.dp)
                 .clip(StayFocusedTheme.shapes.chip)
-                .background(if (selected) c.text else Color.Transparent)
+                .background(if (selected) c.text else c.transparent)
                 .selectable(selected = selected, role = Role.Tab, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
