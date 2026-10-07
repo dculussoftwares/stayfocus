@@ -1,0 +1,156 @@
+name: release
+
+# Tag `vMAJOR.MINOR.PATCH` -> signed AABs for both apps, attached to a GitHub Release, optionally uploaded to
+# the Play internal track. Setup, secrets and versionCode scheme: docs/RELEASING.md.
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "17"
+
+jobs:
+  build:
+    name: build-signed-aabs
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Secrets live in the `release` environment so only this workflow can read them.
+    environment: release
+    permissions:
+      contents: read
+    env:
+      KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
+      STAYFOCUSED_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+      STAYFOCUSED_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+      STAYFOCUSED_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
+      # Prod Firebase config (Terraform outputs of infra/firebase, M10-04), stored as base64 secrets. Required.
+      GOOGLE_SERVICES_APP_B64: ${{ secrets.GOOGLE_SERVICES_APP_PROD_BASE64 }}
+      GOOGLE_SERVICES_KIDS_B64: ${{ secrets.GOOGLE_SERVICES_KIDS_PROD_BASE64 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Only release commits that are on main (reviewed code)
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag $GITHUB_REF_NAME does not point at a commit on main; refusing to build with release secrets."
+            exit 1
+          fi
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: true
+
+      - name: Check the release secrets are present
+        run: |
+          for v in KEYSTORE_B64 STAYFOCUSED_KEYSTORE_PASSWORD STAYFOCUSED_KEY_ALIAS STAYFOCUSED_KEY_PASSWORD GOOGLE_SERVICES_APP_B64 GOOGLE_SERVICES_KIDS_B64; do
+            if [ -z "${!v}" ]; then echo "::error::Missing release secret for $v (see docs/RELEASING.md)"; exit 1; fi
+          done
+
+      - name: Decode the upload keystore and Firebase config
+        run: |
+          umask 077
+          echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "STAYFOCUSED_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          echo "$GOOGLE_SERVICES_APP_B64" | base64 --decode > app/google-services.json
+          echo "$GOOGLE_SERVICES_KIDS_B64" | base64 --decode > kids/google-services.json
+
+      - name: Build signed bundles
+        run: ./gradlew :app:bundleRelease :kids:bundleRelease -PversionName="${GITHUB_REF_NAME}" --configuration-cache
+
+      - name: Verify the bundles are signed
+        run: |
+          for f in app/build/outputs/bundle/release/app-release.aab kids/build/outputs/bundle/release/kids-release.aab; do
+            # jarsigner exits 0 for an unsigned archive, so require its explicit "jar verified" line.
+            out=$(jarsigner -verify "$f" 2>&1) || { echo "$out"; exit 1; }
+            echo "$out" | grep -q '^jar verified' || { echo "::error::$f is not signed"; echo "$out"; exit 1; }
+          done
+
+      - name: Name the artifacts
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/bundle/release/app-release.aab "dist/stayfocused-${GITHUB_REF_NAME}.aab"
+          cp kids/build/outputs/bundle/release/kids-release.aab "dist/stayfocused-kids-${GITHUB_REF_NAME}.aab"
+          # R8 mappings are needed to de-obfuscate crash reports; keep them with the release.
+          cp app/build/outputs/mapping/release/mapping.txt "dist/stayfocused-${GITHUB_REF_NAME}-mapping.txt"
+          cp kids/build/outputs/mapping/release/mapping.txt "dist/stayfocused-kids-${GITHUB_REF_NAME}-mapping.txt"
+
+      - name: Remove secrets from the runner
+        if: ${{ always() }}
+        run: rm -f "$RUNNER_TEMP/upload.jks" app/google-services.json kids/google-services.json
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-bundles
+          path: dist/
+          if-no-files-found: error
+
+  github-release:
+    name: github-release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-bundles
+          path: dist
+      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: dist/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+
+  play-internal:
+    name: play-internal-track
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      contents: read
+    env:
+      PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+    steps:
+      - name: Skip when no Play service account is configured
+        id: gate
+        run: |
+          if [ -n "$PLAY_SERVICE_ACCOUNT_JSON" ]; then echo "upload=true" >> "$GITHUB_OUTPUT"; else echo "No PLAY_SERVICE_ACCOUNT_JSON, skipping the Play upload."; fi
+      - if: steps.gate.outputs.upload == 'true'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-bundles
+          path: dist
+      - if: steps.gate.outputs.upload == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.dculus.stayfocused
+          releaseFiles: dist/stayfocused-${{ github.ref_name }}.aab
+          mappingFile: dist/stayfocused-${{ github.ref_name }}-mapping.txt
+          track: internal
+          status: draft
+      - if: steps.gate.outputs.upload == 'true'
+        uses: r0adkll/upload-google-play@e738b9dd8f2476ea806d921b64aacd24f34515a5 # v1.1.5
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.dculus.stayfocused.kids
+          releaseFiles: dist/stayfocused-kids-${{ github.ref_name }}.aab
+          mappingFile: dist/stayfocused-kids-${{ github.ref_name }}-mapping.txt
+          track: internal
+          status: draft

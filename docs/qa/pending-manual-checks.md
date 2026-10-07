@@ -12,3 +12,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M3-01 UsageStats data source
 - Check: on a real device, today's total from `UsageStatsDataSource.dayUsage(today)` is within ±5% of Digital Wellbeing (screenshot comparison).
 - How: grant Usage access, use the phone for a while, compare the total with Settings > Digital Wellbeing for the same day. Wired to UI in M3-04; until then log `dayUsage(LocalDate.now()).totalMins`.
+
+## M10-03 Release pipeline
+- Check: a pushed tag produces signed AABs that install via bundletool on a device (R8 build starts and runs both apps).
+- How: after the `release` environment secrets exist (docs/RELEASING.md), push a `v0.x.y-rc1` tag, download the AABs from the GitHub Release, `bundletool build-apks` + `install-apks`, open each app.
