@@ -3,6 +3,7 @@ package com.dculus.stayfocused.core.usage
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.temporal.ChronoUnit
 
 /**
  * Turns a raw event stream into a [DayUsageStats]. Pure and deterministic.
@@ -160,16 +161,13 @@ class UsageAggregator(
 
         /** Start of the next local hour after [at]; always strictly greater than [at]. */
         private fun nextHourBoundary(at: Long): Long {
+            // Step on the instant timeline (ZonedDateTime.plusHours) so DST gaps and overlaps stay correct.
             val next =
                 Instant
                     .ofEpochMilli(at)
                     .atZone(zone)
-                    .toLocalDateTime()
-                    .withMinute(0)
-                    .withSecond(0)
-                    .withNano(0)
+                    .truncatedTo(ChronoUnit.HOURS)
                     .plusHours(1)
-                    .atZone(zone)
                     .toInstant()
                     .toEpochMilli()
             return if (next > at) next else at + 1

@@ -415,11 +415,27 @@ class UsageAggregatorTest {
     }
 
     @Test
+    fun `fall back day repeats an hour bucket without losing time`() {
+        val ny = ZoneId.of("America/New_York")
+        val dstDay = LocalDate.of(2026, 11, 1)
+        val start = dstDay.atStartOfDay(ny).toInstant().toEpochMilli()
+        val stats =
+            aggregate(
+                listOf(resumed(ig, start + HOUR), paused(ig, start + 3 * HOUR)),
+                now = start + 25 * HOUR,
+                zone = ny,
+                day = dstDay,
+            )
+        assertEquals(2 * HOUR, stats.totalMillis)
+        assertEquals(HOUR, stats.hourlyMillis[1])
+    }
+
+    @Test
     fun `event types map across API levels`() {
         assertEquals(RawEventType.ACTIVITY_RESUMED, mapEventType(1, 26))
         assertEquals(RawEventType.ACTIVITY_PAUSED, mapEventType(2, 26))
         assertEquals(RawEventType.ACTIVITY_RESUMED, mapEventType(1, 34))
-        assertEquals(RawEventType.ACTIVITY_PAUSED, mapEventType(23, 34))
+        assertEquals(null, mapEventType(23, 34))
         assertEquals(RawEventType.SCREEN_INTERACTIVE, mapEventType(15, 26))
         assertEquals(RawEventType.SCREEN_NON_INTERACTIVE, mapEventType(16, 26))
         assertEquals(RawEventType.KEYGUARD_HIDDEN, mapEventType(18, 28))
