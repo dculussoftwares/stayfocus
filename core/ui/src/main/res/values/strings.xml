@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="sf_chip_limit">LIM</string>
+    <string name="sf_chip_cycle">CYC</string>
+    <string name="sf_chip_schedule">HRS</string>
+    <string name="sf_chip_now">NOW</string>
+    <string name="sf_day_mon">M</string>
+    <string name="sf_day_tue">T</string>
+    <string name="sf_day_wed">W</string>
+    <string name="sf_day_thu">T</string>
+    <string name="sf_day_fri">F</string>
+    <string name="sf_day_sat">S</string>
+    <string name="sf_day_sun">S</string>
+    <string name="sf_password_show">SHOW</string>
+    <string name="sf_password_hide">HIDE</string>
+    <string name="sf_password_show_description">Show password</string>
+    <string name="sf_password_hide_description">Hide password</string>
+    <string name="sf_loading">Loading</string>
+</resources>
