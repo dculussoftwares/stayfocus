@@ -9,6 +9,10 @@ android {
     defaultConfig {
         applicationId = "com.dculus.stayfocused"
     }
+
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -25,10 +29,20 @@ dependencies {
     implementation(project(":feature:insights"))
     implementation(project(":feature:account"))
 
+    implementation(project(":core:navigation"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.timber)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

@@ -19,4 +19,6 @@
     <string name="sf_dial_minutes">MINUTES</string>
     <string name="sf_dial_hour">HOUR</string>
     <string name="sf_dial_hours">HOURS</string>
+    <!-- Placeholder rows on screens that are not built yet (NavPlaceholderScreen); removed with it. -->
+    <string name="sf_placeholder_item">Placeholder row %1$d</string>
 </resources>

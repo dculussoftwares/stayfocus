@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="welcome_title">Welcome</string>
+    <string name="sign_in_title">Sign in</string>
+    <string name="permissions_title">Permissions</string>
+    <!-- Placeholder navigation; removed when the real onboarding screens land. -->
+    <string name="onboarding_placeholder_continue">Continue</string>
+</resources>
