@@ -4,6 +4,10 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.LimitPeriod
 import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -39,7 +43,7 @@ object RuleEvaluator {
     /** The earliest instant after `now` at which the decision for the app could change, or null if never. */
     fun nextEvaluationAt(ctx: EvaluationContext): Instant? {
         val now = ctx.now.toInstant()
-        if (ctx.pkg in ctx.allowlist) return null
+        if (ctx.pkg in ctx.allowlist || ctx.lockedApps.any { it.pkg == ctx.pkg }) return null
         val times = mutableListOf<Instant?>()
         ctx.allowances.filter { it.pkg == ctx.pkg }.forEach { times += it.until }
         times += ctx.breakSession?.endsAt
@@ -155,16 +159,33 @@ object RuleEvaluator {
         block: Block,
     ): Decision.Block? {
         val range = block.range ?: return null
-        val now = ctx.now
-        val time = now.toLocalTime()
-        if (time !in range) return null
-        // Overnight ranges belong to their start day: after midnight the start day is yesterday.
-        val afterMidnightPart = range.crossesMidnight && time < range.end
-        val startDay = if (afterMidnightPart) now.toLocalDate().minusDays(1) else now.toLocalDate()
-        if (startDay.dayOfWeek !in block.days) return null
-        val endDay = if (range.crossesMidnight) startDay.plusDays(1) else startDay
-        val end = ZonedDateTime.of(endDay, range.end, now.zone).toInstant()
+        val now = ctx.now.toInstant()
+        val today = ctx.now.toLocalDate()
+        // Overnight ranges belong to their start day, so yesterday's occurrence may still be running.
+        val end =
+            listOf(today.minusDays(1), today)
+                .filter { it.dayOfWeek in block.days }
+                .firstNotNullOfOrNull { day ->
+                    val endDay = if (range.crossesMidnight) day.plusDays(1) else day
+                    val start = localInstant(day, range.start, ctx.now.zone)
+                    val end = localInstant(endDay, range.end, ctx.now.zone)
+                    end.takeIf { start <= now && now < end }
+                } ?: return null
         return Decision.Block(BlockReason.SCHEDULE, block.id, end)
+    }
+
+    /**
+     * The instant a wall-clock time falls on. A time skipped by a spring-forward gap resolves to the moment the
+     * clocks jump; a repeated autumn time resolves to its first occurrence.
+     */
+    private fun localInstant(
+        date: LocalDate,
+        time: LocalTime,
+        zone: ZoneId,
+    ): Instant {
+        val local = LocalDateTime.of(date, time)
+        val transition = zone.rules.getTransition(local)
+        return if (transition != null && transition.isGap) transition.instant else local.atZone(zone).toInstant()
     }
 
     private fun blockChangeTimes(
@@ -191,8 +212,8 @@ object RuleEvaluator {
             .flatMap { day ->
                 val endDay = if (range.crossesMidnight) day.plusDays(1) else day
                 listOf(
-                    ZonedDateTime.of(day, range.start, ctx.now.zone).toInstant(),
-                    ZonedDateTime.of(endDay, range.end, ctx.now.zone).toInstant(),
+                    localInstant(day, range.start, ctx.now.zone),
+                    localInstant(endDay, range.end, ctx.now.zone),
                 )
             }
     }
@@ -203,6 +224,7 @@ object RuleEvaluator {
     ): List<Instant?> {
         val limitMins = block.limitMins ?: return emptyList()
         val period = block.period ?: return emptyList()
+        if (block.days.isEmpty) return emptyList()
         val boundary = periodEnd(ctx.now, period)
         if (ctx.now.dayOfWeek !in block.days) return listOf(boundary)
         val remainingMs = limitMins * MS_PER_MIN - combinedUsedMs(ctx, block, period)

@@ -373,11 +373,7 @@ class RuleEvaluatorTest {
         val firstTwo = ZonedDateTime.of(2026, 10, 25, 2, 30, 0, 0, BERLIN) // earlier offset (+02:00)
         val c = ctx(firstTwo, b, usage = mapOf(APP to AppUsageSnapshot(0, 5 * MIN)))
         assertEquals(
-            blocked(
-                BlockReason.LIMIT_HOURLY,
-                "b1",
-                firstTwo.truncatedTo(java.time.temporal.ChronoUnit.HOURS).plusHours(1).toInstant(),
-            ),
+            blocked(BlockReason.LIMIT_HOURLY, "b1", Instant.parse("2026-10-25T01:00:00Z")),
             RuleEvaluator.evaluate(c),
         )
     }
@@ -580,6 +576,44 @@ class RuleEvaluatorTest {
     @Test
     fun `nextEvaluationAt is null with nothing to wait for`() {
         assertEquals(null, RuleEvaluator.nextEvaluationAt(ctx(wed)))
+    }
+
+    @Test
+    fun `schedule ending in the repeated autumn hour ends at its first occurrence`() {
+        val b = block(type = BlockType.SCHEDULE, range = range("22:00–02:30"), days = DaysOfWeek.ALL)
+        val first = Instant.parse("2026-10-25T00:15:00Z") // 02:15 +02:00
+        val second = Instant.parse("2026-10-25T01:15:00Z") // 02:15 +01:00
+        val expectedEnd = Instant.parse("2026-10-25T00:30:00Z")
+        assertEquals(
+            blocked(BlockReason.SCHEDULE, "b1", expectedEnd),
+            RuleEvaluator.evaluate(ctx(first.atZone(BERLIN), b)),
+        )
+        assertEquals(Decision.Allow, RuleEvaluator.evaluate(ctx(second.atZone(BERLIN), b)))
+    }
+
+    @Test
+    fun `schedule starting in the spring gap starts when the clocks jump`() {
+        val b = block(type = BlockType.SCHEDULE, range = range("02:30–04:00"), days = DaysOfWeek.ALL)
+        val jump = Instant.parse("2026-03-29T01:00:00Z") // 03:00 local
+        val before = at("2026-03-29T01:00:00", BERLIN)
+        assertEquals(jump, RuleEvaluator.nextEvaluationAt(ctx(before, b)))
+        val after = jump.atZone(BERLIN)
+        assertEquals(
+            blocked(BlockReason.SCHEDULE, "b1", inst("2026-03-29T04:00:00", BERLIN)),
+            RuleEvaluator.evaluate(ctx(after, b)),
+        )
+    }
+
+    @Test
+    fun `nextEvaluationAt is null for manually locked apps`() {
+        val b = block(type = BlockType.NOW, durationMins = 60, startedAt = inst("2026-10-07T12:00:00"))
+        assertEquals(null, RuleEvaluator.nextEvaluationAt(ctx(wed, b, lockedApps = listOf(lock()))))
+    }
+
+    @Test
+    fun `nextEvaluationAt ignores a limit with no days`() {
+        val b = block(type = BlockType.LIMIT, limitMins = 60, period = LimitPeriod.DAILY, days = DaysOfWeek.NONE)
+        assertEquals(null, RuleEvaluator.nextEvaluationAt(ctx(wed, b)))
     }
 
     @Test
