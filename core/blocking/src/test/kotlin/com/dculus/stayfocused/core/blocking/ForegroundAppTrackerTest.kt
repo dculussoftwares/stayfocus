@@ -57,7 +57,7 @@ class ForegroundAppTrackerTest {
 
     @Test fun ownBlockScreenIsIgnoredButOwnOtherScreensCount() {
         tracker.onWindowStateChanged("com.a", "A")
-        tracker.onWindowStateChanged(env.ownPackage, ForegroundAppTracker.BLOCK_SCREEN_CLASS)
+        tracker.onWindowStateChanged(env.ownPackage, "com.dculus.stayfocused.core.blocking.screen.BlockActivity")
         assertEquals("com.a", tracker.foreground.value?.packageName)
         tracker.onWindowStateChanged(env.ownPackage, "com.dculus.stayfocused.MainActivity")
         assertEquals(env.ownPackage, tracker.foreground.value?.packageName)
