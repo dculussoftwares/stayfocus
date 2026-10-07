@@ -71,6 +71,8 @@ resource "google_project_iam_custom_role" "project_metadata_reader" {
   role_id     = "terraformProjectMetadataReader"
   title       = "Terraform project metadata reader"
   permissions = ["resourcemanager.projects.get"]
+
+  depends_on = [google_project_service.bootstrap]
 }
 
 resource "google_project_iam_member" "plan_project_metadata_reader" {
