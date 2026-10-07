@@ -142,7 +142,10 @@ fun RotaryDial(
                     setProgress { target ->
                         val snapped =
                             ((target / config.step).roundToInt() * config.step).coerceIn(config.step, config.max)
-                        if (snapped != currentValue) currentOnChange(snapped)
+                        if (snapped != currentValue) {
+                            currentOnChange(snapped)
+                            haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                        }
                         true
                     }
                 },
@@ -220,9 +223,20 @@ fun DialPresets(
     onPick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val haptics = LocalHapticFeedback.current
+
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         config.presets.forEach { preset ->
-            SelectChip(label = dialLabel(preset), selected = value == preset, onClick = { onPick(preset) })
+            SelectChip(
+                label = dialLabel(preset),
+                selected = value == preset,
+                onClick = {
+                    if (preset != value) {
+                        onPick(preset)
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+                    }
+                },
+            )
         }
     }
 }
