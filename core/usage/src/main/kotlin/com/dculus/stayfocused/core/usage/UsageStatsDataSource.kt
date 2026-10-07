@@ -118,7 +118,7 @@ internal fun mapEventType(
             RawEventType.ACTIVITY_RESUMED
         }
 
-        UsageEvents.Event.ACTIVITY_PAUSED, UsageEvents.Event.ACTIVITY_STOPPED -> {
+        UsageEvents.Event.ACTIVITY_PAUSED -> {
             RawEventType.ACTIVITY_PAUSED
         }
 
