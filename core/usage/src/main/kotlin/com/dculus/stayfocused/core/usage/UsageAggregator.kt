@@ -160,7 +160,7 @@ class UsageAggregator(
 
         /** Start of the next local hour after [at]; always strictly greater than [at]. */
         private fun nextHourBoundary(at: Long): Long {
-            val next =
+            val localHour =
                 Instant
                     .ofEpochMilli(at)
                     .atZone(zone)
@@ -168,11 +168,17 @@ class UsageAggregator(
                     .withMinute(0)
                     .withSecond(0)
                     .withNano(0)
-                    .plusHours(1)
-                    .atZone(zone)
-                    .toInstant()
-                    .toEpochMilli()
-            return if (next > at) next else at + 1
+
+            // A local hour can be repeated or skipped at a zone transition. Try each
+            // local hour boundary and retain only instants that are valid in this zone.
+            for (hoursAhead in 0..48) {
+                val candidate = localHour.plusHours(hoursAhead.toLong())
+                zone.rules.getValidOffsets(candidate).forEach { offset ->
+                    val boundary = candidate.atOffset(offset).toInstant().toEpochMilli()
+                    if (boundary > at) return boundary
+                }
+            }
+            return at + 1
         }
 
         fun toStats(date: LocalDate): DayUsageStats {
