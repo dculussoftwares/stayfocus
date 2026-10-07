@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import kotlin.math.cos
 import kotlin.math.sin
 
 private const val GAUGE_W = 300f
@@ -51,7 +50,7 @@ private fun polar(
     scale: Float,
 ): Offset {
     val t = Math.toRadians(deg.toDouble())
-    return Offset((CENTRE + r * sin(t).toFloat()) * scale, (CENTRE - r * cos(t).toFloat()) * scale)
+    return Offset((CENTRE + r * sin(t).toFloat()) * scale, (CENTRE - r * kotlin.math.cos(t).toFloat()) * scale)
 }
 
 /**
