@@ -4,6 +4,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -66,5 +67,20 @@ class SfBottomSheetTest {
         assertEquals(1, dismissals)
         composeRule.waitForIdle()
         composeRule.onNodeWithText("SHEET BODY").assertDoesNotExist()
+    }
+
+    @Test
+    fun repeatedDismissDuringExitNotifiesOnce() {
+        setSheet()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithTag(SF_SHEET_SCRIM_TAG).performClick()
+        assertEquals(1, dismissals)
+        Snapshot.sendApplyNotifications()
+        composeRule.mainClock.advanceTimeBy(32)
+        Espresso.pressBack()
+        assertEquals("after first back", 1, dismissals)
+        composeRule.mainClock.advanceTimeBy(100)
+        Espresso.pressBack()
+        assertEquals(1, dismissals)
     }
 }

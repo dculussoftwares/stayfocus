@@ -11,6 +11,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,11 +29,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import com.dculus.stayfocused.core.ui.theme.SF_SHEET_DURATION_MS
 import com.dculus.stayfocused.core.ui.theme.SfEasing
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -56,11 +60,15 @@ fun SfBottomSheet(
     val state = remember { MutableTransitionState(false) }
     state.targetState = visible
     if (state.currentState || state.targetState) {
+        // Ignore taps/back while the exit animation runs so the caller is notified once.
+        val dismissOnce = { if (state.targetState) onDismiss() }
         Dialog(
-            onDismissRequest = onDismiss,
+            onDismissRequest = dismissOnce,
             properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false),
         ) {
-            SfSheetLayout(state, onDismiss, modifier, content)
+            // The custom scrim is the only dimming; drop the dialog window's own dim.
+            (LocalView.current.parent as? DialogWindowProvider)?.window?.setDimAmount(0f)
+            SfSheetLayout(state, dismissOnce, modifier, content)
         }
     }
 }
@@ -104,12 +112,9 @@ private fun SfSheetLayout(
                     .fillMaxWidth()
                     .clip(shape.topOnly())
                     .background(colors.panel)
-                    // Swallow taps on the panel so they never reach the scrim.
-                    .clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = {},
-                    ).navigationBarsPadding()
+                    // Consume taps on the panel so they never reach the scrim (no click semantics).
+                    .pointerInput(Unit) { detectTapGestures { } }
+                    .navigationBarsPadding()
                     .padding(horizontal = StayFocusedTheme.spacing.gap16, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
