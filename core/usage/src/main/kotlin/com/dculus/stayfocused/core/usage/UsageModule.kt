@@ -10,4 +10,10 @@ import dagger.hilt.components.SingletonComponent
 internal abstract class UsageModule {
     @Binds
     abstract fun installedApps(impl: PackageManagerInstalledAppsRepository): InstalledAppsRepository
+
+    @Binds
+    abstract fun usageAccess(impl: AppOpsUsageAccess): UsageAccess
+
+    @Binds
+    abstract fun usageStats(impl: AndroidUsageStatsDataSource): UsageStatsDataSource
 }
