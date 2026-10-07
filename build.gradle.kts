@@ -142,6 +142,9 @@ val lintAll = tasks.register("lintAll") { group = "verification" }
 val unitTests = tasks.register("unitTests") { group = "verification" }
 val verifyScreenshots = tasks.register("verifyScreenshots") { group = "verification" }
 
+// The convention plugins' own tests (version scheme) live in the included build-logic build.
+unitTests { dependsOn(gradle.includedBuild("build-logic").task(":convention:test")) }
+
 subprojects {
     plugins.withId("com.android.library") { registerAndroidQualityTasks() }
     plugins.withId("com.android.application") { registerAndroidQualityTasks() }

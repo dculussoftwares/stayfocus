@@ -21,8 +21,7 @@ internal fun Project.configureRelease() {
                 providers
                     .gradleProperty("versionBuild")
                     .map(String::toInt)
-                    .orElse(0)
-                    .get(),
+                    .orNull,
         )
     val keystore = providers.environmentVariable(ENV_KEYSTORE).orNull?.takeIf { it.isNotBlank() }
 
