@@ -60,6 +60,7 @@ data class BlockRequest(
                 pkg,
                 intent.getStringExtra(EXTRA_LABEL),
                 Decision.Block(reason, intent.getStringExtra(EXTRA_BLOCK_ID), until),
+                intent.getLongExtra(EXTRA_TOKEN, 0L),
             )
         }
     }
@@ -119,6 +120,11 @@ class BlockActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        // A launch that went stale between onCreate and now must not claim the screen from a newer one.
+        if (request?.token?.let(BlockScreenState::accepts) != true) {
+            finishAndRemoveTask()
+            return
+        }
         BlockScreenState.visible = true
         BlockScreenState.onVisible?.invoke()
     }

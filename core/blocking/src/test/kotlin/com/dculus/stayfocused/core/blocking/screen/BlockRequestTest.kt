@@ -23,7 +23,12 @@ class BlockRequestTest {
     @Test
     fun `request survives the intent round trip`() {
         val request =
-            BlockRequest("com.example", "Example", Decision.Block(BlockReason.SCHEDULE, "b9", Instant.ofEpochMilli(42)))
+            BlockRequest(
+                "com.example",
+                "Example",
+                Decision.Block(BlockReason.SCHEDULE, "b9", Instant.ofEpochMilli(42)),
+                token = 5L,
+            )
         assertEquals(request, BlockRequest.from(request.toIntent(context)))
     }
 

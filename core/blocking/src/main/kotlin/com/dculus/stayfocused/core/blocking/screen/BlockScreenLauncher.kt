@@ -36,6 +36,7 @@ class BlockScreenLauncher
         private var service: AccessibilityService? = null
         private var overlay: AccessibilityOverlay? = null
         private var lastToken = 0L
+        private var pendingCheck: Runnable? = null
 
         init {
             // The activity made it to the screen (possibly late): the fallback overlay must not stay on top of it.
@@ -68,7 +69,7 @@ class BlockScreenLauncher
         /** Drops the pending launch check, makes a late-starting activity finish, and removes the overlay. */
         private fun invalidate() {
             BlockScreenState.activeToken = 0L
-            handler.removeCallbacksAndMessages(null)
+            cancelCheck()
             removeOverlay()
         }
 
@@ -82,7 +83,7 @@ class BlockScreenLauncher
             decision: Decision.Block,
         ) {
             val svc = service ?: return
-            handler.removeCallbacksAndMessages(null)
+            cancelCheck()
             val token = ++lastToken
             BlockScreenState.activeToken = token
             val request = BlockRequest(pkg, appLabel(pkg), decision, token)
@@ -91,9 +92,18 @@ class BlockScreenLauncher
                 showOverlay(svc, request)
                 return
             }
-            handler.postDelayed({
-                if (!BlockScreenState.visible && BlockScreenState.activeToken == token) showOverlay(svc, request)
-            }, LAUNCH_CHECK_MS)
+            val check =
+                Runnable {
+                    pendingCheck = null
+                    if (!BlockScreenState.visible && BlockScreenState.activeToken == token) showOverlay(svc, request)
+                }
+            pendingCheck = check
+            handler.postDelayed(check, LAUNCH_CHECK_MS)
+        }
+
+        private fun cancelCheck() {
+            pendingCheck?.let(handler::removeCallbacks)
+            pendingCheck = null
         }
 
         private fun startBlockActivity(request: BlockRequest): Boolean =
