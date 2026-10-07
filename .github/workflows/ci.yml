@@ -83,6 +83,18 @@ jobs:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
       - name: Unit tests and coverage
         run: ./gradlew unitTests koverXmlReport koverVerify --continue --configuration-cache
+      # Room regenerates core/data/schemas/<version>.json on build. Any diff means the schema changed without a
+      # version bump (or the new version's JSON was not committed).
+      - name: Room schema is committed and unchanged
+        run: |
+          # --rerun: a build-cache hit would otherwise skip KSP and leave the schema directory untouched.
+          ./gradlew :core:data:kspDebugKotlin --rerun --configuration-cache
+          if [ -n "$(git status --porcelain -- core/data/schemas)" ]; then
+            git status --porcelain -- core/data/schemas
+            git diff -- core/data/schemas
+            echo "::error::Room schema changed without a version bump, or the new schema JSON is not committed."
+            exit 1
+          fi
       - name: Publish test results
         if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
         continue-on-error: true

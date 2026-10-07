@@ -79,8 +79,8 @@ class AndroidRoomConventionPlugin : Plugin<Project> {
         with(target) {
             pluginManager.apply(libs.plugin("ksp"))
             extensions.configure<com.google.devtools.ksp.gradle.KspExtension> {
-                // Schemas are exported to /schemas at the repo root, one folder per module.
-                arg("room.schemaLocation", "${rootProject.projectDir}/schemas/${project.name}")
+                // Schemas are exported to <module>/schemas and committed; CI fails on drift without a version bump.
+                arg("room.schemaLocation", "${project.projectDir}/schemas")
             }
             dependencies {
                 add("implementation", libs.library("androidx-room-runtime"))
