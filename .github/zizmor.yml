@@ -1,0 +1,7 @@
+# zizmor configuration (security.yml, job workflow-audit). Every exception needs a reason.
+rules:
+  github-app:
+    ignore:
+      # The backlog App installation is scoped to this one repository and the org project; the apply job needs
+      # Repository -> Administration and the sync job needs Projects (docs/INFRASTRUCTURE.md, bootstrap step 3).
+      - backlog.yml

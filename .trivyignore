@@ -1,3 +1,8 @@
-# Trivy IaC exceptions (security.yml, job iac-trivy). One finding ID per line, with the reason and the story/issue above it.
-# Example:
-# AVD-GCP-0000
+# Trivy IaC exceptions (security.yml, job iac-trivy). One finding ID per line, with the reason above it.
+
+# This is an open-source project (GPL-3.0): the repository is public on purpose.
+GIT-0001
+
+# Dependabot alerts are enabled through the github_repository_vulnerability_alerts resource (the inline
+# argument is deprecated), which Trivy's check does not recognise.
+GIT-0003
