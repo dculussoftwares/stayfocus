@@ -33,13 +33,13 @@ jobs:
         include:
           - language: java-kotlin
             build-mode: manual
-            sources: "*.kt *.java"
+            sources: ":(glob)**/*.kt :(glob)**/*.java"
           - language: javascript-typescript
             build-mode: none
-            sources: "*.ts *.tsx *.js *.mjs *.cjs"
+            sources: ":(glob)firebase/functions/**/*.ts :(glob)firebase/functions/**/*.js"
           - language: actions
             build-mode: none
-            sources: ".github/workflows/*.yml"
+            sources: ":(glob).github/workflows/*.yml"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -63,6 +63,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
       - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
         if: steps.sources.outputs.found == 'true' && matrix.language == 'java-kotlin'
         with:

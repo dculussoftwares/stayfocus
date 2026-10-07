@@ -4,7 +4,7 @@ name: security
 # Blocking: dependency review (high), gitleaks, Trivy IaC (high/critical), tflint, zizmor (high).
 # CodeQL lives in codeql.yml and is reviewed in the Security tab.
 # Third-party actions are pinned to commit SHAs. No secrets are needed, so fork PRs work (fork PRs skip the
-# Gradle dependency-graph upload and the SARIF uploads, which need a write token).
+# SARIF uploads, which need a write token).
 
 on:
   pull_request:
@@ -25,10 +25,33 @@ env:
   TFLINT_VERSION: "v0.64.0"
 
 jobs:
-  # The dependency graph for Gradle is not built by GitHub itself; submit it so dependency review sees Gradle changes.
+  # GitHub does not build a dependency graph for Gradle itself, so dependency review needs one from the build.
+  # Pull requests (forks included) run untrusted build logic, so they only generate the graph and upload it as an
+  # artifact with a read-only token; dependency-graph-submit.yml (workflow_run, privileged, runs no PR code) submits it.
   gradle-dependency-graph:
     name: gradle-dependency-graph
-    if: ${{ github.event_name != 'schedule' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork != true) }}
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          dependency-graph: generate-and-upload
+          cache-disabled: true
+
+  # main is trusted code: submit the base snapshot that pull requests are compared against.
+  gradle-dependency-graph-main:
+    name: gradle-dependency-graph-main
+    if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 25
     permissions:
@@ -43,14 +66,14 @@ jobs:
           java-version: "17"
       - uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
+          dependency-graph: generate-and-submit
           cache-disabled: true
 
   dependency-review:
     name: dependency-review
-    if: ${{ github.event_name == 'pull_request' && !cancelled() && (needs.gradle-dependency-graph.result == 'success' || needs.gradle-dependency-graph.result == 'skipped') }}
-    needs: [gradle-dependency-graph]
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     permissions:
       contents: read
     steps:
@@ -60,9 +83,12 @@ jobs:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: high
-          # Licences that cannot be combined into a GPL-3.0 work (GPL-2.0-only, non-commercial and source-available terms).
-          deny-licenses: GPL-2.0-only, AGPL-1.0-only, SSPL-1.0, BUSL-1.1, CC-BY-NC-4.0, CC-BY-NC-SA-4.0, CC-BY-NC-ND-4.0
+          # Licences that cannot be combined into a GPL-3.0 work (GPL-2.0-only, CDDL, non-commercial and source-available terms).
+          deny-licenses: GPL-2.0-only, CDDL-1.0, AGPL-1.0-only, SSPL-1.0, BUSL-1.1, CC-BY-NC-4.0, CC-BY-NC-SA-4.0, CC-BY-NC-ND-4.0
           comment-summary-in-pr: never
+          # Wait for dependency-graph-submit.yml to submit the Gradle graph of this PR.
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 600
 
   gitleaks:
     name: gitleaks
@@ -177,7 +203,7 @@ jobs:
   security-pass:
     name: security-pass
     if: ${{ always() }}
-    needs: [gradle-dependency-graph, dependency-review, gitleaks, iac-trivy, iac-tflint, workflow-audit]
+    needs: [gradle-dependency-graph, gradle-dependency-graph-main, dependency-review, gitleaks, iac-trivy, iac-tflint, workflow-audit]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to succeed or be skipped

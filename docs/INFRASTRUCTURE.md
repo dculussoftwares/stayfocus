@@ -110,7 +110,7 @@ Firebase stories need; add roles there when a later infra story needs more.
 ### Security scanning (M1-15)
 
 - `.github/workflows/security.yml` (aggregate `security-pass`, required): dependency review (fails on high severity and on
-  licences incompatible with GPL-3.0; a Gradle dependency graph is submitted first), gitleaks (PR commits; full history on `main`
+  licences incompatible with GPL-3.0). Gradle is not in GitHub's dependency graph by itself: PRs generate it with a read-only token and `dependency-graph-submit.yml` (`workflow_run`, no PR code) submits it, `main` submits its own; the graph needs the dependency graph enabled, which the Dependabot alerts setting turns on after the first apply, gitleaks (PR commits; full history on `main`
   and weekly), Trivy config scan of `infra/` (SARIF to the Security tab, fails on high/critical; exceptions in `.trivyignore`
   with a reason), tflint with the google ruleset (`.tflint.hcl`, also used by the pre-commit hook), zizmor on the workflows (high).
 - `.github/workflows/codeql.yml`: CodeQL for `java-kotlin`, `javascript-typescript` and `actions` (PRs, `main`, weekly); alerts are
