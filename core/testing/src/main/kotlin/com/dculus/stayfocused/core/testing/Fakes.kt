@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.time.Clock
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 /** In-memory [BlockRepository]; behaviour is pinned to the Room implementation by a shared contract test. */
 class FakeBlockRepository : BlockRepository {
@@ -56,7 +57,12 @@ class FakeLockedAppsRepository(
         pkg: String,
         target: BlockTarget,
     ) = apps.update { all ->
-        if (all.any { it.pkg == pkg && it.target == target }) all else all + LockedApp(pkg, target, clock.instant())
+        if (all.any { it.pkg == pkg && it.target == target }) {
+            all
+        } else {
+            all +
+                LockedApp(pkg, target, clock.instant().truncatedTo(ChronoUnit.MILLIS))
+        }
     }
 
     override suspend fun unlock(
@@ -74,7 +80,7 @@ class FakeBreakRepository(
 
     override suspend fun start(mins: Int) {
         require(mins > 0) { "mins must be positive" }
-        val now = clock.instant()
+        val now = clock.instant().truncatedTo(ChronoUnit.MILLIS)
         session.value = BreakSession(now, now.plusSeconds(mins * SECONDS_PER_MINUTE), mins)
     }
 

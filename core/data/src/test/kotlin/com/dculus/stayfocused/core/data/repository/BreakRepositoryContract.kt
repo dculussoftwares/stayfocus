@@ -85,6 +85,19 @@ abstract class BreakRepositoryContract {
         }
 
     @Test
+    fun `sub millisecond clock precision is dropped`() =
+        runTest {
+            clock.set(clock.instant().plusNanos(999_999))
+            repo.start(1)
+            repo.observe().test {
+                val session = awaitItem()
+                assertEquals(session?.startedAt?.plusSeconds(60), session?.endsAt)
+                assertEquals(0, session?.startedAt?.nano?.rem(1_000_000))
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `end without a break is a no-op`() =
         runTest {
             repo.end()
