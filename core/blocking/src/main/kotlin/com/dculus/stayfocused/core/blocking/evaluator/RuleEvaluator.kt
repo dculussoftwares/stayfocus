@@ -4,10 +4,6 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.LimitPeriod
 import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -43,7 +39,8 @@ object RuleEvaluator {
     /** The earliest instant after `now` at which the decision for the app could change, or null if never. */
     fun nextEvaluationAt(ctx: EvaluationContext): Instant? {
         val now = ctx.now.toInstant()
-        if (ctx.pkg in ctx.allowlist || ctx.lockedApps.any { it.pkg == ctx.pkg }) return null
+        if (ctx.pkg in ctx.allowlist) return null
+        if (ctx.lockedApps.any { it.pkg == ctx.pkg }) return null
         val times = mutableListOf<Instant?>()
         ctx.allowances.filter { it.pkg == ctx.pkg }.forEach { times += it.until }
         times += ctx.breakSession?.endsAt
@@ -159,33 +156,16 @@ object RuleEvaluator {
         block: Block,
     ): Decision.Block? {
         val range = block.range ?: return null
-        val now = ctx.now.toInstant()
-        val today = ctx.now.toLocalDate()
-        // Overnight ranges belong to their start day, so yesterday's occurrence may still be running.
-        val end =
-            listOf(today.minusDays(1), today)
-                .filter { it.dayOfWeek in block.days }
-                .firstNotNullOfOrNull { day ->
-                    val endDay = if (range.crossesMidnight) day.plusDays(1) else day
-                    val start = localInstant(day, range.start, ctx.now.zone)
-                    val end = localInstant(endDay, range.end, ctx.now.zone)
-                    end.takeIf { start <= now && now < end }
-                } ?: return null
+        val now = ctx.now
+        val time = now.toLocalTime()
+        if (time !in range) return null
+        // Overnight ranges belong to their start day: after midnight the start day is yesterday.
+        val afterMidnightPart = range.crossesMidnight && time < range.end
+        val startDay = if (afterMidnightPart) now.toLocalDate().minusDays(1) else now.toLocalDate()
+        if (startDay.dayOfWeek !in block.days) return null
+        val endDay = if (range.crossesMidnight) startDay.plusDays(1) else startDay
+        val end = scheduleBoundary(endDay, range.end, now)
         return Decision.Block(BlockReason.SCHEDULE, block.id, end)
-    }
-
-    /**
-     * The instant a wall-clock time falls on. A time skipped by a spring-forward gap resolves to the moment the
-     * clocks jump; a repeated autumn time resolves to its first occurrence.
-     */
-    private fun localInstant(
-        date: LocalDate,
-        time: LocalTime,
-        zone: ZoneId,
-    ): Instant {
-        val local = LocalDateTime.of(date, time)
-        val transition = zone.rules.getTransition(local)
-        return if (transition != null && transition.isGap) transition.instant else local.atZone(zone).toInstant()
     }
 
     private fun blockChangeTimes(
@@ -199,6 +179,39 @@ object RuleEvaluator {
             BlockType.CYCLE -> cycleChangeTimes(ctx, block)
         }
 
+    /** Resolve a local boundary without moving it through a gap or choosing the wrong overlap. */
+    private fun scheduleBoundary(
+        day: java.time.LocalDate,
+        time: java.time.LocalTime,
+        reference: ZonedDateTime,
+        useReferenceOccurrence: Boolean = true,
+    ): Instant {
+        val zone = reference.zone
+        val local = java.time.LocalDateTime.of(day, time)
+        val offsets = zone.rules.getValidOffsets(local)
+        if (offsets.isEmpty()) {
+            // A skipped local time takes effect at the instant the clock jumps.
+            return zone.rules.getTransition(local).instant
+        }
+        val preferred = if (useReferenceOccurrence) reference.offset.takeIf { it in offsets } else null
+        return ZonedDateTime.ofLocal(local, zone, preferred ?: offsets.first()).toInstant()
+    }
+
+    private fun scheduleBoundaryCandidates(
+        day: java.time.LocalDate,
+        time: java.time.LocalTime,
+        zone: java.time.ZoneId,
+    ): List<Instant> {
+        val local = java.time.LocalDateTime.of(day, time)
+        val offsets = zone.rules.getValidOffsets(local)
+        return if (offsets.isEmpty()) {
+            // A skipped local time takes effect at the instant the clock jumps.
+            listOf(zone.rules.getTransition(local).instant)
+        } else {
+            offsets.map { ZonedDateTime.ofLocal(local, zone, it).toInstant() }
+        }
+    }
+
     private fun scheduleBoundaries(
         ctx: EvaluationContext,
         block: Block,
@@ -211,10 +224,8 @@ object RuleEvaluator {
             .filter { it.dayOfWeek in block.days }
             .flatMap { day ->
                 val endDay = if (range.crossesMidnight) day.plusDays(1) else day
-                listOf(
-                    localInstant(day, range.start, ctx.now.zone),
-                    localInstant(endDay, range.end, ctx.now.zone),
-                )
+                scheduleBoundaryCandidates(day, range.start, ctx.now.zone) +
+                    scheduleBoundaryCandidates(endDay, range.end, ctx.now.zone)
             }
     }
 
@@ -225,8 +236,13 @@ object RuleEvaluator {
         val limitMins = block.limitMins ?: return emptyList()
         val period = block.period ?: return emptyList()
         if (block.days.isEmpty) return emptyList()
+        if (ctx.now.dayOfWeek !in block.days) {
+            val nextDay = (1L..7L)
+                .map { ctx.now.toLocalDate().plusDays(it) }
+                .first { it.dayOfWeek in block.days }
+            return listOf(nextDay.atStartOfDay(ctx.now.zone).toInstant())
+        }
         val boundary = periodEnd(ctx.now, period)
-        if (ctx.now.dayOfWeek !in block.days) return listOf(boundary)
         val remainingMs = limitMins * MS_PER_MIN - combinedUsedMs(ctx, block, period)
         // Exhaustion assumes the app stays in the foreground; once exhausted only the reset matters.
         return if (remainingMs > 0) listOf(ctx.now.toInstant().plusMillis(remainingMs), boundary) else listOf(boundary)
