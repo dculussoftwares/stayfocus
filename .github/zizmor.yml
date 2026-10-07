@@ -5,3 +5,8 @@ rules:
       # The backlog App installation is scoped to this one repository and the org project; the apply job needs
       # Repository -> Administration and the sync job needs Projects (docs/INFRASTRUCTURE.md, bootstrap step 3).
       - backlog.yml
+  dangerous-triggers:
+    ignore:
+      # workflow_run is the documented way to submit a fork PR's Gradle dependency graph with a write token. The workflow
+      # checks out nothing, runs no PR-controlled code and only passes the uploaded graph to the Dependency Submission API.
+      - dependency-graph-submit.yml
