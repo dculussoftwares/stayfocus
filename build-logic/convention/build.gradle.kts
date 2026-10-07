@@ -16,6 +16,8 @@ dependencies {
     compileOnly(libs.ksp.gradlePlugin)
     compileOnly(libs.hilt.gradlePlugin)
     compileOnly(libs.google.services.gradlePlugin)
+
+    testImplementation(libs.junit4)
 }
 
 gradlePlugin {
