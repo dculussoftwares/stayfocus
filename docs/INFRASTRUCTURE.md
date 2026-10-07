@@ -110,9 +110,13 @@ Firebase stories need; add roles there when a later infra story needs more.
 ### Security scanning (M1-15)
 
 - `.github/workflows/security.yml` (aggregate `security-pass`, required): dependency review (fails on high severity and on
-  licences incompatible with GPL-3.0). Gradle is not in GitHub's dependency graph by itself: PRs generate it with a read-only token and `dependency-graph-submit.yml` (`workflow_run`, no PR code) submits it, `main` submits its own; the graph needs the dependency graph enabled, which the Dependabot alerts setting turns on after the first apply, gitleaks (PR commits; full history on `main`
-  and weekly), Trivy config scan of `infra/` (SARIF to the Security tab, fails on high/critical; exceptions in `.trivyignore`
-  with a reason), tflint with the google ruleset (`.tflint.hcl`, also used by the pre-commit hook), zizmor on the workflows (high).
+  licences incompatible with GPL-3.0), gitleaks (PR commits; full history on `main` and weekly), Trivy config scan of `infra/`
+  (SARIF to the Security tab, fails on high/critical; exceptions in `.trivyignore` with a reason), tflint with the google ruleset
+  (`.tflint.hcl`, also used by the pre-commit hook), zizmor on the workflows (high; exceptions in `.github/zizmor.yml`).
+- Gradle is not in GitHub's dependency graph by itself. `dependency-graph.yml` generates it (PRs, forks included, with a read-only
+  token and an uploaded artifact; `main` submits directly) and `dependency-graph-submit.yml` (`workflow_run`, runs no PR code)
+  submits the PR's graph while dependency review waits and retries. The dependency graph itself is turned on by the Dependabot
+  alerts setting, so the first PR after the first apply is the first one these jobs can pass.
 - `.github/workflows/codeql.yml`: CodeQL for `java-kotlin`, `javascript-typescript` and `actions` (PRs, `main`, weekly); alerts are
   reviewed in the Security tab and are not a merge gate. A language without sources yet is skipped.
 - `.github/dependabot.yml`: Gradle, npm (`firebase/functions`), GitHub Actions, Terraform and pre-commit, weekly, minor/patch grouped.

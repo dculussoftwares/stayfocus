@@ -1,0 +1,61 @@
+name: dependency-graph
+
+# GitHub does not build a dependency graph for Gradle itself, so dependency review (security.yml) needs one from the build (M1-15).
+# Pull requests (forks included) run untrusted build logic, so they only generate the graph and upload it as an artifact with a
+# read-only token; dependency-graph-submit.yml (workflow_run, privileged, runs no PR code) submits it. This is a workflow of its
+# own so that workflow_run fires as soon as the graph exists, while dependency review is still waiting for it.
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: dependency-graph-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gradle-dependency-graph:
+    name: gradle-dependency-graph
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          dependency-graph: generate-and-upload
+          cache-disabled: true
+
+  # main is trusted code: submit the base snapshot that pull requests are compared against.
+  gradle-dependency-graph-main:
+    name: gradle-dependency-graph-main
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write # Dependency Submission API
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          dependency-graph: generate-and-submit
+          cache-disabled: true
