@@ -140,4 +140,36 @@ class LocalBlockParserTest {
             assertEquals("limit", LocalBlockParser.parse(it, installed).type, it)
         }
     }
+
+    @Test
+    fun `both a longer installed label and the shorter known app are kept when both are named`() {
+        val withMusic = installed + AppInfo("com.google.android.apps.youtube.music", "YouTube Music")
+        assertEquals(
+            listOf("youtube music", "youtube"),
+            LocalBlockParser.parse("Block YouTube Music and YouTube for 20 minutes", withMusic).apps,
+        )
+    }
+
+    @Test
+    fun `a group phrase wins over an installed app with the same words`() {
+        val apps =
+            LocalBlockParser
+                .parse(
+                    "social media 20 min a day",
+                    installed + AppInfo("com.x.sm", "Social Media"),
+                ).apps
+        assertEquals(KnownApps.socialMediaIds.toSet(), apps.orEmpty().toSet())
+    }
+
+    @Test
+    fun `generic system app labels are not matched`() {
+        val phone = installed + AppInfo("com.android.dialer", "Phone")
+        assertEquals(listOf("instagram"), LocalBlockParser.parse("Block Instagram on my phone from 9 to 5", phone).apps)
+    }
+
+    @Test
+    fun `hour 24 is only valid as 24-00`() {
+        assertEquals("limit", LocalBlockParser.parse("Block X from 24:30 to 9:00", installed).type)
+        assertEquals("schedule", LocalBlockParser.parse("Block X from 24:00 to 9:00", installed).type)
+    }
 }

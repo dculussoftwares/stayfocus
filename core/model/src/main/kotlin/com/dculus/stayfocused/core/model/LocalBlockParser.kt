@@ -18,6 +18,8 @@ object LocalBlockParser {
         Regex("\\bthen\\b|\\brest\\b|\\bon\\b.*\\boff\\b|\\b(?:every|each) time\\b")
     private val WEAK_CYCLE = Regex("\\b(?:lock|block)\\b.*\\bfor\\b|\\bafter\\b")
     private val DAILY = Regex("\\b(?:a|per|each|every)\\s+day\\b|\\bdaily\\b|\\btoday\\b")
+    private val LOCK_WORD = Regex("\\b(?:lock|block|stop|ban)\\b")
+    private val AFTER = Regex("\\bafter\\b")
     private val NOW_WORDS = Regex("\\bnow\\b|\\bnext\\b|right away|straight away|immediately")
     private val LOCK_FOR = Regex("\\b(?:lock|block|stop|ban|no)\\b.*\\bfor\\b")
     private val LIMIT_WORDS = Regex("\\b(?:limit|allow|allowed|max|at most|only|cap|no more than|up to)\\b")
@@ -37,20 +39,39 @@ object LocalBlockParser {
         val mins = durations.map { it.mins }
         val daily = DAILY.containsMatchIn(text)
         val weakCycle = WEAK_CYCLE.containsMatchIn(text) && mins.size >= 2 && hourly == null && !daily
-        val range = if (strongCycle || weakCycle) null else ParserTimes.range(text)
+        val cycle = strongCycle || weakCycle
+        val range = if (cycle) null else ParserTimes.range(text)
         return when {
-            strongCycle || weakCycle -> {
-                AiBlockResult(type = "cycle", apps = apps, use = mins[0], rest = mins[1], days = days)
-            }
-
-            range != null -> {
-                AiBlockResult(type = "schedule", apps = apps, range = range, days = days)
-            }
-
-            else -> {
-                nowOrLimit(text, apps, days, mins, hourly != null, daily)
-            }
+            cycle -> cycleResult(text, apps, days, durations)
+            range != null -> AiBlockResult(type = "schedule", apps = apps, range = range, days = days)
+            else -> nowOrLimit(text, apps, days, mins, hourly != null, daily)
         }
+    }
+
+    private fun cycleResult(
+        text: String,
+        apps: List<String>,
+        days: List<String>?,
+        durations: List<ParsedDuration>,
+    ): AiBlockResult {
+        val (use, rest) = cycleRoles(text, durations)
+        return AiBlockResult(type = "cycle", apps = apps, use = use, rest = rest, days = days)
+    }
+
+    /**
+     * (use, rest) in the order spoken, except "lock X for 1 hour after 10 minutes", where the lock comes first
+     * but the allowance is the second amount.
+     */
+    private fun cycleRoles(
+        text: String,
+        durations: List<ParsedDuration>,
+    ): Pair<Double, Double> {
+        val first = durations[0]
+        val second = durations[1]
+        val between = text.substring(first.end, second.start)
+        val lockBefore = LOCK_WORD.containsMatchIn(text.substring(0, first.start))
+        val swap = lockBefore && AFTER.containsMatchIn(between) && !LOCK_WORD.containsMatchIn(between)
+        return if (swap) second.mins to first.mins else first.mins to second.mins
     }
 
     private fun nowOrLimit(
@@ -118,6 +139,34 @@ internal object ParserApps {
         )
     private val SOCIAL = Regex("\\bsocials?(?:\\s+media)?\\b")
 
+    /** Everyday words that are also labels of system apps; "on my phone" must not block the dialer. */
+    private val GENERIC_LABELS =
+        setOf(
+            "phone",
+            "messages",
+            "message",
+            "clock",
+            "camera",
+            "settings",
+            "calendar",
+            "files",
+            "news",
+            "contacts",
+            "photos",
+            "gallery",
+            "music",
+            "video",
+            "email",
+            "mail",
+            "browser",
+            "calculator",
+            "notes",
+            "weather",
+            "search",
+            "store",
+            "play",
+        )
+
     private data class Hit(
         val range: IntRange,
         val name: String,
@@ -130,15 +179,19 @@ internal object ParserApps {
     ): List<String> {
         val aliasHits = mutableListOf<Hit>()
         ALIASES.forEach { (id, names) ->
-            names.forEach { name -> wordRange(text, name)?.let { aliasHits += Hit(it, id) } }
+            names.forEach { name -> wordRanges(text, name).forEach { aliasHits += Hit(it, id) } }
         }
-        SOCIAL.find(text)?.let { m -> KnownApps.socialMediaIds.forEach { aliasHits += Hit(m.range, it) } }
+        // A group phrase beats an installed app that happens to share its words ("Social Media").
+        val groupRanges = SOCIAL.findAll(text).map { it.range }.toList()
+        groupRanges.forEach { r -> KnownApps.socialMediaIds.forEach { aliasHits += Hit(r, it) } }
         val idByPkg = KnownApps.packages.entries.associate { it.value to it.key }
         val labelHits = mutableListOf<Hit>()
         installed.forEach { app ->
             val label = app.label.lowercase(Locale.ROOT).trim()
-            if (label.length >= 2) {
-                wordRange(text, label)?.let { labelHits += Hit(it, idByPkg[app.pkg] ?: label) }
+            if (label.length >= 2 && label !in GENERIC_LABELS) {
+                wordRanges(text, label)
+                    .filter { it !in groupRanges }
+                    .forEach { labelHits += Hit(it, idByPkg[app.pkg] ?: label) }
             }
         }
         // "YouTube Music" installed: the word "youtube" inside it must not also select YouTube.
@@ -150,10 +203,10 @@ internal object ParserApps {
     private fun Hit.contains(other: Hit) =
         range.first <= other.range.first && range.last >= other.range.last && range != other.range
 
-    private fun wordRange(
+    private fun wordRanges(
         text: String,
         word: String,
-    ): IntRange? = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").find(text)?.range
+    ): List<IntRange> = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").findAll(text).map { it.range }.toList()
 }
 
 internal object ParserDurations {
@@ -284,7 +337,8 @@ internal object ParserTimes {
 
     /** 1-12 with am/pm, 0-24 without; minutes 0-59. */
     private fun Clock.isReal(): Boolean =
-        minute <= MAX_MINUTE && if (meridiem != null) hour in 1..NOON else hour <= HOURS_IN_DAY
+        minute <= MAX_MINUTE &&
+            if (meridiem != null) hour in 1..NOON else (hour < HOURS_IN_DAY || (hour == HOURS_IN_DAY && minute == 0))
 
     private fun String.startsWithWordAfter(m: MatchResult): Boolean =
         substring(m.range.last + 1).trimStart().let { it.startsWith("noon") || it.startsWith("midnight") }

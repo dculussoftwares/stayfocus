@@ -509,6 +509,17 @@
         ],
         "range": "12:00–13:00"
       }
+    },
+    {
+      "sentence": "Lock Instagram for 1 hour after 10 minutes",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 60
+      }
     }
   ]
 }
