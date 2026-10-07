@@ -81,7 +81,7 @@ fun SfTextField(
                     .clip(shape)
                     .background(c.panel)
                     .border(1.dp, borderColor, shape)
-                    .padding(start = 16.dp, end = if (isPassword) 4.dp else 16.dp),
+                    .padding(end = if (isPassword) 4.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BasicTextField(
@@ -104,7 +104,15 @@ fun SfTextField(
                             if (error != null) error(error)
                         },
                 decorationBox = { inner ->
-                    Box(contentAlignment = Alignment.CenterStart) {
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .heightIn(
+                                    min = 54.dp,
+                                ).padding(start = 16.dp, end = if (isPassword) 0.dp else 16.dp),
+                        contentAlignment = Alignment.CenterStart,
+                    ) {
                         if (value.isEmpty() && placeholder != null) {
                             Text(placeholder, style = StayFocusedTheme.type.bodyL, color = c.tertiary)
                         }

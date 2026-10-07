@@ -6,13 +6,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -60,6 +61,7 @@ private fun SfButton(
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
+    val focused by interaction.collectIsFocusedAsState()
     val s = style(StayFocusedTheme.colors, pressed)
     val shape = StayFocusedTheme.shapes.button
     val loadingDescription = stringResource(R.string.sf_loading)
@@ -67,12 +69,17 @@ private fun SfButton(
         modifier =
             modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .heightIn(min = 56.dp)
                 .alpha(if (enabled) 1f else DISABLED_ALPHA)
                 .clip(shape)
                 .background(s.container)
-                .then(if (s.border != null) Modifier.border(1.dp, s.border, shape) else Modifier)
-                .clickable(
+                .then(
+                    when {
+                        focused -> Modifier.border(2.dp, StayFocusedTheme.colors.text, shape)
+                        s.border != null -> Modifier.border(1.dp, s.border, shape)
+                        else -> Modifier
+                    },
+                ).clickable(
                     interactionSource = interaction,
                     indication = null,
                     enabled = enabled && !loading,

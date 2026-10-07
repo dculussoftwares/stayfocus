@@ -101,7 +101,7 @@ fun SelectChip(
     Box(
         modifier =
             modifier
-                .heightIn(min = MinTouch)
+                .sizeIn(minWidth = MinTouch, minHeight = MinTouch)
                 .clip(shape)
                 .background(if (selected) c.accent else c.panel)
                 .border(1.dp, if (selected) c.accent else c.hairline10, shape)
@@ -153,7 +153,7 @@ private fun RowScope.SegmentedTab(
         modifier =
             Modifier
                 .weight(1f)
-                .heightIn(min = MinTouch)
+                .sizeIn(minWidth = MinTouch, minHeight = MinTouch)
                 .clip(StayFocusedTheme.shapes.chip)
                 .background(if (selected) c.text else c.background.copy(alpha = 0f))
                 .selectable(selected = selected, role = Role.Tab, onClick = onClick),

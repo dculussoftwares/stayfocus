@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -80,8 +81,7 @@ class ComponentsScreenshotTest {
         composeRule.setContent {
             StayFocusedTheme { SfTextField("secret", {}, "Password", isPassword = true, enabled = false) }
         }
-        composeRule.onNodeWithContentDescription("Show password").performClick()
-        composeRule.onNodeWithContentDescription("Show password").assertExists()
+        composeRule.onNodeWithContentDescription("Show password").assertIsNotEnabled()
     }
 
     @Test
