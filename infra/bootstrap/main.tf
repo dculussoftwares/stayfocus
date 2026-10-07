@@ -9,6 +9,9 @@ resource "google_project" "env" {
   org_id          = var.org_id != "" ? var.org_id : null
   billing_account = var.billing_account
 
+  # No default VPC (it ships with open SSH/RDP rules); this foundation has no network workloads.
+  auto_create_network = false
+
   # Terraform must not delete a project by accident.
   deletion_policy = "PREVENT"
 }
@@ -37,6 +40,25 @@ resource "google_service_account" "deploy" {
   display_name = "Terraform deploy (GitHub Actions, ${each.key})"
 
   depends_on = [google_project_service.bootstrap]
+}
+
+# Read-only identity for pull-request plans (any ref of this repository). It can read, never change.
+resource "google_service_account" "plan" {
+  for_each = var.environments
+
+  project      = google_project.env[each.key].project_id
+  account_id   = "tf-plan"
+  display_name = "Terraform plan, read-only (GitHub Actions, ${each.key})"
+
+  depends_on = [google_project_service.bootstrap]
+}
+
+resource "google_project_iam_member" "plan" {
+  for_each = var.environments
+
+  project = google_project.env[each.key].project_id
+  role    = "roles/viewer"
+  member  = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 
 resource "google_project_iam_member" "deploy" {
@@ -69,23 +91,34 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   display_name                       = "GitHub OIDC"
 
   attribute_mapping = {
-    "google.subject"       = "assertion.sub"
-    "attribute.repository" = "assertion.repository"
-    "attribute.ref"        = "assertion.ref"
+    "google.subject"          = "assertion.sub"
+    "attribute.repository_id" = "assertion.repository_id"
+    # repository id + ref, so the deploy identity can be limited to one branch.
+    "attribute.repo_ref" = "assertion.repository_id + \":\" + assertion.ref"
   }
 
-  # Only this repository can use the provider.
-  attribute_condition = "assertion.repository == \"${var.github_repository}\""
+  # Only this repository can use the provider. The numeric id is immutable; names can be reused after a rename.
+  attribute_condition = "assertion.repository_id == \"${var.github_repository_id}\""
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
 }
 
-resource "google_service_account_iam_member" "wif" {
+# Deploy (apply) identity: only workflows running on the deploy branch of this repository.
+resource "google_service_account_iam_member" "wif_deploy" {
   for_each = var.environments
 
   service_account_id = google_service_account.deploy[each.key].name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repository/${var.github_repository}"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repo_ref/${var.github_repository_id}:refs/heads/${var.deploy_branch}"
+}
+
+# Plan identity: any ref of this repository (pull requests), read-only.
+resource "google_service_account_iam_member" "wif_plan" {
+  for_each = var.environments
+
+  service_account_id = google_service_account.plan[each.key].name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github[each.key].name}/attribute.repository_id/${var.github_repository_id}"
 }

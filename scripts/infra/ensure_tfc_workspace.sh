@@ -12,12 +12,22 @@ set -euo pipefail
 api="https://app.terraform.io/api/v2"
 auth=(-H "Authorization: Bearer ${TF_API_TOKEN}" -H "Content-Type: application/vnd.api+json")
 
-status=$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" \
+body=$(mktemp)
+trap 'rm -f "$body"' EXIT
+status=$(curl -sS -o "$body" -w '%{http_code}' "${auth[@]}" \
   "${api}/organizations/${TF_CLOUD_ORGANIZATION}/workspaces/${TF_WORKSPACE}")
 
 case "$status" in
   200)
     echo "HCP workspace ${TF_CLOUD_ORGANIZATION}/${TF_WORKSPACE} exists"
+    # Runs happen in GitHub Actions (cloud credentials live there), so the workspace must use Local execution mode.
+    mode=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["data"]["attributes"]["execution-mode"])' "$body")
+    ws_id=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["data"]["id"])' "$body")
+    if [ "$mode" != "local" ]; then
+      echo "Switching ${TF_WORKSPACE} from '${mode}' to local execution mode"
+      curl -sS --fail-with-body "${auth[@]}" -X PATCH "${api}/workspaces/${ws_id}" \
+        -d '{"data":{"type":"workspaces","attributes":{"execution-mode":"local"}}}' > /dev/null
+    fi
     ;;
   404)
     echo "Creating HCP workspace ${TF_CLOUD_ORGANIZATION}/${TF_WORKSPACE} (execution mode: local)"

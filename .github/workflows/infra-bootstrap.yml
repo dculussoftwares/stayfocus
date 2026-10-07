@@ -3,7 +3,8 @@ name: infra-bootstrap
 # One-time GCP foundation (infra/bootstrap): projects, billing link, Workload Identity Federation, deploy
 # service account. Manual only. Uses the TEMPORARY secret GCP_BOOTSTRAP_CREDENTIALS (a service-account key JSON of a
 # bootstrap identity). Delete that secret and the key right after the first successful run
-# (docs/INFRASTRUCTURE.md, Firebase/GCP). Secret GCP_BILLING_ACCOUNT holds the billing account ID.
+# (docs/INFRASTRUCTURE.md, Firebase/GCP); a workflow cannot delete a repository secret. Later role changes in
+# infra/bootstrap need a fresh temporary key the same way. Secret GCP_BILLING_ACCOUNT holds the billing account ID.
 
 on:
   workflow_dispatch:
@@ -25,6 +26,8 @@ env:
   TF_WORKSPACE: ${{ vars.TF_WORKSPACE_BOOTSTRAP || 'stayfocus-bootstrap' }}
   TF_VAR_billing_account: ${{ secrets.GCP_BILLING_ACCOUNT }}
   TF_VAR_org_id: ${{ vars.GCP_ORG_ID }}
+  # Immutable id of the repository running this workflow (forks use their own).
+  TF_VAR_github_repository_id: ${{ github.repository_id }}
   TF_IN_AUTOMATION: "true"
 
 defaults:
@@ -44,6 +47,9 @@ jobs:
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
           terraform_wrapper: false
+      - name: Project id override (forks)
+        if: vars.GCP_PROJECT_ID_DEV != ''
+        run: echo 'TF_VAR_environments={ dev = { project_id = "${{ vars.GCP_PROJECT_ID_DEV }}" } }' >> "$GITHUB_ENV"
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           credentials_json: ${{ secrets.GCP_BOOTSTRAP_CREDENTIALS }}

@@ -19,10 +19,15 @@ variable "org_id" {
   default     = ""
 }
 
-variable "github_repository" {
-  description = "GitHub repository (owner/name) allowed to impersonate the deploy service account."
+variable "github_repository_id" {
+  description = "Numeric GitHub repository ID allowed to use Workload Identity Federation (gh api repos/OWNER/NAME --jq .id). Immutable, unlike the name."
   type        = string
-  default     = "dculussoftwares/stayfocus"
+}
+
+variable "deploy_branch" {
+  description = "Branch whose workflows may impersonate the deploy service account."
+  type        = string
+  default     = "main"
 }
 
 variable "region" {
@@ -32,13 +37,9 @@ variable "region" {
 }
 
 variable "deploy_roles" {
-  description = "Project roles for the deploy service account. Extended by later infra stories as they need more."
+  description = "Project roles for the deploy service account. Least privilege: only what infra/firebase manages today (enabling APIs). Later infra stories add the roles they need (for example Firebase, Firestore, IAM) in their own PR."
   type        = list(string)
   default = [
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/firebase.admin",
-    "roles/datastore.owner",
-    "roles/iam.serviceAccountAdmin",
-    "roles/resourcemanager.projectIamAdmin",
   ]
 }

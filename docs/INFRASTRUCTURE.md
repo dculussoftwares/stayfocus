@@ -71,9 +71,10 @@ GitHub Actions authenticates through WIF; **no service-account key** is used for
 |---|---|---|
 | variable | `TF_CLOUD_ORGANIZATION` | HCP organization (already set) |
 | secret | `TF_API_TOKEN` | HCP token (already set) |
-| variable | `GCP_WIF_PROVIDER_DEV` | `projects.<number>.locations.global.workloadIdentityPools.github.providers.github` path from the bootstrap output `wif_provider` |
+| variable | `GCP_WIF_PROVIDER_DEV` | bootstrap output `wif_provider`, copied exactly (`projects/<number>/locations/global/workloadIdentityPools/github/providers/github`) |
 | variable | `GCP_DEPLOY_SA_DEV` | bootstrap output `deploy_service_acc` (`tf-deploy@stayfocus-dev.iam.gserviceaccount.com`) |
-| variable | `GCP_PROJECT_ID_DEV` | optional, default `stayfocus-dev` |
+| variable | `GCP_PLAN_SA_DEV` | bootstrap output `plan_service_acc`: read-only (`roles/viewer`) identity for PR plans |
+| variable | `GCP_PROJECT_ID_DEV` | optional, default `stayfocus-dev` (forks: your own unique project id) |
 | variable | `GCP_ORG_ID` | optional, GCP organization ID that owns the projects |
 | secret | `GCP_BILLING_ACCOUNT` | billing account ID, bootstrap only |
 | secret | `GCP_BOOTSTRAP_CREDENTIALS` | temporary key JSON of the bootstrap identity, **deleted after the first run** |
@@ -95,13 +96,18 @@ HCP workspaces `stayfocus-bootstrap` and `stayfocus-firebase-dev` are created in
 6. Merge any change under `infra/firebase`: the `infra-firebase` workflow applies it. A later `terraform plan` on `main`
    shows no changes. The workflow only warns (and skips) until the variables exist.
 
+Trust is bound to the numeric repository ID (names can be reused after a rename). Only workflows on `main` can
+impersonate `tf-deploy`; pull-request plans use the read-only `tf-plan`. Changing `deploy_roles` later means re-running
+infra-bootstrap with a fresh temporary key (steps 1-5), then deleting it again.
+
 The deploy service account's roles (`deploy_roles` in `infra/bootstrap/variables.tf`) are least-privilege for what the
 Firebase stories need; add roles there when a later infra story needs more.
 
 ### Forks
 
-Run the same bootstrap with your own billing account, then set `GCP_*` variables, `TF_CLOUD_ORGANIZATION` and
-`github_repository` (`-var github_repository=you/fork`) to point at your own project.
+Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
+`GCP_PROJECT_ID_DEV` to a unique project id, then set the `GCP_*` variables and `TF_CLOUD_ORGANIZATION` to point at
+your own project.
 
 ## Editing the backlog
 
