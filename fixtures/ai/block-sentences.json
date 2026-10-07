@@ -531,6 +531,55 @@
         "use": 10,
         "rest": 60
       }
+    },
+    {
+      "sentence": "Limit Instagram to 30 minutes next Monday",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 30,
+        "period": "daily",
+        "days": [
+          "mon"
+        ]
+      }
+    },
+    {
+      "sentence": "Don't block Instagram, block YouTube for 30 minutes",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "youtube"
+        ],
+        "now": 30
+      }
+    },
+    {
+      "sentence": "Block Instagram from midnight to 6am",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram"
+        ],
+        "range": "00:00–06:00"
+      }
+    },
+    {
+      "sentence": "Block Instagram on weekends and Monday from 9am to 5pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram"
+        ],
+        "range": "09:00–17:00",
+        "days": [
+          "mon",
+          "sat",
+          "sun"
+        ]
+      }
     }
   ]
 }

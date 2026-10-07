@@ -20,7 +20,11 @@ object LocalBlockParser {
     private val DAILY = Regex("\\b(?:a|per|each|every)\\s+day\\b|\\bdaily\\b|\\btoday\\b")
     private val LOCK_WORD = Regex("\\b(?:lock|block|stop|ban)\\b")
     private val ALLOWANCE_WORD = Regex("\\b(?:after|allow|allowed|use|let)\\b")
-    private val NOW_WORDS = Regex("\\bnow\\b|\\bnext\\b|right away|straight away|immediately")
+    private val NOW_WORDS =
+        Regex(
+            "\\bnow\\b|\\bnext\\s+(?:\\d|an?\\s|half|quarter|[a-z]+ (?:min|hour|hr))|" +
+                "right away|straight away|immediately",
+        )
     private val LOCK_FOR = Regex("\\b(?:lock|block|stop|ban|no)\\b.*\\bfor\\b")
     private val LIMIT_WORDS = Regex("\\b(?:limit|allow|allowed|max|at most|only|cap|no more than|up to)\\b")
 
@@ -140,6 +144,7 @@ internal object ParserApps {
     private const val BLOCK_VERB = "\\b(?:lock|block|stop|limit|ban|disable)\\s+(?:the\\s+)?"
     private const val APP_LIST_ITEM = "(?:[a-z0-9 ]{1,60}(?:,|\\band\\b)\\s*)*"
     private val TARGET_VERB = Regex("$BLOCK_VERB$APP_LIST_ITEM(?:the\\s+)?$")
+    private val ALIAS_NEGATION = Regex("(?:n't|\\bnot|\\bnever|\\bexcept|\\bwithout)\\b[^,;.]*$")
     private val NEGATION = Regex("(?:n't|\\bnot|\\bnever|\\bexcept|\\bwithout)\\s*(?:\\w+\\s+)?$")
     private val SOCIAL = Regex("\\bsocials?(?:\\s+media)?\\b")
 
@@ -212,7 +217,12 @@ internal object ParserApps {
             }
         }
         // "YouTube Music" installed: the word "youtube" inside it must not also select YouTube.
-        val all = aliasHits + labelHits
+        val all =
+            (aliasHits + labelHits).filterNot {
+                ALIAS_NEGATION.containsMatchIn(
+                    text.substring(0, it.range.first),
+                )
+            }
         val kept = all.filterNot { hit -> all.any { it.contains(hit) } }
         return kept.sortedBy { it.range.first }.map { it.name }.distinct()
     }
@@ -363,7 +373,7 @@ internal object ParserTimes {
     private fun MatchResult.wordClock(): Clock? =
         when (groupValues.getOrNull(WORD_GROUP)) {
             "noon" -> Clock(NOON, 0, 'p')
-            "midnight" -> Clock(0, 0, 'a')
+            "midnight" -> Clock(0, 0, null)
             else -> null
         }
 
@@ -420,12 +430,14 @@ internal object ParserDays {
 
     /** Day keys for the days named in [text]; null when none are (the normaliser then picks every day). */
     fun find(text: String): List<String>? {
-        val days =
+        val group =
             when {
                 WEEKDAYS.containsMatchIn(text) -> NAMES.subList(0, WEEKDAY_COUNT)
                 WEEKENDS.containsMatchIn(text) -> NAMES.subList(WEEKDAY_COUNT, NAMES.size)
-                else -> named(text)
+                else -> emptyList()
             }
+        // "weekends and Monday": the group plus the days named on top of it.
+        val days = (group + named(text)).distinct().sortedBy { NAMES.indexOf(it) }
         return days.takeIf { it.isNotEmpty() }
     }
 

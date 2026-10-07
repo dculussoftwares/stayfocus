@@ -10,6 +10,11 @@ object AiNormalizer {
     private val RANGE_REGEX = Regex("^\\d\\d:\\d\\d–\\d\\d:\\d\\d$")
     private val WEEKDAY_WORDS = Regex("weekday|school day|work day|workday")
     private val WEEKEND_WORDS = Regex("weekend")
+    private val NAMED_DAY =
+        Regex(
+            "\\b(?:mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|" +
+                "fri(?:day)?|sat(?:urday)?|sun(?:day)?)\\b",
+        )
     private val DAY_KEYS =
         listOf("mon", "tue", "wed", "thu", "fri", "sat", "sun").zip(DayOfWeek.entries).toMap()
     private val FALLBACK_IDS = listOf("instagram", "youtube")
@@ -87,10 +92,20 @@ object AiNormalizer {
                 .orEmpty()
                 .mapNotNull { DAY_KEYS[it.take(DAY_KEY_LENGTH).lowercase(Locale.ROOT)] }
                 .toTypedArray()
+        val group =
+            when {
+                WEEKDAY_WORDS.containsMatchIn(t) -> DaysOfWeek.WEEKDAYS
+                WEEKEND_WORDS.containsMatchIn(t) -> DaysOfWeek.WEEKENDS
+                else -> null
+            }
         return when {
-            WEEKDAY_WORDS.containsMatchIn(t) -> DaysOfWeek.WEEKDAYS
-            WEEKEND_WORDS.containsMatchIn(t) -> DaysOfWeek.WEEKENDS
+            // "weekends and Monday": keep the group and add the days the sentence names on top of it.
+            group != null && NAMED_DAY.containsMatchIn(t) -> DaysOfWeek(group.mask or DaysOfWeek.of(*chosen).mask)
+
+            group != null -> group
+
             chosen.isEmpty() -> DaysOfWeek.ALL
+
             else -> DaysOfWeek.of(*chosen)
         }
     }
