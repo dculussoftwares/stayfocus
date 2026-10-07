@@ -117,7 +117,7 @@ class AiNormalizerTest {
         assertEquals(setOf(ig, yt), norm(AiBlockResult(apps = listOf("nothing"))).apps)
         assertEquals(setOf(ig, yt), norm(AiBlockResult(apps = null)).apps)
         assertEquals(setOf(yt), norm(AiBlockResult(), apps = listOf(AppInfo(yt, "YouTube"))).apps)
-        assertEquals(setOf(ig, yt), norm(AiBlockResult(), apps = emptyList()).apps)
+        assertEquals(emptySet(), norm(AiBlockResult(), apps = emptyList()).apps)
     }
 
     @Test

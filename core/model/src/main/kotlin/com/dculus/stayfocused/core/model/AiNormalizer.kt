@@ -105,7 +105,7 @@ object AiNormalizer {
                 .toCollection(linkedSetOf())
         if (resolved.isNotEmpty()) return resolved
         val fallback = FALLBACK_IDS.map { KnownApps.packages.getValue(it) }
-        return fallback.filter { it in installedPkgs }.ifEmpty { fallback }.toCollection(linkedSetOf())
+        return fallback.filter { it in installedPkgs }.toCollection(linkedSetOf())
     }
 
     private fun resolveApp(
