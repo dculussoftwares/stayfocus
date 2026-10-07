@@ -1,0 +1,143 @@
+// Account deletion for the web (Play requirement). Signs the user in with the Firebase JS SDK, then calls the
+// `deleteAccount` callable, which deletes the user's data and Auth account (M6-06).
+// The Firebase web config is public by design; it is written to firebase-config.json at deploy time.
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithEmailAndPassword,
+  signOut,
+} from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js";
+
+const $ = (id) => document.getElementById(id);
+const status = $("status");
+
+function say(message, isError = false) {
+  status.textContent = message;
+  status.classList.toggle("error", isError);
+}
+
+async function loadConfig() {
+  try {
+    const response = await fetch("firebase-config.json", { cache: "no-store" });
+    if (!response.ok) return null;
+    const config = await response.json();
+    return config && config.apiKey ? config : null;
+  } catch {
+    return null;
+  }
+}
+
+function describe(error) {
+  switch (error && error.code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Wrong email or password.";
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "Sign-in was cancelled.";
+    case "functions/unauthenticated":
+    case "functions/permission-denied":
+      return "Please sign in again and retry.";
+    default:
+      return "Something went wrong. Please try again.";
+  }
+}
+
+async function main() {
+  const config = await loadConfig();
+  if (!config) {
+    $("unconfigured").hidden = false;
+    return;
+  }
+  const { functionsRegion, ...firebaseConfig } = config;
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const deleteAccount = httpsCallable(getFunctions(app, functionsRegion || "europe-west1"), "deleteAccount");
+
+  function show(signedIn) {
+    $("signin").hidden = signedIn;
+    $("confirm").hidden = !signedIn;
+  }
+
+  let confirmedUid = null;
+
+  function afterSignIn(user) {
+    confirmedUid = user.uid;
+    $("who").textContent = user.email || user.displayName || "your account";
+    show(true);
+  }
+
+  show(false);
+
+  // If the signed-in user changes (another tab, expiry), drop the confirmation.
+  onAuthStateChanged(auth, (user) => {
+    if (confirmedUid && (!user || user.uid !== confirmedUid)) {
+      confirmedUid = null;
+      show(false);
+    }
+  });
+
+  $("google").addEventListener("click", async () => {
+    say("");
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      afterSignIn(result.user);
+    } catch (error) {
+      if (error && error.code === "auth/popup-blocked") {
+        say("Your browser blocked the sign-in window. Allow pop-ups for this site, or sign in with email.", true);
+        return;
+      }
+      say(describe(error), true);
+    }
+  });
+
+  $("email-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    say("");
+    try {
+      const result = await signInWithEmailAndPassword(auth, $("email").value, $("password").value);
+      $("password").value = "";
+      afterSignIn(result.user);
+    } catch (error) {
+      say(describe(error), true);
+    }
+  });
+
+  $("cancel").addEventListener("click", async () => {
+    confirmedUid = null;
+    await signOut(auth);
+    show(false);
+    say("");
+  });
+
+  $("delete").addEventListener("click", async () => {
+    if (!window.confirm("Delete your account and all data? This cannot be undone.")) return;
+    if (!confirmedUid || !auth.currentUser || auth.currentUser.uid !== confirmedUid) {
+      confirmedUid = null;
+      show(false);
+      say("The signed-in account changed. Please sign in again.", true);
+      return;
+    }
+    $("delete").disabled = true;
+    say("Deleting...");
+    try {
+      await deleteAccount();
+      confirmedUid = null;
+      await signOut(auth).catch(() => {});
+      $("signin").hidden = true;
+      $("confirm").hidden = true;
+      say("Account and all data deleted.");
+    } catch (error) {
+      say(describe(error), true);
+      $("delete").disabled = false;
+    }
+  });
+}
+
+main();

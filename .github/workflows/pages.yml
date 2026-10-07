@@ -1,0 +1,74 @@
+name: pages
+
+# Deploys /web (privacy policy + account-deletion page) to GitHub Pages. Pages itself is enabled by Terraform
+# (infra/github, `github_repository_pages`, build_type workflow).
+# The Firebase web config (public values) is read from the infra/firebase Terraform state (HCP Terraform) and written to
+# web/firebase-config.json. Without it (before infra-firebase has applied) the site still deploys; the deletion page then
+# tells people to delete the account in the app.
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  # Run by hand after infra-firebase / backlog have applied, so the Firebase web config and the Pages setting exist.
+  # (No schedule or workflow_run: a deploy that cannot read Terraform state would silently disable web deletion.)
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
+  TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_DEV || 'stayfocus-dev' }}
+  TF_IN_AUTOMATION: "true"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        if: vars.TF_CLOUD_ORGANIZATION != ''
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - name: Write Firebase web config
+        if: vars.TF_CLOUD_ORGANIZATION != ''
+        run: |
+          # Reads state only (no GCP credentials). Missing state or output is not an error: the site deploys without it.
+          cd infra/firebase
+          # A failing init (bad token, HCP outage) fails the job on purpose; only a missing output is tolerated.
+          terraform init -input=false >/dev/null
+          if terraform output -json firebase_web_config > ../../web/firebase-config.json; then
+            echo "Firebase web config written."
+          else
+            rm -f ../../web/firebase-config.json
+            echo "::warning::firebase_web_config output not available yet; deploying without it"
+          fi
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

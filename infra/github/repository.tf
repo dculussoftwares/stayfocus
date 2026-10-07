@@ -44,6 +44,12 @@ resource "github_repository" "this" {
   }
 }
 
+# GitHub Pages for /web (M6-07), deployed by .github/workflows/pages.yml (actions/deploy-pages).
+resource "github_repository_pages" "this" {
+  repository = github_repository.this.name
+  build_type = "workflow"
+}
+
 # Dependabot alerts (M1-15).
 resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
