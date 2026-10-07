@@ -64,6 +64,16 @@ private fun SfButton(
     val focused by interaction.collectIsFocusedAsState()
     val s = style(StayFocusedTheme.colors, pressed)
     val shape = StayFocusedTheme.shapes.button
+    // Lime buttons get an off-white ring; every other variant gets the lime ring.
+    val colors = StayFocusedTheme.colors
+    val focusRing =
+        if (s.container == colors.accent ||
+            s.container == colors.accentHover
+        ) {
+            colors.text
+        } else {
+            colors.accent
+        }
     val loadingDescription = stringResource(R.string.sf_loading)
     Row(
         modifier =
@@ -75,7 +85,7 @@ private fun SfButton(
                 .background(s.container)
                 .then(
                     when {
-                        focused -> Modifier.border(2.dp, StayFocusedTheme.colors.text, shape)
+                        focused -> Modifier.border(2.dp, focusRing, shape)
                         s.border != null -> Modifier.border(1.dp, s.border, shape)
                         else -> Modifier
                     },
