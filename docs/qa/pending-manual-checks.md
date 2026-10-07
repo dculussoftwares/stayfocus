@@ -32,3 +32,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M6-07 Web privacy policy and account deletion
 - Check: both pages are live at the Pages URL and account deletion works from the web on dev.
 - How: after merge, `infra-firebase` applies, then run the `pages` workflow by hand (Actions, Run workflow). Open `https://dculussoftwares.github.io/stayfocus/privacy.html` and `delete-account.html`. If Google sign-in is rejected because the Pages domain is not an authorised Auth domain, leave this check pending and add the domain through Terraform (follow-up on the Identity Platform config), not a console. With a throwaway dev account (needs M6-06's `deleteAccount` deployed): use one throwaway account per method (Google, then email; create a new one after the first is deleted): sign in, delete, and confirm the Auth user and `users/{uid}` are gone. The URLs are then wired into the app (M6-05) and `docs/play/` (M10-01).
+
+## M1-09 Navigation shell
+- Check: Maestro flow `e2e/flows/navigation-tabs.yaml` passes on an emulator (onboarding placeholders, tabs, back to Home, Account keeps the tab bar). The Robolectric tests in `:app` already cover tab state, back behaviour and tab-bar visibility.
+- How: install `:app` on an emulator, then `maestro test e2e/flows/navigation-tabs.yaml`. Automated by M1-16.
