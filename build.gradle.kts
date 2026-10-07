@@ -128,6 +128,17 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
         "com.dculus.stayfocused.core.blocking.ForegroundAppService*",
         "com.dculus.stayfocused.core.blocking.AndroidForegroundEnvironment",
+        // Block screen UI and window plumbing (Activity, Compose host, accessibility overlay, launcher): covered by
+        // the manual/E2E checks; its logic (BlockCountdown, BlockRequest, decision source) is unit-tested.
+        "com.dculus.stayfocused.core.blocking.screen.BlockActivity",
+        "com.dculus.stayfocused.core.blocking.screen.BlockActivity$*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockHostKt*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockScreenKt*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockScreenState",
+        "com.dculus.stayfocused.core.blocking.screen.BlockScreenModule",
+        "com.dculus.stayfocused.core.blocking.screen.AccessibilityOverlay*",
+        "com.dculus.stayfocused.core.blocking.screen.BackAwareFrame",
         "*.MainActivity",
         "*.StayFocusedApp",
         "*.StayFocusedKidsApp",
