@@ -22,6 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -66,7 +70,10 @@ fun SfToggle(
                             onValueChange = onCheckedChange,
                         )
                     } else {
-                        Modifier
+                        Modifier.semantics {
+                            role = Role.Switch
+                            toggleableState = ToggleableState(checked)
+                        }
                     },
                 ),
         contentAlignment = Alignment.Center,

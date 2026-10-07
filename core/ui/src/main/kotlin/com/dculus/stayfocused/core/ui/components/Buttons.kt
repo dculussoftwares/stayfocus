@@ -151,7 +151,7 @@ fun GhostButton(
     loadingLabel: String? = null,
     leadingIcon: (@Composable () -> Unit)? = null,
 ) = SfButton(text, onClick, enabled, loading, loadingLabel, leadingIcon, modifier) { c, pressed ->
-    ButtonStyle(if (pressed) c.hairline08 else Color.Transparent, c.secondary)
+    ButtonStyle(if (pressed) c.hairline08 else c.background.copy(alpha = 0f), c.secondary)
 }
 
 /** The small ink tile (r8, 24 dp) used as a leading icon, e.g. the lime "+" in [WhiteButton]. */

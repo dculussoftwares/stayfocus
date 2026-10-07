@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertHeightIsAtLeast
+import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertWidthIsAtLeast
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -64,6 +65,23 @@ class ComponentsScreenshotTest {
         node.assertWidthIsAtLeast(48.dp).assertHeightIsAtLeast(48.dp)
         node.performClick()
         assertEquals(true, checked)
+    }
+
+    @Test
+    fun readOnlyToggleStillExposesSwitchSemantics() {
+        composeRule.setContent { StayFocusedTheme { SfToggle(checked = true, onCheckedChange = null) } }
+        composeRule
+            .onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Switch))
+            .assertIsOn()
+    }
+
+    @Test
+    fun disabledPasswordFieldCannotBeRevealed() {
+        composeRule.setContent {
+            StayFocusedTheme { SfTextField("secret", {}, "Password", isPassword = true, enabled = false) }
+        }
+        composeRule.onNodeWithContentDescription("Show password").performClick()
+        composeRule.onNodeWithContentDescription("Show password").assertExists()
     }
 
     @Test

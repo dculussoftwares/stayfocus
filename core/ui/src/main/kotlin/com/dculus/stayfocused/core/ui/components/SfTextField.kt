@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -65,7 +64,7 @@ fun SfTextField(
     val focused by interaction.collectIsFocusedAsState()
     val showDescription = stringResource(R.string.sf_password_show_description)
     val hideDescription = stringResource(R.string.sf_password_hide_description)
-    var revealed by rememberSaveable { mutableStateOf(false) }
+    var revealed by remember { mutableStateOf(false) }
     val borderColor =
         when {
             error != null -> c.alert
@@ -118,7 +117,7 @@ fun SfTextField(
                     modifier =
                         Modifier
                             .size(48.dp)
-                            .clickable(role = Role.Button) { revealed = !revealed }
+                            .clickable(enabled = enabled, role = Role.Button) { revealed = !revealed }
                             .semantics {
                                 contentDescription = if (revealed) hideDescription else showDescription
                             },
