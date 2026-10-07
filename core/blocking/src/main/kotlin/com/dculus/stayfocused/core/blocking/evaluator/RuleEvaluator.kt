@@ -43,9 +43,11 @@ object RuleEvaluator {
     /** The earliest instant after `now` at which the decision for the app could change, or null if never. */
     fun nextEvaluationAt(ctx: EvaluationContext): Instant? {
         val now = ctx.now.toInstant()
-        if (ctx.pkg in ctx.allowlist || ctx.lockedApps.any { it.pkg == ctx.pkg }) return null
+        if (ctx.pkg in ctx.allowlist) return null
         val times = mutableListOf<Instant?>()
         ctx.allowances.filter { it.pkg == ctx.pkg }.forEach { times += it.until }
+        // A manual lock only gives way to an allowance, so nothing else can change the decision.
+        if (ctx.lockedApps.any { it.pkg == ctx.pkg }) return times.filterNotNull().filter { it > now }.minOrNull()
         times += ctx.breakSession?.endsAt
         times += ctx.focusSession?.endsAt
         ctx.blocks.filter { it.enabled && ctx.pkg in it.apps }.forEach { times += blockChangeTimes(ctx, it) }

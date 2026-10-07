@@ -608,6 +608,12 @@ class RuleEvaluatorTest {
     fun `nextEvaluationAt is null for manually locked apps`() {
         val b = block(type = BlockType.NOW, durationMins = 60, startedAt = inst("2026-10-07T12:00:00"))
         assertEquals(null, RuleEvaluator.nextEvaluationAt(ctx(wed, b, lockedApps = listOf(lock()))))
+        // ...except that an allowance over the lock expires.
+        val allow = TemporaryAllowance(APP, inst("2026-10-07T12:50:00"))
+        assertEquals(
+            allow.until,
+            RuleEvaluator.nextEvaluationAt(ctx(wed, b, lockedApps = listOf(lock()), allowances = listOf(allow))),
+        )
     }
 
     @Test
