@@ -1,5 +1,5 @@
 plugins {
-    id("stayfocused.android.library")
+    id("stayfocused.android.library.compose")
     id("stayfocused.android.hilt")
 }
 
@@ -17,6 +17,8 @@ dependencies {
     implementation(project(":core:usage"))
     implementation(project(":core:ui"))
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)

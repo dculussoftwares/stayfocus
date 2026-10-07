@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
+import com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -13,6 +14,8 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class ForegroundAppService : AccessibilityService() {
     @Inject lateinit var tracker: ForegroundAppTracker
+
+    @Inject lateinit var launcher: BlockScreenLauncher
 
     private val screenOffReceiver =
         object : BroadcastReceiver() {
@@ -27,6 +30,7 @@ class ForegroundAppService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        launcher.attach(this)
         if (!receiverRegistered) {
             registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
             receiverRegistered = true
@@ -42,6 +46,7 @@ class ForegroundAppService : AccessibilityService() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         tracker.onScreenOff()
+        launcher.detach()
         return super.onUnbind(intent)
     }
 
