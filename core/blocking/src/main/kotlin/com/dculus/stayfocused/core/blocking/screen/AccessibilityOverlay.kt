@@ -3,6 +3,7 @@ package com.dculus.stayfocused.core.blocking.screen
 import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.PixelFormat
+import android.util.Log
 import android.view.KeyEvent
 import android.view.WindowManager
 import android.widget.FrameLayout
@@ -16,6 +17,7 @@ import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import java.time.Clock
 
 /**
  * Fallback when Android drops the background start of [BlockActivity]: the same screen as a full-screen
@@ -26,6 +28,7 @@ internal class AccessibilityOverlay(
     private val service: AccessibilityService,
     private val request: BlockRequest,
     private val decisionSource: BlockDecisionSource,
+    private val clock: Clock,
     private val extras: BlockScreenExtras?,
     private val onRemoved: () -> Unit,
     /** The user (or an Allow decision) ended this block, as opposed to the activity taking over the screen. */
@@ -52,7 +55,7 @@ internal class AccessibilityOverlay(
         root.setViewTreeSavedStateRegistryOwner(this)
         composeView.setContent {
             StayFocusedTheme {
-                BlockHost(request, decisionSource, extras, onGoHome = ::goHome, onAllow = ::finish)
+                BlockHost(request, decisionSource, clock, extras, onGoHome = ::goHome, onAllow = ::finish)
             }
         }
         val params =
@@ -63,7 +66,16 @@ internal class AccessibilityOverlay(
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.OPAQUE,
             )
-        windowManager.addView(root, params)
+        try {
+            windowManager.addView(root, params)
+        } catch (e: WindowManager.BadTokenException) {
+            // The service disconnected under us: leave nothing half-attached.
+            Log.w(TAG, "Overlay could not be attached", e)
+            composeView.disposeComposition()
+            lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+            onRemoved()
+            return
+        }
         view = root
         compose = composeView
     }
@@ -100,3 +112,5 @@ private class BackAwareFrame(
         return true
     }
 }
+
+private const val TAG = "AccessibilityOverlay"

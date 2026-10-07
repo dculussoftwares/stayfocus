@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import kotlinx.coroutines.delay
+import java.time.Clock
 import java.time.Instant
 
 private const val TICK_MS = 1000L
@@ -22,16 +23,17 @@ private const val TICK_MS = 1000L
 internal fun BlockHost(
     request: BlockRequest,
     decisionSource: BlockDecisionSource,
+    clock: Clock,
     extras: BlockScreenExtras?,
     onGoHome: () -> Unit,
     onAllow: () -> Unit,
 ) {
     var decision by remember(request) { mutableStateOf<Decision>(request.decision) }
-    var now by remember(request) { mutableStateOf(Instant.now()) }
+    var now by remember(request) { mutableStateOf(clock.instant()) }
     val allow by rememberUpdatedState(onAllow)
     LaunchedEffect(request) {
         while (true) {
-            now = Instant.now()
+            now = clock.instant()
             decision = decisionSource.current(request.pkg, request.decision, now)
             if (decision is Decision.Allow) {
                 allow()

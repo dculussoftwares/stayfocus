@@ -10,6 +10,7 @@ import android.os.Looper
 import android.util.Log
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.time.Clock
 import java.util.Optional
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,6 +31,7 @@ class BlockScreenLauncher
     constructor(
         @ApplicationContext private val context: Context,
         private val decisionSource: BlockDecisionSource,
+        private val clock: Clock,
         private val extras: Optional<BlockScreenExtras>,
     ) {
         private val handler = Handler(Looper.getMainLooper())
@@ -128,6 +130,7 @@ class BlockScreenLauncher
                     svc,
                     request,
                     decisionSource,
+                    clock,
                     extras.orElse(null),
                     onRemoved = { overlay = null },
                     onFinished = { BlockScreenState.activeToken = 0L },

@@ -18,6 +18,7 @@ import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.time.Clock
 import java.time.Instant
 import java.util.Optional
 import javax.inject.Inject
@@ -71,6 +72,10 @@ internal object BlockScreenState {
     @Volatile
     var visible: Boolean = false
 
+    /** The activity instance that set [visible]; only it may clear it (an old instance can stop late). */
+    @Volatile
+    var visibleOwner: Any? = null
+
     /** Token of the launch the launcher currently stands behind; 0 = none. */
     @Volatile
     var activeToken: Long = 0L
@@ -90,6 +95,8 @@ internal object BlockScreenState {
 @AndroidEntryPoint
 class BlockActivity : ComponentActivity() {
     @Inject lateinit var decisionSource: BlockDecisionSource
+
+    @Inject lateinit var clock: Clock
 
     @Inject lateinit var extras: Optional<BlockScreenExtras>
 
@@ -125,12 +132,16 @@ class BlockActivity : ComponentActivity() {
             finishAndRemoveTask()
             return
         }
+        BlockScreenState.visibleOwner = this
         BlockScreenState.visible = true
         BlockScreenState.onVisible?.invoke()
     }
 
     override fun onStop() {
-        BlockScreenState.visible = false
+        if (BlockScreenState.visibleOwner === this) {
+            BlockScreenState.visible = false
+            BlockScreenState.visibleOwner = null
+        }
         super.onStop()
     }
 
@@ -141,6 +152,7 @@ class BlockActivity : ComponentActivity() {
         BlockHost(
             request = current,
             decisionSource = decisionSource,
+            clock = clock,
             extras = extras.orElse(null),
             onGoHome = ::goHome,
             onAllow = ::finishAndRemoveTask,
