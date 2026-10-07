@@ -64,6 +64,10 @@ class ComponentsScreenshotTest {
 
     @Test fun ledBarChart() = shot("LedBarChart") { LedBarChartPreview() }
 
+    @Test fun tabBar() = shot("SfTabBar") { SfTabBarPreview() }
+
+    @Test fun navPlaceholderScreen() = shot("NavPlaceholderScreen") { NavPlaceholderScreenPreview() }
+
     @Test
     fun toggleHasSwitchRoleAndTouchTarget() {
         var checked by mutableStateOf(false)

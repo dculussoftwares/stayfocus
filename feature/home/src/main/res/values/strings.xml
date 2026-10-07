@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title">Home</string>
+    <!-- Placeholder navigation; removed when the real Home screen lands. -->
+    <string name="home_placeholder_open_account">Open Account</string>
+</resources>

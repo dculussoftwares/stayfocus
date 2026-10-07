@@ -4,27 +4,30 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.activity.viewModels
+import androidx.compose.runtime.collectAsState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.navigation.AppStartViewModel
+import com.dculus.stayfocused.navigation.StayFocusedNavigation
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private val appStart: AppStartViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
-        installSplashScreen()
+        installSplashScreen().setKeepOnScreenCondition { appStart.startGraph.value == null }
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         setContent {
             StayFocusedTheme {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(text = stringResource(R.string.placeholder_message))
-                }
+                appStart.startGraph
+                    .collectAsState()
+                    .value
+                    ?.let {
+                        StayFocusedNavigation(startGraph = it, onFinishOnboarding = appStart::completeOnboarding)
+                    }
             }
         }
     }

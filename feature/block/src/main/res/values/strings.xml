@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="block_title">Block</string>
+    <string name="block_wizard_title">New block</string>
+    <!-- Placeholder navigation; removed when the real Block screen lands. -->
+    <string name="block_placeholder_new_block">New block</string>
+</resources>

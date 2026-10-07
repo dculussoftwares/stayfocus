@@ -28,3 +28,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M1-15 Security scanning
 - Check: after the first apply, secret scanning, push protection and Dependabot alerts are enabled and the next plan shows no drift; a PR adding a dependency with a known critical CVE fails dependency review; a PR adding a public Firestore rule or an over-privileged IAM binding is flagged by Trivy or CodeRabbit.
 - How: Settings > Code security on GitHub; then try the two cases on a throwaway PR (needs the live repository and the M1-12 App permissions).
+
+## M1-09 Navigation shell
+- Check: Maestro flow `e2e/flows/navigation-tabs.yaml` passes on an emulator (onboarding placeholders, tabs, back to Home, Account keeps the tab bar). The Robolectric tests in `:app` already cover tab state, back behaviour and tab-bar visibility.
+- How: install `:app` on an emulator, then `maestro test e2e/flows/navigation-tabs.yaml`. Automated by M1-16.

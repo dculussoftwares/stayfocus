@@ -1,0 +1,22 @@
+# M1-09: the app opens on onboarding (flag stub = false); Continue x3 reaches Home, then the tabs work.
+appId: com.dculus.stayfocused
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Welcome"
+- tapOn: "Continue"
+- assertVisible: "Sign in"
+- tapOn: "Continue"
+- assertVisible: "Permissions"
+- tapOn: "Continue"
+- assertVisible: "Home"
+- tapOn: "BLOCK"
+- assertVisible: "New block"
+- tapOn: "DEVICES"
+- tapOn: "INSIGHTS"
+- back
+- assertVisible: "Open Account"
+- tapOn: "Open Account"
+- assertVisible: "Account"
+# The tab bar stays visible on Account.
+- assertVisible: "BLOCK"

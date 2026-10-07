@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devices_title">Devices</string>
+    <string name="link_add_title">Link a phone</string>
+    <string name="link_scan_title">Scan code</string>
+    <string name="link_confirm_title">Confirm link</string>
+    <string name="remote_device_title">Remote device</string>
+    <!-- Placeholder navigation; removed when the real screens land. -->
+    <string name="devices_placeholder_link">Link a phone</string>
+    <string name="devices_placeholder_open_device">Open remote device</string>
+    <string name="devices_placeholder_scan">Scan code</string>
+    <string name="devices_placeholder_scanned">Simulate a scan</string>
+</resources>

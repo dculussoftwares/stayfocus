@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Stay Focused</string>
-    <string name="placeholder_message">Stay Focused</string>
+    <string name="tab_home">HOME</string>
+    <string name="tab_block">BLOCK</string>
+    <string name="tab_devices">DEVICES</string>
+    <string name="tab_insights">INSIGHTS</string>
 </resources>
