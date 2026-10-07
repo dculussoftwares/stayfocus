@@ -19,6 +19,16 @@ internal data class ReleaseVersion(
         private val PATTERN = Regex("""^v?(\d+)\.(\d+)\.(\d+)(?:-([0-9A-Za-z.-]+))?$""")
         private val TRAILING_NUMBER = Regex("""(\d+)$""")
 
+        private const val GROUP_MAJOR = 1
+        private const val GROUP_MINOR = 2
+        private const val GROUP_PATCH = 3
+        private const val GROUP_SUFFIX = 4
+
+        private fun number(
+            groups: MatchGroupCollection,
+            index: Int,
+        ): Long = groups[index]?.value?.toLongOrNull() ?: Long.MAX_VALUE
+
         /** Parses a tag or version name (leading `v` optional); [build] overrides the derived build number. */
         fun parse(
             raw: String,
@@ -27,10 +37,11 @@ internal data class ReleaseVersion(
             val trimmed = raw.trim()
             val match =
                 requireNotNull(PATTERN.matchEntire(trimmed)) { "Invalid version '$raw', expected vMAJOR.MINOR.PATCH" }
-            val (_, majorText, minorText, patchText, suffix) = match.groupValues
-            val major = majorText.toLongOrNull() ?: Long.MAX_VALUE
-            val minor = minorText.toLongOrNull() ?: Long.MAX_VALUE
-            val patch = patchText.toLongOrNull() ?: Long.MAX_VALUE
+            val groups = match.groups
+            val major = number(groups, GROUP_MAJOR)
+            val minor = number(groups, GROUP_MINOR)
+            val patch = number(groups, GROUP_PATCH)
+            val suffix = groups[GROUP_SUFFIX]?.value.orEmpty()
             val derived =
                 if (suffix.isEmpty()) {
                     FINAL_BUILD
