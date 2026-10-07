@@ -75,7 +75,7 @@ GitHub Actions authenticates through WIF; **no service-account key** is used for
 | secret | `TF_API_TOKEN` | HCP token (already set) |
 | variable | `GCP_WIF_PROVIDER_DEV` | bootstrap output `wif_provider`, copied exactly (`projects/<number>/locations/global/workloadIdentityPools/github/providers/github`) |
 | variable | `GCP_DEPLOY_SA_DEV` | bootstrap output `deploy_service_acc` (`tf-deploy@stayfocus-dev.iam.gserviceaccount.com`) |
-| variable | `GCP_PLAN_SA_DEV` | bootstrap output `plan_service_acc`: read-only (`serviceUsageViewer` + `browser`) identity for PR plans |
+| variable | `GCP_PLAN_SA_DEV` | bootstrap output `plan_service_acc`: read-only (`serviceUsageViewer` + a project metadata-reader role) identity for PR plans |
 | variable | `GCP_PROJECT_ID_DEV` | optional, default `stayfocus-dev` (forks: your own unique project id) |
 | variable | `GCP_ORG_ID` | optional, GCP organization ID that owns the projects |
 | secret | `GCP_BILLING_ACCOUNT` | billing account ID, bootstrap only |

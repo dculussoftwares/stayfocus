@@ -62,13 +62,31 @@ resource "google_project_iam_member" "plan" {
 }
 
 # The google provider resolves the project number with resourcemanager.projects.get before it reads a
-# service; serviceUsageViewer lacks it, so every PR plan failed with 403. roles/browser is read-only.
-resource "google_project_iam_member" "plan_browser" {
+# service; neither serviceUsageViewer nor serviceUsageAdmin has it, so every PR plan failed with 403. A custom
+# role keeps it to that one permission (roles/browser would also grant getIamPolicy and hierarchy reads).
+resource "google_project_iam_custom_role" "project_metadata_reader" {
+  for_each = var.environments
+
+  project     = google_project.env[each.key].project_id
+  role_id     = "terraformProjectMetadataReader"
+  title       = "Terraform project metadata reader"
+  permissions = ["resourcemanager.projects.get"]
+}
+
+resource "google_project_iam_member" "plan_project_metadata_reader" {
   for_each = var.environments
 
   project = google_project.env[each.key].project_id
-  role    = "roles/browser"
+  role    = google_project_iam_custom_role.project_metadata_reader[each.key].name
   member  = "serviceAccount:${google_service_account.plan[each.key].email}"
+}
+
+resource "google_project_iam_member" "deploy_project_metadata_reader" {
+  for_each = var.environments
+
+  project = google_project.env[each.key].project_id
+  role    = google_project_iam_custom_role.project_metadata_reader[each.key].name
+  member  = "serviceAccount:${google_service_account.deploy[each.key].email}"
 }
 
 resource "google_project_iam_member" "deploy" {

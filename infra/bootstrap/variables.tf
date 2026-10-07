@@ -41,6 +41,5 @@ variable "deploy_roles" {
   type        = list(string)
   default = [
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/browser", # resourcemanager.projects.get, needed to read project services
   ]
 }
