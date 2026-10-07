@@ -77,8 +77,8 @@ internal class AccessibilityOverlay(
     }
 
     private fun goHome() {
-        service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
-        remove()
+        // Keep the overlay if Home did not happen: removing it would expose the blocked app.
+        if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) remove()
     }
 }
 

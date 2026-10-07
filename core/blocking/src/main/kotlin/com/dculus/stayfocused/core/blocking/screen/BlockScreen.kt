@@ -8,9 +8,12 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -66,6 +69,7 @@ fun BlockScreen(
             modifier
                 .fillMaxSize()
                 .background(Brush.radialGradient(listOf(gradientTop, colors.background), radius = 1400f))
+                .windowInsetsPadding(WindowInsets.safeDrawing)
                 .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 26.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
