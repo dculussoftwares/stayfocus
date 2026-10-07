@@ -132,12 +132,7 @@ jobs:
         env:
           TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
         run: ../../scripts/infra/ensure_tfc_workspace.sh
-      - run: terraform init -input=false
-      - run: terraform apply -input=false -auto-approve
-      - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
-      - name: Link sub-issues and dependencies
-        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" relations
-      - name: Mint GitHub App token for the project board
+      - name: Mint GitHub App token (repo settings and project board)
         id: app
         if: vars.BACKLOG_APP_CLIENT_ID != ''
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
@@ -145,6 +140,20 @@ jobs:
           client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
           private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+      - run: terraform init -input=false
+      - name: Terraform apply
+        # Repo settings and the main ruleset need Repository -> Administration, which GITHUB_TOKEN lacks.
+        env:
+          APP_TOKEN: ${{ steps.app.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.app.outputs.token || github.token }}
+        run: |
+          if [ -z "${APP_TOKEN}" ]; then
+            echo "::warning title=No GitHub App token::Repository settings and the main ruleset need the stayfocus-automation App (Administration permission); their apply will fail with 403 (docs/INFRASTRUCTURE.md)."
+          fi
+          terraform apply -input=false -auto-approve
+      - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
+      - name: Link sub-issues and dependencies
+        run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" relations
       - name: Sync project board (org project #11)
         env:
           GH_TOKEN: ${{ steps.app.outputs.token || secrets.BACKLOG_PROJECT_TOKEN }}
