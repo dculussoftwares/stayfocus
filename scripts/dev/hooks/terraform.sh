@@ -40,6 +40,8 @@ for d in $dirs; do
   terraform -chdir="$root/$d" fmt -check -diff || status=1
   terraform -chdir="$root/$d" init -backend=false -input=false -no-color >/dev/null || status=1
   terraform -chdir="$root/$d" validate -no-color || status=1
-  "$tflint_bin" --chdir="$root/$d" || status=1
+  # tflint --init downloads the ruleset from GitHub releases; an unauthenticated call is rate limited.
+  GITHUB_TOKEN="${GITHUB_TOKEN:-$(gh auth token 2>/dev/null || true)}" "$tflint_bin" --init --config "$root/.tflint.hcl" >/dev/null || status=1
+  "$tflint_bin" --chdir="$root/$d" --config "$root/.tflint.hcl" || status=1
 done
 exit "$status"

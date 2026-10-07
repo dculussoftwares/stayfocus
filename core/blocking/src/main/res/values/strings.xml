@@ -1,4 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="foreground_service_description">Stay Focused sees which app is on your screen so it can block the apps you choose. It never reads messages, passwords or typing, and nothing leaves this phone.</string>
+
+    <!-- Block screen -->
+    <string name="block_locked_label">%1$s · LOCKED</string>
+    <string name="block_go_home">Go to home screen</string>
+    <string name="block_opens_in">OPENS IN</string>
+    <string name="block_until">UNTIL %1$s</string>
+
+    <string name="block_reason_break">You\'re on a break.</string>
+    <string name="block_reason_focus">Focus session in progress.</string>
+    <string name="block_reason_now">Locked right now.</string>
+    <string name="block_reason_limit_daily">Today\'s limit is used up.</string>
+    <string name="block_reason_limit_hourly">This hour\'s limit is used up.</string>
+    <string name="block_reason_cycle_rest">Time to rest.</string>
+    <string name="block_reason_schedule">Outside your allowed hours.</string>
+    <string name="block_reason_manual_lock">You locked this app.</string>
 </resources>

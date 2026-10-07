@@ -37,5 +37,7 @@ variable "required_approvals" {
 variable "required_status_checks" {
   description = "Status checks that must pass before merging to main."
   type        = set(string)
-  default     = ["ci-pass"]
+  # gradle-dependency-graph (dependency-graph.yml) is required on its own: it is a separate workflow, so security-pass cannot
+  # see it, and a failed graph would leave dependency review without the Gradle snapshot.
+  default = ["ci-pass", "security-pass", "gradle-dependency-graph"]
 }

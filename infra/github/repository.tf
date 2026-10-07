@@ -29,9 +29,25 @@ resource "github_repository" "this" {
 
   archive_on_destroy = true
 
+  # Secret scanning and push protection (free on public repositories) (M1-15).
+  security_and_analysis {
+    secret_scanning {
+      status = "enabled"
+    }
+    secret_scanning_push_protection {
+      status = "enabled"
+    }
+  }
+
   lifecycle {
     prevent_destroy = true
   }
+}
+
+# Dependabot alerts (M1-15).
+resource "github_repository_vulnerability_alerts" "this" {
+  repository = github_repository.this.name
+  enabled    = true
 }
 
 resource "github_repository_ruleset" "main" {

@@ -267,7 +267,9 @@ jobs:
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: |
+      - env:
+          GITHUB_TOKEN: ${{ github.token }} # tflint --init downloads the google ruleset (rate limit)
+        run: |
           pip install pre-commit
           # The Gradle pre-push hook is covered by the static-analysis and unit-tests jobs.
           pre-commit run --all-files --show-diff-on-failure

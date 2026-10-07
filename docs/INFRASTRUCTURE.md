@@ -123,13 +123,13 @@ Identity Platform (Firebase Auth) with email/password and anonymous sign-in, and
    `{"app":["AA:BB:..."],"kids":["..."]}` (debug and release fingerprints; public values). The existing secret `GCP_BILLING_ACCOUNT`
    must stay set for the budget (the budget is skipped when it is empty).
 
-**Google sign-in gap (decision needed).** The Google provider (`google_identity_platform_default_supported_idp_config`) needs an OAuth 2.0
+**Google sign-in (resolved).** The Google provider (`google_identity_platform_default_supported_idp_config`) needs an OAuth 2.0
 *web* client ID and secret. Research result: ordinary OAuth clients have no public create API and no Terraform resource;
 `google_iap_client` only works for IAP brands in a Google Workspace organisation (and is being phased out), and the
 client Firebase auto-creates ("Web client (auto created by Google Service)") only appears when Google sign-in is enabled in the
 console and can't be read back reliably. So Terraform takes the client as input: a maintainer creates a web client once in
 *Google Auth Platform → Clients* in `stayfocus-dev` (a credential, not infrastructure) and sets the variable
-`GOOGLE_OAUTH_WEB_CLIENT_ID_DEV` and the secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET_DEV`. Until then the provider is not enabled and the plan is clean. The web client ID is
+`GOOGLE_OAUTH_WEB_CLIENT_ID_DEV` and the secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET_DEV`. Both now exist on the repository (client from `stayfocus-dev-48213`), so the apply enables the provider; without them it stays off and the plan is clean. The web client ID is
 also what Credential Manager needs in the app (M6-03).
 
 **CI.** The optional job `build-with-terraform-firebase-config` (not part of `ci-pass`; pushes to `main` and manual runs only, never forks)
@@ -140,6 +140,24 @@ emulator sign-in test comes with the first Auth code.
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
 `GCP_PROJECT_ID_DEV` to a unique project id, then set the `GCP_*` variables to point at your own project. Set `TF_CLOUD_ORGANIZATION` to your own HCP organization.
+
+### Security scanning (M1-15)
+
+- `.github/workflows/security.yml` (aggregate `security-pass`, required): dependency review (fails on high severity and on
+  licences incompatible with GPL-3.0), gitleaks (PR commits; full history on `main` and weekly), Trivy config scan of `infra/`
+  (SARIF to the Security tab, fails on high/critical; exceptions in `.trivyignore` with a reason), tflint with the google ruleset
+  (`.tflint.hcl`, also used by the pre-commit hook), zizmor on the workflows (high; exceptions in `.github/zizmor.yml`).
+- Gradle is not in GitHub's dependency graph by itself. `dependency-graph.yml` generates it (PRs, forks included, with a read-only
+  token and an uploaded artifact; `main` submits directly) and `dependency-graph-submit.yml` (`workflow_run`, runs no PR code)
+  submits the PR's graph while dependency review waits and retries. The dependency graph itself is turned on by the Dependabot
+  alerts setting, so the first PR after the first apply is the first one these jobs can pass.
+- `.github/workflows/codeql.yml`: CodeQL for `java-kotlin`, `javascript-typescript` and `actions` (PRs, `main`, weekly); alerts are
+  reviewed in the Security tab and are not a merge gate. A language without sources yet is skipped.
+- `.github/dependabot.yml`: Gradle, npm (`firebase/functions`), GitHub Actions, Terraform and pre-commit, weekly, minor/patch grouped.
+- `github_repository` turns on secret scanning, push protection and Dependabot alerts (needs the M1-12 App permissions).
+
+## Forks
+
 
 ## Editing the backlog
 
@@ -157,7 +175,7 @@ Run the same bootstrap from your fork with your own billing account (the workflo
 imported with an `import` block) and a ruleset on the default branch:
 
 - pull request required, stale approvals dismissed on push, **all review threads resolved**;
-- required status check: `ci-pass` (aggregate job in `ci.yml`);
+- required status checks: `ci-pass` (aggregate job in `ci.yml`), `security-pass` (aggregate job in `security.yml`) and `gradle-dependency-graph` (`dependency-graph.yml`);
 - linear history, no force pushes, no deletion; direct pushes are rejected for everyone;
 - the only bypass is the organisation admin role in `pull_request` mode (emergency merge of a PR).
 

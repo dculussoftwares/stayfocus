@@ -50,7 +50,7 @@ class ForegroundAppTracker
         companion object {
             const val SYSTEM_UI_PACKAGE = "com.android.systemui"
 
-            /** Class name of the block screen activity (added in a later M2 story). */
-            const val BLOCK_SCREEN_CLASS = "com.dculus.stayfocused.core.blocking.BlockActivity"
+            /** Class name of the block screen activity (`screen.BlockActivity`). */
+            const val BLOCK_SCREEN_CLASS = "com.dculus.stayfocused.core.blocking.screen.BlockActivity"
         }
     }

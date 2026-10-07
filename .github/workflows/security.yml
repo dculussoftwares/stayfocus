@@ -1,0 +1,175 @@
+name: security
+
+# Supply-chain and secret scanning (M1-15). `security-pass` is the aggregate required check (ruleset, infra/github).
+# Blocking: dependency review (high), gitleaks, Trivy IaC (high/critical), tflint, zizmor (high).
+# CodeQL lives in codeql.yml and is reviewed in the Security tab.
+# Third-party actions are pinned to commit SHAs. No secrets are needed, so fork PRs work (fork PRs skip the
+# SARIF uploads, which need a write token).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "43 4 * * 1" # weekly, Monday 04:43 UTC: full-history gitleaks and a fresh scan of main
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  TFLINT_VERSION: "v0.64.0"
+
+jobs:
+  dependency-review:
+    name: dependency-review
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+          # Licences that cannot be combined into a GPL-3.0 work (GPL-2.0-only, CDDL, non-commercial and source-available terms).
+          deny-licenses: GPL-2.0-only, CDDL-1.0, AGPL-1.0-only, SSPL-1.0, BUSL-1.1, CC-BY-NC-4.0, CC-BY-NC-SA-4.0, CC-BY-NC-ND-4.0
+          comment-summary-in-pr: never
+          # Wait for dependency-graph.yml + dependency-graph-submit.yml to submit the Gradle graph of this PR.
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 600
+
+  gitleaks:
+    name: gitleaks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # full history: PRs scan their own commits, main and the weekly run scan everything
+          persist-credentials: false
+      # The gitleaks-action needs a licence for organisation repos; the open-source CLI does not.
+      - name: Install gitleaks
+        run: |
+          base="https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}"
+          tarball="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -fsSL -o "$RUNNER_TEMP/$tarball" "$base/$tarball"
+          curl -fsSL -o "$RUNNER_TEMP/checksums.txt" "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          (cd "$RUNNER_TEMP" && grep " $tarball\$" checksums.txt | sha256sum --check -)
+          tar -xzf "$RUNNER_TEMP/$tarball" -C "$RUNNER_TEMP" gitleaks
+      - name: Scan
+        env:
+          EVENT: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT" = "pull_request" ]; then
+            "$RUNNER_TEMP/gitleaks" git --redact --verbose --log-opts="${BASE_SHA}..${HEAD_SHA}" .
+          else
+            "$RUNNER_TEMP/gitleaks" git --redact --verbose .
+          fi
+
+  iac-trivy:
+    name: iac-trivy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Report everything to the Security tab...
+      - name: Trivy config scan (SARIF)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra
+          format: sarif
+          output: trivy-iac.sarif
+          severity: LOW,MEDIUM,HIGH,CRITICAL
+          exit-code: "0"
+      - name: Upload SARIF (code scanning)
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
+        with:
+          sarif_file: trivy-iac.sarif
+          category: trivy-iac
+      # ...and fail the PR on high/critical findings. Accepted exceptions go in .trivyignore with a reason.
+      - name: Trivy config scan (gate)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: config
+          scan-ref: infra
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "1"
+          trivyignores: .trivyignore
+
+  iac-tflint:
+    name: iac-tflint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
+        with:
+          tflint_version: ${{ env.TFLINT_VERSION }}
+      - name: Install the google ruleset
+        env:
+          GITHUB_TOKEN: ${{ github.token }} # avoids the anonymous API rate limit
+        run: tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+      - name: tflint
+        run: |
+          status=0
+          for dir in infra/github infra/bootstrap infra/firebase; do
+            echo "== $dir"
+            tflint --chdir="$dir" --config "$GITHUB_WORKSPACE/.tflint.hcl" || status=1
+          done
+          exit "$status"
+
+  workflow-audit:
+    name: workflow-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Template injection, excessive permissions, unpinned actions. Findings below "high" are not blocking.
+      - uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        with:
+          min-severity: high
+          advanced-security: false
+
+  # Single aggregate for the ruleset. A skipped job (dependency review outside PRs) counts as fine.
+  security-pass:
+    name: security-pass
+    if: ${{ always() }}
+    needs: [dependency-review, gitleaks, iac-trivy, iac-tflint, workflow-audit]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to succeed or be skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Job results: $RESULTS"
+          for r in $RESULTS; do
+            if [ "$r" != "success" ] && [ "$r" != "skipped" ]; then
+              echo "::error::A security job finished as '$r'."
+              exit 1
+            fi
+          done

@@ -19,8 +19,11 @@ android {
 }
 
 dependencies {
-    implementation(project(":core:model"))
+    api(project(":core:model"))
+    api(libs.kotlinx.coroutines.core)
+    implementation(libs.androidx.datastore.preferences)
 
+    testImplementation(project(":core:testing"))
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.room.testing)

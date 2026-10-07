@@ -1,2 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+          Own task so it never ends up inside the blocked app's task or in recents. singleTask keeps one instance:
+          a second block while it is showing only updates its content (onNewIntent).
+        -->
+        <activity
+            android:name=".screen.BlockActivity"
+            android:excludeFromRecents="true"
+            android:exported="false"
+            android:launchMode="singleTask"
+            android:taskAffinity="com.dculus.stayfocused.block"
+            android:theme="@style/Theme.StayFocused.Block" />
+    </application>
+
+</manifest>
