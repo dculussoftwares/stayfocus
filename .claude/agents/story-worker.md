@@ -77,7 +77,7 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
    **If CodeRabbit says "Review rate limited"**: wait the stated time once (at most ~10 min), re-request once, and if it
    is still limited, use the Qodo fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
    `/agentic_review` (again after **every** push; Qodo may not re-review on its own), wait up to ~10 min (if it still
-   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `qodo not responding`), collect the Qodo bot's comments (inline + PR comments) and handle
+   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `qodo not responding`), collect `qodo-code-review[bot]` comments (inline + PR comments) and handle
    them exactly like CodeRabbit's (step 3). Qodo never approves.
 2. Collect CodeRabbit findings: inline comments
    `gh api repos/dculussoftwares/stayfocus/pulls/<PR>/comments --paginate` (author `coderabbitai[bot]`), its review bodies
