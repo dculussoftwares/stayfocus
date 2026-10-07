@@ -17,6 +17,10 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 - Check: a pushed tag produces signed AABs that install via bundletool on a device (R8 build starts and runs both apps).
 - How: after the `release` environment secrets exist (docs/RELEASING.md), push a `v0.x.y-rc1` tag, download the AABs from the GitHub Release, `bundletool build-apks` + `install-apks`, open each app.
 
+## M6-01 Firebase Auth and apps
+- Check: the first apply on `main` creates both Firebase Android apps and enables email/password and anonymous sign-in; the next plan shows no changes. A Firebase-enabled CI build (`build-with-terraform-firebase-config`) downloads its config from the Terraform output, and an emulator test account can sign in.
+- How: first re-run `infra-bootstrap` with a temporary key (new roles, docs/INFRASTRUCTURE.md "Firebase Auth and apps"), then merge. The sign-in test itself lands with the first Auth code (M6-03 onwards); until then check in the Firebase console (read only) that the providers are on.
+
 ## M2-03 Block screen
 - Check: the block screen appears within 500 ms when a blocked app opens, on API 26 and API 36 (attach a screen recording to the PR); it cannot be dismissed into the blocked app with back, recents or home + reopen; fill the "Verified" column of `docs/blocking/block-screen-launch.md` for API 29, 34, 35, 36 (activity or overlay path).
 - How: install `:app`, enable the accessibility service, and (until the engine story wires `show`) call `BlockScreenLauncher.show(pkg, Decision.Block(...))` from a debug hook while opening that app. Record with `adb shell screenrecord`.

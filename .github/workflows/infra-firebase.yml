@@ -35,6 +35,12 @@ env:
   TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_DEV || 'stayfocus-dev' }}
   TF_VAR_env: dev
   TF_IN_AUTOMATION: "true"
+  # Optional inputs (docs/INFRASTRUCTURE.md, "Firebase Auth and apps"). Empty = feature skipped.
+  TF_VAR_billing_account: ${{ secrets.GCP_BILLING_ACCOUNT }}
+  TF_VAR_google_oauth_client_id: ${{ vars.GOOGLE_OAUTH_WEB_CLIENT_ID_DEV }}
+  TF_VAR_google_oauth_client_secret: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_SECRET_DEV }}
+  TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
+  TF_VAR_sha256_fingerprints: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
 
 defaults:
   run:

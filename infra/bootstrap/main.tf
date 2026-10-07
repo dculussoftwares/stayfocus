@@ -83,6 +83,30 @@ resource "google_project_iam_member" "plan_project_metadata_reader" {
   member  = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 
+resource "google_project_iam_member" "plan_extra" {
+  for_each = {
+    for pair in setproduct(keys(var.environments), var.plan_roles) :
+    "${pair[0]}/${pair[1]}" => { env = pair[0], role = pair[1] }
+  }
+
+  project = google_project.env[each.value.env].project_id
+  role    = each.value.role
+  member  = "serviceAccount:${google_service_account.plan[each.value.env].email}"
+}
+
+# M6-01: budgets live on the billing account, not the project. Costs Manager manages budgets; Viewer lets PR plans read them.
+resource "google_billing_account_iam_member" "deploy_budgets" {
+  billing_account_id = var.billing_account
+  role               = "roles/billing.costsManager"
+  member             = "serviceAccount:${google_service_account.deploy["dev"].email}"
+}
+
+resource "google_billing_account_iam_member" "plan_budgets" {
+  billing_account_id = var.billing_account
+  role               = "roles/billing.viewer"
+  member             = "serviceAccount:${google_service_account.plan["dev"].email}"
+}
+
 resource "google_project_iam_member" "deploy_project_metadata_reader" {
   for_each = var.environments
 
