@@ -187,6 +187,15 @@ class LocalBlockParserTest {
     }
 
     @Test
+    fun `a factual mention of a generic label is not a block`() {
+        val camera = installed + AppInfo("com.android.camera", "Camera")
+        assertEquals(
+            listOf("instagram", "youtube"),
+            LocalBlockParser.parse("There is no camera in the room", camera).apps,
+        )
+    }
+
+    @Test
     fun `hour 24 is only valid as 24-00`() {
         assertEquals("limit", LocalBlockParser.parse("Block X from 24:30 to 9:00", installed).type)
         assertEquals("schedule", LocalBlockParser.parse("Block X from 24:00 to 9:00", installed).type)

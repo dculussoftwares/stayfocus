@@ -137,7 +137,7 @@ internal object ParserApps {
             "spotify" to listOf("spotify"),
             "maps" to listOf("google maps", "maps"),
         )
-    private const val BLOCK_VERB = "\\b(?:lock|block|stop|limit|ban|disable|no)\\s+(?:the\\s+)?"
+    private const val BLOCK_VERB = "\\b(?:lock|block|stop|limit|ban|disable)\\s+(?:the\\s+)?"
     private const val APP_LIST_ITEM = "(?:[a-z0-9 ]{1,60}(?:,|\\band\\b)\\s*)*"
     private val TARGET_VERB = Regex("$BLOCK_VERB$APP_LIST_ITEM(?:the\\s+)?$")
     private val NEGATION = Regex("(?:n't|\\bnot|\\bnever|\\bexcept|\\bwithout)\\s*(?:\\w+\\s+)?$")
