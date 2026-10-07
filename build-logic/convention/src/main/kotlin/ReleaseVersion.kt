@@ -27,12 +27,10 @@ internal data class ReleaseVersion(
             val trimmed = raw.trim()
             val match =
                 requireNotNull(PATTERN.matchEntire(trimmed)) { "Invalid version '$raw', expected vMAJOR.MINOR.PATCH" }
-            val (major, minor, patch) =
-                match.groupValues
-                    .drop(1)
-                    .take(3)
-                    .map { it.toLongOrNull() ?: Long.MAX_VALUE }
-            val suffix = match.groupValues[4]
+            val (_, majorText, minorText, patchText, suffix) = match.groupValues
+            val major = majorText.toLongOrNull() ?: Long.MAX_VALUE
+            val minor = minorText.toLongOrNull() ?: Long.MAX_VALUE
+            val patch = patchText.toLongOrNull() ?: Long.MAX_VALUE
             val derived =
                 if (suffix.isEmpty()) {
                     FINAL_BUILD
