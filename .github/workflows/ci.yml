@@ -210,6 +210,36 @@ jobs:
       - name: Assemble debug and release (app and kids) with Firebase config
         run: ./gradlew :app:assembleDebug :kids:assembleDebug :app:assembleRelease :kids:assembleRelease
 
+  # Optional (not part of ci-pass): the same build with the REAL dev google-services.json, read from the Terraform
+  # state (output google_services_json of infra/firebase). Runs on pushes to main and manual runs, never on forks.
+  build-with-terraform-firebase-config:
+    name: build-with-terraform-firebase-config
+    if: github.event_name != 'pull_request' && vars.TF_CLOUD_ORGANIZATION != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - name: Write google-services.json from the Terraform output
+        env:
+          TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+          TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
+        run: scripts/ci/fetch-google-services.sh
+      - name: Assemble debug (app and kids) with the real dev Firebase config
+        run: ./gradlew :app:assembleDebug :kids:assembleDebug
+
   pre-commit:
     name: pre-commit
     runs-on: ubuntu-latest

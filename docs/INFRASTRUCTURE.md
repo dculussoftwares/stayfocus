@@ -65,8 +65,8 @@ GCP bootstrap is described in the next section.
 `infra/bootstrap` (manual, once) creates the project(s), billing link, a Workload Identity Federation (WIF) pool and
 provider restricted to this repository, and the `tf-deploy` service account. `infra/firebase` (automatic) then manages
 the resources inside the project, starting with the base APIs (`serviceusage`, `cloudresourcemanager`, `iam`).
-`firebase.googleapis.com` is not enabled yet: M6-01 enables it together with the Firebase role `tf-deploy` needs for it
-(enabling it with the base roles alone returned 403).
+`firebase.googleapis.com` is enabled by M6-01 together with the Firebase roles `tf-deploy` needs for it
+(enabling it with the base roles alone returned 403); see "Firebase Auth and apps" below.
 GitHub Actions authenticates through WIF; **no service-account key** is used for deploys.
 
 ### Settings
@@ -106,6 +106,35 @@ infra-bootstrap with a fresh temporary key (steps 1-5), then deleting it again.
 
 The deploy service account's roles (`deploy_roles` in `infra/bootstrap/variables.tf`) are least-privilege for what the
 Firebase stories need; add roles there when a later infra story needs more.
+
+### Firebase Auth and apps (M6-01)
+
+`infra/firebase` creates the Firebase project, the two Android apps (`com.dculus.stayfocused`, `com.dculus.stayfocused.kids`),
+Identity Platform (Firebase Auth) with email/password and anonymous sign-in, and a budget alert (50/90/100% of
+`budget_amount`, default 20 EUR, on the dev project). It outputs `google_services_json` (sensitive, per app) from the
+`google_firebase_android_app_config` data source; the files are never committed.
+
+**One-time steps for the maintainer (credentials only, no infrastructure clicks):**
+1. Re-run **infra-bootstrap** with a temporary key (steps 1-5 above). The bootstrap identity also needs *Billing Account
+   Administrator* on the billing account, because this change grants `roles/billing.costsManager` (deploy) and
+   `roles/billing.viewer` (plan) on it. New project roles: `firebase.admin`, `identityplatform.admin`,
+   `serviceusage.serviceUsageConsumer` (deploy) and `firebase.viewer`, `identityplatform.viewer`, `serviceUsageConsumer` (plan).
+2. Optional repo variables (empty = skipped): `FIREBASE_SHA1_FINGERPRINTS_DEV` / `FIREBASE_SHA256_FINGERPRINTS_DEV`, JSON such as
+   `{"app":["AA:BB:..."],"kids":["..."]}` (debug and release fingerprints; public values). The existing secret `GCP_BILLING_ACCOUNT`
+   must stay set for the budget (the budget is skipped when it is empty).
+
+**Google sign-in gap (decision needed).** The Google provider (`google_identity_platform_default_supported_idp_config`) needs an OAuth 2.0
+*web* client ID and secret. Research result: ordinary OAuth clients have no public create API and no Terraform resource;
+`google_iap_client` only works for IAP brands in a Google Workspace organisation (and is being phased out), and the
+client Firebase auto-creates ("Web client (auto created by Google Service)") only appears when Google sign-in is enabled in the
+console and can't be read back reliably. So Terraform takes the client as input: a maintainer creates a web client once in
+*Google Auth Platform → Clients* in `stayfocus-dev` (a credential, not infrastructure) and sets the variable
+`GOOGLE_OAUTH_WEB_CLIENT_ID_DEV` and the secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET_DEV`. Until then the provider is not enabled and the plan is clean. The web client ID is
+also what Credential Manager needs in the app (M6-03).
+
+**CI.** The optional job `build-with-terraform-firebase-config` (not part of `ci-pass`; pushes to `main` and manual runs only, never forks)
+runs `scripts/ci/fetch-google-services.sh`, which reads the output from the HCP state into `app/` and `kids/` and builds both debug apps. The
+emulator sign-in test comes with the first Auth code.
 
 ### Forks
 

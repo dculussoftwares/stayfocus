@@ -41,5 +41,20 @@ variable "deploy_roles" {
   type        = list(string)
   default = [
     "roles/serviceusage.serviceUsageAdmin",
+    # M6-01: Firebase project and Android apps (includes firebase.projects.update), and Auth/Identity Platform config.
+    "roles/firebase.admin",
+    "roles/identityplatform.admin",
+    # Quota project for the billing budget API calls (user_project_override).
+    "roles/serviceusage.serviceUsageConsumer",
+  ]
+}
+
+variable "plan_roles" {
+  description = "Extra read-only project roles for the plan service account (PR plans refresh Firebase and Auth resources)."
+  type        = list(string)
+  default = [
+    "roles/firebase.viewer",
+    "roles/identityplatform.viewer",
+    "roles/serviceusage.serviceUsageConsumer",
   ]
 }
