@@ -16,7 +16,7 @@ internal data class ReleaseVersion(
         private const val MAX_PART = 99
         private const val FINAL_BUILD = 99
         private const val MAX_MAJOR = 2099
-        private val PATTERN = Regex("""^v?(\d+)\.(\d+)\.(\d+)(?:-rc(\d+))?$""")
+        private val PATTERN = Regex("""^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-rc([1-9]\d*))?$""")
 
         private const val GROUP_MAJOR = 1
         private const val GROUP_MINOR = 2

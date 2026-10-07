@@ -44,6 +44,10 @@ class ReleaseVersionTest {
             "v0.2.0-rc2147483648",
             "v0.2.0-beta1",
             "v0.2.0-rc",
+            "v0.2.0-rc01",
+            "v01.2.0",
+            "v1.02.0",
+            "v1.2.00",
         ).forEach {
             assertTrue(it, runCatching { ReleaseVersion.parse(it) }.isFailure)
         }
