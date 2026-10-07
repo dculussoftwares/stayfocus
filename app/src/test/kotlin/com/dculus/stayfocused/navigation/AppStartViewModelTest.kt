@@ -52,6 +52,15 @@ class AppStartViewModelTest {
     }
 
     @Test
+    fun laterFlagChangesDoNotMoveTheStartGraph() {
+        val flag = MutableSharedFlow<Boolean>(extraBufferCapacity = 2)
+        val viewModel = AppStartViewModel(source(flag))
+        flag.tryEmit(false)
+        flag.tryEmit(true)
+        assertEquals(StartGraph.ONBOARDING, viewModel.startGraph.value)
+    }
+
+    @Test
     fun startGraphIsNullUntilTheFlagLoads() {
         val flag = MutableSharedFlow<Boolean>()
         val viewModel = AppStartViewModel(source(flag))

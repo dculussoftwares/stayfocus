@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.take
 import javax.inject.Inject
 
 /** The graph the app opens on. [route] is the type-safe route object passed to `NavHost`. */
@@ -47,7 +48,10 @@ internal abstract class AppStartModule {
     abstract fun onboardingFlagSource(impl: StubOnboardingFlagSource): OnboardingFlagSource
 }
 
-/** Picks the start graph from the `onboardingComplete` flag; `null` until the flag has loaded (splash stays up). */
+/**
+ * Picks the start graph from the `onboardingComplete` flag; `null` until the flag has loaded (splash stays up).
+ * Only the first value counts: a later change (finishing onboarding, signing out) must not rebuild the NavHost.
+ */
 @HiltViewModel
 class AppStartViewModel
     @Inject
@@ -56,6 +60,7 @@ class AppStartViewModel
     ) : ViewModel() {
         val startGraph: StateFlow<StartGraph?> =
             flagSource.onboardingComplete
+                .take(1)
                 .map { startGraphFor(it) }
                 .stateIn(viewModelScope, SharingStarted.Eagerly, null)
     }
