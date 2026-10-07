@@ -58,7 +58,7 @@ variable "billing_account" {
 }
 
 variable "budget_amount" {
-  description = "Monthly budget (whole EUR) that triggers alerts at 50%, 90% and 100%."
+  description = "Monthly budget (whole units of the billing account currency) that triggers alerts at 50%, 90% and 100%."
   type        = number
   default     = 20
 }

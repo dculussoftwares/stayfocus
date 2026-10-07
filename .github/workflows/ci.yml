@@ -8,6 +8,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -237,6 +238,9 @@ jobs:
           TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
           TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
         run: scripts/ci/fetch-google-services.sh
+      # Gradle (and everything it runs) must not be able to read the HCP token.
+      - name: Remove the Terraform CLI credential
+        run: rm -f "$TF_CLI_CONFIG_FILE" "$HOME/.terraformrc" "$HOME/.terraform.d/credentials.tfrc.json"
       - name: Assemble debug (app and kids) with the real dev Firebase config
         run: ./gradlew :app:assembleDebug :kids:assembleDebug
 

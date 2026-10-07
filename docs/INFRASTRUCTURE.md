@@ -111,7 +111,7 @@ Firebase stories need; add roles there when a later infra story needs more.
 
 `infra/firebase` creates the Firebase project, the two Android apps (`com.dculus.stayfocused`, `com.dculus.stayfocused.kids`),
 Identity Platform (Firebase Auth) with email/password and anonymous sign-in, and a budget alert (50/90/100% of
-`budget_amount`, default 20 EUR, on the dev project). It outputs `google_services_json` (sensitive, per app) from the
+`budget_amount`, default 20 in the billing account currency, on the dev project). It outputs `google_services_json` (sensitive, per app) from the
 `google_firebase_android_app_config` data source; the files are never committed.
 
 **One-time steps for the maintainer (credentials only, no infrastructure clicks):**

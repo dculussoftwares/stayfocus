@@ -110,8 +110,8 @@ resource "google_billing_budget" "dev" {
 
   amount {
     specified_amount {
-      currency_code = "EUR"
-      units         = tostring(var.budget_amount)
+      # currency_code omitted: the Budgets API uses the billing account's currency.
+      units = tostring(var.budget_amount)
     }
   }
 

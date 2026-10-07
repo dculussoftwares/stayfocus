@@ -10,7 +10,7 @@ output "firebase_app_ids" {
 
 output "google_services_json" {
   description = "google-services.json contents per app (app, kids). Write into app/ and kids/ for Firebase-enabled builds; never commit. Read with: terraform output -json google_services_json."
-  value       = { for k, c in data.google_firebase_android_app_config.this : k => c.config_file_contents }
+  value       = { for k, c in data.google_firebase_android_app_config.this : k => base64decode(c.config_file_contents) }
   sensitive   = true
 }
 
