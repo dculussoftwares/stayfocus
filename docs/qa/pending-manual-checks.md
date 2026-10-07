@@ -24,3 +24,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M1-15 Security scanning
 - Check: after the first apply, secret scanning, push protection and Dependabot alerts are enabled and the next plan shows no drift; a PR adding a dependency with a known critical CVE fails dependency review; a PR adding a public Firestore rule or an over-privileged IAM binding is flagged by Trivy or CodeRabbit.
 - How: Settings > Code security on GitHub; then try the two cases on a throwaway PR (needs the live repository and the M1-12 App permissions).
+
+## M6-07 Web privacy policy and account deletion
+- Check: both pages are live at the Pages URL and account deletion works from the web on dev.
+- How: after merge, `infra-firebase` applies, then `pages` deploys (Actions). Open `https://dculussoftwares.github.io/stayfocus/privacy.html` and `delete-account.html`. Add `dculussoftwares.github.io` to Auth authorised domains if sign-in is rejected. With a throwaway dev account (needs M6-06's `deleteAccount` deployed): sign in with Google and with email, delete, and confirm the Auth user and `users/{uid}` are gone. The URLs are then wired into the app (M6-05) and `docs/play/` (M10-01).

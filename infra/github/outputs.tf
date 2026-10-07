@@ -13,3 +13,8 @@ output "backlog" {
     }
   }
 }
+
+output "pages_url" {
+  description = "GitHub Pages URL of the /web site (privacy policy, account deletion)."
+  value       = github_repository_pages.this.html_url
+}
