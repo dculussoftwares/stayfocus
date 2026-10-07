@@ -64,7 +64,9 @@ GCP bootstrap is described in the next section.
 
 `infra/bootstrap` (manual, once) creates the project(s), billing link, a Workload Identity Federation (WIF) pool and
 provider restricted to this repository, and the `tf-deploy` service account. `infra/firebase` (automatic) then manages
-the resources inside the project, starting with the base APIs (`serviceusage`, `cloudresourcemanager`, `iam`, `firebase`).
+the resources inside the project, starting with the base APIs (`serviceusage`, `cloudresourcemanager`, `iam`).
+`firebase.googleapis.com` is not enabled yet: M6-01 enables it together with the Firebase role `tf-deploy` needs for it
+(enabling it with the base roles alone returned 403).
 GitHub Actions authenticates through WIF; **no service-account key** is used for deploys.
 
 ### Settings
