@@ -160,4 +160,11 @@ class AiNormalizerTest {
         assertEquals(DaysOfWeek.WEEKDAYS, d.days)
         assertEquals(setOf(ig, yt), d.apps)
     }
+
+    @Test
+    fun `a weekend group keeps explicitly named extra days`() {
+        val days = AiNormalizer.toDays(listOf("sat", "sun", "mon"), "Block Instagram on weekends and Monday")
+        assertEquals(DaysOfWeek.of(DayOfWeek.MONDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY), days)
+        assertEquals(DaysOfWeek.WEEKENDS, AiNormalizer.toDays(listOf("mon"), "Block Instagram on weekends"))
+    }
 }
