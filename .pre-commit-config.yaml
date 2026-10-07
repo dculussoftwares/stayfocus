@@ -9,8 +9,11 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # Room's generated schema JSON must stay byte-identical to what the build writes (CI diff check).
       - id: trailing-whitespace
+        exclude: ^core/data/schemas/
       - id: end-of-file-fixer
+        exclude: ^core/data/schemas/
       - id: check-yaml
       - id: check-json
       - id: check-merge-conflict
