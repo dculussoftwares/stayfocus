@@ -66,7 +66,8 @@ object AiNormalizer {
     internal fun parseRange(raw: String?): TimeRange {
         if (raw != null && RANGE_REGEX.matches(raw)) {
             try {
-                return TimeRange.parse(raw)
+                // An empty window (start == end) would never block, so treat it as unusable.
+                return TimeRange.parse(raw).takeIf { it.start != it.end } ?: DEFAULT_RANGE
             } catch (
                 @Suppress("SwallowedException") e: IllegalArgumentException,
             ) {
@@ -105,7 +106,8 @@ object AiNormalizer {
                 .toCollection(linkedSetOf())
         if (resolved.isNotEmpty()) return resolved
         val fallback = FALLBACK_IDS.map { KnownApps.packages.getValue(it) }
-        return fallback.filter { it in installedPkgs }.ifEmpty { fallback }.toCollection(linkedSetOf())
+        // Only apps that are actually installed; empty if neither is (the user picks apps in the wizard).
+        return fallback.filter { it in installedPkgs }.toCollection(linkedSetOf())
     }
 
     private fun resolveApp(

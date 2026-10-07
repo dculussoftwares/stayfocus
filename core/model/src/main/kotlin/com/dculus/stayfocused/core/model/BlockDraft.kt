@@ -8,7 +8,7 @@ data class BlockDraft(
     val target: BlockTarget = BlockTarget.ThisPhone,
     val type: BlockType = BlockType.LIMIT,
     /** Package names. */
-    val apps: Set<String> = emptySet(),
+    val apps: Set<String> = setOf(KnownApps.packages.getValue("instagram"), KnownApps.packages.getValue("youtube")),
     val period: LimitPeriod = LimitPeriod.DAILY,
     val mins: Int = 30,
     val use: Int = 10,

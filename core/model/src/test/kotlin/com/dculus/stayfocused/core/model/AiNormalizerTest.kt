@@ -74,6 +74,7 @@ class AiNormalizerTest {
         assertEquals(default, norm(AiBlockResult(range = "9:00–17:00")).range)
         assertEquals(default, norm(AiBlockResult(range = "25:00–26:00")).range)
         assertEquals(default, norm(AiBlockResult(range = "09:00–17:00\n")).range)
+        assertEquals(default, norm(AiBlockResult(range = "12:00–12:00")).range)
     }
 
     @Test
@@ -117,7 +118,7 @@ class AiNormalizerTest {
         assertEquals(setOf(ig, yt), norm(AiBlockResult(apps = listOf("nothing"))).apps)
         assertEquals(setOf(ig, yt), norm(AiBlockResult(apps = null)).apps)
         assertEquals(setOf(yt), norm(AiBlockResult(), apps = listOf(AppInfo(yt, "YouTube"))).apps)
-        assertEquals(setOf(ig, yt), norm(AiBlockResult(), apps = emptyList()).apps)
+        assertEquals(emptySet(), norm(AiBlockResult(), apps = emptyList()).apps)
     }
 
     @Test
@@ -157,5 +158,6 @@ class AiNormalizerTest {
         val d = BlockDraft()
         assertFalse(d.fromAi)
         assertEquals(DaysOfWeek.WEEKDAYS, d.days)
+        assertEquals(setOf(ig, yt), d.apps)
     }
 }
