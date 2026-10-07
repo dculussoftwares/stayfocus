@@ -77,7 +77,13 @@ class DefaultUsageRepository
                 }
             }
 
-        private fun dates(): Flow<LocalDate> = ticks().map { currentDate() }.distinctUntilChanged()
+        /** Re-emits when the local date or the device zone changes, so day boundaries are never stale. */
+        private fun dates(): Flow<Pair<LocalDate, ZoneId>> =
+            ticks()
+                .map {
+                    val zone = zone
+                    clock.instant().atZone(zone).toLocalDate() to zone
+                }.distinctUntilChanged()
 
         override fun today(): Flow<DayUsageStats> =
             merge(ticks(), refreshRequests).map { dataSource.dayUsage(currentDate()) }
@@ -89,14 +95,14 @@ class DefaultUsageRepository
         override fun day(date: LocalDate): Flow<DayUsageStats?> = cache.observeDay(date)
 
         override fun averages(): Flow<UsageAverages> =
-            dates().flatMapLatest { today ->
+            dates().flatMapLatest { (today, _) ->
                 cache
                     .observeTotals(today.minusDays(WINDOW), today.minusDays(1))
                     .map(UsageAverages::of)
             }
 
         override fun blockedToday(): Flow<Int> =
-            dates().flatMapLatest { today ->
+            dates().flatMapLatest { (today, zone) ->
                 blockEvents.observeCountBetween(
                     today.atStartOfDay(zone).toInstant(),
                     today.plusDays(1).atStartOfDay(zone).toInstant(),
