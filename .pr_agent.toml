@@ -1,0 +1,31 @@
+# Qodo: fallback reviewer when CodeRabbit is rate limited (docs/agents/PHASE1_EXECUTION.md).
+[github_app]
+pr_commands = [
+    "/agentic_describe",
+    "/agentic_review",
+]
+
+[review_agent]
+comments_location_policy = "both"
+# 3 = action_required, 2 = remediation_recommended, 1 = informational
+inline_comments_severity_threshold = 2
+issues_user_guidelines = """
+Stay Focused is a free, open-source (GPL-3.0) Android app blocker plus a companion Kids app (Kotlin + Jetpack Compose).
+Rules are in AGENTS.md and docs/IMPLEMENTATION_PLAN.md (conventions in section 5).
+- Flag any new permission, manifest flag or QUERY_ALL_PACKAGES the story does not call for (Play policy).
+- The project must build without google-services.json.
+- Public repo: flag any secret, keystore, google-services.json, Terraform state or real user data.
+- UI strings must match design_handoff_stay_focused_phase1/ verbatim.
+- Infrastructure changes only through Terraform in infra/, never console or CLI creation.
+- The PR must stay inside its story's scope and close its issue; flag unrelated changes.
+- New logic needs unit tests; flag missing coverage for rule evaluation, time ranges and parsing.
+"""
+
+[ignore]
+glob = [
+    "design_handoff_stay_focused_phase1/**",
+    "**/*.png",
+    "**/*.lock.hcl",
+    "**/schemas/**/*.json",
+    "**/src/test/snapshots/**",
+]

@@ -9,7 +9,7 @@ Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a compan
 
 **Rules**
 - One story = one branch (`m<N>/<issue>-<slug>`) = one PR with `Closes #<issue>`, reviewed by **CodeRabbit** (`.coderabbit.yaml`).
-  Fix or answer every CodeRabbit comment; merge only when the merge gate is met (CI green, `CodeRabbit` check done, 0 unresolved threads, CodeRabbit approved or no new actionable comments on HEAD; see `docs/agents/PHASE1_EXECUTION.md`). Never self-approve or dismiss its review. If CodeRabbit is rate limited, **Gemini Code Assist** is the fallback reviewer (`/gemini review`, `.gemini/`); see `docs/agents/PHASE1_EXECUTION.md`.
+  Fix or answer every CodeRabbit comment; merge only when the merge gate is met (CI green, `CodeRabbit` check done, 0 unresolved threads, CodeRabbit approved or no new actionable comments on HEAD; see `docs/agents/PHASE1_EXECUTION.md`). Never self-approve or dismiss its review. If CodeRabbit is rate limited, **Qodo** is the fallback reviewer (`/agentic_review`, `.pr_agent.toml`); see `docs/agents/PHASE1_EXECUTION.md`.
 - Track work on the **kanban board** (https://github.com/orgs/dculussoftwares/projects/11): pick from *Ready*, move to *In progress* when you start and *In review* when the PR is open (`scripts/backlog/board.py`); *Done* happens when the PR merges.
 - Run work with `/wave <N>`, `/next-wave` or `/story <ID>` (Claude Code). The per-story procedure is `.claude/agents/story-worker.md`; the parallel wave order is in `docs/agents/PHASE1_EXECUTION.md`.
 - Don't start a story whose "Depends on" issues are still open.

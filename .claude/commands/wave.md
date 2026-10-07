@@ -1,9 +1,10 @@
 ---
 description: Run one wave of the Phase 1 backlog — parallel story-worker subagents, each in its own worktree
-argument-hint: <wave-number> [max-parallel, default 2]
+argument-hint: <wave-number> [max-parallel, default 2] [reviewer: coderabbit (default) | qodo]
 ---
 
 Run **wave $1** of the Stay Focused Phase 1 backlog. Max parallel workers: **$2** (if empty, use 2).
+Reviewer: **$3** (if empty, `coderabbit`; `qodo` = Qodo-only mode, no CodeRabbit).
 
 You are the coordinator. Keep this session small: don't implement stories yourself, don't read source files, and
 don't paste large logs. Workers do the work in their own contexts and return a short report.
@@ -19,7 +20,7 @@ don't paste large logs. Workers do the work in their own contexts and return a s
    For each open story start the `story-worker` subagent with:
    - `subagent_type: "story-worker"`, `isolation: "worktree"`, `run_in_background: true`,
    - `name: "<ID>"`, `description: "Story <ID>"`,
-   - prompt: `Implement story <ID> (issue #<N>).` plus, for needs-human stories, `This story is labelled needs-human.`
+   - prompt: `Implement story <ID> (issue #<N>).` plus, for needs-human stories, `This story is labelled needs-human.` Add the line `Reviewer: qodo` to the prompt when the reviewer is `qodo`.
    Start the larger stories (size L) first. When a worker finishes, start the next story in the wave.
    Don't poll or sleep while waiting; you're notified when a worker completes.
 
@@ -31,7 +32,7 @@ don't paste large logs. Workers do the work in their own contexts and return a s
 
 4. **Check and summarise** when every worker has reported:
    - `python3 scripts/backlog/waves.py --status` (the wave's stories should be closed, except needs-human ones).
-   - Output a compact table: story | issue | PR | result | CodeRabbit outcome | follow-ups / manual checks.
+   - Output a compact table: story | issue | PR | result | Reviewer outcome (CodeRabbit / Qodo gate) | follow-ups / manual checks.
    - List anything that needs me (blockers, needs-human actions, decisions).
    - Finish with: "Next: `/clear`, then `/wave <next>`" (or `/next-wave`), or "Phase 1 complete" if `NEXT_WAVE=done`.
 

@@ -28,7 +28,7 @@ gh issue comment N --repo dculussoftwares/stayfocus --body "🤖 Started <ID>."
 
 ## 3. Read before coding (only what this story needs)
 `AGENTS.md`; `docs/IMPLEMENTATION_PLAN.md` §4 (workflow, Definition of done), §5 (conventions), §8 (backend policy);
-`docs/INFRASTRUCTURE.md` for `infra` stories; `.coderabbit.yaml` and `.gemini/styleguide.md` (what the reviewers check);
+`docs/INFRASTRUCTURE.md` for `infra` stories; `.coderabbit.yaml` and `.pr_agent.toml` (what the reviewers check);
 `design_handoff_stay_focused_phase1/README.md` and the prototype's `<script>` block for exact copy, tokens and maths.
 Look up current library/API details (Context7 / official docs) instead of relying on memory.
 
@@ -71,14 +71,17 @@ For `needs-human` stories use `Refs #N` instead of `Closes #N` (see the end).
 
 ## 8. CodeRabbit review loop
 Repeat until the merge gate (step 9) is met; at most 5 rounds.
+**If your prompt says `Reviewer: qodo`**, skip CodeRabbit entirely (don't wait for it, never comment `@coderabbitai`): go
+straight to the Qodo steps in the next paragraph for every round, and use the fallback gate in step 9.
 1. Wait for CI and for CodeRabbit to review the current HEAD: `gh pr checks <PR> --watch`; the `CodeRabbit` check reads
    "Review completed" when its review of HEAD is done. Reviews can take 5–15 min. If nothing starts within ~15 min,
    comment `@coderabbitai review` once.
-   **If CodeRabbit says "Review rate limited"**: wait the stated time once (at most ~10 min), re-request once, and if it
-   is still limited, use the Gemini fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
-   `/gemini review` (again after **every** push; Gemini may not re-review on its own), wait up to ~10 min (if it still
-   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `gemini not responding`), collect `gemini-code-assist[bot]` comments (inline + PR comments) and handle
-   them exactly like CodeRabbit's (step 3). Gemini never approves.
+   **If CodeRabbit is unavailable** ("Review rate limited"; no review ~15 min after the push and still none ~10 min after one
+   re-request; the `CodeRabbit` check errored/failed or it reports it can't review, and one re-request didn't fix it; or it
+   is down): for a rate limit wait the stated time once (at most ~10 min); re-request once; if it's still unavailable, use the Qodo fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
+   `/agentic_review` (again after **every** push; Qodo may not re-review on its own), wait up to ~10 min (if it still
+   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `qodo not responding`), collect `qodo-code-review[bot]` comments (inline + PR comments) and handle
+   them exactly like CodeRabbit's (step 3). Qodo never approves.
 2. Collect CodeRabbit findings: inline comments
    `gh api repos/dculussoftwares/stayfocus/pulls/<PR>/comments --paginate` (author `coderabbitai[bot]`), its review bodies
    (`…/pulls/<PR>/reviews`, incl. "Outside diff range" and nitpick sections) and its PR comments.
@@ -93,9 +96,9 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
 
 ## 9. Merge gate, then merge
 Merge only when **all** of these hold for the current HEAD:
-- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Gemini fallback, where `ci-pass` and the other CI checks are what count;
+- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Qodo fallback, where `ci-pass` and the other CI checks are what count;
 - **0 unresolved review threads**;
-- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit rate limited and Gemini fallback used) Gemini
+- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit unavailable and Qodo fallback used) Qodo
   has reviewed HEAD and no `critical`/`high` finding is open, and any CodeRabbit review on HEAD has no unaddressed comments — **or**, if its approval hasn't updated within ~20 min after
   its HEAD review completed, its review(s) of HEAD contain **no new actionable comments** (say so in the report).
 
@@ -123,8 +126,8 @@ Leave the PR open and the card where it is.
 <ID> #N — DONE | BLOCKED | NEEDS-HUMAN | ALREADY-DONE
 PR: <url> (merged | open)
 Summary: <1–3 lines>
-CodeRabbit: <n> findings — fixed <a>, declined <b> (why, one line each); gate: approved | no-actionable-on-HEAD | gemini-fallback (CodeRabbit rate limited)
-Gemini: <n> findings — fixed <a>, declined <b>   (only if used)
+CodeRabbit: <n> findings — fixed <a>, declined <b> (why, one line each); gate: approved | no-actionable-on-HEAD | qodo-fallback (<why CodeRabbit was unavailable: rate limited | no response | check failed | down | qodo-only mode>)
+Qodo: <n> findings — fixed <a>, declined <b>   (only if used)
 Pending manual checks: <list or none>
 Follow-ups: <list or none>
 Blocker / decision needed: <only if BLOCKED>
