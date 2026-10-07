@@ -144,8 +144,13 @@ jobs:
       - name: Terraform apply
         # Repo settings and the main ruleset need Repository -> Administration, which GITHUB_TOKEN lacks.
         env:
+          APP_TOKEN: ${{ steps.app.outputs.token }}
           GITHUB_TOKEN: ${{ steps.app.outputs.token || github.token }}
-        run: terraform apply -input=false -auto-approve
+        run: |
+          if [ -z "${APP_TOKEN}" ]; then
+            echo "::warning title=No GitHub App token::Repository settings and the main ruleset need the stayfocus-automation App (Administration permission); their apply will fail with 403 (docs/INFRASTRUCTURE.md)."
+          fi
+          terraform apply -input=false -auto-approve
       - run: terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
       - name: Link sub-issues and dependencies
         run: python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" relations
