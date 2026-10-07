@@ -123,6 +123,7 @@ interface BlockEventDao {
     ): Flow<List<BlockEventEntity>>
 }
 
+@Suppress("TooManyFunctions")
 @Dao
 interface UsageDao {
     @Upsert
@@ -150,4 +151,50 @@ interface UsageDao {
         from: LocalDate,
         to: LocalDate,
     ): Flow<List<UsageTotalsEntity>>
+
+    /** Replaces everything cached for [totals]`.date` atomically, so a re-cached day never keeps stale rows. */
+    @Transaction
+    suspend fun replaceDay(
+        totals: UsageTotalsEntity,
+        days: List<UsageDayEntity>,
+        hours: List<UsageHourEntity>,
+    ) {
+        deleteDay(totals.date)
+        upsertTotals(totals)
+        days.forEach { upsertDay(it) }
+        hours.forEach { upsertHour(it) }
+    }
+
+    /** Drops every cached day strictly before [date]. */
+    @Transaction
+    suspend fun deleteBefore(date: LocalDate) {
+        deleteTotalsBefore(date)
+        deleteDaysBefore(date)
+        deleteHoursBefore(date)
+    }
+
+    @Transaction
+    suspend fun deleteDay(date: LocalDate) {
+        deleteTotalsOn(date)
+        deleteDaysOn(date)
+        deleteHoursOn(date)
+    }
+
+    @Query("DELETE FROM usage_totals WHERE date = :date")
+    suspend fun deleteTotalsOn(date: LocalDate)
+
+    @Query("DELETE FROM usage_day WHERE date = :date")
+    suspend fun deleteDaysOn(date: LocalDate)
+
+    @Query("DELETE FROM usage_hour WHERE date = :date")
+    suspend fun deleteHoursOn(date: LocalDate)
+
+    @Query("DELETE FROM usage_totals WHERE date < :date")
+    suspend fun deleteTotalsBefore(date: LocalDate)
+
+    @Query("DELETE FROM usage_day WHERE date < :date")
+    suspend fun deleteDaysBefore(date: LocalDate)
+
+    @Query("DELETE FROM usage_hour WHERE date < :date")
+    suspend fun deleteHoursBefore(date: LocalDate)
 }
