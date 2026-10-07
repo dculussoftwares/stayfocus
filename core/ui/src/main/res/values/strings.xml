@@ -16,4 +16,5 @@
     <string name="sf_password_show_description">Show password</string>
     <string name="sf_password_hide_description">Hide password</string>
     <string name="sf_loading">Loading</string>
+    <string name="sf_gauge_description">Screen time %1$s, average %2$s</string>
 </resources>
