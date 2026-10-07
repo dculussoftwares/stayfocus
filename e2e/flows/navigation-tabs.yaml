@@ -9,7 +9,7 @@ appId: com.dculus.stayfocused
 - tapOn: "Continue"
 - assertVisible: "Permissions"
 - tapOn: "Continue"
-- assertVisible: "HOME"
+- assertVisible: "Home"
 - tapOn: "BLOCK"
 - assertVisible: "New block"
 - tapOn: "DEVICES"
@@ -17,4 +17,6 @@ appId: com.dculus.stayfocused
 - back
 - assertVisible: "Open Account"
 - tapOn: "Open Account"
+- assertVisible: "Account"
+# The tab bar stays visible on Account.
 - assertVisible: "BLOCK"
