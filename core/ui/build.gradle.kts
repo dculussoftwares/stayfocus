@@ -15,8 +15,10 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.coil.compose)
     implementation(libs.androidx.core.ktx)
+    implementation(libs.kotlinx.coroutines.core)
 
     testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
     testImplementation(libs.roborazzi.junit.rule)
