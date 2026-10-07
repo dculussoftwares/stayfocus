@@ -38,7 +38,5 @@ variable "deploy_roles" {
     "roles/serviceusage.serviceUsageAdmin",
     "roles/firebase.admin",
     "roles/datastore.owner",
-    "roles/iam.serviceAccountAdmin",
-    "roles/resourcemanager.projectIamAdmin",
   ]
 }
