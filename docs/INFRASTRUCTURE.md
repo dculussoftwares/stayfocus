@@ -107,7 +107,18 @@ infra-bootstrap with a fresh temporary key (steps 1-5), then deleting it again.
 The deploy service account's roles (`deploy_roles` in `infra/bootstrap/variables.tf`) are least-privilege for what the
 Firebase stories need; add roles there when a later infra story needs more.
 
-### Forks
+### Security scanning (M1-15)
+
+- `.github/workflows/security.yml` (aggregate `security-pass`, required): dependency review (fails on high severity and on
+  licences incompatible with GPL-3.0; a Gradle dependency graph is submitted first), gitleaks (PR commits; full history on `main`
+  and weekly), Trivy config scan of `infra/` (SARIF to the Security tab, fails on high/critical; exceptions in `.trivyignore`
+  with a reason), tflint with the google ruleset (`.tflint.hcl`, also used by the pre-commit hook), zizmor on the workflows (high).
+- `.github/workflows/codeql.yml`: CodeQL for `java-kotlin`, `javascript-typescript` and `actions` (PRs, `main`, weekly); alerts are
+  reviewed in the Security tab and are not a merge gate. A language without sources yet is skipped.
+- `.github/dependabot.yml`: Gradle, npm (`firebase/functions`), GitHub Actions, Terraform and pre-commit, weekly, minor/patch grouped.
+- `github_repository` turns on secret scanning, push protection and Dependabot alerts (needs the M1-12 App permissions).
+
+## Forks
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
 `GCP_PROJECT_ID_DEV` to a unique project id, then set the `GCP_*` variables to point at your own project. Set `TF_CLOUD_ORGANIZATION` to your own HCP organization.
@@ -128,7 +139,7 @@ Run the same bootstrap from your fork with your own billing account (the workflo
 imported with an `import` block) and a ruleset on the default branch:
 
 - pull request required, stale approvals dismissed on push, **all review threads resolved**;
-- required status check: `ci-pass` (aggregate job in `ci.yml`);
+- required status checks: `ci-pass` (aggregate job in `ci.yml`) and `security-pass` (aggregate job in `security.yml`);
 - linear history, no force pushes, no deletion; direct pushes are rejected for everyone;
 - the only bypass is the organisation admin role in `pull_request` mode (emergency merge of a PR).
 

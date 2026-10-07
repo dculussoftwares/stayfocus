@@ -37,5 +37,5 @@ variable "required_approvals" {
 variable "required_status_checks" {
   description = "Status checks that must pass before merging to main."
   type        = set(string)
-  default     = ["ci-pass"]
+  default     = ["ci-pass", "security-pass"]
 }

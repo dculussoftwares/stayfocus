@@ -1,0 +1,48 @@
+# Dependabot version updates (M1-15). Weekly, minor/patch bumps grouped into one PR per ecosystem.
+# Dependabot PRs go through the same gate as any other PR (ci-pass, security-pass, CodeRabbit).
+# GitHub Actions updates keep the commit-SHA pin and rewrite the trailing "# vX.Y.Z" comment.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      gradle-minor-patch:
+        update-types: [minor, patch]
+
+  # Cloud Functions (M6). The directory does not exist before M6-01 lands; Dependabot reports it as unreachable until then.
+  - package-ecosystem: npm
+    directory: "/firebase/functions"
+    schedule:
+      interval: weekly
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: terraform
+    directories:
+      - "/infra/github"
+      - "/infra/bootstrap"
+      - "/infra/firebase"
+    schedule:
+      interval: weekly
+    groups:
+      terraform-minor-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: pre-commit
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      pre-commit-minor-patch:
+        update-types: [minor, patch]
