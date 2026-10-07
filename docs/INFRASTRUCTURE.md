@@ -56,7 +56,52 @@ These are the only manual steps, and they create credentials, not infrastructure
 **Public repo hygiene:** no secrets, tokens, `google-services.json`, keystores or Terraform state in git (see `.gitignore`).
 Fork PRs never get secrets (the plan job only runs for branches in this repo). Third-party actions are pinned to commit SHAs.
 
-GCP bootstrap (billing account, the WIF pool, deploy service account) is part of story **M1-13**.
+GCP bootstrap is described in the next section.
+
+## Firebase/GCP
+
+`infra/bootstrap` (manual, once) creates the project(s), billing link, a Workload Identity Federation (WIF) pool and
+provider restricted to this repository, and the `tf-deploy` service account. `infra/firebase` (automatic) then manages
+the resources inside the project, starting with the base APIs (`serviceusage`, `cloudresourcemanager`, `iam`, `firebase`).
+GitHub Actions authenticates through WIF; **no service-account key** is used for deploys.
+
+### Settings
+
+| Where | Name | Value |
+|---|---|---|
+| variable | `TF_CLOUD_ORGANIZATION` | HCP organization (already set) |
+| secret | `TF_API_TOKEN` | HCP token (already set) |
+| variable | `GCP_WIF_PROVIDER_DEV` | `projects.<number>.locations.global.workloadIdentityPools.github.providers.github` path from the bootstrap output `wif_provider` |
+| variable | `GCP_DEPLOY_SA_DEV` | bootstrap output `deploy_service_acc` (`tf-deploy@stayfocus-dev.iam.gserviceaccount.com`) |
+| variable | `GCP_PROJECT_ID_DEV` | optional, default `stayfocus-dev` |
+| variable | `GCP_ORG_ID` | optional, GCP organization ID that owns the projects |
+| secret | `GCP_BILLING_ACCOUNT` | billing account ID, bootstrap only |
+| secret | `GCP_BOOTSTRAP_CREDENTIALS` | temporary key JSON of the bootstrap identity, **deleted after the first run** |
+| environments | `bootstrap`, `dev` | `main` only; add required reviewers to gate applies |
+
+HCP workspaces `stayfocus-bootstrap` and `stayfocus-firebase-dev` are created in Local execution mode by
+`scripts/infra/ensure_tfc_workspace.sh`.
+
+### Bootstrap steps (maintainer, once)
+
+1. Create a throwaway bootstrap identity (a service account with *Project Creator* on the org/folder and *Billing
+   Account User* on the billing account, plus permission to create WIF pools) and a key for it.
+2. Add the secrets `GCP_BILLING_ACCOUNT` and `GCP_BOOTSTRAP_CREDENTIALS`, and the `bootstrap` environment.
+3. Run **infra-bootstrap** from `main` with `apply` unchecked and read the plan, then run it again with `apply` checked.
+4. Copy the printed `wif_provider` and `deploy_service_acc` into the variables above.
+5. **Delete the key and the `GCP_BOOTSTRAP_CREDENTIALS` secret.** Check with
+   `gcloud iam service-accounts keys list --iam-account=<bootstrap and tf-deploy accounts>`: only
+   `SYSTEM_MANAGED` keys may remain.
+6. Merge any change under `infra/firebase`: the `infra-firebase` workflow applies it. A later `terraform plan` on `main`
+   shows no changes. The workflow only warns (and skips) until the variables exist.
+
+The deploy service account's roles (`deploy_roles` in `infra/bootstrap/variables.tf`) are least-privilege for what the
+Firebase stories need; add roles there when a later infra story needs more.
+
+### Forks
+
+Run the same bootstrap with your own billing account, then set `GCP_*` variables, `TF_CLOUD_ORGANIZATION` and
+`github_repository` (`-var github_repository=you/fork`) to point at your own project.
 
 ## Editing the backlog
 

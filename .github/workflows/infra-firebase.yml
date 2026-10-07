@@ -1,0 +1,127 @@
+name: infra-firebase
+
+# GCP/Firebase resources as code (infra/firebase, HCP Terraform state, Local execution mode).
+#  - PR: fmt, validate, plan (posted as a PR comment).
+#  - Merge to main / manual run: apply, gated by the GitHub environment `dev`.
+# Auth to GCP uses Workload Identity Federation (no service-account keys).
+# Repo variables: TF_CLOUD_ORGANIZATION, GCP_WIF_PROVIDER_DEV, GCP_DEPLOY_SA_DEV, GCP_PROJECT_ID_DEV (optional,
+# default stayfocus-dev). Secret: TF_API_TOKEN. See docs/INFRASTRUCTURE.md ("Firebase/GCP").
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  pull_request:
+    paths:
+      - "infra/firebase/**"
+      - ".github/workflows/infra-firebase.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/firebase/**"
+      - ".github/workflows/infra-firebase.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: infra-firebase-dev
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
+  TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
+  TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_DEV || 'stayfocus-dev' }}
+  TF_VAR_env: dev
+  TF_IN_AUTOMATION: "true"
+
+defaults:
+  run:
+    working-directory: infra/firebase
+
+jobs:
+  bootstrap-check:
+    # Runs only while the one-time bootstrap (docs/INFRASTRUCTURE.md) is missing, instead of failing every run.
+    if: vars.TF_CLOUD_ORGANIZATION == '' || vars.GCP_WIF_PROVIDER_DEV == '' || vars.GCP_DEPLOY_SA_DEV == ''
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .
+    steps:
+      - run: echo "::warning title=Firebase infra not applied::Complete the GCP bootstrap and set TF_CLOUD_ORGANIZATION, GCP_WIF_PROVIDER_DEV and GCP_DEPLOY_SA_DEV (docs/INFRASTRUCTURE.md, Firebase/GCP)."
+
+  plan:
+    # Secrets are never exposed to PRs from forks.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_DEPLOY_SA_DEV != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - run: terraform fmt -check -recursive
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_DEPLOY_SA_DEV }}
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
+      - run: terraform init -input=false
+      - run: terraform validate
+      - id: plan
+        run: |
+          set -o pipefail
+          terraform plan -input=false -no-color -lock=false | tee plan.txt
+      - name: Comment plan on PR
+        if: always() && steps.plan.outcome != 'skipped'
+        run: |
+          {
+            echo "### Firebase/GCP (dev) Terraform plan"
+            echo
+            grep -E '^(Plan:|No changes\.|Error)' plan.txt || echo "Plan did not complete; see the job log."
+            echo
+            echo "<details><summary>Full plan</summary>"
+            echo
+            echo '```'
+            tail -c 60000 plan.txt
+            echo '```'
+            echo "</details>"
+          } > comment.md
+          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md --edit-last \
+            || gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
+
+  apply:
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_DEPLOY_SA_DEV != ''
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER_DEV }}
+          service_account: ${{ vars.GCP_DEPLOY_SA_DEV }}
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
+      - run: terraform init -input=false
+      - run: terraform apply -input=false -auto-approve
