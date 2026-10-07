@@ -28,7 +28,7 @@ gh issue comment N --repo dculussoftwares/stayfocus --body "🤖 Started <ID>."
 
 ## 3. Read before coding (only what this story needs)
 `AGENTS.md`; `docs/IMPLEMENTATION_PLAN.md` §4 (workflow, Definition of done), §5 (conventions), §8 (backend policy);
-`docs/INFRASTRUCTURE.md` for `infra` stories; `.coderabbit.yaml` and `.gemini/styleguide.md` (what the reviewers check);
+`docs/INFRASTRUCTURE.md` for `infra` stories; `.coderabbit.yaml` and `.pr_agent.toml` (what the reviewers check);
 `design_handoff_stay_focused_phase1/README.md` and the prototype's `<script>` block for exact copy, tokens and maths.
 Look up current library/API details (Context7 / official docs) instead of relying on memory.
 
@@ -75,10 +75,10 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
    "Review completed" when its review of HEAD is done. Reviews can take 5–15 min. If nothing starts within ~15 min,
    comment `@coderabbitai review` once.
    **If CodeRabbit says "Review rate limited"**: wait the stated time once (at most ~10 min), re-request once, and if it
-   is still limited, use the Gemini fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
-   `/gemini review` (again after **every** push; Gemini may not re-review on its own), wait up to ~10 min (if it still
-   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `gemini not responding`), collect `gemini-code-assist[bot]` comments (inline + PR comments) and handle
-   them exactly like CodeRabbit's (step 3). Gemini never approves.
+   is still limited, use the Qodo fallback (see "Fallback reviewer" in `docs/agents/PHASE1_EXECUTION.md`): comment
+   `/agentic_review` (again after **every** push; Qodo may not re-review on its own), wait up to ~10 min (if it still
+   hasn't reviewed HEAD after one re-request, don't merge: report BLOCKED `qodo not responding`), collect the Qodo bot's comments (inline + PR comments) and handle
+   them exactly like CodeRabbit's (step 3). Qodo never approves.
 2. Collect CodeRabbit findings: inline comments
    `gh api repos/dculussoftwares/stayfocus/pulls/<PR>/comments --paginate` (author `coderabbitai[bot]`), its review bodies
    (`…/pulls/<PR>/reviews`, incl. "Outside diff range" and nitpick sections) and its PR comments.
@@ -93,9 +93,9 @@ Repeat until the merge gate (step 9) is met; at most 5 rounds.
 
 ## 9. Merge gate, then merge
 Merge only when **all** of these hold for the current HEAD:
-- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Gemini fallback, where `ci-pass` and the other CI checks are what count;
+- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Qodo fallback, where `ci-pass` and the other CI checks are what count;
 - **0 unresolved review threads**;
-- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit rate limited and Gemini fallback used) Gemini
+- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit rate limited and Qodo fallback used) Qodo
   has reviewed HEAD and no `critical`/`high` finding is open, and any CodeRabbit review on HEAD has no unaddressed comments — **or**, if its approval hasn't updated within ~20 min after
   its HEAD review completed, its review(s) of HEAD contain **no new actionable comments** (say so in the report).
 
@@ -123,8 +123,8 @@ Leave the PR open and the card where it is.
 <ID> #N — DONE | BLOCKED | NEEDS-HUMAN | ALREADY-DONE
 PR: <url> (merged | open)
 Summary: <1–3 lines>
-CodeRabbit: <n> findings — fixed <a>, declined <b> (why, one line each); gate: approved | no-actionable-on-HEAD | gemini-fallback (CodeRabbit rate limited)
-Gemini: <n> findings — fixed <a>, declined <b>   (only if used)
+CodeRabbit: <n> findings — fixed <a>, declined <b> (why, one line each); gate: approved | no-actionable-on-HEAD | qodo-fallback (CodeRabbit rate limited)
+Qodo: <n> findings — fixed <a>, declined <b>   (only if used)
 Pending manual checks: <list or none>
 Follow-ups: <list or none>
 Blocker / decision needed: <only if BLOCKED>

@@ -106,8 +106,8 @@ M1 ──┬── M2 ───────────────────�
    criteria ticked, and pending manual checks. Move the card to `In review`.
 7. **CodeRabbit reviews the PR** (config: `.coderabbit.yaml`). Fix or answer **every** comment and resolve the threads.
    Never self-approve (`@coderabbitai approve`) or dismiss its review. If CodeRabbit is rate limited, the fallback reviewer
-   is **Gemini Code Assist** (`.gemini/`; `/gemini review`), see `docs/agents/PHASE1_EXECUTION.md`.
-8. **Merge** (squash) only when the merge gate is met (CI green, `CodeRabbit` check done, 0 unresolved threads, CodeRabbit approved, or the Gemini fallback gate is met, or no new actionable comments on HEAD; see `docs/agents/PHASE1_EXECUTION.md`). The merge closes
+   is **Qodo** (`.pr_agent.toml`; `/agentic_review`), see `docs/agents/PHASE1_EXECUTION.md`.
+8. **Merge** (squash) only when the merge gate is met (CI green, `CodeRabbit` check done, 0 unresolved threads, CodeRabbit approved, or the Qodo fallback gate is met, or no new actionable comments on HEAD; see `docs/agents/PHASE1_EXECUTION.md`). The merge closes
    the issue, and the board moves the card to `Done` and promotes newly unblocked cards to `Ready`.
 
 ### Definition of done (every story)
@@ -121,7 +121,7 @@ M1 ──┬── M2 ───────────────────�
 - A story that adds or changes a user journey adds or extends a Maestro flow in `e2e/flows/` (and instrumented tests where useful).
 - No new permission, manifest flag or Play-relevant declaration unless the story says so.
 - Builds without `google-services.json`.
-- CI is green, CodeRabbit approved the PR (or Gemini fallback gate met) with no unresolved threads, and every acceptance criterion is ticked in the PR
+- CI is green, CodeRabbit approved the PR (or Qodo fallback gate met) with no unresolved threads, and every acceptance criterion is ticked in the PR
   (anything needing a real device or a person is listed in `docs/qa/pending-manual-checks.md`).
 
 ---
