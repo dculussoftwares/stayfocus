@@ -1,0 +1,3 @@
+# CodeQL configuration (codeql.yml). The design handoff is an HTML prototype for reference only, not shipped code.
+paths-ignore:
+  - design_handoff_stay_focused_phase1
