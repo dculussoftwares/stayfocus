@@ -74,7 +74,9 @@ jobs:
       - name: Verify the bundles are signed
         run: |
           for f in app/build/outputs/bundle/release/app-release.aab kids/build/outputs/bundle/release/kids-release.aab; do
-            jarsigner -verify "$f"
+            # jarsigner exits 0 for an unsigned archive, so require its explicit "jar verified" line.
+            out=$(jarsigner -verify "$f" 2>&1) || { echo "$out"; exit 1; }
+            echo "$out" | grep -q '^jar verified' || { echo "::error::$f is not signed"; echo "$out"; exit 1; }
           done
 
       - name: Name the artifacts
