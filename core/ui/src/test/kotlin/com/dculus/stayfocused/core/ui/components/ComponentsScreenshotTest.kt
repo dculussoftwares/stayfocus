@@ -60,6 +60,10 @@ class ComponentsScreenshotTest {
 
     @Test fun textFields() = shot("SfTextField") { SfTextFieldPreview() }
 
+    @Test fun screenTimeGauge() = shot("ScreenTimeGauge") { ScreenTimeGaugePreview() }
+
+    @Test fun ledBarChart() = shot("LedBarChart") { LedBarChartPreview() }
+
     @Test
     fun toggleHasSwitchRoleAndTouchTarget() {
         var checked by mutableStateOf(false)
