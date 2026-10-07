@@ -35,6 +35,7 @@ class BlockScreenLauncher
         private val handler = Handler(Looper.getMainLooper())
         private var service: AccessibilityService? = null
         private var overlay: AccessibilityOverlay? = null
+        private var launchGeneration = 0L
 
         /** Called by the service when it connects. */
         fun attach(service: AccessibilityService) {
@@ -58,6 +59,7 @@ class BlockScreenLauncher
         /** Removes the fallback overlay, if showing. The engine calls this when the user leaves the blocked app. */
         fun dismissOverlay() {
             handler.post {
+                launchGeneration++
                 overlay?.remove()
                 overlay = null
             }
@@ -67,6 +69,7 @@ class BlockScreenLauncher
             pkg: String,
             decision: Decision.Block,
         ) {
+            val generation = ++launchGeneration
             val svc = service ?: return
             val request = BlockRequest(pkg, appLabel(pkg), decision)
             svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
@@ -75,7 +78,9 @@ class BlockScreenLauncher
                 return
             }
             handler.postDelayed({
-                if (!BlockScreenState.visible) showOverlay(svc, request)
+                if (generation == launchGeneration && service === svc && !BlockScreenState.visible) {
+                    showOverlay(svc, request)
+                }
             }, LAUNCH_CHECK_MS)
         }
 
