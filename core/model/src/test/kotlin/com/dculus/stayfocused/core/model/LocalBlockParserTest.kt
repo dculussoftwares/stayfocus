@@ -123,4 +123,21 @@ class LocalBlockParserTest {
         assertEquals(listOf("instagram", "youtube"), LocalBlockParser.parse("fox next maxim", installed).apps)
         assertEquals(listOf("x"), LocalBlockParser.parse("block x for 20 min", installed).apps)
     }
+
+    @Test
+    fun `a known app name inside a longer installed label does not select the known app`() {
+        val withMusic = installed + AppInfo("com.google.android.apps.youtube.music", "YouTube Music")
+        assertEquals(
+            listOf("youtube music"),
+            LocalBlockParser.parse("block YouTube Music for 20 minutes", withMusic).apps,
+        )
+        assertEquals(listOf("youtube"), LocalBlockParser.parse("block YouTube for 20 minutes", withMusic).apps)
+    }
+
+    @Test
+    fun `clocks that do not exist give no schedule`() {
+        listOf("Block X from 13pm to 14pm", "Block X from 0am to 5am", "Block X from 8:75 to 9:00").forEach {
+            assertEquals("limit", LocalBlockParser.parse(it, installed).type, it)
+        }
+    }
 }

@@ -439,6 +439,76 @@
           "fri"
         ]
       }
+    },
+    {
+      "sentence": "Block Instagram 9 until 5",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram"
+        ],
+        "range": "09:00–17:00"
+      }
+    },
+    {
+      "sentence": "Block Instagram for 1 hour and thirty minutes",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "instagram"
+        ],
+        "now": 90
+      }
+    },
+    {
+      "sentence": "Block Instagram for one and a half hours",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "instagram"
+        ],
+        "now": 90
+      }
+    },
+    {
+      "sentence": "Limit Instagram to 30 minutes per day starting now",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 30,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Instagram 1 hour a day Monday through Friday and Sunday",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 60,
+        "period": "daily",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri",
+          "sun"
+        ]
+      }
+    },
+    {
+      "sentence": "Block Spotify from 12:00 noon to 1pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "spotify"
+        ],
+        "range": "12:00–13:00"
+      }
     }
   ]
 }

@@ -86,7 +86,7 @@ object LocalBlockParser {
         hourly: Boolean,
         daily: Boolean,
     ): Boolean =
-        NOW_WORDS.containsMatchIn(text) ||
+        (NOW_WORDS.containsMatchIn(text) && !hourly && !daily) ||
             (
                 mins.size == 1 && !hourly && !daily &&
                     LOCK_FOR.containsMatchIn(
@@ -118,30 +118,42 @@ internal object ParserApps {
         )
     private val SOCIAL = Regex("\\bsocials?(?:\\s+media)?\\b")
 
+    private data class Hit(
+        val range: IntRange,
+        val name: String,
+    )
+
     /** Known ids and installed labels found in [text], in order of first mention. */
     fun find(
         text: String,
         installed: List<AppInfo>,
     ): List<String> {
-        val hits = mutableListOf<Pair<Int, String>>()
+        val aliasHits = mutableListOf<Hit>()
         ALIASES.forEach { (id, names) ->
-            names.forEach { name -> wordIndex(text, name)?.let { hits += it to id } }
+            names.forEach { name -> wordRange(text, name)?.let { aliasHits += Hit(it, id) } }
         }
-        SOCIAL.find(text)?.let { m -> KnownApps.socialMediaIds.forEach { hits += m.range.first to it } }
+        SOCIAL.find(text)?.let { m -> KnownApps.socialMediaIds.forEach { aliasHits += Hit(m.range, it) } }
         val idByPkg = KnownApps.packages.entries.associate { it.value to it.key }
+        val labelHits = mutableListOf<Hit>()
         installed.forEach { app ->
             val label = app.label.lowercase(Locale.ROOT).trim()
             if (label.length >= 2) {
-                wordIndex(text, label)?.let { hits += it to (idByPkg[app.pkg] ?: label) }
+                wordRange(text, label)?.let { labelHits += Hit(it, idByPkg[app.pkg] ?: label) }
             }
         }
-        return hits.sortedBy { it.first }.map { it.second }.distinct()
+        // "YouTube Music" installed: the word "youtube" inside it must not also select YouTube.
+        val all = aliasHits + labelHits
+        val kept = all.filterNot { hit -> all.any { it.contains(hit) } }
+        return kept.sortedBy { it.range.first }.map { it.name }.distinct()
     }
 
-    private fun wordIndex(
+    private fun Hit.contains(other: Hit) =
+        range.first <= other.range.first && range.last >= other.range.last && range != other.range
+
+    private fun wordRange(
         text: String,
         word: String,
-    ): Int? = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").find(text)?.range?.first
+    ): IntRange? = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").find(text)?.range
 }
 
 internal object ParserDurations {
@@ -158,7 +170,8 @@ internal object ParserDurations {
     private val HOUR_AND_HALF = Regex("\\b($NUM|an?)\\s*$HOUR\\s+and\\s+a\\s+half\\b")
     private val HALF_HOUR = Regex("\\bhalf[ -](?:an?[ -])?hour\\b")
     private val QUARTER_HOUR = Regex("\\bquarter(?: of)?(?: an?)? hour\\b")
-    private val HOURS_MINS = Regex("\\b($NUM)\\s*$HOUR\\b\\s*(?:and\\s+)?(\\d+)\\s*$MIN\\b")
+    private val HOURS_MINS = Regex("\\b($NUM)\\s*$HOUR\\b\\s*(?:and\\s+)?($NUM)\\s*$MIN\\b")
+    private val HALVES = Regex("\\b($NUM|an?)\\s+and\\s+a\\s+half\\s+hours?\\b")
     private val COMPACT = Regex("\\b(\\d+)h(\\d{1,2})\\b")
     private val HOURS = Regex("\\b($NUM)\\s*$HOUR\\b")
     private val AN_HOUR = Regex("\\ban?\\s+hour\\b")
@@ -175,7 +188,8 @@ internal object ParserDurations {
         add(HOUR_AND_HALF) { (number(it.groupValues[1]) + HALF) * MINS_PER_HOUR }
         add(HALF_HOUR) { MINS_PER_HOUR * HALF }
         add(QUARTER_HOUR) { MINS_PER_HOUR * QUARTER }
-        add(HOURS_MINS) { number(it.groupValues[1]) * MINS_PER_HOUR + it.groupValues[2].toDouble() }
+        add(HOURS_MINS) { number(it.groupValues[1]) * MINS_PER_HOUR + number(it.groupValues[2]) }
+        add(HALVES) { (number(it.groupValues[1]) + HALF) * MINS_PER_HOUR }
         add(COMPACT) { it.groupValues[1].toDouble() * MINS_PER_HOUR + it.groupValues[2].toDouble() }
         add(HOURS) { number(it.groupValues[1]) * MINS_PER_HOUR }
         add(AN_HOUR) { MINS_PER_HOUR }
@@ -221,6 +235,7 @@ internal object ParserTimes {
     private val CLOCK = Regex("\\b$TOKEN(?![\\d:])|\\b(noon|midnight)\\b")
     private val SPAN = Regex("\\b$TOKEN\\s*(?:to|-|and|until|till|through)\\s*$TOKEN(?![\\d:])")
     private val FROM_BETWEEN = Regex("\\b(?:from|between)\\s+\\d")
+    private val UNTIL = Regex("\\b(?:until|till)\\b")
     private val MARKER = Regex("am|pm|a\\.m\\.|p\\.m\\.|:")
 
     private data class Clock(
@@ -231,7 +246,7 @@ internal object ParserTimes {
 
     /** "HH:MM–HH:MM" when the text names two times (or the default range for one); null when it names none. */
     fun range(text: String): String? {
-        val pair = span(text) ?: marked(text)
+        val pair = (span(text) ?: marked(text))?.takeIf { (a, b) -> a.isReal() && b.isReal() }
         val (start, end) = pair?.let { resolve(it.first, it.second) ?: DEFAULT_MINUTES } ?: return null
         return "%02d:%02d–%02d:%02d".format(Locale.ROOT, start / 60, start % 60, end / 60, end % 60)
     }
@@ -247,7 +262,8 @@ internal object ParserTimes {
         val a = m.toClock(1)
         val b = m.toClock(4)
         val marked = a.meridiem != null || b.meridiem != null || m.value.contains(':')
-        return if (marked || FROM_BETWEEN.containsMatchIn(text)) a to b else null
+        val bareOk = FROM_BETWEEN.containsMatchIn(text) || UNTIL.containsMatchIn(m.value)
+        return if (marked || bareOk) a to b else null
     }
 
     /** Two or more times with am/pm, a colon, noon or midnight that are not a span ("from 8am until 3pm"). */
@@ -255,14 +271,23 @@ internal object ParserTimes {
         val found =
             CLOCK
                 .findAll(text)
-                .mapNotNull { m -> m.wordClock() ?: m.takeIf { MARKER.containsMatchIn(it.value) }?.toClock(1) }
-                .toList()
+                .mapNotNull { m ->
+                    m.wordClock()
+                        ?: m.takeIf { MARKER.containsMatchIn(it.value) && !text.startsWithWordAfter(it) }?.toClock(1)
+                }.toList()
         return when {
             found.size >= 2 -> found[0] to found[1]
             found.size == 1 -> DEFAULT_CLOCKS
             else -> null
         }
     }
+
+    /** 1-12 with am/pm, 0-24 without; minutes 0-59. */
+    private fun Clock.isReal(): Boolean =
+        minute <= MAX_MINUTE && if (meridiem != null) hour in 1..NOON else hour <= HOURS_IN_DAY
+
+    private fun String.startsWithWordAfter(m: MatchResult): Boolean =
+        substring(m.range.last + 1).trimStart().let { it.startsWith("noon") || it.startsWith("midnight") }
 
     private fun MatchResult.wordClock(): Clock? =
         when (groupValues.getOrNull(WORD_GROUP)) {
@@ -283,7 +308,6 @@ internal object ParserTimes {
         a: Clock,
         b: Clock,
     ): Pair<Int, Int>? {
-        if (listOf(a, b).any { it.minute > MAX_MINUTE || it.hour > HOURS_IN_DAY }) return null
         val ends = candidates(b, null)
         val starts = candidates(a, b.meridiem)
         // Prefer the reading where the window stays inside one day ("9 to 5" -> 09:00-17:00).
@@ -335,17 +359,19 @@ internal object ParserDays {
     }
 
     private fun named(text: String): List<String> {
-        val range = DAY_RANGE.find(text)
-        if (range != null) {
-            val from = NAMES.indexOf(range.groupValues[1].take(DAY_KEY_LENGTH))
-            val to = NAMES.indexOf(range.groupValues[2].take(DAY_KEY_LENGTH))
-            val length = (to - from + NAMES.size) % NAMES.size
-            return (0..length).map { NAMES[(from + it) % NAMES.size] }
-        }
-        return DAY_WORD
-            .findAll(text)
-            .map { it.groupValues[1].take(DAY_KEY_LENGTH) }
-            .distinct()
-            .toList()
+        val ranges = DAY_RANGE.findAll(text).toList()
+        val fromRanges =
+            ranges.flatMap { range ->
+                val from = NAMES.indexOf(range.groupValues[1].take(DAY_KEY_LENGTH))
+                val to = NAMES.indexOf(range.groupValues[2].take(DAY_KEY_LENGTH))
+                val length = (to - from + NAMES.size) % NAMES.size
+                (0..length).map { NAMES[(from + it) % NAMES.size] }
+            }
+        val single =
+            DAY_WORD
+                .findAll(text)
+                .filter { word -> ranges.none { word.range.first in it.range } }
+                .map { it.groupValues[1].take(DAY_KEY_LENGTH) }
+        return (fromRanges + single).distinct().sortedBy { NAMES.indexOf(it) }
     }
 }
