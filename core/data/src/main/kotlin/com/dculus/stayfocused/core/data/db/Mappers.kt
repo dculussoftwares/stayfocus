@@ -7,8 +7,14 @@ import com.dculus.stayfocused.core.model.TimeRange
 
 fun BlockTarget.toKey(): String =
     when (this) {
-        BlockTarget.ThisPhone -> TARGET_ME
-        is BlockTarget.Device -> deviceId
+        BlockTarget.ThisPhone -> {
+            TARGET_ME
+        }
+
+        is BlockTarget.Device -> {
+            require(deviceId != TARGET_ME) { "deviceId must not equal the reserved this-phone key '$TARGET_ME'" }
+            deviceId
+        }
     }
 
 fun String.toBlockTarget(): BlockTarget = if (this == TARGET_ME) BlockTarget.ThisPhone else BlockTarget.Device(this)

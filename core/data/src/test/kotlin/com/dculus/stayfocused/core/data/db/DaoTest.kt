@@ -21,6 +21,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -183,6 +184,33 @@ class DaoTest {
                     .map { it.block.id },
             )
         }
+
+    @Test
+    fun `dropping an app from a block clears its cycle state`() =
+        runBlocking {
+            save(block("b1", setOf("com.a", "com.b")))
+            db.cycleStateDao().upsert(CycleStateEntity("b1", "com.a", 1, Instant.EPOCH, null))
+            db.cycleStateDao().upsert(CycleStateEntity("b1", "com.b", 1, Instant.EPOCH, null))
+
+            save(block("b1", setOf("com.b")))
+            save(block("b1", setOf("com.a", "com.b")))
+
+            assertNull(db.cycleStateDao().observe("b1", "com.a").first())
+            assertEquals(
+                1L,
+                db
+                    .cycleStateDao()
+                    .observe("b1", "com.b")
+                    .first()
+                    ?.usedMs,
+            )
+        }
+
+    @Test
+    fun `a device cannot take the reserved this-phone key`() {
+        assertFailsWith<IllegalArgumentException> { BlockTarget.Device(TARGET_ME).toKey() }
+        assertEquals(BlockTarget.ThisPhone, TARGET_ME.toBlockTarget())
+    }
 
     @Test
     fun `locked apps are keyed by pkg and target`() =

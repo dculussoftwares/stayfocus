@@ -36,11 +36,19 @@ interface BlockDao {
         upsertBlock(block)
         deleteApps(block.id)
         insertApps(apps)
+        // Cycle state of apps dropped from the block must not resurface if they are re-added later.
+        deleteCycleStateExcept(block.id, apps.map { it.pkg })
     }
 
     /** Deletes the block; its apps and cycle state go with it (foreign key cascade). */
     @Query("DELETE FROM blocks WHERE id = :id")
     suspend fun delete(id: String)
+
+    @Query("DELETE FROM cycle_state WHERE blockId = :blockId AND pkg NOT IN (:keep)")
+    suspend fun deleteCycleStateExcept(
+        blockId: String,
+        keep: List<String>,
+    )
 
     @Upsert
     suspend fun upsertBlock(block: BlockEntity)
