@@ -86,7 +86,7 @@ object LocalBlockParser {
         hourly: Boolean,
         daily: Boolean,
     ): Boolean =
-        NOW_WORDS.containsMatchIn(text) ||
+        (!hourly && !daily && NOW_WORDS.containsMatchIn(text)) ||
             (
                 mins.size == 1 && !hourly && !daily &&
                     LOCK_FOR.containsMatchIn(
@@ -105,6 +105,8 @@ internal data class ParsedDuration(
 }
 
 internal object ParserApps {
+    private data class Hit(val start: Int, val end: Int, val id: String)
+
     private val ALIASES: Map<String, List<String>> =
         mapOf(
             "instagram" to listOf("instagram", "insta", "ig"),
@@ -123,25 +125,34 @@ internal object ParserApps {
         text: String,
         installed: List<AppInfo>,
     ): List<String> {
-        val hits = mutableListOf<Pair<Int, String>>()
+        val hits = mutableListOf<Hit>()
         ALIASES.forEach { (id, names) ->
-            names.forEach { name -> wordIndex(text, name)?.let { hits += it to id } }
+            names.forEach { name -> wordRange(text, name)?.let { hits += Hit(it.first, it.last + 1, id) } }
         }
-        SOCIAL.find(text)?.let { m -> KnownApps.socialMediaIds.forEach { hits += m.range.first to it } }
+        SOCIAL.find(text)?.let { m -> KnownApps.socialMediaIds.forEach { hits += Hit(m.range.first, m.range.last + 1, it) } }
         val idByPkg = KnownApps.packages.entries.associate { it.value to it.key }
-        installed.forEach { app ->
+        val installedHits = installed.mapNotNull { app ->
             val label = app.label.lowercase(Locale.ROOT).trim()
-            if (label.length >= 2) {
-                wordIndex(text, label)?.let { hits += it to (idByPkg[app.pkg] ?: label) }
+            if (label.length < 2) {
+                null
+            } else {
+                wordRange(text, label)?.let { Hit(it.first, it.last + 1, idByPkg[app.pkg] ?: label) }
             }
         }
-        return hits.sortedBy { it.first }.map { it.second }.distinct()
+        hits += installedHits
+        return hits
+            .filterNot { hit ->
+                installedHits.any { installedHit ->
+                    installedHit.end - installedHit.start > hit.end - hit.start &&
+                        installedHit.start <= hit.start && installedHit.end >= hit.end
+                }
+            }.sortedBy { it.start }.map { it.id }.distinct()
     }
 
-    private fun wordIndex(
+    private fun wordRange(
         text: String,
         word: String,
-    ): Int? = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").find(text)?.range?.first
+    ): IntRange? = Regex("(?<![a-z0-9])${Regex.escape(word)}(?![a-z0-9])").find(text)?.range
 }
 
 internal object ParserDurations {
@@ -158,7 +169,7 @@ internal object ParserDurations {
     private val HOUR_AND_HALF = Regex("\\b($NUM|an?)\\s*$HOUR\\s+and\\s+a\\s+half\\b")
     private val HALF_HOUR = Regex("\\bhalf[ -](?:an?[ -])?hour\\b")
     private val QUARTER_HOUR = Regex("\\bquarter(?: of)?(?: an?)? hour\\b")
-    private val HOURS_MINS = Regex("\\b($NUM)\\s*$HOUR\\b\\s*(?:and\\s+)?(\\d+)\\s*$MIN\\b")
+    private val HOURS_MINS = Regex("\\b($NUM)\\s*$HOUR\\b\\s*(?:and\\s+)?($NUM)\\s*$MIN\\b")
     private val COMPACT = Regex("\\b(\\d+)h(\\d{1,2})\\b")
     private val HOURS = Regex("\\b($NUM)\\s*$HOUR\\b")
     private val AN_HOUR = Regex("\\ban?\\s+hour\\b")
@@ -175,7 +186,7 @@ internal object ParserDurations {
         add(HOUR_AND_HALF) { (number(it.groupValues[1]) + HALF) * MINS_PER_HOUR }
         add(HALF_HOUR) { MINS_PER_HOUR * HALF }
         add(QUARTER_HOUR) { MINS_PER_HOUR * QUARTER }
-        add(HOURS_MINS) { number(it.groupValues[1]) * MINS_PER_HOUR + it.groupValues[2].toDouble() }
+        add(HOURS_MINS) { number(it.groupValues[1]) * MINS_PER_HOUR + number(it.groupValues[2]) }
         add(COMPACT) { it.groupValues[1].toDouble() * MINS_PER_HOUR + it.groupValues[2].toDouble() }
         add(HOURS) { number(it.groupValues[1]) * MINS_PER_HOUR }
         add(AN_HOUR) { MINS_PER_HOUR }
@@ -221,6 +232,7 @@ internal object ParserTimes {
     private val CLOCK = Regex("\\b$TOKEN(?![\\d:])|\\b(noon|midnight)\\b")
     private val SPAN = Regex("\\b$TOKEN\\s*(?:to|-|and|until|till|through)\\s*$TOKEN(?![\\d:])")
     private val FROM_BETWEEN = Regex("\\b(?:from|between)\\s+\\d")
+    private val SINGLE_UNTIL = Regex("\\b(?:until|till|through)\\s+$TOKEN(?![\\d:])")
     private val MARKER = Regex("am|pm|a\\.m\\.|p\\.m\\.|:")
 
     private data class Clock(
@@ -247,11 +259,13 @@ internal object ParserTimes {
         val a = m.toClock(1)
         val b = m.toClock(4)
         val marked = a.meridiem != null || b.meridiem != null || m.value.contains(':')
-        return if (marked || FROM_BETWEEN.containsMatchIn(text)) a to b else null
+        return if (marked || FROM_BETWEEN.containsMatchIn(text) || m.value.contains("until") || m.value.contains("till") || m.value.contains("through")) a to b else null
     }
 
     /** Two or more times with am/pm, a colon, noon or midnight that are not a span ("from 8am until 3pm"). */
     private fun marked(text: String): Pair<Clock, Clock>? {
+        val singleUntil = SINGLE_UNTIL.find(text)?.toClock(1)
+        if (singleUntil != null) return DEFAULT_CLOCKS.first to singleUntil
         val found =
             CLOCK
                 .findAll(text)
