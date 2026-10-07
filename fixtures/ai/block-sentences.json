@@ -1,0 +1,444 @@
+{
+  "version": 1,
+  "description": "Natural-language block sentences with the expected AiBlockResult. Shared by the on-device parser test (M9-02) and the Gemini evals (M9-04). apps are KnownApps ids (or lower-cased installed labels for localOnly cases); days is omitted when the sentence names none; only fields relevant to the type are listed. Eval scripts must skip localOnly cases.",
+  "installedApps": [
+    {
+      "pkg": "com.supercell.clashofclans",
+      "label": "Clash of Clans"
+    },
+    {
+      "pkg": "com.zhiliaoapp.musically",
+      "label": "TikTok"
+    },
+    {
+      "pkg": "com.discord",
+      "label": "Discord"
+    }
+  ],
+  "cases": [
+    {
+      "sentence": "Instagram 10 min, then lock 1 hour",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 60
+      }
+    },
+    {
+      "sentence": "No YouTube on school days 8am–3pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "youtube"
+        ],
+        "range": "08:00–15:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "Social media 45 min a day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram",
+          "reddit",
+          "x",
+          "youtube"
+        ],
+        "mins": 45,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Let me use Instagram for 10 minutes, then lock it for an hour",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 60
+      }
+    },
+    {
+      "sentence": "Block Reddit for 2 hours",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "reddit"
+        ],
+        "now": 120
+      }
+    },
+    {
+      "sentence": "Block YouTube right now for 30 minutes",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "youtube"
+        ],
+        "now": 30
+      }
+    },
+    {
+      "sentence": "Lock WhatsApp for the next 45 min",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "whatsapp"
+        ],
+        "now": 45
+      }
+    },
+    {
+      "sentence": "YouTube 20 minutes an hour",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "youtube"
+        ],
+        "mins": 20,
+        "period": "hourly"
+      }
+    },
+    {
+      "sentence": "Limit Instagram to 1 hour a day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 60,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Reddit 30 min per hour",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "reddit"
+        ],
+        "mins": 30,
+        "period": "hourly"
+      }
+    },
+    {
+      "sentence": "Block Chrome from 9 to 5 on weekdays",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "chrome"
+        ],
+        "range": "09:00–17:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "Lock Instagram between 10pm and 6am",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram"
+        ],
+        "range": "22:00–06:00"
+      }
+    },
+    {
+      "sentence": "Block X from 7:30pm to 9:30pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "x"
+        ],
+        "range": "19:30–21:30"
+      }
+    },
+    {
+      "sentence": "Block TikTok and Discord from 11pm to 7am on weekends",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "tiktok",
+          "discord"
+        ],
+        "range": "23:00–07:00",
+        "days": [
+          "sat",
+          "sun"
+        ]
+      },
+      "localOnly": true
+    },
+    {
+      "sentence": "Block Spotify between noon and 1pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "spotify"
+        ],
+        "range": "12:00–13:00"
+      }
+    },
+    {
+      "sentence": "Instagram 2 hours a day on weekends",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 120,
+        "period": "daily",
+        "days": [
+          "sat",
+          "sun"
+        ]
+      }
+    },
+    {
+      "sentence": "Block Clash of Clans for 1 hour 30 minutes",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "clash of clans"
+        ],
+        "now": 90
+      },
+      "localOnly": true
+    },
+    {
+      "sentence": "Block maps for half an hour",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "maps"
+        ],
+        "now": 30
+      }
+    },
+    {
+      "sentence": "Allow YouTube 15 min then rest 45 min",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "youtube"
+        ],
+        "use": 15,
+        "rest": 45
+      }
+    },
+    {
+      "sentence": "Instagram 10 min on, 20 min off",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 20
+      }
+    },
+    {
+      "sentence": "Twitter 1h30 a day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "x"
+        ],
+        "mins": 90,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Block Instagram and YouTube for the next 4 hours",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "instagram",
+          "youtube"
+        ],
+        "now": 240
+      }
+    },
+    {
+      "sentence": "Stop social media on weekdays from 9am to 5pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram",
+          "reddit",
+          "x",
+          "youtube"
+        ],
+        "range": "09:00–17:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "WhatsApp max 5 minutes per day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "whatsapp"
+        ],
+        "mins": 5,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Lock Instagram Monday to Friday 7pm to 9pm",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "instagram"
+        ],
+        "range": "19:00–21:00",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "Mon, Wed and Fri 8pm-10pm no YouTube",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "youtube"
+        ],
+        "range": "20:00–22:00",
+        "days": [
+          "mon",
+          "wed",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "Give me 25 minutes of Reddit each day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "reddit"
+        ],
+        "mins": 25,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Chrome and Reddit for 1 hour every day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "chrome",
+          "reddit"
+        ],
+        "mins": 60,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "A quarter of an hour of Instagram a day",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 15,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Instagram 10 min, then lock for an hour, weekdays",
+      "expected": {
+        "type": "cycle",
+        "apps": [
+          "instagram"
+        ],
+        "use": 10,
+        "rest": 60,
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    },
+    {
+      "sentence": "Stop me using Reddit now",
+      "expected": {
+        "type": "now",
+        "apps": [
+          "reddit"
+        ],
+        "now": 60
+      }
+    },
+    {
+      "sentence": "Block my distractions",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram",
+          "youtube"
+        ],
+        "mins": 30,
+        "period": "daily"
+      }
+    },
+    {
+      "sentence": "Block YouTube from 8:30 to 15:00",
+      "expected": {
+        "type": "schedule",
+        "apps": [
+          "youtube"
+        ],
+        "range": "08:30–15:00"
+      }
+    },
+    {
+      "sentence": "Instagram 5 minutes every hour on school days",
+      "expected": {
+        "type": "limit",
+        "apps": [
+          "instagram"
+        ],
+        "mins": 5,
+        "period": "hourly",
+        "days": [
+          "mon",
+          "tue",
+          "wed",
+          "thu",
+          "fri"
+        ]
+      }
+    }
+  ]
+}
