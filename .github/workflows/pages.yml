@@ -13,10 +13,8 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/pages.yml"
-  schedule:
-    # Picks up the Firebase web config and the Pages setting once Terraform has applied them (workflow_run triggers are
-    # rejected by the workflow audit); run it by hand after an apply to see the change sooner.
-    - cron: "17 5 * * *"
+  # Run by hand after infra-firebase / backlog have applied, so the Firebase web config and the Pages setting exist.
+  # (No schedule or workflow_run: a deploy that cannot read Terraform state would silently disable web deletion.)
   workflow_dispatch:
 
 concurrency:
