@@ -61,6 +61,16 @@ resource "google_project_iam_member" "plan" {
   member  = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 
+# The google provider resolves the project number with resourcemanager.projects.get before it reads a
+# service; serviceUsageViewer lacks it, so every PR plan failed with 403. roles/browser is read-only.
+resource "google_project_iam_member" "plan_browser" {
+  for_each = var.environments
+
+  project = google_project.env[each.key].project_id
+  role    = "roles/browser"
+  member  = "serviceAccount:${google_service_account.plan[each.key].email}"
+}
+
 resource "google_project_iam_member" "deploy" {
   for_each = {
     for pair in setproduct(keys(var.environments), var.deploy_roles) :
