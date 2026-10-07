@@ -4,6 +4,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
 import {
   getAuth,
+  onAuthStateChanged,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
@@ -63,12 +64,23 @@ async function main() {
     $("confirm").hidden = !signedIn;
   }
 
+  let confirmedUid = null;
+
   function afterSignIn(user) {
+    confirmedUid = user.uid;
     $("who").textContent = user.email || user.displayName || "your account";
     show(true);
   }
 
   show(false);
+
+  // If the signed-in user changes (another tab, expiry), drop the confirmation.
+  onAuthStateChanged(auth, (user) => {
+    if (confirmedUid && (!user || user.uid !== confirmedUid)) {
+      confirmedUid = null;
+      show(false);
+    }
+  });
 
   $("google").addEventListener("click", async () => {
     say("");
@@ -98,6 +110,7 @@ async function main() {
   });
 
   $("cancel").addEventListener("click", async () => {
+    confirmedUid = null;
     await signOut(auth);
     show(false);
     say("");
@@ -105,10 +118,17 @@ async function main() {
 
   $("delete").addEventListener("click", async () => {
     if (!window.confirm("Delete your account and all data? This cannot be undone.")) return;
+    if (!confirmedUid || !auth.currentUser || auth.currentUser.uid !== confirmedUid) {
+      confirmedUid = null;
+      show(false);
+      say("The signed-in account changed. Please sign in again.", true);
+      return;
+    }
     $("delete").disabled = true;
     say("Deleting...");
     try {
       await deleteAccount();
+      confirmedUid = null;
       await signOut(auth).catch(() => {});
       $("signin").hidden = true;
       $("confirm").hidden = true;

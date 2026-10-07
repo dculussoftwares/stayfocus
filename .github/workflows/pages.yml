@@ -47,7 +47,9 @@ jobs:
         run: |
           # Reads state only (no GCP credentials). Missing state or output is not an error: the site deploys without it.
           cd infra/firebase
-          if terraform init -input=false >/dev/null && terraform output -json firebase_web_config > ../../web/firebase-config.json; then
+          # A failing init (bad token, HCP outage) fails the job on purpose; only a missing output is tolerated.
+          terraform init -input=false >/dev/null
+          if terraform output -json firebase_web_config > ../../web/firebase-config.json; then
             echo "Firebase web config written."
           else
             rm -f ../../web/firebase-config.json
