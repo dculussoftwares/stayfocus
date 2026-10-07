@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,7 +25,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -118,7 +116,8 @@ internal fun ScreenTimeGaugePreview() {
         val c = StayFocusedTheme.colors
         Column(Modifier.background(c.background).padding(20.dp)) {
             ScreenTimeGauge(valueMins = 147, avgMins = 139) {
-                Text("2h 27m", style = StayFocusedTheme.type.numeric.copy(fontSize = 30.sp), color = c.text)
+                // Text-free stand-in for the readout so baselines don't depend on font rendering.
+                Box(Modifier.size(width = 120.dp, height = 28.dp).background(c.hairline14))
             }
             ScreenTimeGauge(valueMins = 0, avgMins = 60, modifier = Modifier.padding(top = 12.dp))
         }
