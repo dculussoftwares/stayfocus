@@ -1,8 +1,13 @@
 package com.dculus.stayfocused.feature.block
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -10,7 +15,6 @@ import androidx.navigation.compose.composable
 import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
-import com.dculus.stayfocused.core.ui.components.PlaceholderAction
 
 fun NavController.navigateToBlock(navOptions: NavOptions? = null) = navigate(Block, navOptions)
 
@@ -21,9 +25,13 @@ fun NavController.navigateToBlockWizard(
     navOptions: NavOptions? = null,
 ) = navigate(BlockWizard(target = target, prefill = prefill), navOptions)
 
-/** Block tab. [onNewBlock] opens the wizard for this phone. */
-fun NavGraphBuilder.blockScreen(onNewBlock: () -> Unit) {
-    composable<Block> { BlockRoute(onNewBlock) }
+/** Block tab. [onOpenWizard] opens the wizard for a target (child device id, null = this phone) and template. */
+fun NavGraphBuilder.blockScreen(
+    onOpenWizard: (target: String?, prefill: String?) -> Unit,
+    /** Supplies the ViewModel; null uses Hilt. Lets navigation tests run without a Hilt application. */
+    viewModelProvider: (@Composable () -> BlockViewModel)? = null,
+) {
+    composable<Block> { BlockRoute(onOpenWizard, viewModelProvider?.invoke() ?: hiltViewModel()) }
 }
 
 /** The 3-step block wizard, a sub-screen without a tab bar. */
@@ -32,10 +40,32 @@ fun NavGraphBuilder.blockWizardScreen() {
 }
 
 @Composable
-internal fun BlockRoute(onNewBlock: () -> Unit) {
-    val newBlock = stringResource(R.string.block_placeholder_new_block)
-    val actions = remember(newBlock, onNewBlock) { listOf(PlaceholderAction(newBlock, onNewBlock)) }
-    NavPlaceholderScreen(title = stringResource(R.string.block_title), actions = actions)
+internal fun BlockRoute(
+    onOpenWizard: (target: String?, prefill: String?) -> Unit,
+    viewModel: BlockViewModel,
+) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val currentOpenWizard by rememberUpdatedState(onOpenWizard)
+    LaunchedEffect(viewModel) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is BlockEvent.OpenWizard -> currentOpenWizard(event.target, event.prefill)
+            }
+        }
+    }
+    val actions =
+        remember(viewModel) {
+            BlockActions(
+                onSelectTarget = viewModel::selectTarget,
+                onNewBlock = viewModel::newBlock,
+                onToggleAi = viewModel::toggleAi,
+                onAiText = viewModel::setAiText,
+                onSelectTab = viewModel::selectTab,
+                onSetEnabled = viewModel::setBlockEnabled,
+                onTemplate = viewModel::useTemplate,
+            )
+        }
+    BlockScreen(state, actions)
 }
 
 @Composable

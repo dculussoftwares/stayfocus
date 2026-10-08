@@ -29,6 +29,9 @@ internal abstract class RepositoryModule {
     abstract fun breaks(impl: DataStoreBreakRepository): BreakRepository
 
     @Binds
+    abstract fun linkedDevices(impl: EmptyLinkedDevicesRepository): LinkedDevicesRepository
+
+    @Binds
     abstract fun settings(impl: DataStoreSettingsRepository): SettingsRepository
 
     companion object {
