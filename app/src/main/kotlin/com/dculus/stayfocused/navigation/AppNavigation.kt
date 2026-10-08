@@ -66,7 +66,9 @@ fun StayFocusedNavigation(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
     ) {
-        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel, insightsContent) }
+        Box(
+            Modifier.weight(1f),
+        ) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel, insightsContent) }
         if (destination.showsTabBar()) {
             SfTabBar(
                 items = tabItems,
