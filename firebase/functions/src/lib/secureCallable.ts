@@ -1,3 +1,4 @@
+import { getApps, initializeApp } from "firebase-admin/app";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
 import {
   HttpsError,
@@ -44,7 +45,13 @@ export interface SecureDeps {
   now: () => Date;
 }
 
-const defaultDeps: SecureDeps = { db: () => getFirestore(), now: () => new Date() };
+/** Initializes the default Admin app on first use (credentials come from the function's runtime service account). */
+export function defaultDb(): Firestore {
+  if (getApps().length === 0) initializeApp();
+  return getFirestore();
+}
+
+const defaultDeps: SecureDeps = { db: defaultDb, now: () => new Date() };
 
 /**
  * The baseline every callable shares, in this order: App Check (and replay protection), sign-in, per-uid rate limit,
@@ -99,10 +106,24 @@ export function secureHandler<S extends z.ZodType, Out>(
         logWarn("callable refused", { fn: config.name, outcome: "refused", code: e.code });
         throw e;
       }
-      logError("callable failed", { fn: config.name, outcome: "error", code: e instanceof Error ? e.name : "unknown" });
+      // The error message may echo personal data, so log the error name and the stack frames (file:line) only.
+      logError("callable failed", {
+        fn: config.name,
+        outcome: "error",
+        code: e instanceof Error ? e.name : "unknown",
+        frames: e instanceof Error ? stackFrames(e) : undefined,
+      });
       throw new HttpsError("internal", "Something went wrong.");
     }
   };
+}
+
+function stackFrames(e: Error): string[] {
+  return (e.stack ?? "")
+    .split("\n")
+    .filter((line) => line.trimStart().startsWith("at "))
+    .slice(0, 8)
+    .map((line) => line.trim());
 }
 
 /**

@@ -7,7 +7,6 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname;
-const pkg = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
 // Installed by Cloud Build from the generated package.json; everything else (zod) is bundled.
 const externals = ["firebase-admin", "firebase-functions"];
 const names = (await readdir(join(root, "src/functions")))
@@ -31,7 +30,11 @@ for (const name of names) {
     legalComments: "none",
     logLevel: "warning",
   });
-  const dependencies = Object.fromEntries(externals.map((d) => [d, pkg.dependencies[d]]));
+  // Exact versions as installed (and tested) here, so Cloud Build installs the same SDKs and an SDK bump changes the zip.
+  const dependencies = {};
+  for (const d of externals) {
+    dependencies[d] = JSON.parse(await readFile(join(root, "node_modules", d, "package.json"), "utf8")).version;
+  }
   const manifest = { name: `stayfocus-fn-${name}`, private: true, main: "index.js", engines: { node: "22" }, dependencies };
   await writeFile(join(out, "package.json"), JSON.stringify(manifest, null, 2) + "\n");
 }

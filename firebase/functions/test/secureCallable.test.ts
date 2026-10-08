@@ -111,6 +111,14 @@ describe("secureHandler", () => {
     expect(await code(run(alice))).toBe("no-error");
   });
 
+  it("lets exactly `max` of many simultaneous calls through", async () => {
+    const run = secureHandler({ ...base, rateLimit: { max: 3, windowSeconds: 60 } }, deps);
+    const caller = request({ data: { childUid: "c" } });
+    const codes = await Promise.all(Array.from({ length: 10 }, () => code(run(caller))));
+    expect(codes.filter((c) => c === "no-error")).toHaveLength(3);
+    expect(codes.filter((c) => c === "resource-exhausted")).toHaveLength(7);
+  });
+
   it("does not count calls that fail before the limiter (no sign-in)", async () => {
     const run = secureHandler({ ...base, rateLimit: { max: 1, windowSeconds: 60 } }, deps);
     const anon = request({ auth: undefined, data: { childUid: "c" } });
