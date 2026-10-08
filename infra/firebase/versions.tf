@@ -12,7 +12,7 @@ terraform {
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 6.0"
+      version = "~> 8.5"
     }
     archive = {
       source  = "hashicorp/archive"
