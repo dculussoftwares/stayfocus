@@ -96,7 +96,8 @@ service cloud.firestore {
       return r is map
         && r.keys().hasOnly(['start', 'end']) && r.keys().hasAll(['start', 'end'])
         && r.start is string && r.start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
-        && r.end is string && r.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$');
+        && r.end is string && r.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && r.start != r.end;
     }
 
     // Each command type carries a fixed payload with bounded values.
