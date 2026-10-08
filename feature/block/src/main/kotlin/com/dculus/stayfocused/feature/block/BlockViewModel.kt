@@ -92,6 +92,19 @@ class BlockViewModel
 
         val events: Flow<BlockEvent> = eventChannel.receiveAsFlow()
 
+        init {
+            // An unlinked device must not become selected again if the same id is linked later.
+            viewModelScope.launch {
+                linkedDevices.observeAll().collect { devices ->
+                    local.update { l ->
+                        val gone =
+                            l.selected is BlockTarget.Device && devices.none { BlockTarget.Device(it.id) == l.selected }
+                        if (gone) l.copy(selected = BlockTarget.ThisPhone) else l
+                    }
+                }
+            }
+        }
+
         private val remote: Flow<Remote> =
             linkedDevices
                 .observeAll()

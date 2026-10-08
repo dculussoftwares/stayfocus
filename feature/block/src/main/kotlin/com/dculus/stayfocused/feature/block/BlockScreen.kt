@@ -39,19 +39,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
-import com.dculus.stayfocused.core.model.DaysOfWeek
-import com.dculus.stayfocused.core.model.LimitPeriod
-import com.dculus.stayfocused.core.model.dialLabel
-import com.dculus.stayfocused.core.model.durationLabel
 import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.components.SfToggle
 import com.dculus.stayfocused.core.ui.components.TypeChip
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import java.time.DayOfWeek
-import java.time.format.TextStyle
-import java.util.Locale
 
 private val AiExamples =
     listOf(R.string.block_ai_example_1, R.string.block_ai_example_2, R.string.block_ai_example_3)

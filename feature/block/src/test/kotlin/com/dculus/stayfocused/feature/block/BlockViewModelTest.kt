@@ -110,6 +110,9 @@ class BlockViewModelTest {
 
             devices.devices.value = emptyList()
             assertEquals(BlockTarget.ThisPhone, vm.state.value.selected)
+
+            devices.devices.value = listOf(device())
+            assertEquals(BlockTarget.ThisPhone, vm.state.value.selected)
         }
 
     @Test
