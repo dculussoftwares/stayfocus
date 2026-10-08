@@ -48,9 +48,6 @@ interface BlockScreenExtras {
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class BlockScreenModule {
-    @Binds
-    abstract fun decisionSource(impl: TimeBasedBlockDecisionSource): BlockDecisionSource
-
     @BindsOptionalOf
     abstract fun extras(): BlockScreenExtras
 }

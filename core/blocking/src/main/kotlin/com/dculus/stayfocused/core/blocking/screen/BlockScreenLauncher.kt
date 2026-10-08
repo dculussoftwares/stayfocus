@@ -33,7 +33,7 @@ class BlockScreenLauncher
         private val decisionSource: BlockDecisionSource,
         private val clock: Clock,
         private val extras: Optional<BlockScreenExtras>,
-    ) {
+    ) : BlockPresenter {
         private val handler = Handler(Looper.getMainLooper())
         private var service: AccessibilityService? = null
         private var overlay: AccessibilityOverlay? = null
@@ -56,7 +56,7 @@ class BlockScreenLauncher
             service = null
         }
 
-        fun show(
+        override fun show(
             pkg: String,
             decision: Decision.Block,
         ) {
@@ -64,7 +64,7 @@ class BlockScreenLauncher
         }
 
         /** Removes the fallback overlay, if showing. The engine calls this when the user leaves the blocked app. */
-        fun dismissOverlay() {
+        override fun dismissOverlay() {
             handler.post { invalidate() }
         }
 

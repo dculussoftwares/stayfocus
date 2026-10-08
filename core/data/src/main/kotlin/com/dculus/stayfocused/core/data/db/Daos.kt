@@ -92,6 +92,12 @@ interface LockedAppDao {
 @Dao
 interface CycleStateDao {
     @Query("SELECT * FROM cycle_state WHERE blockId = :blockId AND pkg = :pkg")
+    suspend fun get(
+        blockId: String,
+        pkg: String,
+    ): CycleStateEntity?
+
+    @Query("SELECT * FROM cycle_state WHERE blockId = :blockId AND pkg = :pkg")
     fun observe(
         blockId: String,
         pkg: String,
