@@ -1,5 +1,5 @@
 name: Set up Maestro
-description: Installs the pinned Maestro CLI (checksum-verified) and puts it on PATH.
+description: Installs the pinned Maestro CLI (checksum-verified) and links it into /usr/local/bin.
 
 inputs:
   version:
@@ -22,4 +22,4 @@ runs:
           "https://github.com/mobile-dev-inc/maestro/releases/download/cli-${MAESTRO_VERSION}/maestro.zip"
         echo "${MAESTRO_SHA256}  $RUNNER_TEMP/maestro.zip" | sha256sum --check
         unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
-        echo "$RUNNER_TEMP/maestro/bin" >> "$GITHUB_PATH"
+        sudo ln -sf "$RUNNER_TEMP/maestro/bin/maestro" /usr/local/bin/maestro

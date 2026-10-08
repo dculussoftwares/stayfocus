@@ -270,9 +270,17 @@ jobs:
             ~/.android/avd/gradle-managed
             ~/.android/gradle-managed
           key: gradle-managed-devices-${{ hashFiles('build-logic/convention/src/main/kotlin/AndroidInstrumentedTestConventionPlugin.kt') }}
+      # The runner image ships no emulator package or these system images; Gradle's own download fails there.
+      - name: Install the emulator and system images
+        run: |
+          sudo chown -R "$USER" "$ANDROID_HOME"
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "emulator" \
+            "system-images;android-26;default;x86_64" "system-images;android-36;google_atd;x86_64"
+      # --no-parallel: :app and :kids share the same two AVDs, so their setup tasks must not race.
       - name: Instrumented tests on pixel6Api26 and pixel6Api36
         run: >
-          ./gradlew ciDevicesGroupDebugAndroidTest
+          ./gradlew ciDevicesGroupDebugAndroidTest --no-parallel
           -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect
           -Pandroid.experimental.androidTest.numManagedDeviceShards=1
           --no-configuration-cache
