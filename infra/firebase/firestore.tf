@@ -59,6 +59,16 @@ locals {
       query_scope = "COLLECTION_GROUP"
       fields      = [["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
     }
+    requests_device_status_created = {
+      collection  = "requests"
+      query_scope = "COLLECTION"
+      fields      = [["status", "ASCENDING"], ["createdAt", "DESCENDING"]]
+    }
+    alerts_device_dismissed_created = {
+      collection  = "alerts"
+      query_scope = "COLLECTION"
+      fields      = [["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
+    }
     commands_status_created = {
       collection  = "commands"
       query_scope = "COLLECTION"

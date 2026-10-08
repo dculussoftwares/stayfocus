@@ -70,13 +70,13 @@ variable "firestore_location" {
 }
 
 variable "app_check_enforcement" {
-  description = "App Check enforcement on Firestore: ENFORCED (requests without a valid token are rejected), UNENFORCED (metrics only, for a rollout period) or OFF."
+  description = "App Check enforcement on Firestore: ENFORCED (requests without a valid token are rejected) or UNENFORCED (metrics only, for a rollout period)."
   type        = string
   default     = "ENFORCED"
 
   validation {
-    condition     = contains(["ENFORCED", "UNENFORCED", "OFF"], var.app_check_enforcement)
-    error_message = "app_check_enforcement must be ENFORCED, UNENFORCED or OFF."
+    condition     = contains(["ENFORCED", "UNENFORCED"], var.app_check_enforcement)
+    error_message = "app_check_enforcement must be ENFORCED or UNENFORCED."
   }
 }
 
