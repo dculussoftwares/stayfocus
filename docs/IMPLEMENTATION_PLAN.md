@@ -207,9 +207,9 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 |---|---|---|
 | `users/{uid}` | read; create (`displayName`, `email`, `createdAt` = server time); update `displayName`/`email`; no delete | none |
 | `fcmTokens/{token}` | read, write, delete own | none |
-| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` |
-| `blocks` | read, create, update, delete (schema checked, device must exist) | read |
-| `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload <= 10 keys) | read; update only `status` (done/failed/expired) and `ackAt` |
+| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead) |
+| `blocks` | read, create, update, delete (whitelisted keys, enums and the fields each block type needs; device must exist) | read |
+| `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload fixed per type with bounded values) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
 | `requests` | read; decide a pending one (`status` approved/denied, `decidedAt`) | read; create (`app` <= 255, `minutes` 1..480, `pending`) |
 | `alerts` | read; update only `dismissed` | read; create (`kind` from the list, `dismissed: false`) |
 | `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps) |
@@ -217,7 +217,7 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 | `linkTokens/{token}` | none | create with `childUid == auth.uid`, `expiresAt` in (now, now + 5 min], no `claimedBy`; read own; no update/delete |
 | `rateLimits/**`, anything else | none | none |
 
-Every client timestamp (`createdAt`, `decidedAt`, `ackAt`) must equal the server time. The list contents of `usage.apps` and
+Every client timestamp (`createdAt`, `decidedAt`, `ackAt`, `lastSeen`) must equal the server time (Block `createdAt`/`startedAt` and `focusEndsAt` are plain timestamps). The list contents of `usage.apps` and
 `blocks.apps` are only bounded by size (rules cannot iterate lists); readers must parse defensively.
 
 ---

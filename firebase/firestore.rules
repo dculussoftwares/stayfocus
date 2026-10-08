@@ -66,19 +66,58 @@ service cloud.firestore {
     }
 
     function blockIsValid(b) {
-      return b.keys().size() <= 30
-        && b.keys().hasAll(['type', 'name', 'apps', 'enabled'])
+      return b.keys().hasOnly(['id', 'type', 'name', 'apps', 'limitMins', 'period', 'useMins', 'restMins', 'range',
+                               'durationMins', 'startedAt', 'days', 'enabled', 'createdAt', 'source'])
+        && b.keys().hasAll(['type', 'name', 'apps', 'days', 'enabled', 'createdAt', 'source'])
+        && isOptStr(b, 'id', 128)
         && b.type in ['LIMIT', 'CYCLE', 'SCHEDULE', 'NOW']
         && isStr(b.name, 100)
         && b.apps is list && b.apps.size() <= 300
         && b.enabled is bool
+        && isIntIn(b.days, 0, 127)
+        && b.createdAt is timestamp
+        && b.source in ['MANUAL', 'TEMPLATE', 'AI']
+        && (!('period' in b) || b.period == null || b.period in ['DAILY', 'HOURLY'])
         && (!('limitMins' in b) || b.limitMins == null || isIntIn(b.limitMins, 1, 1440))
         && (!('useMins' in b) || b.useMins == null || isIntIn(b.useMins, 1, 1440))
         && (!('restMins' in b) || b.restMins == null || isIntIn(b.restMins, 1, 1440))
         && (!('durationMins' in b) || b.durationMins == null || isIntIn(b.durationMins, 1, 1440))
-        && (!('days' in b) || isIntIn(b.days, 0, 127))
-        && isOptStr(b, 'period', 20)
-        && isOptStr(b, 'source', 20);
+        && (!('range' in b) || b.range == null || b.range is map)
+        && isOptTimestamp(b, 'startedAt')
+        // Fields each block type needs.
+        && (b.type != 'LIMIT' || (b.get('limitMins', null) != null && b.get('period', null) != null))
+        && (b.type != 'CYCLE' || (b.get('useMins', null) != null && b.get('restMins', null) != null))
+        && (b.type != 'SCHEDULE' || b.get('range', null) is map)
+        && (b.type != 'NOW' || b.get('durationMins', null) != null);
+    }
+
+    // Each command type carries a fixed payload with bounded values.
+    function payloadIsValid(type, p) {
+      return (type in ['BLOCK_APP', 'UNBLOCK_APP'] && p.keys().hasOnly(['pkg']) && p.keys().hasAll(['pkg'])
+              && isStr(p.pkg, 255))
+        || (type == 'START_FOCUS' && p.keys().hasOnly(['mins']) && p.keys().hasAll(['mins'])
+            && isIntIn(p.mins, 1, 480))
+        || (type in ['STOP_FOCUS', 'SYNC_BLOCKS'] && p.keys().size() == 0)
+        || (type == 'APPROVE_REQUEST' && p.keys().hasOnly(['reqId', 'mins']) && p.keys().hasAll(['reqId', 'mins'])
+            && isStr(p.reqId, 128) && isIntIn(p.mins, 1, 480))
+        || (type == 'DENY_REQUEST' && p.keys().hasOnly(['reqId']) && p.keys().hasAll(['reqId'])
+            && isStr(p.reqId, 128))
+        || (type == 'REMIND_PERMISSION' && p.keys().hasOnly(['permission']) && p.keys().hasAll(['permission'])
+            && isStr(p.permission, 50));
+    }
+
+    // True when `key` is unchanged or, if it changes, the new value is the server time.
+    function lastSeenIsNowIfChanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastSeen'])
+        || isNow(request.resource.data.lastSeen);
+    }
+
+    // focusEndsAt may only be cleared or set to a moment at most 8 hours ahead (the longest Block now).
+    function focusEndsAtIsValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['focusEndsAt'])
+        || request.resource.data.focusEndsAt == null
+        || (request.resource.data.focusEndsAt is timestamp
+            && request.resource.data.focusEndsAt <= request.time + duration.value(8, 'h'));
     }
 
     // ---------- users/{uid} (parent profile) ----------
@@ -104,7 +143,7 @@ service cloud.firestore {
           && token.size() <= 4096
           && request.resource.data.keys().hasOnly(['createdAt', 'platform'])
           && request.resource.data.keys().hasAll(['createdAt', 'platform'])
-          && request.resource.data.createdAt is timestamp
+          && isNow(request.resource.data.createdAt)
           && request.resource.data.platform in ['android'];
         allow delete: if isParent(uid);
       }
@@ -112,16 +151,18 @@ service cloud.firestore {
       // Device docs are created and deleted by Functions only (approveLink, unlinkDevice).
       match /devices/{deviceId} {
         allow read: if isParent(uid) || isChildOf(resource.data);
-        // The child reports its own status; nothing else on the device doc is client-writable.
+        // The child reports its own status (and mirrors its focus end time); nothing else on the device doc is client-writable.
         allow update: if isChildOf(resource.data)
-          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen'])
+          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt'])
           && (!('battery' in request.resource.data) || request.resource.data.battery == null
               || isIntIn(request.resource.data.battery, 0, 100))
           && (!('charging' in request.resource.data) || request.resource.data.charging is bool)
           && (!('online' in request.resource.data) || request.resource.data.online is bool)
           && (!('currentApp' in request.resource.data) || request.resource.data.currentApp == null
               || isStr(request.resource.data.currentApp, 255))
-          && isOptTimestamp(request.resource.data, 'lastSeen');
+          && isOptTimestamp(request.resource.data, 'lastSeen')
+          && lastSeenIsNowIfChanged()
+          && focusEndsAtIsValid();
 
         // Blocks that apply to this device. Written by the parent, read by the child.
         match /blocks/{blockId} {
@@ -142,10 +183,11 @@ service cloud.firestore {
             && request.resource.data.type in ['BLOCK_APP', 'UNBLOCK_APP', 'START_FOCUS', 'STOP_FOCUS',
                                               'APPROVE_REQUEST', 'DENY_REQUEST', 'SYNC_BLOCKS', 'REMIND_PERMISSION']
             && request.resource.data.payload is map
-            && request.resource.data.payload.keys().size() <= 10
+            && payloadIsValid(request.resource.data.type, request.resource.data.payload)
             && request.resource.data.status == 'pending'
             && isNow(request.resource.data.createdAt);
           allow update: if isChildOfDevice(uid, deviceId)
+            && resource.data.status == 'pending'
             && onlyChanges(['status', 'ackAt'])
             && request.resource.data.status in ['done', 'failed', 'expired']
             && (!('ackAt' in request.resource.data) || isNow(request.resource.data.ackAt));

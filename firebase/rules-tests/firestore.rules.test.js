@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { Timestamp, deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const PARENT = 'parent1';
 const OTHER_PARENT = 'parent2';
@@ -121,6 +121,9 @@ describe('fcmTokens', () => {
     await assertSucceeds(setDoc(doc(parentDb(), path), { createdAt: serverTimestamp(), platform: 'android' }));
     await assertSucceeds(deleteDoc(doc(parentDb(), path)));
   });
+  it('rejects a back-dated token createdAt', async () => {
+    await assertFails(setDoc(doc(parentDb(), path), { createdAt: Timestamp.fromMillis(1000), platform: 'android' }));
+  });
   it('rejects an unknown platform or extra field', async () => {
     await assertFails(setDoc(doc(parentDb(), path), { createdAt: serverTimestamp(), platform: 'ios' }));
     await assertFails(setDoc(doc(parentDb(), path), { createdAt: serverTimestamp(), platform: 'android', x: 1 }));
@@ -162,11 +165,21 @@ describe('device docs', () => {
       battery: 80, charging: true, currentApp: 'a.b', online: true, lastSeen: serverTimestamp(),
     }));
   });
-  it('child cannot change childUid, name or focusEndsAt', async () => {
+  it('child cannot change childUid or name', async () => {
     await seedDevice();
     await assertFails(updateDoc(doc(childDb(), D), { childUid: OTHER_CHILD }));
     await assertFails(updateDoc(doc(childDb(), D), { name: 'Hacked' }));
-    await assertFails(updateDoc(doc(childDb(), D), { focusEndsAt: serverTimestamp() }));
+  });
+  it('child mirrors focusEndsAt within 8 hours, or clears it', async () => {
+    await seedDevice();
+    await assertSucceeds(updateDoc(doc(childDb(), D), { focusEndsAt: inMinutes(30) }));
+    await assertSucceeds(updateDoc(doc(childDb(), D), { focusEndsAt: null }));
+    await assertFails(updateDoc(doc(childDb(), D), { focusEndsAt: inMinutes(60 * 24) }));
+  });
+  it('child cannot post a lastSeen other than the server time', async () => {
+    await seedDevice();
+    await assertFails(updateDoc(doc(childDb(), D), { lastSeen: inMinutes(600) }));
+    await assertSucceeds(updateDoc(doc(childDb(), D), { battery: 40 }));
   });
   it('child rejects battery out of range or wrong type', async () => {
     await seedDevice();
@@ -179,8 +192,31 @@ describe('device docs', () => {
   });
 });
 
+describe('collection queries', () => {
+  it('parent lists its devices; another parent cannot', async () => {
+    await seedDevice();
+    await assertSucceeds(getDocs(collection(parentDb(), `users/${PARENT}/devices`)));
+    await assertFails(getDocs(collection(parentDb(OTHER_PARENT), `users/${PARENT}/devices`)));
+  });
+  it('child lists pending commands on its device; another child cannot', async () => {
+    await seedDevice();
+    const q = (db) => query(collection(db, `${D}/commands`), where('status', '==', 'pending'));
+    await assertSucceeds(getDocs(q(childDb())));
+    await assertFails(getDocs(q(childDb(OTHER_CHILD))));
+  });
+  it('parent lists pending requests per device; another parent cannot', async () => {
+    await seedDevice();
+    const q = (db) => query(collection(db, `${D}/requests`), where('status', '==', 'pending'));
+    await assertSucceeds(getDocs(q(parentDb())));
+    await assertFails(getDocs(q(parentDb(OTHER_PARENT))));
+  });
+});
+
 describe('blocks', () => {
-  const block = (over = {}) => ({ type: 'LIMIT', name: 'Games', apps: ['x.y'], enabled: true, limitMins: 30, ...over });
+  const block = (over = {}) => ({
+    type: 'LIMIT', name: 'Games', apps: ['x.y'], enabled: true, limitMins: 30, period: 'DAILY', days: 127,
+    createdAt: Timestamp.now(), source: 'MANUAL', ...over,
+  });
   it('parent creates, updates and deletes a block', async () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(parentDb(), `${D}/blocks/b2`), block()));
@@ -199,6 +235,24 @@ describe('blocks', () => {
   });
   it('rejects a block on a device that does not exist', async () => {
     await assertFails(setDoc(doc(parentDb(), `users/${PARENT}/devices/nope/blocks/b2`), block()));
+  });
+  it('rejects blocks missing type-specific fields, with bad enums or unknown keys', async () => {
+    await seedDevice();
+    const w = (b) => setDoc(doc(parentDb(), `${D}/blocks/b3`), b);
+    await assertFails(w(block({ limitMins: null })));
+    await assertFails(w(block({ period: 'WEEKLY' })));
+    await assertFails(w(block({ source: 'HACK' })));
+    await assertFails(w(block({ extra: 1 })));
+    await assertFails(w(block({ type: 'SCHEDULE' })));
+    await assertFails(w(block({ type: 'CYCLE', limitMins: null })));
+    await assertFails(w(block({ type: 'NOW', limitMins: null })));
+  });
+  it('accepts a valid block of each type', async () => {
+    await seedDevice();
+    const w = (id, b) => setDoc(doc(parentDb(), `${D}/blocks/${id}`), b);
+    await assertSucceeds(w('s', block({ type: 'SCHEDULE', limitMins: null, period: null, range: { start: '22:00', end: '07:00' } })));
+    await assertSucceeds(w('c', block({ type: 'CYCLE', limitMins: null, period: null, useMins: 10, restMins: 30 })));
+    await assertSucceeds(w('n', block({ type: 'NOW', limitMins: null, period: null, durationMins: 60, startedAt: Timestamp.now() })));
   });
   it('other parent cannot read or write blocks', async () => {
     await seedDevice();
@@ -233,6 +287,20 @@ describe('commands', () => {
     await seedDevice();
     const payload = Object.fromEntries(Array.from({ length: 11 }, (_, i) => [`k${i}`, i]));
     await assertFails(setDoc(doc(parentDb(), `${D}/commands/c2`), cmd({ payload })));
+    await assertFails(setDoc(doc(parentDb(), `${D}/commands/c2`), cmd({ payload: { pkg: 'x'.repeat(256) } })));
+    await assertFails(setDoc(doc(parentDb(), `${D}/commands/c2`), cmd({ payload: { pkg: 'a.b', extra: 'x' } })));
+    await assertFails(setDoc(doc(parentDb(), `${D}/commands/c2`), cmd({ type: 'START_FOCUS', payload: { mins: 9999 } })));
+  });
+  it('accepts a valid payload for each command type', async () => {
+    await seedDevice();
+    const ok = [
+      ['START_FOCUS', { mins: 30 }], ['STOP_FOCUS', {}], ['SYNC_BLOCKS', {}], ['UNBLOCK_APP', { pkg: 'a.b' }],
+      ['APPROVE_REQUEST', { reqId: 'r1', mins: 15 }], ['DENY_REQUEST', { reqId: 'r1' }],
+      ['REMIND_PERMISSION', { permission: 'usage' }],
+    ];
+    for (const [i, [type, payload]] of ok.entries()) {
+      await assertSucceeds(setDoc(doc(parentDb(), `${D}/commands/ok${i}`), cmd({ type, payload })));
+    }
   });
   it('parent cannot update or delete a command', async () => {
     await seedDevice();
@@ -252,6 +320,11 @@ describe('commands', () => {
     await assertSucceeds(updateDoc(doc(childDb(), `${D}/commands/c1`), { status: 'done', ackAt: serverTimestamp() }));
     await assertFails(updateDoc(doc(childDb(), `${D}/commands/c1`), { type: 'STOP_FOCUS' }));
     await assertFails(updateDoc(doc(childDb(), `${D}/commands/c1`), { status: 'pending' }));
+  });
+  it('child cannot change the outcome of a finished command', async () => {
+    await seedDevice();
+    await assertSucceeds(updateDoc(doc(childDb(), `${D}/commands/c1`), { status: 'done', ackAt: serverTimestamp() }));
+    await assertFails(updateDoc(doc(childDb(), `${D}/commands/c1`), { status: 'failed' }));
   });
   it('child reads commands; another child cannot', async () => {
     await seedDevice();
