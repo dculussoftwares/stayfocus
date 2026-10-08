@@ -14,6 +14,7 @@ android {
 dependencies {
     implementation(project(":core:usage"))
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.timber)
 
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)

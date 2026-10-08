@@ -6,6 +6,7 @@ import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -82,7 +84,18 @@ internal class InsightsViewModel
 
         init {
             // Fills the cache of past days (no-op without usage access, skips days already cached).
-            viewModelScope.launch { usage.backfill() }
+            viewModelScope.launch {
+                try {
+                    usage.backfill()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    // Best effort: a failed backfill must not crash the screen; the cache worker retries later.
+                    Timber.w(e, "Insights backfill failed")
+                }
+            }
         }
 
         val state: StateFlow<InsightsUiState> =
