@@ -28,7 +28,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -242,7 +241,7 @@ private fun AppRow(
                 Text(
                     value,
                     style = StayFocusedTheme.type.label.copy(fontWeight = FontWeight.SemiBold),
-                    color = Color(0xFFC9CDC0),
+                    color = c.secondary,
                 )
             }
             Box(

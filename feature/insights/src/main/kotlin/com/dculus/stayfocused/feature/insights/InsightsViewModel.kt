@@ -28,7 +28,7 @@ import javax.inject.Inject
 
 internal data class InsightsUiState(
     val dayOffset: Int = 0,
-    val date: LocalDate = LocalDate.now(),
+    val date: LocalDate,
     val metric: InsightsMetric = InsightsMetric.ScreenTime,
     val loading: Boolean = true,
     /** Null when the day has no data (empty state). */
