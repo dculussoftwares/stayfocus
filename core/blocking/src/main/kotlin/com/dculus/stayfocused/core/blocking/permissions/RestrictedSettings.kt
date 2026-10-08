@@ -6,8 +6,8 @@ import android.os.Build
  * Android 13+ blocks Accessibility for apps installed outside a store ("restricted settings") until the user
  * allows it from App info. We show guidance first so the greyed-out toggle is not a dead end.
  *
- * Installs with no installer (adb) are not restricted, and neither are installs by a known app store; anything
- * else (a file manager, a browser download, the package installer) is.
+ * Installs by a known app store are not restricted; anything else (file manager, browser download, package
+ * installer, unknown installer) is treated as restricted.
  */
 object RestrictedSettings {
     private val storeInstallers =
@@ -25,7 +25,10 @@ object RestrictedSettings {
         accessibilityGranted: Boolean,
     ): Boolean = sdk >= Build.VERSION_CODES.TIRAMISU && !accessibilityGranted && isRestrictedInstall(installerPackage)
 
-    /** True when a person installed the APK by hand through an app that is not a store. */
+    /**
+     * True unless a known store installed the app. A null installer is ambiguous (adb, or an installer app that was
+     * since removed), so it errs towards showing the guidance: a redundant hint costs far less than a dead end.
+     */
     fun isRestrictedInstall(installerPackage: String?): Boolean =
-        installerPackage != null && installerPackage !in storeInstallers
+        installerPackage == null || installerPackage !in storeInstallers
 }

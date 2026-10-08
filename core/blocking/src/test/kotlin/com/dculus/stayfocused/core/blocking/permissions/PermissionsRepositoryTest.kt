@@ -76,8 +76,8 @@ class PermissionsRepositoryTest {
         assertFalse(repo(34).needsRestrictedSettingsGuidance())
         checks.installer = "com.sec.android.app.samsungapps"
         assertFalse(repo(34).needsRestrictedSettingsGuidance())
-        checks.installer = null // adb install: not restricted
-        assertFalse(repo(34).needsRestrictedSettingsGuidance())
+        checks.installer = null // ambiguous (adb or removed installer): err towards showing the guidance
+        assertTrue(repo(34).needsRestrictedSettingsGuidance())
         checks.installer = "com.google.android.packageinstaller"
         checks.state = checks.state.copy(accessibility = true)
         assertFalse(repo(34).needsRestrictedSettingsGuidance())
