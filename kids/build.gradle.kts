@@ -1,6 +1,7 @@
 plugins {
     id("stayfocused.android.application.compose")
     id("stayfocused.android.hilt")
+    id("stayfocused.android.instrumented-test")
 }
 
 android {
@@ -21,4 +22,6 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.timber)
+
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

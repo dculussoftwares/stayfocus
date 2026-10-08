@@ -50,6 +50,10 @@ gradlePlugin {
             id = "stayfocused.android.room"
             implementationClass = "AndroidRoomConventionPlugin"
         }
+        register("androidInstrumentedTest") {
+            id = "stayfocused.android.instrumented-test"
+            implementationClass = "AndroidInstrumentedTestConventionPlugin"
+        }
         register("jvmLibrary") {
             id = "stayfocused.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"

@@ -1,0 +1,4 @@
+# Which flows `maestro test e2e/flows` runs. Add a glob here when a story adds a folder of flows.
+# Helper flows that other flows call with runFlow live in e2e/flows/_shared/ and are not listed, so they never run alone.
+flows:
+  - "smoke/*"

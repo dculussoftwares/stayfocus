@@ -1,5 +1,7 @@
 # M1-09: the app opens on onboarding (flag stub = false); Get started then Continue x2 reaches Home, then the tabs work.
 appId: com.dculus.stayfocused
+tags:
+  - smoke
 ---
 - launchApp:
     clearState: true
