@@ -17,7 +17,10 @@ internal object DatabaseModule {
     fun database(
         @ApplicationContext context: Context,
     ): StayFocusedDatabase =
-        Room.databaseBuilder(context, StayFocusedDatabase::class.java, StayFocusedDatabase.NAME).build()
+        Room
+            .databaseBuilder(context, StayFocusedDatabase::class.java, StayFocusedDatabase.NAME)
+            .addMigrations(StayFocusedDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     fun blockDao(db: StayFocusedDatabase): BlockDao = db.blockDao()

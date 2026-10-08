@@ -315,7 +315,12 @@ internal fun previewInsightsState(
     offset: Int = 0,
     empty: Boolean = false,
 ): InsightsUiState {
-    val hours = listOf(0, 0, 0, 0, 0, 0, 2, 6, 14, 9, 5, 8, 12, 4, 3, 7, 10, 6, 9, 18, 22, 15, 8, 2)
+    val hours =
+        if (metric == InsightsMetric.Unlocks) {
+            listOf(0, 0, 0, 0, 0, 1, 3, 5, 4, 2, 3, 2, 4, 2, 1, 2, 3, 2, 3, 4, 5, 3, 1, 0)
+        } else {
+            listOf(0, 0, 0, 0, 0, 0, 2, 6, 14, 9, 5, 8, 12, 4, 3, 7, 10, 6, 9, 18, 22, 15, 8, 2)
+        }
     val apps =
         listOf("Instagram" to 41, "YouTube" to 33, "Reddit" to 24, "WhatsApp" to 18, "Chrome" to 12)
             .mapIndexed { i, (name, v) ->
@@ -360,7 +365,14 @@ internal fun previewInsightsState(
                             51
                         },
                     levels = ledLevels(hours, LED_ROWS, if (offset == 0) 10 else null),
-                    avgFraction = 139f / 24f / hours.max(),
+                    avgFraction =
+                        if (metric ==
+                            InsightsMetric.Unlocks
+                        ) {
+                            51f / 24f / hours.max()
+                        } else {
+                            139f / 24f / hours.max()
+                        },
                     apps = apps,
                 )
             },

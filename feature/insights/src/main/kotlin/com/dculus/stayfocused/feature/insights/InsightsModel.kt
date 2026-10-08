@@ -67,7 +67,8 @@ internal data class RankedApp(
 
 private fun AppUsageStat.valueFor(metric: InsightsMetric): Int =
     when (metric) {
-        InsightsMetric.ScreenTime -> mins
+        // Sessions under 30 s round to 0 min but are still real use: show them as 1 min.
+        InsightsMetric.ScreenTime -> if (millis > 0) maxOf(mins, 1) else 0
 
         InsightsMetric.Opens -> opens
 

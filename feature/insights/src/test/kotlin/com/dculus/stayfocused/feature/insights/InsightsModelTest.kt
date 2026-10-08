@@ -40,6 +40,13 @@ class InsightsModelTest {
     }
 
     @Test
+    fun `brief sessions still rank as one minute`() {
+        val brief = AppUsageStat("brief", 10_000L, opens = 1, firstAfterUnlock = 0)
+        val ranked = rankApps(listOf(brief), InsightsMetric.ScreenTime) { it }
+        assertEquals(listOf(1), ranked.map { it.value })
+    }
+
+    @Test
     fun `ranks opens with screen time then label as tie-breakers`() {
         val ranked = rankApps(apps, InsightsMetric.Opens) { it }
         assertEquals(listOf("b", "c", "a"), ranked.map { it.pkg })
