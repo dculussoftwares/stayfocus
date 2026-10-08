@@ -46,6 +46,8 @@ variable "deploy_roles" {
     "roles/identityplatform.admin",
     # Quota project for the billing budget API calls (user_project_override).
     "roles/serviceusage.serviceUsageConsumer",
+    # M7-01: Firestore database, indexes and TTL (firebase.admin already covers rules and App Check).
+    "roles/datastore.owner",
   ]
 }
 
@@ -56,5 +58,6 @@ variable "plan_roles" {
     "roles/firebase.viewer",
     "roles/identityplatform.viewer",
     "roles/serviceusage.serviceUsageConsumer",
+    "roles/datastore.viewer",
   ]
 }

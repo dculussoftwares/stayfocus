@@ -40,3 +40,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M5-03 Permissions repository and settings intents
 - Check: on API 26, 33 and 36 devices, each permission row state updates after returning from its settings screen; each intent opens the right screen (usage, accessibility, overlay (this app's own screen on API 26; the app list on 30+ including 33 and 36, where you pick Stay Focused), notifications, battery list); the restricted-settings guidance condition holds for a sideloaded install on 33+.
 - How: needs the onboarding UI (M5 stories) or a debug hook calling `PermissionsRepository.observe()` and `PermissionIntents`; on an API 33+ device install the APK by opening it from a browser download or file manager (adb installs are exempt from Android's restricted settings, so they do not exercise the real case) and confirm the guidance condition is true and the Accessibility toggle is greyed until "Allow restricted settings"; compare with a Play internal-testing install, where the condition is false.
+
+## M7-01 Firestore and App Check
+- Check: after merge and apply, a Firestore request from a build without a valid App Check token is rejected on dev (PERMISSION_DENIED / missing token), and one with a registered debug token reaches the rules (still denied by the deny-all baseline until M7-03).
+- How: needs the maintainer bootstrap step (roles datastore.owner/viewer) first. Call the Firestore REST API with curl and no X-Firebase-AppCheck header; expect a 403. Then run a debug build with a registered debug token.
