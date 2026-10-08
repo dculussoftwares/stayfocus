@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.Duration
@@ -93,6 +94,7 @@ class BlockingEngine
 
         // Only touched from the engine coroutine, which collectLatest runs one iteration at a time.
         private var session: Session? = null
+        private var sessionInputs: EngineInputs? = null
         private var shown: Shown? = null
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
 
@@ -113,8 +115,23 @@ class BlockingEngine
                 synchronized(lock) {
                     scope.also { scope = null }
                 } ?: return
+            runBlocking {
+                withContext(NonCancellable) {
+                    val current = session
+                    val from = current?.takeIf { it.counting }?.flushedAt
+                    val inputs = sessionInputs ?: latestInputs
+                    if (current != null && from != null && inputs != null) {
+                        val now = clock.instant()
+                        if (now > from) {
+                            bookForeground(current.pkg, from, now, inputs)
+                            current.flushedAt = now
+                        }
+                    }
+                    session = null
+                    sessionInputs = null
+                }
+            }
             s.cancel()
-            session = null
             shown = null
             latestInputs = null
             cycleCache.clear()
@@ -145,6 +162,13 @@ class BlockingEngine
             combine(tracker.foreground.map { it?.packageName }, inputs) { pkg, i -> pkg to i }
                 .collectLatest { (pkg, i) ->
                     latestInputs = i
+                    val activeCycleKeys =
+                        i.blocks
+                            .filter { it.type == BlockType.CYCLE }
+                            .flatMapTo(HashSet()) { block -> block.apps.map { CycleKey(block.id, it) } }
+                    cycleCache.keys
+                        .filter { it !in activeCycleKeys }
+                        .forEach { cycleCache.remove(it) }
                     evaluateWhileInFront(pkg, i)
                 }
         }
@@ -221,15 +245,23 @@ class BlockingEngine
         ): Session? {
             val previous = session
             val from = previous?.takeIf { it.counting }?.flushedAt
+            val previousInputs = sessionInputs
             val next =
                 when {
                     pkg == null -> null
                     previous?.pkg == pkg -> previous
                     else -> Session(pkg, now)
                 }
-            previous?.flushedAt = now
-            session = next
-            if (previous != null && from != null && now > from) bookForeground(previous.pkg, from, now, inputs)
+            // Keep the whole flush and checkpoint update non-cancellable. Otherwise a new input emission can
+            // cancel the booking after the timestamp has moved, losing the interval on the next evaluation.
+            withContext(NonCancellable) {
+                if (previous != null && from != null && now > from) {
+                    bookForeground(previous.pkg, from, now, previousInputs ?: inputs)
+                    previous.flushedAt = now
+                }
+                session = next
+                sessionInputs = if (next == null) null else inputs
+            }
             return next
         }
 
