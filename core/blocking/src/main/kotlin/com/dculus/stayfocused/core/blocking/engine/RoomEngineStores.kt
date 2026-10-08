@@ -23,8 +23,19 @@ class RoomCycleStateStore
             now: Instant,
         ) {
             // A window starts when the first foreground time is counted after a reset.
+            val previous = dao.get(key.blockId, key.pkg)
             val windowStart =
-                if (state.usedMs == 0L) now else dao.get(key.blockId, key.pkg)?.windowStartedAt ?: now
+                when {
+                    // Resting: the window that ended keeps its start.
+                    state.lockedUntil != null -> previous?.windowStartedAt ?: now
+
+                    // First counted interval after a rest starts a new window.
+                    previous?.lockedUntil != null -> now
+
+                    state.usedMs == 0L -> now
+
+                    else -> previous?.windowStartedAt ?: now
+                }
             dao.upsert(CycleStateEntity(key.blockId, key.pkg, state.usedMs, windowStart, state.lockedUntil))
         }
     }

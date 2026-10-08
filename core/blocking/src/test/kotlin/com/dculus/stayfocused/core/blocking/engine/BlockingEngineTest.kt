@@ -81,6 +81,7 @@ private class RecordingPresenter : BlockPresenter {
 
 private class MemoryCycleStore : CycleStateStore {
     val states = HashMap<CycleKey, CycleState>()
+    var failSaves = false
 
     override suspend fun load(key: CycleKey): CycleState? = states[key]
 
@@ -89,6 +90,7 @@ private class MemoryCycleStore : CycleStateStore {
         state: CycleState,
         now: Instant,
     ) {
+        check(!failSaves) { "cycle store unavailable" }
         states[key] = state
     }
 }
@@ -124,6 +126,7 @@ class BlockingEngineTest {
         val presenter = RecordingPresenter()
         val cycles = MemoryCycleStore()
         val events = mutableListOf<Triple<String, String?, String>>()
+        var failEvents = false
         val usage = ForegroundTimingUsage()
         val engine =
             BlockingEngine(
@@ -134,7 +137,10 @@ class BlockingEngineTest {
                 settings,
                 { flowOf(emptyList()) },
                 cycles,
-                { pkg, blockId, reason, _ -> events += Triple(pkg, blockId, reason) },
+                { pkg, blockId, reason, _ ->
+                    check(!failEvents) { "event log unavailable" }
+                    events += Triple(pkg, blockId, reason)
+                },
                 usage,
                 usage,
                 AndroidBlockAllowlistProvider(context),
@@ -209,10 +215,10 @@ class BlockingEngineTest {
             assertEquals(BlockReason.NOW, decision.reason)
             assertEquals(listOf(Triple<String, String?, String>(APP, "now", "NOW")), r.events)
 
-            // The user is sent home; the overlay (if any) is dismissed and nothing more is recorded.
+            // The block screen's own "home" jump lands on the launcher right away: that must not dismiss it.
             r.open(LAUNCHER)
             r.pass(1_000)
-            assertEquals(1, r.presenter.dismissals)
+            assertEquals(0, r.presenter.dismissals)
 
             // Opening the app again inside the block shows it again; after the block it is let through.
             r.open(APP)
@@ -378,6 +384,103 @@ class BlockingEngineTest {
             r.engine.start()
             r.pass(1_000)
             assertEquals(2, r.presenter.shown.size)
+            r.engine.stop()
+        }
+
+    @Test fun leavingTheBlockedAppLaterDismissesTheOverlay() =
+        runTest {
+            val r = rig(this)
+            r.locked.lock(APP, BlockTarget.ThisPhone)
+            r.engine.start()
+            r.open(APP)
+            r.pass(5_000)
+            assertEquals(0, r.presenter.dismissals)
+            r.open(LAUNCHER)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.dismissals)
+            r.engine.stop()
+        }
+
+    @Test fun cycleCreatedMidSessionDoesNotChargeEarlierTime() =
+        runTest {
+            val r = rig(this)
+            r.engine.start()
+            r.open(APP)
+            r.pass(5 * 60_000L)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty(), "five minutes before the rule existed must not count")
+            assertTrue((r.cycles.states[CycleKey("cycle", APP)]?.usedMs ?: 0L) <= 1_000L)
+            r.engine.stop()
+        }
+
+    @Test fun stopBooksTheTimeSinceTheLastEvaluation() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 10, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(10_000)
+            r.engine.stop()
+            r.pass(1_000)
+            assertEquals(10_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
+            val today =
+                r.usage
+                    .usage(setOf(APP), r.clock.instant().atZone(ZoneOffset.UTC))
+                    .getValue(APP)
+                    .todayMs
+            assertEquals(10_000L, today)
+        }
+
+    @Test fun blockScreenDecisionAllowsOnceStopped() =
+        runTest {
+            val r = rig(this)
+            r.locked.lock(APP, BlockTarget.ThisPhone)
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertTrue(r.engine.decide(APP, r.clock.instant()) is Decision.Block)
+            r.engine.stop()
+            assertEquals(Decision.Allow, r.engine.decide(APP, r.clock.instant()))
+        }
+
+    @Test fun storageFailureDoesNotEndEnforcement() =
+        runTest {
+            val r = rig(this)
+            r.cycles.failSaves = true
+            r.failEvents = true
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(60_000)
+            assertEquals(
+                BlockReason.CYCLE_REST,
+                r.presenter.shown
+                    .single()
+                    .second.reason,
+            )
+            r.engine.stop()
+        }
+
+    @Test fun reAddedAppStartsWithFreshCycleState() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(60_000)
+            assertEquals(1, r.presenter.shown.size)
+            r.open(LAUNCHER)
+            r.pass(1_000)
+            // Removing the app deletes its stored state (Room does that in the DAO); re-adding must not resurrect it.
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, apps = setOf(OTHER), useMins = 1, restMins = 5))
+            r.pass(1_000)
+            r.cycles.states.clear()
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.pass(1_000)
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.shown.size, "rest of the old window must be gone")
             r.engine.stop()
         }
 }
