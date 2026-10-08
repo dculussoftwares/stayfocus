@@ -64,3 +64,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M2-08 Schedules
 - Check: a schedule starting 1 minute from now blocks the already-open app when it starts; changing the device time or time zone re-evaluates immediately.
 - How: create a "Block during hours" block starting in 1 minute for a non-allowlisted app, keep the app open and watch for the block screen at the start time. Then, with the app open, move the device time across a schedule boundary (Settings > Date & time, automatic time off) and confirm blocking changes immediately; finally switch the time zone and confirm the block follows local time. Overnight (22:00-07:00) and day-chip logic is covered by RuleEvaluatorTest; the engine timer by BlockingEngineTest.
+
+## M9-03 Firebase AI Logic and App Check
+- Check: after apply on dev, a Gemini request through Firebase AI Logic without an App Check token is rejected, and one from a debug build with a registered token succeeds.
+- How: needs the maintainer bootstrap step (roles serviceusage.apiKeysAdmin/apiKeysViewer). Confirm with `curl -H "Authorization: Bearer $(gcloud auth print-access-token)" https://firebaseappcheck.googleapis.com/v1/projects/<project>/services/firebasevertexai.googleapis.com` and expect `"enforcementMode": "ENFORCED"`. Then call `https://firebasevertexai.googleapis.com/v1beta/projects/<project>/locations/global/publishers/google/models/<model>:generateContent` with the Android API key and no `X-Firebase-AppCheck` header; expect an App Check rejection. A real client arrives with M9-04.

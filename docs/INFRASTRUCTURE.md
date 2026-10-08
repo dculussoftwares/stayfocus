@@ -168,6 +168,21 @@ App Check: Play Integrity is configured for both apps, debug tokens are register
    `ENFORCED`) to enforce.
 4. The Play Integrity API must be linked to the app in Play Console once the app exists (M10); until then only debug tokens validate.
 
+### Firebase AI Logic (M9-03)
+
+`infra/firebase/ai.tf` enables the Firebase AI Logic API (`firebasevertexai.googleapis.com`), the Gemini Developer API
+(`generativelanguage.googleapis.com`) and `apikeys.googleapis.com`, and enforces App Check on `firebasevertexai.googleapis.com`
+with the same `app_check_enforcement` switch as Firestore, so an AI request without a valid App Check token is rejected.
+It creates one Android-restricted API key per app (package + SHA-1 fingerprints, limited to the Firebase and AI Logic APIs),
+an optional Gemini quota cap (`gemini_quota_overrides`, empty by default) and a Gemini budget alert (`gemini_budget_amount`,
+default 5, at 50/90/100%).
+
+**One-time steps for the maintainer:**
+1. Re-run **infra-bootstrap** with a temporary key (steps 1-5 above): new roles `serviceusage.apiKeysAdmin` (deploy) and
+   `serviceusage.apiKeysViewer` (plan).
+2. Optional: set quota caps by passing `gemini_quota_overrides` (metric and unit names come from `gcloud alpha services quota list`).
+3. Verify on dev after the apply: a Gemini call through the SDK from a build with no App Check token returns an App Check error.
+
 ### Forks
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
