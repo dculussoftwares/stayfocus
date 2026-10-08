@@ -81,7 +81,7 @@ variable "app_check_enforcement" {
 }
 
 variable "gemini_quota_overrides" {
-  description = "Quota caps for the Gemini Developer API, for example [{metric=\"generativelanguage.googleapis.com/generate_content_requests\", unit=\"1/min/{project}\", limit=60}]. Look up metric and unit names with `gcloud alpha services quota list`. Empty applies none."
+  description = "Quota caps for the Gemini Developer API, for example [{metric=\"generativelanguage.googleapis.com/generate_content_requests\", unit=\"/min/project\", limit=60}]. The unit is the limit identifier without a leading 1/ or braces, for example /min/project. Look up metric and limit names with `gcloud alpha services quota list`. Empty applies none."
   type = list(object({
     metric = string
     unit   = string

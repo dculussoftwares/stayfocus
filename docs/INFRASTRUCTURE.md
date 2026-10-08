@@ -180,7 +180,7 @@ default 5, at 50/90/100%).
 **One-time steps for the maintainer:**
 1. Re-run **infra-bootstrap** with a temporary key (steps 1-5 above): new roles `serviceusage.apiKeysAdmin` (deploy) and
    `serviceusage.apiKeysViewer` (plan).
-2. Optional: set the repo variable `GEMINI_QUOTA_OVERRIDES_DEV` to a JSON list such as `[{"metric":"generativelanguage.googleapis.com/generate_content_requests","unit":"1/min/{project}","limit":60}]` (metric and unit names come from `gcloud alpha services quota list`). Empty applies no cap.
+2. Optional: set the repo variable `GEMINI_QUOTA_OVERRIDES_DEV` to a JSON list such as `[{"metric":"generativelanguage.googleapis.com/generate_content_requests","unit":"/min/project","limit":60}]` (metric and unit names come from `gcloud alpha services quota list`). Empty applies no cap.
    The managed keys need SHA-1 fingerprints (`FIREBASE_SHA1_FINGERPRINTS_DEV`); an app without them gets no managed key. The keys in `google-services.json` are the Firebase-created ones; bringing those under Terraform (import by key UID) is a follow-up.
 3. Verify on dev after the apply: a Gemini call through the SDK from a build with no App Check token returns an App Check error.
 
