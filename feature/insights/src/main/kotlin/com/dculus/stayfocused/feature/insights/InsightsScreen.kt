@@ -51,22 +51,24 @@ import java.time.LocalDate
 @Composable
 internal fun InsightsRoute(viewModel: InsightsViewModel = hiltViewModel()) {
     val state = viewModel.state.collectAsStateWithLifecycle().value
-    InsightsContent(
+    InsightsScreen(
         state = state,
-        onPreviousDay = viewModel::previousDay,
-        onNextDay = viewModel::nextDay,
-        onSelectMetric = viewModel::selectMetric,
+        onEvent = { event ->
+            when (event) {
+                InsightsEvent.PreviousDay -> viewModel.previousDay()
+                InsightsEvent.NextDay -> viewModel.nextDay()
+                is InsightsEvent.SelectMetric -> viewModel.selectMetric(event.metric)
+            }
+        },
     )
 }
 
 private val MetricOrder = InsightsMetric.entries
 
 @Composable
-internal fun InsightsContent(
+internal fun InsightsScreen(
     state: InsightsUiState,
-    onPreviousDay: () -> Unit,
-    onNextDay: () -> Unit,
-    onSelectMetric: (InsightsMetric) -> Unit,
+    onEvent: (InsightsEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val spacing = StayFocusedTheme.spacing
@@ -78,7 +80,11 @@ internal fun InsightsContent(
                 .PaddingValues(horizontal = spacing.screen, vertical = spacing.gap16),
         verticalArrangement = Arrangement.Top,
     ) {
-        item { Box(Modifier.padding(bottom = spacing.gap14)) { DayStepper(state, onPreviousDay, onNextDay) } }
+        item {
+            Box(Modifier.padding(bottom = spacing.gap14)) {
+                DayStepper(state, { onEvent(InsightsEvent.PreviousDay) }, { onEvent(InsightsEvent.NextDay) })
+            }
+        }
         item {
             Box(Modifier.padding(bottom = spacing.gap14)) {
                 SegmentedTabs(
@@ -89,7 +95,7 @@ internal fun InsightsContent(
                             stringResource(R.string.insights_metric_unlocks),
                         ),
                     selectedIndex = MetricOrder.indexOf(state.metric),
-                    onSelect = { onSelectMetric(MetricOrder[it]) },
+                    onSelect = { onEvent(InsightsEvent.SelectMetric(MetricOrder[it])) },
                 )
             }
         }
@@ -365,6 +371,6 @@ internal fun previewInsightsState(
 @Composable
 internal fun InsightsPreview() {
     StayFocusedTheme {
-        InsightsContent(previewInsightsState(InsightsMetric.ScreenTime), {}, {}, {})
+        InsightsScreen(previewInsightsState(InsightsMetric.ScreenTime), {})
     }
 }

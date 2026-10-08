@@ -29,7 +29,7 @@ class InsightsScreenshotTest {
     private fun shot(
         name: String,
         state: InsightsUiState,
-        content: @Composable (InsightsUiState) -> Unit = { InsightsContent(it, {}, {}, {}) },
+        content: @Composable (InsightsUiState) -> Unit = { InsightsScreen(it, {}) },
     ) {
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content(state) } }
@@ -52,7 +52,10 @@ class InsightsScreenshotTest {
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 StayFocusedTheme {
-                    InsightsContent(previewInsightsState(InsightsMetric.ScreenTime), {}, {}, { picked += it })
+                    InsightsScreen(
+                        state = previewInsightsState(InsightsMetric.ScreenTime),
+                        onEvent = { event -> if (event is InsightsEvent.SelectMetric) picked += event.metric },
+                    )
                 }
             }
         }
