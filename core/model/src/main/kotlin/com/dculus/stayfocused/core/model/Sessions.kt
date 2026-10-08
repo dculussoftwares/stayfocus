@@ -31,7 +31,12 @@ data class Permissions(
     val accessibility: Boolean,
     val overlay: Boolean,
     val notifications: Boolean,
-)
+    /** Battery optimisation exemption. Informational: never gates onboarding or blocking. */
+    val batteryUnrestricted: Boolean = false,
+) {
+    /** The four permissions that gate blocking; [batteryUnrestricted] is deliberately excluded. */
+    val allGatingGranted: Boolean get() = usage && accessibility && overlay && notifications
+}
 
 data class AppInfo(
     val pkg: String,
