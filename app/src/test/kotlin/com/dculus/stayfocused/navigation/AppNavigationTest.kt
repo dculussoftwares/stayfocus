@@ -30,6 +30,7 @@ import com.dculus.stayfocused.core.navigation.RemoteDevice
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
+import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
@@ -39,6 +40,7 @@ import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.feature.block.BlockViewModel
+import com.dculus.stayfocused.feature.home.HomeViewModel
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
@@ -46,6 +48,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.Clock
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -68,6 +71,8 @@ class AppNavigationTest {
             FakeSettingsRepository(),
         )
 
+    private val homeViewModel = HomeViewModel(FakeBreakRepository(), Clock.systemUTC())
+
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {
         composeRule.setContent {
             navController = rememberNavController()
@@ -77,6 +82,7 @@ class AppNavigationTest {
                     navController = navController,
                     blockViewModel = { blockViewModel },
                     insightsContent = { NavPlaceholderScreen(title = "Insights") },
+                    homeViewModel = { homeViewModel },
                 )
             }
         }

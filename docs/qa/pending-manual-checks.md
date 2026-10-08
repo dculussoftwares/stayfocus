@@ -53,3 +53,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M2-06 Daily and hourly limits
 - Check: on a device with usage access and the accessibility service on, a 2-minute daily limit on Chrome blocks after about 2 minutes of use (within 10 s) and stays blocked until midnight; an hourly limit unblocks at the next clock-hour boundary.
 - How: create a daily limit block (2 min) with Chrome, open Chrome and keep it open; note the time to the block screen. Reopen Chrome: still blocked. Change the device clock past midnight (or wait): unblocked. Repeat with an hourly limit near the top of an hour. The unit tests already cover the UsageStats + live-delta merge and the hour/day resets.
+
+## M2-05 Block now and Take a break
+- Check: on a real phone with Accessibility on, a 5-minute break blocks a non-allowlisted app and leaves the dialer usable; after expiry the app opens normally and a "Break over" notification appears (channel Breaks, only with the notification permission). Killing the app process mid-break leaves the countdown correct on reopening. Maestro flow `e2e/flows/smoke/take_a_break.yaml` passes on an emulator.
+- How: dial 5 min in the sheet (or 15 min preset), open Instagram or similar, dial a number, wait for the end, then `adb shell am kill com.dculus.stayfocused` during a second break and reopen. The engine, break-then-allowlist and "Break over" logic are covered by `BlockingEngineTest` and `AndroidBreakNotifierTest`; the flow is also run by CI job `e2e-smoke`.

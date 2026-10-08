@@ -66,6 +66,9 @@ internal abstract class EngineModule {
     abstract fun cycleStore(impl: RoomCycleStateStore): CycleStateStore
 
     @Binds
+    abstract fun breakEnd(impl: AndroidBreakNotifier): BreakEndNotifier
+
+    @Binds
     abstract fun eventLog(impl: RoomBlockEventLog): BlockEventLog
 
     companion object {

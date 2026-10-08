@@ -28,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
@@ -75,6 +76,7 @@ class BlockingEngine
         private val recorder: ForegroundTimeRecorder,
         private val allowlist: BlockAllowlistProvider,
         private val presenter: BlockPresenter,
+        private val breakEnd: BreakEndNotifier,
         private val clock: Clock,
         @EngineDispatcher private val dispatcher: CoroutineDispatcher,
     ) {
@@ -243,11 +245,36 @@ class BlockingEngine
                     settings.settings.map { it.focusSession },
                     allowances.observe(),
                 ) { b, l, br, f, a -> EngineInputs(b, l, br, f, a) }
-            combine(tracker.foreground.map { it?.packageName }, inputs) { pkg, i -> pkg to i }
-                .collectLatest { (pkg, i) ->
-                    latestInputs = i
-                    evaluateWhileInFront(pkg, i)
+            coroutineScope {
+                launch { watchBreakEnd() }
+                combine(tracker.foreground.map { it?.packageName }, inputs) { pkg, i -> pkg to i }
+                    .collectLatest { (pkg, i) ->
+                        latestInputs = i
+                        evaluateWhileInFront(pkg, i)
+                    }
+            }
+        }
+
+        /**
+         * Tells the user when a break runs out while the engine is watching. A break that is ended early or
+         * replaced is not announced, and neither is one that had already elapsed before the engine saw it.
+         */
+        private suspend fun watchBreakEnd() {
+            breaks.observe().collectLatest { session ->
+                if (session == null) return@collectLatest
+                val wait = Duration.between(clock.instant(), session.endsAt).toMillis()
+                if (wait <= 0L) return@collectLatest
+                delay(wait)
+                try {
+                    breakEnd.breakEnded()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    Log.e(TAG, "Could not announce the end of the break", e)
                 }
+            }
         }
 
         private suspend fun evaluateWhileInFront(

@@ -3,4 +3,16 @@
     <string name="home_title">Home</string>
     <!-- Placeholder navigation; removed when the real Home screen lands. -->
     <string name="home_placeholder_open_account">Open Account</string>
+
+    <!-- Take a break -->
+    <string name="break_card_title">Take a break</string>
+    <string name="break_card_subtitle">Lock distracting apps for a while</string>
+    <string name="break_active_label">ON A BREAK · APPS LOCKED</string>
+    <string name="break_end_early">End early</string>
+    <string name="break_sheet_title">Take a break</string>
+    <string name="break_sheet_hint">DRAG THE DIAL</string>
+    <string name="break_sheet_note">Instagram, YouTube, Reddit and X stay locked until the timer ends.</string>
+    <string name="break_sheet_start">Start %1$s break</string>
+    <string name="break_toast_started">Break started · %1$s</string>
+    <string name="break_countdown_description">Break ends in %1$s</string>
 </resources>

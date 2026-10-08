@@ -65,3 +65,8 @@ fun interface BlockEventLog {
         at: Instant,
     )
 }
+
+/** Tells the user that a break has run out ("Break over"). Must not throw for a missing permission. */
+fun interface BreakEndNotifier {
+    fun breakEnded()
+}
