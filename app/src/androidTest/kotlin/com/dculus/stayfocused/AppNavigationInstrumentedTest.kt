@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
+import com.dculus.stayfocused.core.testing.ScenarioCleanupRule
 import com.dculus.stayfocused.core.testing.ScreenshotOnFailureRule
 import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
 import com.dculus.stayfocused.core.ui.components.sfTabTag
@@ -18,7 +19,6 @@ import com.dculus.stayfocused.navigation.MainTab
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import kotlinx.coroutines.runBlocking
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -32,10 +32,14 @@ class AppNavigationInstrumentedTest {
     @get:Rule(order = 0)
     val hiltRule = HiltAndroidRule(this)
 
+    // Closes the activity after the failure screenshot is taken (see ScenarioCleanupRule).
     @get:Rule(order = 1)
-    val composeRule = createEmptyComposeRule()
+    val scenarios = ScenarioCleanupRule()
 
     @get:Rule(order = 2)
+    val composeRule = createEmptyComposeRule()
+
+    @get:Rule(order = 3)
     val screenshotOnFailure = ScreenshotOnFailureRule()
 
     @Inject
@@ -46,15 +50,10 @@ class AppNavigationInstrumentedTest {
     @Before
     fun inject() = hiltRule.inject()
 
-    @After
-    fun closeActivity() {
-        scenario?.close()
-    }
-
     private fun launch(onboardingComplete: Boolean) {
         // The DataStore file outlives a test, so seed the flag before the activity reads it.
         runBlocking { settings.setOnboardingComplete(onboardingComplete) }
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        scenario = scenarios.launch(MainActivity::class.java)
     }
 
     private fun tab(tab: MainTab) = composeRule.onNodeWithTag(sfTabTag(tab.name))

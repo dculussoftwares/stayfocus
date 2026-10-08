@@ -10,6 +10,8 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT_DIR="${OUT_DIR:-$ROOT/e2e/results}"
 mkdir -p "$OUT_DIR/maestro"
+# Absolute, so the later `cd` into e2e/flows cannot scatter the reports.
+OUT_DIR="$(cd "$OUT_DIR" && pwd)"
 
 if [ "$#" -eq 0 ]; then
   # Same set as `maestro test e2e/flows`: the globs in config.yaml (top-level "- glob" lines under "flows:").
@@ -36,7 +38,8 @@ fi
 failed=0
 cases=""
 for flow in "${files[@]}"; do
-  name="$(basename "$flow" .yaml)"
+  # The path, not the basename, so same-named flows in different folders keep separate artifacts.
+  name="$(echo "${flow%.yaml}" | sed -e 's#^\./##' -e 's#[^A-Za-z0-9_.-]#__#g')"
   echo "::group::maestro $flow"
   # screenrecord stops after 3 minutes; each flow is far shorter.
   adb shell screenrecord --time-limit 170 "/sdcard/$name.mp4" &
@@ -54,7 +57,9 @@ for flow in "${files[@]}"; do
   adb shell pkill -2 screenrecord || true
   wait "$rec_pid" 2>/dev/null || true
   sleep 1
-  adb pull "/sdcard/$name.mp4" "$OUT_DIR/$name.mp4" >/dev/null 2>&1 || true
+  if ! adb pull "/sdcard/$name.mp4" "$OUT_DIR/$name.mp4" >/dev/null; then
+    echo "::warning::No video was recorded for $flow"
+  fi
   adb shell rm -f "/sdcard/$name.mp4" || true
   echo "::endgroup::"
   echo "$result: $flow (${elapsed}s)"

@@ -125,6 +125,7 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.stayfocused.core.model.UnlockRequest*",
         "com.dculus.stayfocused.core.testing.HiltTestRunner", // instrumented-test harness, runs on devices only
         "com.dculus.stayfocused.core.testing.ScreenshotOnFailureRule",
+        "com.dculus.stayfocused.core.testing.ScenarioCleanupRule",
         "*.Placeholder", // empty module placeholders; delete this line when the modules get real code
         // Android adapters in :core:blocking (system service, Settings/PackageManager lookups); the logic they
         // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
