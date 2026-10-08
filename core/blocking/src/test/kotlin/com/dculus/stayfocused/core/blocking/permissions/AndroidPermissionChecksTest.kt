@@ -4,10 +4,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import com.dculus.stayfocused.core.usage.UsageAccess
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.plus
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -44,11 +45,11 @@ class AndroidPermissionChecksTest {
     fun resumeSignalEmitsWhenAnActivityResumes() =
         runTest {
             var count = 0
-            val job =
-                ActivityResumeSignal(context)
-                    .resumes()
-                    .onEach { count++ }
-                    .launchIn(kotlinx.coroutines.CoroutineScope(Dispatchers.Unconfined))
+            // backgroundScope is cancelled with the test even if an assertion fails.
+            ActivityResumeSignal(context)
+                .resumes()
+                .onEach { count++ }
+                .launchIn(backgroundScope + UnconfinedTestDispatcher(testScheduler))
             val controller =
                 Robolectric
                     .buildActivity(Activity::class.java)
@@ -57,6 +58,5 @@ class AndroidPermissionChecksTest {
                     .resume()
             assertEquals(2, count) // initial signal on subscription + the resume
             controller.pause().stop().destroy()
-            job.cancel()
         }
 }

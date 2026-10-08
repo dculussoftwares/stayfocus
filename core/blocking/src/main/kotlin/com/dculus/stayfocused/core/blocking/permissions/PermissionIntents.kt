@@ -17,6 +17,10 @@ object PermissionIntents {
 
     fun accessibility(): Intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).newTask()
 
+    /**
+     * "Display over other apps". The package URI opens this app's own screen on Android 10 and below; on 11+ the
+     * system ignores it and shows the list of apps, so the UI must tell the user to pick Stay Focused there.
+     */
     fun overlay(packageName: String): Intent =
         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")).newTask()
 
