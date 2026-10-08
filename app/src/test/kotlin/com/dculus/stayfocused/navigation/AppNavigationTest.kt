@@ -32,6 +32,7 @@ import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
+import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
 import com.dculus.stayfocused.core.ui.components.SF_PLACEHOLDER_LIST_TAG
 import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
 import com.dculus.stayfocused.core.ui.components.sfTabTag
@@ -75,6 +76,7 @@ class AppNavigationTest {
                     startGraph = startGraph,
                     navController = navController,
                     blockViewModel = { blockViewModel },
+                    insightsContent = { NavPlaceholderScreen(title = "Insights") },
                 )
             }
         }
