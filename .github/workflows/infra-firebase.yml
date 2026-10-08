@@ -12,12 +12,14 @@ on:
   pull_request:
     paths:
       - "infra/firebase/**"
+      - "firebase/firestore.rules"
       - "scripts/infra/**"
       - ".github/workflows/infra-firebase.yml"
   push:
     branches: [main]
     paths:
       - "infra/firebase/**"
+      - "firebase/firestore.rules"
       - "scripts/infra/**"
       - ".github/workflows/infra-firebase.yml"
   workflow_dispatch:
@@ -39,6 +41,9 @@ env:
   TF_VAR_billing_account: ${{ secrets.GCP_BILLING_ACCOUNT }}
   TF_VAR_google_oauth_client_id: ${{ vars.GOOGLE_OAUTH_WEB_CLIENT_ID_DEV }}
   TF_VAR_google_oauth_client_secret: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_SECRET_DEV }}
+  # App Check: debug tokens (JSON secret, e.g. {"app":{"ci":"<uuid>"},"kids":{}}) and the Firestore enforcement switch.
+  TF_VAR_app_check_debug_tokens: ${{ secrets.APP_CHECK_DEBUG_TOKENS_DEV || '{}' }}
+  TF_VAR_app_check_enforcement: ${{ vars.APP_CHECK_ENFORCEMENT_DEV || 'ENFORCED' }}
   TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
   TF_VAR_sha256_fingerprints: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
 

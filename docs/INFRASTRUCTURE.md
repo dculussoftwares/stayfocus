@@ -136,6 +136,24 @@ also what Credential Manager needs in the app (M6-03).
 runs `scripts/ci/fetch-google-services.sh`, which reads the output from the HCP state into `app/` and `kids/` and builds both debug apps. The
 emulator sign-in test comes with the first Auth code.
 
+### Firestore, rules and App Check (M7-01)
+
+`infra/firebase` creates the `(default)` Firestore database (native mode, `firestore_location`, default `europe-west1`,
+delete protection on), a TTL policy on `linkTokens.expiresAt`, the composite indexes for the M7/M8 queries, and releases
+`firebase/firestore.rules` (`google_firebaserules_ruleset` + `release cloud.firestore`). Editing the rules file shows as a
+ruleset replacement in the PR plan and goes live when the PR merges; the Firebase CLI is never used to deploy.
+App Check: Play Integrity is configured for both apps, debug tokens are registered for dev and CI, and
+`firestore.googleapis.com` is `ENFORCED` (or `UNENFORCED` via the switch below), so a request without a valid token is rejected.
+
+**One-time steps for the maintainer:**
+1. Re-run **infra-bootstrap** with a temporary key (steps 1-5 above): new roles `datastore.owner` (deploy) and `datastore.viewer` (plan).
+2. Optional secret `APP_CHECK_DEBUG_TOKENS_DEV`: JSON `{"app":{"ci":"<uuid>"},"kids":{"ci":"<uuid>"}}` (UUIDs you generate; they are registered with App Check, and a test
+   harness that sets the same value as its debug token is then accepted). Optional: with an empty secret no debug token is
+   registered and debug builds register their own per-install token from Logcat in the Firebase console.
+3. Rollout switch: set the repo variable `APP_CHECK_ENFORCEMENT_DEV` to `UNENFORCED` to collect metrics only; remove it (or set
+   `ENFORCED`) to enforce.
+4. The Play Integrity API must be linked to the app in Play Console once the app exists (M10); until then only debug tokens validate.
+
 ### Forks
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set
