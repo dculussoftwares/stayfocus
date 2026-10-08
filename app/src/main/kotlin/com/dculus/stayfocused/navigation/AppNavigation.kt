@@ -29,6 +29,7 @@ import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
 import com.dculus.stayfocused.feature.account.accountScreen
 import com.dculus.stayfocused.feature.account.navigateToAccount
+import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.blockScreen
 import com.dculus.stayfocused.feature.block.blockWizardScreen
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
@@ -52,6 +53,7 @@ fun StayFocusedNavigation(
     modifier: Modifier = Modifier,
     onFinishOnboarding: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
+    blockViewModel: (@Composable () -> BlockViewModel)? = null,
 ) {
     val destination = navController.currentBackStackEntryAsState().value?.destination
     val tabItems = MainTab.entries.map { tab -> SfTabItem(tab.name, stringResource(tab.label), tab.icon) }
@@ -63,7 +65,7 @@ fun StayFocusedNavigation(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
     ) {
-        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph, onFinishOnboarding) }
+        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel) }
         if (destination.showsTabBar()) {
             SfTabBar(
                 items = tabItems,
@@ -80,6 +82,7 @@ private fun AppNavHost(
     navController: NavHostController,
     startGraph: StartGraph,
     onFinishOnboarding: () -> Unit,
+    blockViewModel: (@Composable () -> BlockViewModel)?,
 ) {
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
@@ -101,7 +104,10 @@ private fun AppNavHost(
         )
         navigation<MainGraph>(startDestination = Home) {
             homeScreen(onOpenAccount = { navController.navigateToAccount() })
-            blockScreen(onOpenWizard = { target, prefill -> navController.navigateToBlockWizard(target, prefill) })
+            blockScreen(
+                onOpenWizard = { target, prefill -> navController.navigateToBlockWizard(target, prefill) },
+                viewModelProvider = blockViewModel,
+            )
             blockWizardScreen()
             devicesScreen(
                 onLinkPhone = { navController.navigateToLinkAdd() },

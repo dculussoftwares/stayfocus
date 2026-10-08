@@ -26,8 +26,12 @@ fun NavController.navigateToBlockWizard(
 ) = navigate(BlockWizard(target = target, prefill = prefill), navOptions)
 
 /** Block tab. [onOpenWizard] opens the wizard for a target (child device id, null = this phone) and template. */
-fun NavGraphBuilder.blockScreen(onOpenWizard: (target: String?, prefill: String?) -> Unit) {
-    composable<Block> { BlockRoute(onOpenWizard) }
+fun NavGraphBuilder.blockScreen(
+    onOpenWizard: (target: String?, prefill: String?) -> Unit,
+    /** Supplies the ViewModel; null uses Hilt. Lets navigation tests run without a Hilt application. */
+    viewModelProvider: (@Composable () -> BlockViewModel)? = null,
+) {
+    composable<Block> { BlockRoute(onOpenWizard, viewModelProvider?.invoke() ?: hiltViewModel()) }
 }
 
 /** The 3-step block wizard, a sub-screen without a tab bar. */
@@ -38,7 +42,7 @@ fun NavGraphBuilder.blockWizardScreen() {
 @Composable
 internal fun BlockRoute(
     onOpenWizard: (target: String?, prefill: String?) -> Unit,
-    viewModel: BlockViewModel = hiltViewModel(),
+    viewModel: BlockViewModel,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOpenWizard by rememberUpdatedState(onOpenWizard)

@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performScrollToIndex
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.navigation.Account
 import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
@@ -28,10 +29,16 @@ import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.RemoteDevice
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
+import com.dculus.stayfocused.core.testing.FakeBlockRepository
+import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.components.SF_PLACEHOLDER_LIST_TAG
 import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
 import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.feature.block.BlockViewModel
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -50,10 +57,26 @@ class AppNavigationTest {
 
     private lateinit var navController: NavHostController
 
+    private val blockViewModel =
+        BlockViewModel(
+            FakeBlockRepository(),
+            FakeLinkedDevicesRepository(),
+            object : InstalledAppsRepository {
+                override fun observeLaunchableApps() = flowOf(emptyList<AppInfo>())
+            },
+            FakeSettingsRepository(),
+        )
+
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {
         composeRule.setContent {
             navController = rememberNavController()
-            StayFocusedTheme { StayFocusedNavigation(startGraph = startGraph, navController = navController) }
+            StayFocusedTheme {
+                StayFocusedNavigation(
+                    startGraph = startGraph,
+                    navController = navController,
+                    blockViewModel = { blockViewModel },
+                )
+            }
         }
         composeRule.waitForIdle()
     }
@@ -92,12 +115,12 @@ class AppNavigationTest {
     @Test
     fun switchingTabsKeepsScrollState() {
         launch()
-        tab(MainTab.BLOCK).performClick()
+        tab(MainTab.INSIGHTS).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(SF_PLACEHOLDER_LIST_TAG).performScrollToIndex(20)
-        tab(MainTab.DEVICES).performClick()
+        tab(MainTab.HOME).performClick()
         composeRule.waitForIdle()
-        tab(MainTab.BLOCK).performClick()
+        tab(MainTab.INSIGHTS).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(SF_PLACEHOLDER_LIST_TAG).assert(
             SemanticsMatcher("list is scrolled") {
