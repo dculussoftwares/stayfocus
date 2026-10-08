@@ -101,7 +101,7 @@ jobs:
         run: |
           set -euo pipefail
           # All states: a closed tracking issue is reopened instead of starting a duplicate.
-          line="$(gh issue list --state all --limit 100 --json number,title,state \
+          line="$(gh issue list --state all --limit 100 --search "\"$TITLE\" in:title" --json number,title,state \
             --jq '[.[] | select(.title == env.TITLE)][0] | select(. != null) | "\(.number) \(.state)"')"
           number="${line%% *}"
           state="${line##* }"
