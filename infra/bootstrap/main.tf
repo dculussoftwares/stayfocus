@@ -126,6 +126,22 @@ resource "google_project_iam_member" "deploy" {
   member  = "serviceAccount:${google_service_account.deploy[each.value.env].email}"
 }
 
+# M7-02: Terraform grants each function's service account its roles. projectIamAdmin is limited by a condition to the
+# roles in deploy_iam_grantable_roles, so the deploy account can't hand out (or take) anything else.
+resource "google_project_iam_member" "deploy_iam_admin" {
+  for_each = var.environments
+
+  project = google_project.env[each.key].project_id
+  role    = "roles/resourcemanager.projectIamAdmin"
+  member  = "serviceAccount:${google_service_account.deploy[each.key].email}"
+
+  condition {
+    title       = "grant-function-roles-only"
+    description = "Only the roles Cloud Functions service accounts need"
+    expression  = "api.getAttribute('iam.googleapis.com/modifiedGrantsByRole', []).hasOnly([${join(",", [for r in var.deploy_iam_grantable_roles : "'${r}'"])}])"
+  }
+}
+
 resource "google_iam_workload_identity_pool" "github" {
   for_each = var.environments
 

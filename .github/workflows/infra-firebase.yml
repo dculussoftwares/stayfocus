@@ -13,6 +13,7 @@ on:
     paths:
       - "infra/firebase/**"
       - "firebase/firestore.rules"
+      - "firebase/functions/**"
       - "scripts/infra/**"
       - ".github/workflows/infra-firebase.yml"
   push:
@@ -20,6 +21,7 @@ on:
     paths:
       - "infra/firebase/**"
       - "firebase/firestore.rules"
+      - "firebase/functions/**"
       - "scripts/infra/**"
       - ".github/workflows/infra-firebase.yml"
   workflow_dispatch:
@@ -91,6 +93,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - name: Build the functions (one folder per function in firebase/functions/dist)
+        working-directory: firebase/functions
+        run: |
+          npm ci --ignore-scripts
+          npm run build
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
@@ -138,6 +150,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - name: Build the functions (one folder per function in firebase/functions/dist)
+        working-directory: firebase/functions
+        run: |
+          npm ci --ignore-scripts
+          npm run build
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}

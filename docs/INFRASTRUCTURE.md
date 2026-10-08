@@ -107,6 +107,20 @@ infra-bootstrap with a fresh temporary key (steps 1-5), then deleting it again.
 The deploy service account's roles (`deploy_roles` in `infra/bootstrap/variables.tf`) are least-privilege for what the
 Firebase stories need; add roles there when a later infra story needs more.
 
+### Cloud Functions (M7-02)
+
+`infra/firebase/functions.tf` deploys the Functions in `firebase/functions` (TypeScript, Node 22, 2nd gen). The
+`infra-firebase` workflow runs `npm ci && npm run build` (one folder per function in `dist/`); Terraform zips each folder,
+uploads it to a private bucket under a content-hashed name and updates only the functions whose zip changed. Each function
+has its own runtime service account (logging plus the roles listed in `local.functions`), builds run as `functions-build`,
+and callables get a public Cloud Run invoker because `secureCallable()` enforces App Check and sign-in itself.
+
+**One-time step for the maintainer:** re-run **infra-bootstrap** with a temporary key (steps 1-5 above). New deploy roles:
+`cloudfunctions.admin`, `run.admin`, `storage.admin`, `iam.serviceAccountAdmin`, `iam.serviceAccountUser`, and
+`resourcemanager.projectIamAdmin` limited by an IAM condition to the roles in `deploy_iam_grantable_roles`. New plan roles:
+`cloudfunctions.viewer`, `run.viewer`, `storage.objectViewer`, `storage.legacyBucketReader`, `iam.securityReviewer`.
+Until then the apply fails with 403.
+
 ### Firebase Auth and apps (M6-01)
 
 `infra/firebase` creates the Firebase project, the two Android apps (`com.dculus.stayfocused`, `com.dculus.stayfocused.kids`),

@@ -372,6 +372,33 @@ jobs:
           # The Gradle pre-push hook is covered by the static-analysis and unit-tests jobs.
           pre-commit run --all-files --show-diff-on-failure
 
+  # Cloud Functions (M7-02): lint, type check, build, and Jest against the Firestore emulator (needs Java 21+).
+  functions-tests:
+    name: functions-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: firebase/functions
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - name: Jest against the Firestore emulator
+        run: npm test
+
   # The single required status check (branch protection, M1-12). Fails if any job failed or was cancelled.
   ci-pass:
     name: ci-pass
@@ -385,6 +412,7 @@ jobs:
         build-with-firebase-config,
         instrumented-tests,
         e2e-smoke,
+        functions-tests,
         pre-commit,
       ]
     runs-on: ubuntu-latest
