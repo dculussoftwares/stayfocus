@@ -246,6 +246,9 @@ describe('blocks', () => {
     await assertFails(w(block({ type: 'SCHEDULE' })));
     await assertFails(w(block({ type: 'CYCLE', limitMins: null })));
     await assertFails(w(block({ type: 'NOW', limitMins: null })));
+    await assertFails(w(block({ type: 'NOW', limitMins: null, durationMins: 60 })));
+    await assertFails(w(block({ type: 'SCHEDULE', limitMins: null, range: {} })));
+    await assertFails(w(block({ type: 'SCHEDULE', limitMins: null, range: { start: '25:00', end: '07:00' } })));
   });
   it('accepts a valid block of each type', async () => {
     await seedDevice();
