@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -47,7 +48,11 @@ class InsightsViewModelTest {
 
         override fun blockedToday(): Flow<Int> = flowOf(0)
 
-        override suspend fun backfill() = Unit
+        var backfills = 0
+
+        override suspend fun backfill() {
+            backfills++
+        }
     }
 
     private val installed =
@@ -108,7 +113,7 @@ class InsightsViewModelTest {
                 assertNull(s.day)
 
                 repeat(10) { vm.previousDay() }
-                testScheduler.advanceUntilIdle()
+                testScheduler.runCurrent()
                 val oldest = expectMostRecentItem()
                 assertEquals(OLDEST_DAY_OFFSET, oldest.dayOffset)
                 assertEquals(false, oldest.canStepBack)
@@ -125,6 +130,8 @@ class InsightsViewModelTest {
             val usage = FakeUsage(MutableStateFlow(stats(today, 5)), mutableMapOf())
             val vm = InsightsViewModel(usage, installed, clock)
             vm.nextDay()
+            testScheduler.runCurrent()
+            assertEquals(1, usage.backfills)
             vm.state.map { it.dayOffset }.test {
                 assertEquals(0, awaitItem())
                 cancelAndIgnoreRemainingEvents()

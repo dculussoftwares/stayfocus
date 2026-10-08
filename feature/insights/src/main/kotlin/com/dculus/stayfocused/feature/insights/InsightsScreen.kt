@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,20 +77,22 @@ internal fun InsightsContent(
         contentPadding =
             androidx.compose.foundation.layout
                 .PaddingValues(horizontal = spacing.screen, vertical = spacing.gap16),
-        verticalArrangement = Arrangement.spacedBy(spacing.gap14),
+        verticalArrangement = Arrangement.Top,
     ) {
-        item { DayStepper(state, onPreviousDay, onNextDay) }
+        item { Box(Modifier.padding(bottom = spacing.gap14)) { DayStepper(state, onPreviousDay, onNextDay) } }
         item {
-            SegmentedTabs(
-                options =
-                    listOf(
-                        stringResource(R.string.insights_metric_screen_time),
-                        stringResource(R.string.insights_metric_opens),
-                        stringResource(R.string.insights_metric_unlocks),
-                    ),
-                selectedIndex = MetricOrder.indexOf(state.metric),
-                onSelect = { onSelectMetric(MetricOrder[it]) },
-            )
+            Box(Modifier.padding(bottom = spacing.gap14)) {
+                SegmentedTabs(
+                    options =
+                        listOf(
+                            stringResource(R.string.insights_metric_screen_time),
+                            stringResource(R.string.insights_metric_opens),
+                            stringResource(R.string.insights_metric_unlocks),
+                        ),
+                    selectedIndex = MetricOrder.indexOf(state.metric),
+                    onSelect = { onSelectMetric(MetricOrder[it]) },
+                )
+            }
         }
         when {
             state.loading -> {
@@ -101,11 +104,13 @@ internal fun InsightsContent(
             }
 
             else -> {
-                item { ChartPanel(day) }
+                item { Box(Modifier.padding(bottom = spacing.gap14)) { ChartPanel(day) } }
                 if (day.apps.isEmpty()) {
-                    item { NoApps() }
+                    item { Box(Modifier.padding(bottom = spacing.gap14)) { NoApps() } }
                 } else {
-                    item { AppList(day) }
+                    itemsIndexed(day.apps, key = { _, app -> app.pkg }) { index, app ->
+                        AppRow(app, day.metric, first = index == 0, last = index == day.apps.lastIndex)
+                    }
                 }
             }
         }
@@ -204,23 +209,21 @@ private fun ChartPanel(day: InsightsDay) {
 }
 
 @Composable
-private fun AppList(day: InsightsDay) {
-    Panel(Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            day.apps.forEach { AppRow(it, day.metric) }
-        }
-    }
-}
-
-@Composable
 private fun AppRow(
     app: RankedApp,
     metric: InsightsMetric,
+    first: Boolean,
+    last: Boolean,
 ) {
     val c = StayFocusedTheme.colors
     val value = if (metric == InsightsMetric.ScreenTime) formatMinutes(app.value) else app.value.toString()
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 8.dp).semantics(mergeDescendants = true) { },
+        Modifier
+            .fillMaxWidth()
+            .clip(rowShape(first, last))
+            .background(c.panel)
+            .padding(horizontal = 18.dp, vertical = if (first || last) 14.dp else 10.dp)
+            .semantics(mergeDescendants = true) { },
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -259,6 +262,16 @@ private fun AppRow(
         }
     }
 }
+
+private fun rowShape(
+    first: Boolean,
+    last: Boolean,
+) = RoundedCornerShape(
+    topStart = if (first) 20.dp else 0.dp,
+    topEnd = if (first) 20.dp else 0.dp,
+    bottomStart = if (last) 20.dp else 0.dp,
+    bottomEnd = if (last) 20.dp else 0.dp,
+)
 
 @Composable
 private fun EmptyDay() {

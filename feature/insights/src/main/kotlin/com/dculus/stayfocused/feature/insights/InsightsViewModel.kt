@@ -7,16 +7,20 @@ import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
 import java.time.ZoneId
@@ -33,6 +37,12 @@ internal data class InsightsUiState(
     val canStepBack: Boolean get() = canStepBack(dayOffset)
     val canStepForward: Boolean get() = canStepForward(dayOffset)
 }
+
+private data class DayStats(
+    val offset: Int,
+    val date: LocalDate,
+    val stats: DayUsageStats?,
+)
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -54,22 +64,29 @@ internal class InsightsViewModel
                 .map { apps -> apps.associate { it.pkg to it.label } }
                 .onStart { emit(emptyMap()) }
 
-        private val dayStats: Flow<Pair<Int, DayUsageStats?>> =
-            dayOffset.flatMapLatest { offset ->
-                val source: Flow<DayUsageStats?> =
-                    if (offset ==
-                        0
-                    ) {
-                        usage.today()
-                    } else {
-                        usage.day(today().plusDays(offset.toLong()))
-                    }
-                source.map { offset to it }
+        /** The local date, re-read every minute so a screen left open follows midnight. */
+        private val localDate: Flow<LocalDate> =
+            flow {
+                while (true) {
+                    emit(today())
+                    delay(DATE_POLL_MILLIS)
+                }
+            }.distinctUntilChanged()
+
+        private val dayStats: Flow<DayStats> =
+            combine(dayOffset, localDate, ::Pair).flatMapLatest { (offset, now) ->
+                val date = now.plusDays(offset.toLong())
+                val source: Flow<DayUsageStats?> = if (offset == 0) usage.today() else usage.day(date)
+                source.map { DayStats(offset, date, it) }
             }
 
+        init {
+            // Fills the cache of past days (no-op without usage access, skips days already cached).
+            viewModelScope.launch { usage.backfill() }
+        }
+
         val state: StateFlow<InsightsUiState> =
-            combine(dayStats, usage.averages(), metric, labels) { (offset, stats), averages, metric, names ->
-                val date = today().plusDays(offset.toLong())
+            combine(dayStats, usage.averages(), metric, labels) { (offset, date, stats), averages, metric, names ->
                 val day =
                     if (stats.hasNoData()) {
                         null
@@ -106,5 +123,6 @@ internal class InsightsViewModel
 
         private companion object {
             const val STOP_TIMEOUT_MILLIS = 5_000L
+            const val DATE_POLL_MILLIS = 60_000L
         }
     }
