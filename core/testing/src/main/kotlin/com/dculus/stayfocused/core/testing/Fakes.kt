@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.testing
 
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
+import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
 import com.dculus.stayfocused.core.data.repository.LockedAppsRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.AppSettings
@@ -9,6 +10,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BreakSession
 import com.dculus.stayfocused.core.model.FocusSession
+import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -110,4 +112,12 @@ class FakeSettingsRepository(
     override suspend fun setAccessibilityConsentAt(at: Instant?) = state.update { it.copy(accessibilityConsentAt = at) }
 
     override suspend fun setAiEnabled(enabled: Boolean) = state.update { it.copy(aiEnabled = enabled) }
+}
+
+class FakeLinkedDevicesRepository(
+    initial: List<LinkedDevice> = emptyList(),
+) : LinkedDevicesRepository {
+    val devices = MutableStateFlow(initial)
+
+    override fun observeAll(): Flow<List<LinkedDevice>> = devices
 }

@@ -2,6 +2,52 @@
 <resources>
     <string name="block_title">Block</string>
     <string name="block_wizard_title">New block</string>
-    <!-- Placeholder navigation; removed when the real Block screen lands. -->
-    <string name="block_placeholder_new_block">New block</string>
+
+    <string name="block_blocking_on">Blocking on</string>
+    <string name="block_this_phone">This phone</string>
+    <string name="block_this_phone_initial">ME</string>
+    <string name="block_active_count">%1$d ACTIVE</string>
+    <string name="block_new_block">New block</string>
+    <string name="block_new_block_on">on %1$s</string>
+
+    <string name="block_ai_badge">AI</string>
+    <string name="block_ai_describe">Describe</string>
+    <string name="block_ai_intro">Say it the way you\'d say it. You\'ll check the result before it turns on for %1$s.</string>
+    <string name="block_ai_placeholder">Let me use Instagram for 10 minutes, then lock it for an hour</string>
+    <string name="block_ai_example_1">Instagram 10 min, then lock 1 hour</string>
+    <string name="block_ai_example_2">No YouTube on school days 8am–3pm</string>
+    <string name="block_ai_example_3">Social media 45 min a day</string>
+    <string name="block_ai_create">Create block</string>
+
+    <string name="block_tab_blocks">Blocks</string>
+    <string name="block_tab_all_apps">All apps</string>
+
+    <string name="block_empty_title">No blocks yet</string>
+    <string name="block_empty_body">Start from a template below, or tap New block.</string>
+
+    <string name="block_templates_header">Start from a template</string>
+    <string name="block_template_mindful_name">Mindful scrolling</string>
+    <string name="block_template_mindful_desc">10 min each time, then locked for 30.</string>
+    <string name="block_template_study_name">Study time</string>
+    <string name="block_template_study_desc">Social apps locked 16:00–20:00 on school days.</string>
+    <string name="block_template_social_name">Social limit</string>
+    <string name="block_template_social_desc">30 minutes a day across social apps.</string>
+    <string name="block_template_bedtime_name">Bedtime</string>
+    <string name="block_template_bedtime_desc">Everything except calls, 22:00–07:00.</string>
+    <string name="block_template_code_cycle">CYC</string>
+    <string name="block_template_code_schedule">HRS</string>
+    <string name="block_template_code_limit">LIM</string>
+
+    <!-- Block row detail line, e.g. "10m on, 30m off · Instagram, YouTube". -->
+    <string name="block_detail_cycle">%1$s on, %2$s off · %3$s</string>
+    <string name="block_detail_limit_daily">%1$s a day · %2$s</string>
+    <string name="block_detail_limit_hourly">%1$s an hour · %2$s</string>
+    <string name="block_detail_schedule">%1$s · %2$s · %3$s</string>
+    <string name="block_detail_now">%1$s · %2$s</string>
+    <string name="block_detail_apps_many">%1$d apps</string>
+    <string name="block_detail_apps_none">No apps</string>
+    <string name="block_days_every_day">Every day</string>
+    <string name="block_days_weekdays">Mon–Fri</string>
+    <string name="block_days_weekends">Sat–Sun</string>
+    <string name="block_days_none">No days</string>
 </resources>

@@ -5,6 +5,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BreakSession
 import com.dculus.stayfocused.core.model.FocusSession
+import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
@@ -72,4 +73,9 @@ interface SettingsRepository {
     suspend fun setAccessibilityConsentAt(at: Instant?)
 
     suspend fun setAiEnabled(enabled: Boolean)
+}
+
+interface LinkedDevicesRepository {
+    /** Child phones linked to this one, oldest link first. Empty until device linking ships (M7). */
+    fun observeAll(): Flow<List<LinkedDevice>>
 }

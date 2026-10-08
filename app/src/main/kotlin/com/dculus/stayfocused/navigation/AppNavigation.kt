@@ -101,7 +101,7 @@ private fun AppNavHost(
         )
         navigation<MainGraph>(startDestination = Home) {
             homeScreen(onOpenAccount = { navController.navigateToAccount() })
-            blockScreen(onNewBlock = { navController.navigateToBlockWizard() })
+            blockScreen(onOpenWizard = { target, prefill -> navController.navigateToBlockWizard(target, prefill) })
             blockWizardScreen()
             devicesScreen(
                 onLinkPhone = { navController.navigateToLinkAdd() },
