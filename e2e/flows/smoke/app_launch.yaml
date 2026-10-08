@@ -5,5 +5,4 @@ tags:
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Welcome"
-- assertVisible: "Continue"
+- assertVisible: "Get started"
