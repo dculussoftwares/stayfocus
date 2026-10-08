@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="insights_title">Insights</string>
+    <string name="insights_day_today">Today</string>
+    <string name="insights_day_yesterday">Yesterday</string>
+    <string name="insights_previous_day">Previous day</string>
+    <string name="insights_next_day">Next day</string>
+    <string name="insights_metric_screen_time">Screen time</string>
+    <string name="insights_metric_opens">Opens</string>
+    <string name="insights_metric_unlocks">Unlocks</string>
+    <string name="insights_avg">- - - AVG %1$s</string>
+    <string name="insights_empty_title">No data for this day</string>
+    <string name="insights_empty_body">Nothing was recorded on this day.</string>
+    <string name="insights_no_apps">No apps to rank for this metric on this day.</string>
+    <string name="insights_chart_summary">%1$s per hour of day, 00 to 23</string>
 </resources>
