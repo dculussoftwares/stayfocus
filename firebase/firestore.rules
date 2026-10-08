@@ -66,19 +66,42 @@ service cloud.firestore {
     }
 
     function blockIsValid(b) {
-      return b.keys().size() <= 30
-        && b.keys().hasAll(['type', 'name', 'apps', 'enabled'])
+      return b.keys().hasOnly(['type', 'name', 'apps', 'enabled', 'limitMins', 'period',
+                               'useMins', 'restMins', 'rangeStart', 'rangeEnd',
+                               'durationMins', 'startedAt', 'days', 'createdAt', 'source'])
+        && b.keys().hasAll(['type', 'name', 'apps', 'enabled', 'createdAt', 'source'])
         && b.type in ['LIMIT', 'CYCLE', 'SCHEDULE', 'NOW']
         && isStr(b.name, 100)
         && b.apps is list && b.apps.size() <= 300
         && b.enabled is bool
+        && b.createdAt is timestamp
+        && b.source in ['MANUAL', 'TEMPLATE', 'AI']
         && (!('limitMins' in b) || b.limitMins == null || isIntIn(b.limitMins, 1, 1440))
         && (!('useMins' in b) || b.useMins == null || isIntIn(b.useMins, 1, 1440))
         && (!('restMins' in b) || b.restMins == null || isIntIn(b.restMins, 1, 1440))
         && (!('durationMins' in b) || b.durationMins == null || isIntIn(b.durationMins, 1, 1440))
         && (!('days' in b) || isIntIn(b.days, 0, 127))
-        && isOptStr(b, 'period', 20)
-        && isOptStr(b, 'source', 20);
+        && (!('period' in b) || b.period == null || b.period in ['DAILY', 'HOURLY'])
+        && (!('rangeStart' in b) || b.rangeStart == null || b.rangeStart is string)
+        && (!('rangeEnd' in b) || b.rangeEnd == null || b.rangeEnd is string)
+        && (!('startedAt' in b) || b.startedAt == null || b.startedAt is timestamp)
+        && (b.type != 'LIMIT' || ('limitMins' in b && b.limitMins != null && 'period' in b && b.period != null))
+        && (b.type != 'CYCLE' || ('useMins' in b && b.useMins != null && 'restMins' in b && b.restMins != null))
+        && (b.type != 'SCHEDULE' || (('rangeStart' in b && b.rangeStart != null) && ('rangeEnd' in b && b.rangeEnd != null)))
+        && (b.type != 'NOW' || ('durationMins' in b && b.durationMins != null));
+    }
+
+    function commandPayloadIsValid(payload, type) {
+      return (type in ['BLOCK_APP', 'UNBLOCK_APP']
+          && payload.keys().hasOnly(['pkg']) && payload.keys().hasAll(['pkg'])
+          && isStr(payload.pkg, 255))
+        || (type in ['APPROVE_REQUEST', 'DENY_REQUEST']
+          && payload.keys().hasOnly(['requestId']) && payload.keys().hasAll(['requestId'])
+          && isStr(payload.requestId, 128))
+        || (type == 'REMIND_PERMISSION'
+          && payload.keys().hasOnly(['permission']) && payload.keys().hasAll(['permission'])
+          && isStr(payload.permission, 50))
+        || (type in ['START_FOCUS', 'STOP_FOCUS', 'SYNC_BLOCKS'] && payload.keys().size() == 0);
     }
 
     // ---------- users/{uid} (parent profile) ----------
@@ -100,10 +123,17 @@ service cloud.firestore {
       // The parent's own push tokens (document id = FCM token).
       match /fcmTokens/{token} {
         allow read: if isParent(uid);
-        allow create, update: if isParent(uid)
+        allow create: if isParent(uid)
           && token.size() <= 4096
           && request.resource.data.keys().hasOnly(['createdAt', 'platform'])
           && request.resource.data.keys().hasAll(['createdAt', 'platform'])
+          && isNow(request.resource.data.createdAt)
+          && request.resource.data.platform in ['android'];
+        allow update: if isParent(uid)
+          && token.size() <= 4096
+          && request.resource.data.keys().hasOnly(['createdAt', 'platform'])
+          && request.resource.data.keys().hasAll(['createdAt', 'platform'])
+          && request.resource.data.createdAt == resource.data.createdAt
           && request.resource.data.createdAt is timestamp
           && request.resource.data.platform in ['android'];
         allow delete: if isParent(uid);
@@ -121,14 +151,20 @@ service cloud.firestore {
           && (!('online' in request.resource.data) || request.resource.data.online is bool)
           && (!('currentApp' in request.resource.data) || request.resource.data.currentApp == null
               || isStr(request.resource.data.currentApp, 255))
-          && isOptTimestamp(request.resource.data, 'lastSeen');
+          && (request.resource.data.lastSeen == resource.data.lastSeen
+              || isNow(request.resource.data.lastSeen));
 
         // Blocks that apply to this device. Written by the parent, read by the child.
         match /blocks/{blockId} {
           allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
-          allow create, update: if isParent(uid)
+          allow create: if isParent(uid)
             && deviceExists(uid, deviceId)
-            && blockIsValid(request.resource.data);
+            && blockIsValid(request.resource.data)
+            && isNow(request.resource.data.createdAt);
+          allow update: if isParent(uid)
+            && deviceExists(uid, deviceId)
+            && blockIsValid(request.resource.data)
+            && request.resource.data.createdAt == resource.data.createdAt;
           allow delete: if isParent(uid);
         }
 
@@ -143,6 +179,7 @@ service cloud.firestore {
                                               'APPROVE_REQUEST', 'DENY_REQUEST', 'SYNC_BLOCKS', 'REMIND_PERMISSION']
             && request.resource.data.payload is map
             && request.resource.data.payload.keys().size() <= 10
+            && commandPayloadIsValid(request.resource.data.payload, request.resource.data.type)
             && request.resource.data.status == 'pending'
             && isNow(request.resource.data.createdAt);
           allow update: if isChildOfDevice(uid, deviceId)
@@ -155,7 +192,9 @@ service cloud.firestore {
         match /requests/{reqId} {
           allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
           allow create: if isChildOfDevice(uid, deviceId)
-            && request.resource.data.keys().hasOnly(['app', 'minutes', 'status', 'createdAt'])
+            && request.resource.data.keys().hasOnly(['app', 'minutes', 'status', 'createdAt', 'parentUid'])
+            && request.resource.data.keys().hasAll(['app', 'minutes', 'status', 'createdAt', 'parentUid'])
+            && request.resource.data.parentUid == uid
             && request.resource.data.keys().hasAll(['app', 'minutes', 'status', 'createdAt'])
             && isStr(request.resource.data.app, 255)
             && isIntIn(request.resource.data.minutes, 1, 480)
@@ -172,7 +211,9 @@ service cloud.firestore {
         match /alerts/{alertId} {
           allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
           allow create: if isChildOfDevice(uid, deviceId)
-            && request.resource.data.keys().hasOnly(['kind', 'permission', 'createdAt', 'dismissed'])
+            && request.resource.data.keys().hasOnly(['kind', 'permission', 'createdAt', 'dismissed', 'parentUid'])
+            && request.resource.data.keys().hasAll(['kind', 'createdAt', 'dismissed', 'parentUid'])
+            && request.resource.data.parentUid == uid
             && request.resource.data.keys().hasAll(['kind', 'createdAt', 'dismissed'])
             && request.resource.data.kind in ['permission_lost', 'unlinked', 'offline']
             && isOptStr(request.resource.data, 'permission', 50)
@@ -227,6 +268,15 @@ service cloud.firestore {
         && request.resource.data.code.matches('^[0-9]{6}$')
         && request.resource.data.status == 'open';
       allow update, delete: if false;
+    }
+
+    // Collection-group views are authorized by the denormalized owner field. Queries must include
+    // where('parentUid', '==', auth.uid), allowing Firestore to prove this rule for every result.
+    match /{path=**}/requests/{requestId} {
+      allow read: if signedIn() && resource.data.parentUid == request.auth.uid;
+    }
+    match /{path=**}/alerts/{alertId} {
+      allow read: if signedIn() && resource.data.parentUid == request.auth.uid;
     }
 
     // rateLimits/** and anything else: Functions (admin SDK) only.

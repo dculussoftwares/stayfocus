@@ -52,12 +52,12 @@ locals {
     requests_status_created = {
       collection  = "requests"
       query_scope = "COLLECTION_GROUP"
-      fields      = [["status", "ASCENDING"], ["createdAt", "DESCENDING"]]
+      fields      = [["parentUid", "ASCENDING"], ["status", "ASCENDING"], ["createdAt", "DESCENDING"]]
     }
     alerts_dismissed_created = {
       collection  = "alerts"
       query_scope = "COLLECTION_GROUP"
-      fields      = [["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
+      fields      = [["parentUid", "ASCENDING"], ["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
     }
     requests_device_status_created = {
       collection  = "requests"

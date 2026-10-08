@@ -40,10 +40,11 @@ async function seedDevice() {
       name: 'Kid phone', model: 'Pixel', linkedAt: Timestamp.now(), childUid: CHILD,
       online: false, battery: 50, charging: false, currentApp: null, lastSeen: null, focusEndsAt: null,
     });
-    await setDoc(doc(db, `${D}/blocks/b1`), { type: 'LIMIT', name: 'Social', apps: ['a.b'], enabled: true });
+    await setDoc(doc(db, `${D}/blocks/b1`), { type: 'LIMIT', name: 'Social', apps: ['a.b'], enabled: true,
+      period: 'DAILY', limitMins: 30, createdAt: Timestamp.now(), source: 'MANUAL' });
     await setDoc(doc(db, `${D}/commands/c1`), { type: 'SYNC_BLOCKS', payload: {}, createdAt: Timestamp.now(), status: 'pending' });
-    await setDoc(doc(db, `${D}/requests/r1`), { app: 'a.b', minutes: 15, status: 'pending', createdAt: Timestamp.now() });
-    await setDoc(doc(db, `${D}/alerts/al1`), { kind: 'offline', createdAt: Timestamp.now(), dismissed: false });
+    await setDoc(doc(db, `${D}/requests/r1`), { app: 'a.b', minutes: 15, status: 'pending', createdAt: Timestamp.now(), parentUid: PARENT });
+    await setDoc(doc(db, `${D}/alerts/al1`), { kind: 'offline', createdAt: Timestamp.now(), dismissed: false, parentUid: PARENT });
     await setDoc(doc(db, `${D}/usage/2026-01-02`), { totalMins: 10, apps: [] });
     await setDoc(doc(db, `${D}/apps/a.b`), { label: 'App' });
     await setDoc(doc(db, `users/${PARENT}`), { displayName: 'P', email: 'p@example.com', createdAt: Timestamp.now() });
@@ -180,7 +181,8 @@ describe('device docs', () => {
 });
 
 describe('blocks', () => {
-  const block = (over = {}) => ({ type: 'LIMIT', name: 'Games', apps: ['x.y'], enabled: true, limitMins: 30, ...over });
+  const block = (over = {}) => ({ type: 'LIMIT', name: 'Games', apps: ['x.y'], enabled: true,
+    limitMins: 30, period: 'DAILY', createdAt: serverTimestamp(), source: 'MANUAL', ...over });
   it('parent creates, updates and deletes a block', async () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(parentDb(), `${D}/blocks/b2`), block()));
@@ -261,7 +263,7 @@ describe('commands', () => {
 });
 
 describe('requests', () => {
-  const req = (over = {}) => ({ app: 'a.b', minutes: 15, status: 'pending', createdAt: serverTimestamp(), ...over });
+  const req = (over = {}) => ({ app: 'a.b', minutes: 15, status: 'pending', createdAt: serverTimestamp(), parentUid: PARENT, ...over });
   it('child creates a valid request', async () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(childDb(), `${D}/requests/r2`), req()));
@@ -298,7 +300,7 @@ describe('requests', () => {
 });
 
 describe('alerts', () => {
-  const alert = (over = {}) => ({ kind: 'permission_lost', permission: 'usage', createdAt: serverTimestamp(), dismissed: false, ...over });
+  const alert = (over = {}) => ({ kind: 'permission_lost', permission: 'usage', createdAt: serverTimestamp(), dismissed: false, parentUid: PARENT, ...over });
   it('child creates an alert', async () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(childDb(), `${D}/alerts/al2`), alert()));
@@ -388,6 +390,10 @@ describe('linkTokens', () => {
     await assertFails(getDoc(doc(parentDb(), path)));
     await assertFails(updateDoc(doc(childDb(), path), { status: 'used' }));
     await assertFails(updateDoc(doc(parentDb(), path), { claimedBy: PARENT }));
+    await assertFails(deleteDoc(doc(childDb(), path)));
+  });
+});
+, { claimedBy: PARENT }));
     await assertFails(deleteDoc(doc(childDb(), path)));
   });
 });
