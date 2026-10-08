@@ -4,7 +4,7 @@
 #   e2e/scripts/run-flows.sh [flow-dir-or-file ...]    (default: every flow listed in e2e/flows/config.yaml)
 #
 # Output (OUT_DIR, default e2e/results): junit.xml, <flow>.mp4, and Maestro's screenshots/logs under maestro/.
-# Needs: adb and maestro on PATH, the debug APKs already installed (see e2e/README.md).
+# Needs: adb and maestro on PATH, the debug APKs already installed (see e2e/flows/README.md).
 set -uo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

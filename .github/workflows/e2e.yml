@@ -100,13 +100,17 @@ jobs:
       - name: Open, update or close the tracking issue
         run: |
           set -euo pipefail
-          number="$(gh issue list --state open --search "\"$TITLE\" in:title" --json number,title \
-            --jq "[.[] | select(.title == env.TITLE)][0].number // empty")"
+          # All states: a closed tracking issue is reopened instead of starting a duplicate.
+          line="$(gh issue list --state all --limit 100 --json number,title,state \
+            --jq '[.[] | select(.title == env.TITLE)][0] | select(. != null) | "\(.number) \(.state)"')"
+          number="${line%% *}"
+          state="${line##* }"
           if [ "$RESULT" = "success" ]; then
-            if [ -n "$number" ]; then
+            if [ -n "$number" ] && [ "$state" = "OPEN" ]; then
               gh issue close "$number" --comment "Green again on $SHA: $RUN_URL"
             fi
           elif [ -n "$number" ]; then
+            if [ "$state" = "CLOSED" ]; then gh issue reopen "$number"; fi
             gh issue comment "$number" --body "Still failing on $SHA: $RUN_URL"
           else
             gh issue create --title "$TITLE" \
