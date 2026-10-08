@@ -10,7 +10,7 @@
   <main>
     <nav><a href="index.html">Home</a><a href="delete-account.html">Delete account</a></nav>
     <h1>Privacy policy</h1>
-    <p class="draft">Draft. This policy is finalised before the first public release (story M10-01).</p>
+    <p class="muted">Last updated: 8 October 2026.</p>
 
     <h2>Who we are</h2>
     <p>Stay Focused and Stay Focused Kids are free, open-source (GPL-3.0) Android apps. The source code is at
@@ -18,27 +18,69 @@
 
     <h2>Without an account</h2>
     <p>You can use the app without signing in. Your blocked apps, schedules, limits and usage statistics stay on your
-      device. We do not receive them.</p>
+      device. We do not receive them. The only exception is the optional AI feature described below.</p>
 
-    <h2>What we store if you sign in</h2>
+    <h2>What we collect if you sign in or link a phone</h2>
     <ul>
-      <li>Your sign-in details: email address, display name and a unique account ID (Firebase Authentication).</li>
-      <li>The devices you link, their names, status and last-seen time, the apps you choose to block or limit, and
-        the requests and alerts exchanged between a parent and a child device (Cloud Firestore).</li>
-      <li>A push-notification token for each linked device (Firebase Cloud Messaging).</li>
+      <li><strong>Account:</strong> your email address, display name and a unique account ID (Firebase
+        Authentication). If you use Google sign-in, Google gives us your email and name; we do not receive your
+        Google password.</li>
+      <li><strong>Child phone status:</strong> the phone's name and model, whether it is online, when it was last
+        seen, its battery level and whether it is charging, and the app that is currently in the foreground (Cloud
+        Firestore).</li>
+      <li><strong>Child phone app activity:</strong> the list of launchable apps installed on the child phone (package
+        name and label), and daily usage per app (minutes and number of opens), so a parent can see screen time and
+        choose apps to block (Cloud Firestore).</li>
+      <li><strong>Rules and messages:</strong> the blocks, limits and schedules a parent sets, commands sent to the
+        child phone, and the requests (for example "more time") and alerts (for example a revoked permission)
+        exchanged between the two phones (Cloud Firestore).</li>
+      <li><strong>Notification token:</strong> a push token for each parent phone, used to deliver notifications
+        (Firebase Cloud Messaging).</li>
+      <li><strong>Link codes:</strong> a short-lived code and the child phone's model, used once to link the phones.
+        They expire after five minutes.</li>
+      <li><strong>Firebase SDK data:</strong> the Firebase services above process technical data needed to operate
+        and secure them, such as app instance and installation identifiers, IP address, and device and app
+        attestation signals (Firebase App Check with Play Integrity). We do not use Firebase Analytics or Crashlytics
+        and do not collect advertising IDs.</li>
     </ul>
+
+    <h2>AI block builder</h2>
+    <p>If you use the option to describe a block in a sentence, such as "block Instagram after 9 pm", that sentence is
+      sent to Google's Gemini model through Firebase AI Logic, and the reply is used to fill in the block form. Do not
+      put personal details in the sentence. If the AI is unavailable, the app interprets the sentence on your device
+      instead. We do not store the sentence on our servers; Google processes it under its Firebase and Gemini API
+      terms.</p>
 
     <h2>Permissions</h2>
     <p>The app uses Usage Access and an Accessibility service only to detect which app is in the foreground so it can
-      block it. That information is processed on your device and is not sent to us or sold.</p>
+      block it and measure screen time. On a phone without an account this stays on the device. On a child phone that
+      a parent has linked, the current app and daily usage are sent to the linked parent as described above. We do not
+      read the content of any app, keystrokes, messages or the screen.</p>
 
-    <h2>How it is used and shared</h2>
-    <p>Data is used only to run the features above. We do not sell it and we do not show ads. It is processed by
-      Google Firebase on our behalf.</p>
+    <h2>Why we use it</h2>
+    <p>Only to run the features above: signing you in, linking a parent and a child phone, showing screen time,
+      enforcing blocks and delivering requests and alerts. No profiling and no ads.</p>
+
+    <h2>Where it is stored and who processes it</h2>
+    <p>Account and device data is stored in Google Cloud Firestore and Firebase Authentication, and is encrypted in
+      transit (HTTPS/TLS) and at rest by Google. Access rules limit each account's data to its owner and the phones
+      linked to it. Google Firebase processes it on our behalf. We do not sell it, do not share it with anyone else and
+      do not show ads.</p>
+
+    <h2>How long we keep it</h2>
+    <p>Account and device data is kept until you delete it: unlinking a phone deletes that phone's data, and deleting
+      your account deletes everything stored with it. Link codes are removed after they expire or are used. Firebase
+      may keep short-lived technical logs and backups for a limited period before they are overwritten.</p>
 
     <h2>Deleting your data</h2>
     <p>You can delete your account and all data stored with it in the app (Profile, Delete account and all data) or on
-      the <a href="delete-account.html">account deletion page</a>.</p>
+      the <a href="delete-account.html">account deletion page</a>. You can also unlink a single phone from the app.
+      Data kept only on your phone is removed by uninstalling the app.</p>
+
+    <h2>Children</h2>
+    <p>Stay Focused Kids is installed by a parent or guardian on their child's phone and is controlled by that parent.
+      Children do not create accounts or enter personal details. The data collected from the child phone is available
+      only to the linked parent account and is deleted when the parent unlinks the phone or deletes the account.</p>
 
     <h2>Contact</h2>
     <p>Open an issue at
