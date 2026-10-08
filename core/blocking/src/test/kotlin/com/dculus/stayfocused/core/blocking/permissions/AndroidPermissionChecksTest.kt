@@ -55,7 +55,7 @@ class AndroidPermissionChecksTest {
                     .create()
                     .start()
                     .resume()
-            assertEquals(1, count)
+            assertEquals(2, count) // initial signal on subscription + the resume
             controller.pause().stop().destroy()
             job.cancel()
         }

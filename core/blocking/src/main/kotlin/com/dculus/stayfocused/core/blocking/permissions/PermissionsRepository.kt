@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onStart
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,7 +46,10 @@ interface PermissionChecks {
     fun installerPackage(): String?
 }
 
-/** Fires each time an activity of the app resumes (the user came back, e.g. from a settings screen). */
+/**
+ * Emits once as soon as it is listening (so the first read can never miss a resume that races with start-up),
+ * then each time an activity of the app resumes (the user came back, e.g. from a settings screen).
+ */
 fun interface ResumeSignal {
     fun resumes(): Flow<Unit>
 }
@@ -67,7 +69,6 @@ class DefaultPermissionsRepository
         override fun observe(): Flow<Permissions> =
             resume
                 .resumes()
-                .onStart { emit(Unit) }
                 .map { checks.read() }
                 .distinctUntilChanged()
 
@@ -151,6 +152,8 @@ class ActivityResumeSignal
                         override fun onActivityDestroyed(activity: Activity) = Unit
                     }
                 app.registerActivityLifecycleCallbacks(callbacks)
+                // Registered first, so a resume after this point is queued behind this initial signal.
+                trySend(Unit)
                 awaitClose { app.unregisterActivityLifecycleCallbacks(callbacks) }
             }
     }

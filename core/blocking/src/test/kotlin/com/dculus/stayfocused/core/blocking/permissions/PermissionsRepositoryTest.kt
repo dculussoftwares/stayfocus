@@ -5,6 +5,7 @@ import android.provider.Settings
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.model.Permissions
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,7 +28,8 @@ private class FakeChecks(
 private class FakeResume : ResumeSignal {
     val signal = MutableSharedFlow<Unit>(extraBufferCapacity = 8)
 
-    override fun resumes() = signal
+    // Same contract as the Android implementation: one signal on subscription, then one per resume.
+    override fun resumes() = signal.onSubscription { emit(Unit) }
 }
 
 @RunWith(RobolectricTestRunner::class)
@@ -66,13 +68,17 @@ class PermissionsRepositoryTest {
         assertFalse(all.copy(overlay = false, batteryUnrestricted = true).allGatingGranted)
     }
 
-    @Test fun guidanceOnlyForSideloadedAndroid13PlusWithoutAccessibility() {
-        checks.installer = null
+    @Test fun guidanceOnlyForHandInstalledAndroid13PlusWithoutAccessibility() {
+        checks.installer = "com.google.android.packageinstaller"
         assertTrue(repo(33).needsRestrictedSettingsGuidance())
         assertFalse(repo(32).needsRestrictedSettingsGuidance())
         checks.installer = "com.android.vending"
         assertFalse(repo(34).needsRestrictedSettingsGuidance())
-        checks.installer = null
+        checks.installer = "com.sec.android.app.samsungapps"
+        assertFalse(repo(34).needsRestrictedSettingsGuidance())
+        checks.installer = null // adb install: not restricted
+        assertFalse(repo(34).needsRestrictedSettingsGuidance())
+        checks.installer = "com.google.android.packageinstaller"
         checks.state = checks.state.copy(accessibility = true)
         assertFalse(repo(34).needsRestrictedSettingsGuidance())
     }
