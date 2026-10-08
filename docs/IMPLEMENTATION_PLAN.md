@@ -207,7 +207,7 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 |---|---|---|
 | `users/{uid}` | read; create (`displayName`, `email`, `createdAt` = server time); update `displayName`/`email`; no delete | none |
 | `fcmTokens/{token}` | read, write, delete own | none |
-| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead) |
+| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead); the status fields must stay present, so `approveLink` creates the doc with all of them (null allowed) |
 | `blocks` | read, create, update, delete (whitelisted keys, enums and the fields each block type needs; device must exist) | read |
 | `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload fixed per type with bounded values) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
 | `requests` | read; decide a pending one (`status` approved/denied, `decidedAt`) | read; create (`app` <= 255, `minutes` 1..480, `pending`) |

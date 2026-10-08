@@ -5,7 +5,7 @@ import {
   assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import { Timestamp, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, deleteField, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const PARENT = 'parent1';
 const OTHER_PARENT = 'parent2';
@@ -176,6 +176,10 @@ describe('device docs', () => {
     await assertSucceeds(updateDoc(doc(childDb(), D), { focusEndsAt: null }));
     await assertFails(updateDoc(doc(childDb(), D), { focusEndsAt: inMinutes(60 * 24) }));
   });
+  it('child cannot delete a status field', async () => {
+    await seedDevice();
+    await assertFails(updateDoc(doc(childDb(), D), { online: deleteField() }));
+  });
   it('child cannot post a lastSeen other than the server time', async () => {
     await seedDevice();
     await assertFails(updateDoc(doc(childDb(), D), { lastSeen: inMinutes(600) }));
@@ -247,6 +251,7 @@ describe('blocks', () => {
     await assertFails(w(block({ type: 'CYCLE', limitMins: null })));
     await assertFails(w(block({ type: 'NOW', limitMins: null })));
     await assertFails(w(block({ type: 'NOW', limitMins: null, durationMins: 60 })));
+    await assertFails(w(block({ type: 'NOW', limitMins: null, durationMins: 481, startedAt: Timestamp.now() })));
     await assertFails(w(block({ type: 'SCHEDULE', limitMins: null, range: {} })));
     await assertFails(w(block({ type: 'SCHEDULE', limitMins: null, range: { start: '25:00', end: '07:00' } })));
     await assertFails(w(block({ type: 'SCHEDULE', limitMins: null, range: { start: '08:00', end: '08:00' } })));
@@ -411,6 +416,9 @@ describe('usage and apps', () => {
   it('rejects a bad date id, oversized total, too many apps and extra fields', async () => {
     await seedDevice();
     await assertFails(setDoc(doc(childDb(), `${D}/usage/today`), { totalMins: 1, apps: [] }));
+    await assertFails(setDoc(doc(childDb(), `${D}/usage/2026-02-31`), { totalMins: 1, apps: [] }));
+    await assertFails(setDoc(doc(childDb(), `${D}/usage/2026-13-01`), { totalMins: 1, apps: [] }));
+    await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2028-02-29`), { totalMins: 1, apps: [] }));
     await assertFails(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 1441, apps: [] }));
     await assertFails(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 1, apps: Array.from({ length: 301 }, () => ({})) }));
     await assertFails(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 1, apps: [], x: 1 }));

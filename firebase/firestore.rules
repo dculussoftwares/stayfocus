@@ -88,7 +88,7 @@ service cloud.firestore {
         && (b.type != 'LIMIT' || (b.get('limitMins', null) != null && b.get('period', null) != null))
         && (b.type != 'CYCLE' || (b.get('useMins', null) != null && b.get('restMins', null) != null))
         && (b.type != 'SCHEDULE' || rangeIsValid(b.get('range', null)))
-        && (b.type != 'NOW' || (b.get('durationMins', null) != null && b.get('startedAt', null) is timestamp));
+        && (b.type != 'NOW' || (isIntIn(b.get('durationMins', 0), 1, 480) && b.get('startedAt', null) is timestamp));
     }
 
     // A schedule range is {start, end} as HH:mm strings (the end may be earlier than the start: crosses midnight).
@@ -163,6 +163,8 @@ service cloud.firestore {
         // The child reports its own status (and mirrors its focus end time); nothing else on the device doc is client-writable.
         allow update: if isChildOf(resource.data)
           && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt'])
+          // The status fields are always present (approveLink creates them); the child may not delete them.
+          && request.resource.data.keys().hasAll(['battery', 'charging', 'currentApp', 'online', 'lastSeen'])
           && (!('battery' in request.resource.data) || request.resource.data.battery == null
               || isIntIn(request.resource.data.battery, 0, 100))
           && (!('charging' in request.resource.data) || request.resource.data.charging is bool)
@@ -238,7 +240,7 @@ service cloud.firestore {
         match /usage/{date} {
           allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
           allow create, update: if isChildOfDevice(uid, deviceId)
-            && date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+            && date.matches('^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-9]))$')
             && request.resource.data.keys().hasOnly(['totalMins', 'apps'])
             && request.resource.data.keys().hasAll(['totalMins', 'apps'])
             && isIntIn(request.resource.data.totalMins, 0, 1440)
