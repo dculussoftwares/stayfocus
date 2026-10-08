@@ -1,6 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome_title">Welcome</string>
+    <string name="welcome_brand">● STAY FOCUSED</string>
+    <string name="welcome_headline_1">Take back</string>
+    <string name="welcome_headline_2">your time.</string>
+    <string name="welcome_body">Block what distracts you. Set limits that hold. Look after your child\'s phone from yours.</string>
+    <string name="welcome_get_started">Get started</string>
+    <string name="welcome_child_phone">This is my child\'s phone</string>
+    <string name="welcome_footer">FREE · OPEN SOURCE · NO ADS</string>
+    <!-- PROVISIONAL: the child-phone sheet copy is not in the design handoff. -->
+    <string name="welcome_sheet_title">Your child needs Stay Focused Kids</string>
+    <string name="welcome_sheet_body">Your child\'s phone runs a separate app, Stay Focused Kids. Install it on their phone, then link it from your own phone with this app.</string>
+    <string name="welcome_sheet_open_play">Open Stay Focused Kids on Google Play</string>
     <string name="sign_in_title">Sign in</string>
     <string name="permissions_title">Permissions</string>
     <!-- Placeholder navigation; removed when the real onboarding screens land. -->
