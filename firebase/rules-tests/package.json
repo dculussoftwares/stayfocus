@@ -1,0 +1,14 @@
+{
+  "name": "stayfocus-rules-tests",
+  "private": true,
+  "type": "module",
+  "description": "Firestore security rules tests (run against the Firestore emulator)",
+  "scripts": {
+    "test": "firebase emulators:exec --config ../firebase.json --only firestore --project demo-stayfocus \"node --test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.0",
+    "firebase": "12.3.0",
+    "firebase-tools": "14.19.1"
+  }
+}
