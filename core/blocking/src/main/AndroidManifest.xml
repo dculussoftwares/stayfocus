@@ -9,6 +9,10 @@
         </intent>
     </queries>
 
+    <!-- Permission setup (M5-03): the notification runtime request and the "Display over other apps" screen. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <application>
         <!--
           Own task so it never ends up inside the blocked app's task or in recents. singleTask keeps one instance:
