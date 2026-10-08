@@ -483,4 +483,33 @@ class BlockingEngineTest {
             assertEquals(1, r.presenter.shown.size, "rest of the old window must be gone")
             r.engine.stop()
         }
+
+    @Test fun failedCycleSaveIsRetriedWhenStopping() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 10, restMins = 5))
+            r.cycles.failSaves = true
+            r.engine.start()
+            r.open(APP)
+            r.pass(30_000)
+            assertTrue(r.cycles.states.isEmpty())
+            r.cycles.failSaves = false
+            r.pass(5_000)
+            r.engine.stop()
+            r.pass(1_000)
+            assertEquals(35_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
+        }
+
+    @Test fun stopBooksUpToTheStopInstant() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 10, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(10_000)
+            r.engine.stop()
+            // The shutdown job only runs once time moves on; the extra minute must not be charged.
+            r.pass(60_000)
+            assertEquals(10_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
+        }
 }

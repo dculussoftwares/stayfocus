@@ -24,7 +24,6 @@ import com.dculus.stayfocused.core.model.TemporaryAllowance
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
@@ -108,6 +107,9 @@ class BlockingEngine
         private var bookingInputs: EngineInputs? = null
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
 
+        /** Cycle states whose last save failed; they are saved again at the next opportunity, even if unchanged. */
+        private val unsaved = ConcurrentHashMap.newKeySet<CycleKey>()
+
         @Volatile private var latestInputs: EngineInputs? = null
 
         @Volatile private var cachedAllowlist: Set<String>? = null
@@ -128,35 +130,35 @@ class BlockingEngine
 
         /** Cancels everything the engine started. Safe to call repeatedly. */
         fun stop() {
+            val stoppedAt = clock.instant()
             synchronized(lock) {
                 val s = scope ?: return
                 scope = null
                 running = false
                 val old = s.coroutineContext[Job]
                 s.cancel()
+                // Started right here, under the lock, so a run that starts next always waits for a running job.
                 shutdown =
-                    shutdownScope.launch(start = CoroutineStart.LAZY) {
+                    shutdownScope.launch {
                         old?.join()
-                        finish()
+                        finish(stoppedAt)
                     }
             }
             presenter.dismissOverlay()
-            shutdown?.start()
         }
 
         /** Books the time since the last evaluation, then forgets everything about the run. */
-        private suspend fun finish() {
+        private suspend fun finish(stoppedAt: Instant) {
             try {
                 val s = session
                 val inputs = bookingInputs
                 if (s != null && s.counting && inputs != null) {
-                    val now = clock.instant()
-                    if (now >
-                        s.flushedAt
-                    ) {
-                        withContext(NonCancellable) { bookForeground(s.pkg, s.flushedAt, now, inputs, inputs) }
+                    // Up to the moment of stop(), not however long the old run took to wind down.
+                    if (stoppedAt > s.flushedAt) {
+                        withContext(NonCancellable) { bookForeground(s.pkg, s.flushedAt, stoppedAt, inputs, inputs) }
                     }
                 }
+                retryUnsavedCycles(stoppedAt)
             } catch (e: CancellationException) {
                 throw e
             } catch (
@@ -170,6 +172,21 @@ class BlockingEngine
                 latestInputs = null
                 cachedAllowlist = null
                 cycleCache.clear()
+                unsaved.clear()
+            }
+        }
+
+        private suspend fun retryUnsavedCycles(now: Instant) {
+            for (key in unsaved.toList()) {
+                val state = cycleCache[key] ?: continue
+                try {
+                    cycleStore.save(key, state, now)
+                    unsaved.remove(key)
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    Log.e(TAG, "Could not persist cycle state of ${key.blockId}", e)
+                }
             }
         }
 
@@ -355,6 +372,7 @@ class BlockingEngine
                 if (now > from) withContext(NonCancellable) { bookForeground(previous.pkg, from, now, during, inputs) }
             }
             pruneCycleCache(inputs)
+            unsaved.removeAll { key -> !cycleCache.containsKey(key) }
             return next
         }
 
@@ -382,7 +400,11 @@ class BlockingEngine
                         val before = cycleCache[key] ?: cycleStore.load(key) ?: CycleState()
                         val after = CycleStateMachine.advance(before, delta, to, block)
                         cycleCache[key] = after
-                        if (after != before) cycleStore.save(key, after, to)
+                        if (after != before || key in unsaved) {
+                            unsaved += key
+                            cycleStore.save(key, after, to)
+                            unsaved -= key
+                        }
                     } catch (
                         @Suppress("TooGenericExceptionCaught") e: Exception,
                     ) {
