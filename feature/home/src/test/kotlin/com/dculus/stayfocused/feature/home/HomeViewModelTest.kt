@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.feature.home
 
 import app.cash.turbine.test
+import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -95,6 +96,34 @@ class HomeViewModelTest {
                 vm.endBreak()
                 testScheduler.runCurrent()
                 assertEquals(BreakUi.Idle, awaitItem())
+            }
+        }
+
+    @Test fun startReportsSuccessOnlyOnceTheBreakIsStored() =
+        runTest {
+            val clock = VirtualClock(testScheduler)
+            val vm = HomeViewModel(FakeBreakRepository(clock), clock)
+            vm.events.test {
+                vm.startBreak(15)
+                assertEquals(HomeEvent.BreakStarted(15), awaitItem())
+            }
+        }
+
+    @Test fun failedWritesAreReportedInsteadOfCrashing() =
+        runTest {
+            val clock = VirtualClock(testScheduler)
+            val failing =
+                object : BreakRepository by FakeBreakRepository(clock) {
+                    override suspend fun start(mins: Int) = error("disk full")
+
+                    override suspend fun end() = error("disk full")
+                }
+            val vm = HomeViewModel(failing, clock)
+            vm.events.test {
+                vm.startBreak(15)
+                assertEquals(HomeEvent.BreakFailed, awaitItem())
+                vm.endBreak()
+                assertEquals(HomeEvent.BreakFailed, awaitItem())
             }
         }
 

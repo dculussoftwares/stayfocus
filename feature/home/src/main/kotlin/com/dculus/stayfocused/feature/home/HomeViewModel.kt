@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.BreakRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -12,11 +14,23 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.time.Clock
 import java.time.Duration
 import javax.inject.Inject
+
+/** One-off results of a Home action. */
+internal sealed interface HomeEvent {
+    data class BreakStarted(
+        val mins: Int,
+    ) : HomeEvent
+
+    /** Starting or ending the break could not be stored. */
+    data object BreakFailed : HomeEvent
+}
 
 @HiltViewModel
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,12 +72,38 @@ class HomeViewModel
                 }
             }
 
+        private val eventChannel = Channel<HomeEvent>(Channel.BUFFERED)
+
+        /** One-off results for the UI (toasts). */
+        internal val events: Flow<HomeEvent> = eventChannel.receiveAsFlow()
+
+        /** Starts a break and reports [HomeEvent.BreakStarted] only once it is stored. */
         fun startBreak(mins: Int) {
-            viewModelScope.launch { breaks.start(mins) }
+            viewModelScope.launch {
+                runStored(HomeEvent.BreakStarted(mins)) { breaks.start(mins) }
+            }
         }
 
         fun endBreak() {
-            viewModelScope.launch { breaks.end() }
+            viewModelScope.launch { runStored(null) { breaks.end() } }
+        }
+
+        private suspend fun runStored(
+            success: HomeEvent?,
+            write: suspend () -> Unit,
+        ) {
+            try {
+                write()
+                success?.let { eventChannel.send(it) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                // A failed storage write must not crash the app; tell the user instead.
+                Timber.w(e, "Break update failed")
+                eventChannel.send(HomeEvent.BreakFailed)
+            }
         }
 
         private companion object {

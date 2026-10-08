@@ -3,6 +3,7 @@ package com.dculus.stayfocused.feature.home
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -34,14 +35,26 @@ internal fun HomeRoute(
     val resources = LocalResources.current
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
+    LaunchedEffect(viewModel, toast, resources) {
+        viewModel.events.collect { event ->
+            toast.show(
+                when (event) {
+                    is HomeEvent.BreakStarted -> {
+                        resources.getString(R.string.break_toast_started, durationLabel(event.mins))
+                    }
+
+                    HomeEvent.BreakFailed -> {
+                        resources.getString(R.string.break_toast_failed)
+                    }
+                },
+            )
+        }
+    }
     Box(Modifier.fillMaxSize()) {
         HomeScreen(
             breakUi = breakUi,
             onOpenAccount = onOpenAccount,
-            onStartBreak = { mins ->
-                viewModel.startBreak(mins)
-                toast.show(resources.getString(R.string.break_toast_started, durationLabel(mins)))
-            },
+            onStartBreak = viewModel::startBreak,
             onEndBreak = viewModel::endBreak,
         )
         SfToastHost(toast, bottomPadding = 24.dp)

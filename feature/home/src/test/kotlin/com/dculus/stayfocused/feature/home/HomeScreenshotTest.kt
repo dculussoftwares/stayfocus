@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -16,6 +17,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -87,6 +89,17 @@ class HomeScreenshotTest {
         composeRule.onNodeWithTag(BREAK_START_TAG).performClick()
         composeRule.waitForIdle()
         assertEquals(listOf(60), started)
+    }
+
+    @Test fun startButtonStaysReachableOnAShortScreen() {
+        val started = mutableListOf<Int>()
+        show {
+            Box(Modifier.height(240.dp).width(360.dp)) {
+                BreakSheetContent(mins = 30, onMinsChange = {}, onStart = { started += 30 })
+            }
+        }
+        composeRule.onNodeWithTag(BREAK_START_TAG).performScrollTo().performClick()
+        assertEquals(listOf(30), started)
     }
 
     @Test fun endEarlyIsReported() {

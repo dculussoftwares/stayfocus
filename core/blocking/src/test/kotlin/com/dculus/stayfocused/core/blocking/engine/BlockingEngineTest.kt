@@ -375,6 +375,20 @@ class BlockingEngineTest {
             r.engine.stop()
         }
 
+    @Test fun breakEndIsStillAnnouncedAfterTheEngineIsRestartedMidBreak() =
+        runTest {
+            val r = rig(this)
+            r.engine.start()
+            r.breaks.start(5)
+            r.pass(60_000)
+            r.engine.stop()
+            r.pass(1_000)
+            r.engine.start()
+            r.pass(5 * 60_000L)
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
     @Test fun breakEndedEarlyOrAlreadyElapsedIsNotAnnounced() =
         runTest {
             val r = rig(this)

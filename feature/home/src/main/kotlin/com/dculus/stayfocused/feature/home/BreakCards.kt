@@ -15,7 +15,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -82,7 +84,8 @@ internal fun BreakIdleCard(
         Box(
             Modifier
                 .size(52.dp)
-                .background(colors.onAccent, RoundedCornerShape(18.dp)),
+                .background(colors.onAccent, RoundedCornerShape(18.dp))
+                .clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
             Text("→", color = colors.accent, fontSize = 22.sp)
@@ -180,7 +183,8 @@ internal fun BreakSheetContent(
 ) {
     val colors = StayFocusedTheme.colors
     Column(
-        modifier.fillMaxWidth().padding(bottom = 14.dp),
+        // Scrolls on short screens, landscape and large font sizes so the start button stays reachable.
+        modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {

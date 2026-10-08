@@ -114,6 +114,9 @@ class BlockingEngine
 
         @Volatile private var latestInputs: EngineInputs? = null
 
+        /** End of the break the engine is waiting to announce; survives a restart of the run, not of the engine. */
+        @Volatile private var watchedBreakEnd: Instant? = null
+
         @Volatile private var cachedAllowlist: Set<String>? = null
 
         fun start() {
@@ -172,6 +175,7 @@ class BlockingEngine
                 shown = null
                 bookingInputs = null
                 latestInputs = null
+                watchedBreakEnd = null
                 cachedAllowlist = null
                 cycleCache.clear()
                 unsaved.clear()
@@ -257,14 +261,27 @@ class BlockingEngine
 
         /**
          * Tells the user when a break runs out while the engine is watching. A break that is ended early or
-         * replaced is not announced, and neither is one that had already elapsed before the engine saw it.
+         * replaced is not announced, and neither is one that had already elapsed before the engine first saw it.
+         * A break the engine was already waiting for is still announced after a restart of the run, and the
+         * wall clock is re-read after every wait so a clock that moved backwards never ends the break early.
          */
         private suspend fun watchBreakEnd() {
             breaks.observe().collectLatest { session ->
-                if (session == null) return@collectLatest
-                val wait = Duration.between(clock.instant(), session.endsAt).toMillis()
-                if (wait <= 0L) return@collectLatest
-                delay(wait)
+                if (session == null) {
+                    watchedBreakEnd = null
+                    return@collectLatest
+                }
+                val end = session.endsAt
+                if (watchedBreakEnd != end) {
+                    if (!end.isAfter(clock.instant())) return@collectLatest
+                    watchedBreakEnd = end
+                }
+                while (true) {
+                    val wait = Duration.between(clock.instant(), end).toMillis()
+                    if (wait <= 0L) break
+                    delay(wait)
+                }
+                watchedBreakEnd = null
                 try {
                     breakEnd.breakEnded()
                 } catch (e: CancellationException) {
