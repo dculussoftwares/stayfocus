@@ -1,13 +1,19 @@
 package com.dculus.stayfocused.feature.onboarding
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
@@ -42,6 +48,19 @@ class WelcomeScreenTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithTag(WELCOME_OPEN_KIDS_TAG).assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/WelcomeChildSheet.png")
+    }
+
+    @Test
+    fun shortViewportStaysReachable() {
+        var started = 0
+        show {
+            Box(Modifier.size(width = 360.dp, height = 300.dp)) {
+                WelcomeScreen(onContinue = { started++ }, onOpenKidsListing = {})
+            }
+        }
+        composeRule.onNodeWithText("Take back", substring = true).performScrollTo().assertIsDisplayed()
+        composeRule.onNodeWithTag(WELCOME_GET_STARTED_TAG).performScrollTo().performClick()
+        assertEquals(1, started)
     }
 
     @Test

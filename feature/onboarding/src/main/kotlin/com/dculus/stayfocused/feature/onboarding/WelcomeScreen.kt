@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -79,30 +82,35 @@ internal fun WelcomeScreen(
     var sheetVisible by rememberSaveable { mutableStateOf(initialSheetVisible) }
     Box(modifier.fillMaxSize().background(colors.background)) {
         TickRing(Modifier.align(Alignment.TopEnd).offset(x = 230.dp, y = (-60).dp))
-        Column(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(horizontal = 26.dp)
-                .padding(bottom = 26.dp),
-            verticalArrangement = Arrangement.Bottom,
-        ) {
-            WelcomeCopy()
-            Column(Modifier.padding(top = 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                GetStartedButton(onContinue)
-                OutlineButton(
-                    text = stringResource(R.string.welcome_child_phone),
-                    onClick = { sheetVisible = true },
-                    modifier = Modifier.testTag(WELCOME_CHILD_PHONE_TAG),
+        // Bottom-aligned when it fits; scrolls on short screens or with large system fonts.
+        BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+            val minHeight = maxHeight
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = minHeight)
+                    .padding(horizontal = 26.dp)
+                    .padding(bottom = 26.dp),
+                verticalArrangement = Arrangement.Bottom,
+            ) {
+                WelcomeCopy()
+                Column(Modifier.padding(top = 28.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    GetStartedButton(onContinue)
+                    OutlineButton(
+                        text = stringResource(R.string.welcome_child_phone),
+                        onClick = { sheetVisible = true },
+                        modifier = Modifier.testTag(WELCOME_CHILD_PHONE_TAG),
+                    )
+                }
+                Text(
+                    text = stringResource(R.string.welcome_footer),
+                    style = StayFocusedTheme.type.labelS.copy(fontSize = 10.5.sp, letterSpacing = 0.06.sp),
+                    color = colors.tertiary,
+                    modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
+                    textAlign = TextAlign.Center,
                 )
             }
-            Text(
-                text = stringResource(R.string.welcome_footer),
-                style = StayFocusedTheme.type.labelS.copy(fontSize = 10.5.sp, letterSpacing = 0.06.sp),
-                color = colors.tertiary,
-                modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
-                textAlign = TextAlign.Center,
-            )
         }
     }
     // PROVISIONAL COPY: the child-phone sheet wording is not in the design handoff.
