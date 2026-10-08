@@ -36,16 +36,13 @@ abstract class StayFocusedDatabase : RoomDatabase() {
         const val NAME = "stayfocused.db"
 
         /**
-         * Adds `usage_day.firstAfterUnlock` and empties the usage cache, so every past day is re-aggregated
-         * from system events (the old rows have no first-after-unlock data).
+         * Adds `usage_day.firstAfterUnlock`. Existing cached days are kept (their per-app unlock counts read as 0
+         * until the day leaves the 7-day window); days cached from now on carry the real value.
          */
         val MIGRATION_1_2 =
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE usage_day ADD COLUMN firstAfterUnlock INTEGER NOT NULL DEFAULT 0")
-                    db.execSQL("DELETE FROM usage_day")
-                    db.execSQL("DELETE FROM usage_hour")
-                    db.execSQL("DELETE FROM usage_totals")
                 }
             }
     }

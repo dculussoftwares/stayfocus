@@ -31,16 +31,17 @@ class MigrationTest {
     }
 
     @Test
-    fun `v1 to v2 adds firstAfterUnlock and empties the usage cache`() {
+    fun `v1 to v2 adds firstAfterUnlock and keeps cached usage`() {
         helper.createDatabase(TEST_DB, 1).use { db ->
             db.execSQL("INSERT INTO usage_day (date, pkg, foregroundMs, opens) VALUES ('2026-10-01', 'a', 1, 1)")
         }
         helper.runMigrationsAndValidate(TEST_DB, 2, true, StayFocusedDatabase.MIGRATION_1_2).use { db ->
-            db.query("SELECT COUNT(*) FROM usage_day").use {
+            db.query("SELECT opens, firstAfterUnlock FROM usage_day").use {
+                assertEquals(1, it.count)
                 it.moveToFirst()
-                assertEquals(0, it.getInt(0))
+                assertEquals(1, it.getInt(0))
+                assertEquals(0, it.getInt(1))
             }
-            db.query("SELECT firstAfterUnlock FROM usage_day").use { assertEquals(0, it.count) }
         }
     }
 
