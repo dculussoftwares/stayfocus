@@ -211,6 +211,30 @@ jobs:
       - name: Assemble debug and release (app and kids) with Firebase config
         run: ./gradlew :app:assembleDebug :kids:assembleDebug :app:assembleRelease :kids:assembleRelease
 
+  # Firestore security rules tests (M7-03) against the Firestore emulator.
+  firestore-rules:
+    name: firestore-rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: firebase/rules-tests/package-lock.json
+      # The Firestore emulator needs a recent JDK.
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Install
+        working-directory: firebase/rules-tests
+        run: npm ci --no-audit --no-fund
+      - name: Rules tests
+        working-directory: firebase/rules-tests
+        run: npm test
+
   # Optional (not part of ci-pass): the same build with the REAL dev google-services.json, read from the Terraform
   # state (output google_services_json of infra/firebase). Runs on pushes to main and manual runs, never on forks.
   build-with-terraform-firebase-config:
@@ -383,6 +407,7 @@ jobs:
         screenshot-tests,
         build,
         build-with-firebase-config,
+        firestore-rules,
         instrumented-tests,
         e2e-smoke,
         pre-commit,

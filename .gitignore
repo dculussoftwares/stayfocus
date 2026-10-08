@@ -32,3 +32,9 @@ __pycache__/
 
 # Non-redistributable fonts (see docs/FONTS.md); fetched locally by scripts/dev/fetch-fonts.sh
 /core/ui/src/main/assets/fonts/
+
+# Node
+node_modules/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
