@@ -21,6 +21,8 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=500]
+        # The functions lockfile includes firebase-tools (emulator) and is generated.
+        exclude: ^firebase/functions/package-lock\.json$
       - id: mixed-line-ending
         args: [--fix=lf]
 

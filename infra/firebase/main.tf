@@ -1,5 +1,5 @@
 # Dev environment resources. Later stories add more milestone by milestone
-# (M7-01/02 rules and Functions, M9-03 AI Logic, ...).
+# (M7-01 rules, M7-02 Functions in functions.tf, M9-03 AI Logic, ...).
 
 locals {
   base_apis = [

@@ -48,6 +48,14 @@ variable "deploy_roles" {
     "roles/serviceusage.serviceUsageConsumer",
     # M7-01: Firestore database, indexes and TTL (firebase.admin already covers rules and App Check).
     "roles/datastore.owner",
+    # M7-02: Cloud Functions (functions, Cloud Run invoker bindings, source bucket, per-function service accounts).
+    # Granting roles to those service accounts needs projectIamAdmin, which is added separately with a condition
+    # (deploy_iam_grantable_roles).
+    "roles/cloudfunctions.admin",
+    "roles/run.admin",
+    "roles/storage.admin",
+    "roles/iam.serviceAccountAdmin",
+    "roles/iam.serviceAccountUser",
   ]
 }
 
@@ -59,5 +67,21 @@ variable "plan_roles" {
     "roles/identityplatform.viewer",
     "roles/serviceusage.serviceUsageConsumer",
     "roles/datastore.viewer",
+    # M7-02: refresh functions, Cloud Run services, the source bucket and project IAM bindings.
+    "roles/cloudfunctions.viewer",
+    "roles/run.viewer",
+    "roles/storage.objectViewer",
+    "roles/storage.legacyBucketReader",
+    "roles/iam.securityReviewer",
+  ]
+}
+
+variable "deploy_iam_grantable_roles" {
+  description = "The only roles the deploy service account may grant on the project (an IAM condition on projectIamAdmin). Later infra stories add the roles their function service accounts need."
+  type        = list(string)
+  default = [
+    "roles/logging.logWriter",
+    "roles/datastore.user",
+    "roles/cloudbuild.builds.builder",
   ]
 }
