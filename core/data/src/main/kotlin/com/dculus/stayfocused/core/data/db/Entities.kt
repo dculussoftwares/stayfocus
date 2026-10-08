@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Embedded
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -98,6 +99,8 @@ data class UsageDayEntity(
     val pkg: String,
     val foregroundMs: Long,
     val opens: Int,
+    /** Unlocks of the day whose first opened app was [pkg] (Insights, Unlocks tab). */
+    @ColumnInfo(defaultValue = "0") val firstAfterUnlock: Int = 0,
 )
 
 @Entity(tableName = "usage_hour", primaryKeys = ["date", "hour"])

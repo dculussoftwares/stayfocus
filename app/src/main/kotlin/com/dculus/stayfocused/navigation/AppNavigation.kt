@@ -54,6 +54,7 @@ fun StayFocusedNavigation(
     onFinishOnboarding: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     blockViewModel: (@Composable () -> BlockViewModel)? = null,
+    insightsContent: (@Composable () -> Unit)? = null,
 ) {
     val destination = navController.currentBackStackEntryAsState().value?.destination
     val tabItems = MainTab.entries.map { tab -> SfTabItem(tab.name, stringResource(tab.label), tab.icon) }
@@ -65,7 +66,9 @@ fun StayFocusedNavigation(
                 .statusBarsPadding()
                 .navigationBarsPadding(),
     ) {
-        Box(Modifier.weight(1f)) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel) }
+        Box(
+            Modifier.weight(1f),
+        ) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel, insightsContent) }
         if (destination.showsTabBar()) {
             SfTabBar(
                 items = tabItems,
@@ -83,6 +86,7 @@ private fun AppNavHost(
     startGraph: StartGraph,
     onFinishOnboarding: () -> Unit,
     blockViewModel: (@Composable () -> BlockViewModel)?,
+    insightsContent: (@Composable () -> Unit)?,
 ) {
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
@@ -113,7 +117,7 @@ private fun AppNavHost(
                 onLinkPhone = { navController.navigateToLinkAdd() },
                 onOpenDevice = { navController.navigateToRemoteDevice(it) },
             )
-            insightsScreen()
+            insightsScreen(insightsContent)
             accountScreen()
             linkAddScreen(onScan = { navController.navigateToLinkScan() })
             linkScanScreen(onScan = { navController.navigateToLinkConfirm(it) })

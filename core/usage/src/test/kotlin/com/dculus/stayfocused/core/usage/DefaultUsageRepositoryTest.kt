@@ -106,6 +106,7 @@ class DefaultUsageRepositoryTest {
             assertEquals(120, yesterday?.totalMins)
             assertEquals(listOf("a", "b"), yesterday?.apps?.map { it.pkg })
             assertEquals(8, yesterday?.totalOpens)
+            assertEquals(listOf(2, 0), yesterday?.apps?.map { it.firstAfterUnlock })
             assertEquals(10, yesterday?.unlocks)
             assertEquals(120 * 60_000L, yesterday?.hourlyMillis?.get(9))
             assertEquals(HOURS_PER_DAY, yesterday?.hourlyUnlocks?.size)

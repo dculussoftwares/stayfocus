@@ -16,7 +16,7 @@ interface UsageCache {
     /** Replaces whatever is cached for `stats.date`. */
     suspend fun store(stats: DayUsageStats)
 
-    /** The cached day, or null when it isn't cached. `firstAfterUnlock` isn't cached and reads as 0. */
+    /** The cached day, or null when it isn't cached.  */
     fun observeDay(date: LocalDate): Flow<DayUsageStats?>
 
     /** Totals of cached days in `[from, to]`, oldest first. */
@@ -49,7 +49,7 @@ internal class RoomUsageCache
                         opens = stats.totalOpens,
                         unlocks = stats.unlocks,
                     ),
-                days = stats.apps.map { UsageDayEntity(date, it.pkg, it.millis, it.opens) },
+                days = stats.apps.map { UsageDayEntity(date, it.pkg, it.millis, it.opens, it.firstAfterUnlock) },
                 hours =
                     List(HOURS_PER_DAY) { hour ->
                         UsageHourEntity(
@@ -80,7 +80,7 @@ internal class RoomUsageCache
                     totalMillis = row.totalMs,
                     apps =
                         days
-                            .map { AppUsageStat(it.pkg, it.foregroundMs, it.opens, firstAfterUnlock = 0) }
+                            .map { AppUsageStat(it.pkg, it.foregroundMs, it.opens, it.firstAfterUnlock) }
                             .sortedByDescending { it.millis },
                     hourlyMillis = hourlyMillis.toList(),
                     unlocks = row.unlocks,
