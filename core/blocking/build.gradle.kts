@@ -20,6 +20,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
 
+    testImplementation(project(":core:testing"))
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)
 }
