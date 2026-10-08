@@ -12,7 +12,7 @@
     <string name="break_sheet_title">Take a break</string>
     <string name="break_sheet_hint">DRAG THE DIAL</string>
     <!-- PROVISIONAL COPY: the handoff names four demo apps, but a break locks every app except calls, messages and settings. -->
-    <string name="break_sheet_note">Every app except calls, messages and settings stays locked until the timer ends.</string>
+    <string name="break_sheet_note">Apps stay locked until the timer ends. Your phone, messages and settings stay available.</string>
     <string name="break_sheet_start">Start %1$s break</string>
     <string name="break_toast_started">Break started · %1$s</string>
     <!-- PROVISIONAL COPY: not in the design handoff. -->
