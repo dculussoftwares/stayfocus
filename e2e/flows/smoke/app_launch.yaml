@@ -1,0 +1,8 @@
+# Smoke: Stay Focused starts and shows the first onboarding screen on a clean install.
+appId: com.dculus.stayfocused
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Get started"

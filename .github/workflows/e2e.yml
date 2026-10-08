@@ -1,0 +1,118 @@
+name: e2e
+
+# Full Maestro suite (every flow in e2e/flows/config.yaml) on an API 36 emulator, with videos and screenshots.
+# The smoke subset already gates every PR (`e2e-smoke` in ci.yml). A failure on main opens or updates one tracking issue.
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  JAVA_VERSION: "17"
+
+jobs:
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - uses: ./.github/actions/setup-maestro
+      - name: Assemble debug APKs (app and kids)
+        run: ./gradlew :app:assembleDebug :kids:assembleDebug --configuration-cache
+      - name: Full flow suite on an API 36 emulator
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.38.0
+        with:
+          api-level: 36
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb install -r kids/build/outputs/apk/debug/kids-debug.apk
+            e2e/scripts/run-flows.sh
+      - name: Upload screenshots, videos and the JUnit report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-results
+          path: e2e/results/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Add the report to the job summary
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### E2E results"
+            if [ -f e2e/results/junit.xml ]; then
+              echo '```xml'
+              cat e2e/results/junit.xml
+              echo '```'
+            else
+              echo "No report was produced."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # One tracking issue: opened on the first failure on main, commented on while it keeps failing, closed when green.
+  report:
+    name: report
+    needs: e2e
+    if: ${{ always() && github.ref == 'refs/heads/main' && needs.e2e.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TITLE: "E2E suite is failing on main"
+      RESULT: ${{ needs.e2e.result }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      SHA: ${{ github.sha }}
+    steps:
+      - name: Open, update or close the tracking issue
+        run: |
+          set -euo pipefail
+          # All states: a closed tracking issue is reopened instead of starting a duplicate.
+          line="$(gh issue list --state all --limit 100 --search "\"$TITLE\" in:title" --json number,title,state \
+            --jq '[.[] | select(.title == env.TITLE)][0] | select(. != null) | "\(.number) \(.state)"')"
+          number="${line%% *}"
+          state="${line##* }"
+          if [ "$RESULT" = "success" ]; then
+            if [ -n "$number" ] && [ "$state" = "OPEN" ]; then
+              gh issue close "$number" --comment "Green again on $SHA: $RUN_URL"
+            fi
+          elif [ -n "$number" ]; then
+            if [ "$state" = "CLOSED" ]; then gh issue reopen "$number"; fi
+            gh issue comment "$number" --body "Still failing on $SHA: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" \
+              --body "The full Maestro suite failed on \`main\` ($SHA). Videos, screenshots and the JUnit report are attached to the run: $RUN_URL"
+          fi

@@ -1,0 +1,8 @@
+# Smoke: the Kids app starts and shows its screen.
+appId: com.dculus.stayfocused.kids
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Stay Focused Kids"

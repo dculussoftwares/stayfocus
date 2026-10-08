@@ -1,6 +1,7 @@
 plugins {
     id("stayfocused.android.application.compose")
     id("stayfocused.android.hilt")
+    id("stayfocused.android.instrumented-test")
 }
 
 android {
