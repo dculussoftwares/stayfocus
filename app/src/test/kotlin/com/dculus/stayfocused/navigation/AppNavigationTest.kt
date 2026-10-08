@@ -190,7 +190,9 @@ class AppNavigationTest {
         launch(StartGraph.ONBOARDING)
         assertTrue(currentIs(Welcome::class))
         assertTrue(!tabBarVisible())
-        repeat(3) {
+        composeRule.onNodeWithText("Get started").performClick()
+        composeRule.waitForIdle()
+        repeat(2) {
             composeRule.onNodeWithText("Continue").performClick()
             composeRule.waitForIdle()
         }

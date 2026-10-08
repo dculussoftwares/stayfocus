@@ -1,10 +1,10 @@
-# M1-09: the app opens on onboarding (flag stub = false); Continue x3 reaches Home, then the tabs work.
+# M1-09: the app opens on onboarding (flag stub = false); Get started then Continue x2 reaches Home, then the tabs work.
 appId: com.dculus.stayfocused
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Welcome"
-- tapOn: "Continue"
+- assertVisible: "Get started"
+- tapOn: "Get started"
 - assertVisible: "Sign in"
 - tapOn: "Continue"
 - assertVisible: "Permissions"
