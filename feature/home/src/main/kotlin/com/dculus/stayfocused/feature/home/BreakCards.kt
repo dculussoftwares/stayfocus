@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -102,6 +103,9 @@ internal fun BreakActiveCard(
 ) {
     val colors = StayFocusedTheme.colors
     val ink = colors.onAccent
+
+    // Ink at 25% over the lime card, as an opaque colour so every renderer draws the same pixels.
+    val used = lerp(colors.accent, ink, 0.25f)
     val description = stringResource(R.string.break_countdown_description, state.countdown)
     Column(
         modifier
@@ -166,7 +170,7 @@ internal fun BreakActiveCard(
                     Modifier
                         .weight(1f)
                         .height(10.dp)
-                        .background(if (index < elapsed) ink.copy(alpha = 0.25f) else ink, RoundedCornerShape(2.dp)),
+                        .background(if (index < elapsed) used else ink, RoundedCornerShape(2.dp)),
                 )
             }
         }
