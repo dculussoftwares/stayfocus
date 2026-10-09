@@ -3,7 +3,8 @@ package com.dculus.stayfocused.feature.onboarding
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.sync.AuthFailure
-import com.dculus.stayfocused.core.sync.FakeAuthRepository
+import com.dculus.stayfocused.core.sync.AuthRepository
+import com.dculus.stayfocused.core.sync.AuthResult
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,7 +25,41 @@ import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SignInViewModelTest {
-    private val auth = FakeAuthRepository()
+    /** Test-only: records calls (including passwords) so the production fake never has to. */
+    private class RecordingAuth : AuthRepository {
+        val calls = mutableListOf<String>()
+        var failWith: AuthFailure? = null
+
+        private fun result(): AuthResult = failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success
+
+        override suspend fun signInWithEmail(
+            email: String,
+            password: String,
+        ): AuthResult {
+            calls += "signInWithEmail:$email:$password"
+            return result()
+        }
+
+        override suspend fun createAccount(
+            email: String,
+            password: String,
+        ): AuthResult {
+            calls += "createAccount:$email:$password"
+            return result()
+        }
+
+        override suspend fun signInWithGoogle(): AuthResult {
+            calls += "signInWithGoogle"
+            return result()
+        }
+
+        override suspend fun sendPasswordReset(email: String): AuthResult {
+            calls += "sendPasswordReset:$email"
+            return result()
+        }
+    }
+
+    private val auth = RecordingAuth()
     private val settings = FakeSettingsRepository()
 
     @Before fun setUp() = Dispatchers.setMain(StandardTestDispatcher())

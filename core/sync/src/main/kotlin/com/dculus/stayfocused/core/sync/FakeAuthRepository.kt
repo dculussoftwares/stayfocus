@@ -17,38 +17,21 @@ class FakeAuthRepository
     constructor() : AuthRepository {
         @Volatile var failWith: AuthFailure? = null
 
-        private val recorded = java.util.concurrent.CopyOnWriteArrayList<String>()
-
-        /** Every call so far, as `method` or `method:email:password`, for tests. */
-        val calls: List<String> get() = recorded.toList()
-
         private fun result(): AuthResult = failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success
 
         override suspend fun signInWithEmail(
             email: String,
             password: String,
-        ): AuthResult {
-            recorded += "signInWithEmail:$email:$password"
-            return result()
-        }
+        ): AuthResult = result()
 
         override suspend fun createAccount(
             email: String,
             password: String,
-        ): AuthResult {
-            recorded += "createAccount:$email:$password"
-            return result()
-        }
+        ): AuthResult = result()
 
-        override suspend fun signInWithGoogle(): AuthResult {
-            recorded += "signInWithGoogle"
-            return result()
-        }
+        override suspend fun signInWithGoogle(): AuthResult = result()
 
-        override suspend fun sendPasswordReset(email: String): AuthResult {
-            recorded += "sendPasswordReset:$email"
-            return result()
-        }
+        override suspend fun sendPasswordReset(email: String): AuthResult = result()
     }
 
 @Module
