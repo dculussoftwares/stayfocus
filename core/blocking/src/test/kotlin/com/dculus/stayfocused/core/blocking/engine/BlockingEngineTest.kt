@@ -116,6 +116,7 @@ class BlockingEngineTest {
     private class Rig(
         val scope: TestScope,
         context: Context,
+        val cycles: MemoryCycleStore = MemoryCycleStore(),
     ) {
         val clock = VirtualClock(scope)
         val tracker = ForegroundAppTracker(FakeEnv())
@@ -124,7 +125,6 @@ class BlockingEngineTest {
         val breaks = FakeBreakRepository(clock)
         val settings = FakeSettingsRepository()
         val presenter = RecordingPresenter()
-        val cycles = MemoryCycleStore()
         val events = mutableListOf<Triple<String, String?, String>>()
         var failEvents = false
         val usage = ForegroundTimingUsage()
@@ -190,11 +190,12 @@ class BlockingEngineTest {
     private fun rig(
         scope: TestScope,
         launcherPackage: String = LAUNCHER,
+        cycles: MemoryCycleStore = MemoryCycleStore(),
     ): Rig {
         val home = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
         val info = ResolveInfo().apply { activityInfo = ActivityInfo().apply { packageName = launcherPackage } }
         shadowOf(context.packageManager).addResolveInfoForIntent(home, info)
-        return Rig(scope, context)
+        return Rig(scope, context, cycles)
     }
 
     @Test fun nowBlockStartsAndEndsWhileAppStaysOpen() =
@@ -310,6 +311,80 @@ class BlockingEngineTest {
             val state = r.cycles.states.getValue(CycleKey("cycle", APP))
             assertEquals(r.clock.instant().plusSeconds(5 * 60), state.lockedUntil)
             r.engine.stop()
+        }
+
+    @Test fun cycleWindowsAreIndependentPerApp() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, apps = setOf(APP, OTHER), useMins = 1, restMins = 2))
+            r.engine.start()
+            r.open(APP)
+            r.pass(60_000)
+            assertEquals(
+                BlockReason.CYCLE_REST,
+                r.presenter.shown
+                    .single()
+                    .second.reason,
+            )
+            r.open(OTHER)
+            r.pass(30_000)
+            assertEquals(1, r.presenter.shown.size, "the other app has its own, untouched window")
+            assertEquals(30_000L, r.cycles.states[CycleKey("cycle", OTHER)]?.usedMs)
+            assertTrue(
+                r.cycles.states
+                    .getValue(CycleKey("cycle", APP))
+                    .lockedUntil != null,
+            )
+            r.engine.stop()
+        }
+
+    @Test fun leavingAndReturningContinuesTheSameWindow() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 2))
+            r.engine.start()
+            r.open(APP)
+            r.pass(20_000)
+            r.open(LAUNCHER)
+            r.pass(10 * 60_000L)
+            assertEquals(20_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs, "time away does not count")
+            r.open(APP)
+            r.pass(39_000)
+            assertTrue(r.presenter.shown.isEmpty())
+            r.pass(1_000)
+            assertEquals(1, r.presenter.shown.size)
+            r.engine.stop()
+        }
+
+    @Test fun restSurvivesProcessDeathAndEndsOnTime() =
+        runTest {
+            val store = MemoryCycleStore()
+            val first = rig(this, cycles = store)
+            first.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 2))
+            first.engine.start()
+            first.open(APP)
+            first.pass(60_000)
+            first.engine.stop()
+            first.pass(1_000)
+
+            // A new process: fresh engine and caches, same persisted state.
+            val second = rig(this, cycles = store)
+            second.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 2))
+            second.engine.start()
+            second.open(APP)
+            second.pass(1_000)
+            assertEquals(
+                BlockReason.CYCLE_REST,
+                second.presenter.shown
+                    .single()
+                    .second.reason,
+            )
+            second.pass(2 * 60_000L)
+            second.open(LAUNCHER)
+            second.open(APP)
+            second.pass(30_000)
+            assertEquals(30_000L, store.states[CycleKey("cycle", APP)]?.usedMs, "a fresh window starts after the rest")
+            second.engine.stop()
         }
 
     @Test fun dailyLimitUsesEngineMeasuredForegroundTime() =
