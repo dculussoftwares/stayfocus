@@ -77,12 +77,10 @@ class HomeScreenshotTest {
     }
 
     @Test fun idleCardOpensTheSheetAndStartingPassesTheDialValue() {
-        val started = mutableListOf<Int>()
-        show {
-            Box(Modifier.fillMaxSize()) {
-                HomeScreen(BreakUi.Idle, onOpenAccount = {}, onStartBreak = { started += it }, onEndBreak = {})
-            }
-        }
+        val taps = Taps()
+        val started = taps.started
+        show { Box(Modifier.fillMaxSize()) { HomeScreen(homeState(), BreakUi.Idle, taps.actions()) } }
+        composeRule.onNodeWithTag(BREAK_IDLE_CARD_TAG).performScrollTo()
         composeRule.onNodeWithTag(BREAK_IDLE_CARD_TAG).performClick()
         composeRule.onNodeWithText("Start 30 min break").assertExists()
         composeRule.onNodeWithText("1h").performClick()
@@ -104,17 +102,10 @@ class HomeScreenshotTest {
     }
 
     @Test fun endEarlyIsReported() {
-        var ended = 0
-        show {
-            HomeScreen(
-                BreakUi.Active(60_000, 120_000),
-                onOpenAccount = {},
-                onStartBreak = {},
-                onEndBreak = { ended++ },
-            )
-        }
+        val taps = Taps()
+        show { HomeScreen(homeState(), BreakUi.Active(60_000, 120_000), taps.actions()) }
         composeRule.onNodeWithTag(BREAK_COUNTDOWN_TAG).assertExists()
         composeRule.onNodeWithTag(BREAK_END_TAG).performClick()
-        assertEquals(1, ended)
+        assertEquals(listOf("endBreak"), taps.log)
     }
 }

@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.testing
 
+import com.dculus.stayfocused.core.data.repository.AccountProfileRepository
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
@@ -120,4 +121,12 @@ class FakeLinkedDevicesRepository(
     val devices = MutableStateFlow(initial)
 
     override fun observeAll(): Flow<List<LinkedDevice>> = devices
+}
+
+class FakeAccountProfileRepository(
+    initialFirstName: String? = null,
+) : AccountProfileRepository {
+    val firstName = MutableStateFlow(initialFirstName)
+
+    override fun observeFirstName(): Flow<String?> = firstName
 }

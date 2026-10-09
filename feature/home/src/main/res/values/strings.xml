@@ -1,8 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="home_title">Home</string>
-    <!-- Placeholder navigation; removed when the real Home screen lands. -->
-    <string name="home_placeholder_open_account">Open Account</string>
+
+    <!-- Header. PROVISIONAL COPY: the handoff only shows "Morning, <name>"; afternoon and evening follow the same pattern. -->
+    <string name="home_greeting_morning">Morning</string>
+    <string name="home_greeting_afternoon">Afternoon</string>
+    <string name="home_greeting_evening">Evening</string>
+    <string name="home_greeting_morning_named">Morning, %1$s</string>
+    <string name="home_greeting_afternoon_named">Afternoon, %1$s</string>
+    <string name="home_greeting_evening_named">Evening, %1$s</string>
+    <string name="home_avatar_description">Account</string>
+
+    <!-- Action row -->
+    <string name="home_new_block">New block</string>
+    <string name="home_ai_badge">AI</string>
+    <string name="home_ai_describe">Describe</string>
+    <string name="home_ai_describe_description">AI Describe</string>
+
+    <!-- Gauge card -->
+    <string name="home_screen_time">SCREEN TIME</string>
+    <string name="home_insights_link">INSIGHTS →</string>
+    <string name="home_gauge_min">0h</string>
+    <string name="home_gauge_max">4h</string>
+    <string name="home_gauge_over">▲ %1$s over your %2$s avg</string>
+    <string name="home_gauge_under">▼ %1$s under your %2$s avg</string>
+    <!-- PROVISIONAL COPY: not in the design handoff. -->
+    <string name="home_gauge_on_avg">On your %1$s avg</string>
+    <string name="home_gauge_no_avg">Average appears after a full day</string>
+    <string name="home_gauge_description">Screen time today %1$s. Opens Insights.</string>
+    <string name="home_stat_launches">LAUNCHES</string>
+    <string name="home_stat_unlocks">UNLOCKS</string>
+    <string name="home_stat_blocked">BLOCKED</string>
+
+    <!-- Usage access off. PROVISIONAL COPY: not in the design handoff. -->
+    <string name="home_usage_off_title">Usage access is off</string>
+    <string name="home_usage_off_body">Allow it to see your screen time and when limits are reached.</string>
+    <string name="home_usage_allow">Allow usage access</string>
+
+    <!-- Active blocks -->
+    <string name="home_blocks_title">ACTIVE BLOCKS · THIS PHONE</string>
+    <string name="home_blocks_manage">Manage</string>
+    <!-- PROVISIONAL COPY: not in the design handoff (same wording as the Block tab). -->
+    <string name="home_blocks_empty_title">No blocks yet</string>
+    <string name="home_blocks_empty_body">Tap New block to start one for this phone.</string>
+
+    <!-- Linked phones -->
+    <string name="home_devices_title">LINKED PHONES</string>
+    <string name="home_devices_all">All</string>
+    <string name="home_devices_link">+ Link a child\'s phone</string>
+    <!-- PROVISIONAL COPY: shown when a linked phone has no battery or current-app data. -->
+    <string name="home_device_online">ONLINE</string>
+    <string name="home_device_offline">OFFLINE</string>
+    <string name="home_device_status">%1$s · %2$s</string>
 
     <!-- Take a break -->
     <string name="break_card_title">Take a break</string>
@@ -17,5 +66,7 @@
     <string name="break_toast_started">Break started · %1$s</string>
     <!-- PROVISIONAL COPY: not in the design handoff. -->
     <string name="break_toast_failed">Couldn\'t save the break. Try again.</string>
+    <!-- PROVISIONAL COPY: not in the design handoff. -->
+    <string name="home_toast_block_failed">Couldn\'t update the block. Try again.</string>
     <string name="break_countdown_description">Break ends in %1$s</string>
 </resources>

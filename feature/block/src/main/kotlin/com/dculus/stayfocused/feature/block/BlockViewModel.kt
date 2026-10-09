@@ -9,9 +9,9 @@ import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
-import com.dculus.stayfocused.core.model.KnownApps
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
+import com.dculus.stayfocused.core.model.fallbackAppLabel
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
@@ -212,7 +212,7 @@ class BlockViewModel
                 tab = l.tab,
                 blocks =
                     blocksByTarget[selected].orEmpty().map { b ->
-                        BlockRowUi(b, b.apps.map { labels[it] ?: fallbackLabel(it) })
+                        BlockRowUi(b, b.apps.map { labels[it] ?: fallbackAppLabel(it) })
                     },
                 // A child phone has no app list until device linking (M8-03) syncs one.
                 apps =
@@ -245,13 +245,3 @@ class BlockViewModel
     }
 
 private fun BlockTarget.deviceId(): String? = (this as? BlockTarget.Device)?.deviceId
-
-/** Name of an app without a launcher label (not installed): the prototype name, else the package tail. */
-internal fun fallbackLabel(pkg: String): String {
-    val known =
-        KnownApps.packages.entries
-            .firstOrNull { it.value == pkg }
-            ?.key
-    val raw = known ?: pkg.substringAfterLast('.')
-    return raw.replaceFirstChar { it.uppercase() }
-}

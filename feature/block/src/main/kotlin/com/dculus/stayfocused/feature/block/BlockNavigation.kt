@@ -62,6 +62,11 @@ fun NavController.closeBlockWizard() {
 fun NavController.openBlockInAiMode() {
     if (!onWizard()) return
     if (!popBackStack<Block>(inclusive = false)) navigate(Block)
+    requestBlockAiMode()
+}
+
+/** Asks the Block tab entry on the back stack to open with the "Describe" panel (call after navigating to it). */
+fun NavController.requestBlockAiMode() {
     runCatching { getBackStackEntry<Block>() }.getOrNull()?.savedStateHandle?.set(OPEN_AI_KEY, true)
 }
 

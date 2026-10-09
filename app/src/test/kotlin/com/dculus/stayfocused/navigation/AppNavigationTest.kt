@@ -1,18 +1,22 @@
 package com.dculus.stayfocused.navigation
 
+import android.content.Intent
 import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
@@ -33,6 +37,7 @@ import com.dculus.stayfocused.core.navigation.RemoteDevice
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
+import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
@@ -45,6 +50,7 @@ import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
 import com.dculus.stayfocused.feature.block.BlockViewModel
@@ -75,6 +81,21 @@ class AppNavigationTest {
 
     private lateinit var navController: NavHostController
 
+    private val idleUsage =
+        object : UsageRepository {
+            override fun today() = flowOf(DayUsageStats.empty(LocalDate.of(2026, 10, 6)))
+
+            override fun requestRefresh() = Unit
+
+            override fun day(date: LocalDate) = emptyFlow<DayUsageStats?>()
+
+            override fun averages() = flowOf(UsageAverages.NONE)
+
+            override fun blockedToday() = flowOf(0)
+
+            override suspend fun backfill() = Unit
+        }
+
     private val blockViewModel =
         BlockViewModel(
             FakeBlockRepository(),
@@ -84,23 +105,27 @@ class AppNavigationTest {
             },
             FakeSettingsRepository(),
             FakeLockedAppsRepository(),
-            object : UsageRepository {
-                override fun today() = emptyFlow<DayUsageStats>()
-
-                override fun requestRefresh() = Unit
-
-                override fun day(date: LocalDate) = emptyFlow<DayUsageStats?>()
-
-                override fun averages() = emptyFlow<UsageAverages>()
-
-                override fun blockedToday() = emptyFlow<Int>()
-
-                override suspend fun backfill() = Unit
-            },
+            idleUsage,
         )
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
-    private val homeViewModel = HomeViewModel(FakeBreakRepository(), Clock.systemUTC())
+    private val homeViewModel =
+        HomeViewModel(
+            FakeBreakRepository(),
+            Clock.systemUTC(),
+            idleUsage,
+            object : UsageAccess {
+                override fun isGranted() = true
+
+                override fun settingsIntent() = Intent()
+            },
+            FakeBlockRepository(),
+            object : InstalledAppsRepository {
+                override fun observeLaunchableApps() = flowOf(emptyList<AppInfo>())
+            },
+            FakeLinkedDevicesRepository(),
+            FakeAccountProfileRepository(),
+        )
     private val wizardViewModel =
         WizardViewModel(
             SavedStateHandle(),
@@ -226,13 +251,41 @@ class AppNavigationTest {
     @Test
     fun accountOpensFromHomeWithNoTabSelected() {
         launch()
-        composeRule.onNodeWithText("Open Account").performClick()
+        composeRule.onNodeWithContentDescription("Account").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Account::class))
         MainTab.entries.forEach { tab(it).assertIsNotSelected() }
         tab(MainTab.BLOCK).performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Block::class))
+    }
+
+    @Test
+    fun homeActionsLeadToTheWizardInsightsAndDevices() {
+        launch()
+        composeRule.onNodeWithText("New block").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(BlockWizard::class), "New block opens the wizard")
+        pressBack()
+        assertTrue(currentIs(Home::class))
+        composeRule.onNodeWithTag("home_gauge_card").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(Insights::class), "the gauge opens Insights")
+        tab(MainTab.HOME).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_link_phone"))
+        composeRule.onNodeWithTag("home_link_phone").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(Devices::class), "the empty linked-phones state leads to Devices")
+    }
+
+    @Test
+    fun aiDescribeOpensTheBlockTab() {
+        launch()
+        composeRule.onNodeWithContentDescription("AI Describe").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(Block::class))
+        tab(MainTab.BLOCK).assertIsSelected()
     }
 
     @Test

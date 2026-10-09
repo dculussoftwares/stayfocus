@@ -3,6 +3,7 @@ package com.dculus.stayfocused.feature.block
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.BlockTarget
+import com.dculus.stayfocused.core.model.fallbackAppLabel
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeLockedAppsRepository
@@ -204,9 +205,9 @@ class BlockViewModelTest {
 
     @Test
     fun fallbackLabelsForUninstalledApps() {
-        assertEquals("Instagram", fallbackLabel(pkg("instagram")))
-        assertEquals("X", fallbackLabel(pkg("x")))
-        assertEquals("Foo", fallbackLabel("com.example.foo"))
+        assertEquals("Instagram", fallbackAppLabel(pkg("instagram")))
+        assertEquals("X", fallbackAppLabel(pkg("x")))
+        assertEquals("Foo", fallbackAppLabel("com.example.foo"))
     }
 
     @Test

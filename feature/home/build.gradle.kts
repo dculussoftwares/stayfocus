@@ -12,6 +12,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:usage"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.timber)
 

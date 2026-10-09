@@ -43,6 +43,7 @@ import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.components.SfToggle
 import com.dculus.stayfocused.core.ui.components.TypeChip
+import com.dculus.stayfocused.core.ui.components.blockDetail
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
@@ -363,7 +364,7 @@ private fun BlockRow(
         TypeChip(row.block.type, dimmed = !row.block.enabled)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(row.block.name, style = StayFocusedTheme.type.title, color = c.text)
-            Text(blockDetail(row), style = StayFocusedTheme.type.bodyS, color = c.secondary)
+            Text(blockDetail(row.block, row.appLabels), style = StayFocusedTheme.type.bodyS, color = c.secondary)
         }
         SfToggle(
             checked = row.block.enabled,

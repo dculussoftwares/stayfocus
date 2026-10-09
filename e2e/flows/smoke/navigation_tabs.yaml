@@ -1,4 +1,4 @@
-# M1-09: the app opens on onboarding (flag stub = false); Get started, Continue without an account, Continue reaches Home, then the tabs work.
+# M1-09 / M3-04: the app opens on onboarding (flag stub = false); Get started, Continue without an account, Continue reaches Home, then the tabs work.
 appId: com.dculus.stayfocused
 tags:
   - smoke
@@ -11,14 +11,14 @@ tags:
 - tapOn: "Continue without an account"
 - assertVisible: "Permissions"
 - tapOn: "Continue"
-- assertVisible: "Home"
+- assertVisible: "Take a break"
 - tapOn: "BLOCK"
 - assertVisible: "New block"
 - tapOn: "DEVICES"
 - tapOn: "INSIGHTS"
 - back
-- assertVisible: "Open Account"
-- tapOn: "Open Account"
+- assertVisible: "Take a break"
+- tapOn: "Account"
 - assertVisible: "Account"
 # The tab bar stays visible on Account.
 - assertVisible: "BLOCK"

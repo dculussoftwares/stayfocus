@@ -11,12 +11,12 @@ import com.dculus.stayfocused.core.navigation.Home
 fun NavController.navigateToHome(navOptions: NavOptions? = null) = navigate(Home, navOptions)
 
 /**
- * Home tab. [onOpenAccount] is the avatar tap. [viewModelProvider] supplies the ViewModel; null uses Hilt
+ * Home tab. [destinations] says where its buttons lead. [viewModelProvider] supplies the ViewModel; null uses Hilt
  * (lets navigation tests run without a Hilt application).
  */
 fun NavGraphBuilder.homeScreen(
-    onOpenAccount: () -> Unit,
+    destinations: HomeDestinations,
     viewModelProvider: (@Composable () -> HomeViewModel)? = null,
 ) {
-    composable<Home> { HomeRoute(onOpenAccount, viewModelProvider?.invoke() ?: hiltViewModel()) }
+    composable<Home> { HomeRoute(destinations, viewModelProvider?.invoke() ?: hiltViewModel()) }
 }

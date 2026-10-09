@@ -19,3 +19,13 @@ object KnownApps {
 
     val socialMedia: Set<String> = socialMediaIds.map { packages.getValue(it) }.toSet()
 }
+
+/** Name of an app without a launcher label (not installed): the prototype name, else the package tail. */
+fun fallbackAppLabel(pkg: String): String {
+    val known =
+        KnownApps.packages.entries
+            .firstOrNull { it.value == pkg }
+            ?.key
+    val raw = known ?: pkg.substringAfterLast('.')
+    return raw.replaceFirstChar { it.uppercase() }
+}
