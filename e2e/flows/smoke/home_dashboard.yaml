@@ -1,0 +1,14 @@
+# M3-04: Home shows the dashboard cards; "New block" opens the wizard.
+appId: com.dculus.stayfocused
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- tapOn: "Get started"
+- tapOn: "Continue without an account"
+- tapOn: "Continue"
+- assertVisible: "SCREEN TIME"
+- assertVisible: "Take a break"
+- tapOn: "New block"
+- assertVisible: "Limit time"

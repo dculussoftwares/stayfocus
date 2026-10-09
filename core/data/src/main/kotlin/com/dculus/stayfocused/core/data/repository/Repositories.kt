@@ -79,3 +79,8 @@ interface LinkedDevicesRepository {
     /** Child phones linked to this one, oldest link first. Empty until device linking ships (M7). */
     fun observeAll(): Flow<List<LinkedDevice>>
 }
+
+interface AccountProfileRepository {
+    /** First name of the signed-in account, or null without an account (or without a name). */
+    fun observeFirstName(): Flow<String?>
+}

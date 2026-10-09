@@ -50,12 +50,13 @@ private fun polar(
 
 /**
  * 240° screen-time gauge (-120° to +120°, 0° = up): track, value arc, 41 ticks (major every 10th; ticks up to
- * the value are lit), average marker and a centre readout [content] slot. 300 x 176 dp like the prototype.
+ * the value are lit), average marker (left out while [avgMins] is null, i.e. no history yet) and a centre
+ * readout [content] slot. 300 x 176 dp like the prototype.
  */
 @Composable
 fun ScreenTimeGauge(
     valueMins: Int,
-    avgMins: Int,
+    avgMins: Int?,
     modifier: Modifier = Modifier,
     maxMins: Int = 240,
     content: @Composable () -> Unit = {},
@@ -63,7 +64,7 @@ fun ScreenTimeGauge(
     val c = StayFocusedTheme.colors
     val max = maxMins.coerceAtLeast(1)
     val valueFrac = (valueMins.toFloat() / max).coerceIn(0f, 1f)
-    val avgFrac = (avgMins.toFloat() / max).coerceIn(0f, 1f)
+    val avgFrac = avgMins?.let { (it.toFloat() / max).coerceIn(0f, 1f) }
     Box(
         modifier =
             modifier
@@ -92,8 +93,16 @@ fun ScreenTimeGauge(
                     cap = StrokeCap.Round,
                 )
             }
-            val avgA = START_DEG + SWEEP_DEG * avgFrac
-            drawLine(c.text, polar(112f, avgA, s), polar(136f, avgA, s), strokeWidth = 3f * s, cap = StrokeCap.Round)
+            if (avgFrac != null) {
+                val avgA = START_DEG + SWEEP_DEG * avgFrac
+                drawLine(
+                    c.text,
+                    polar(112f, avgA, s),
+                    polar(136f, avgA, s),
+                    strokeWidth = 3f * s,
+                    cap = StrokeCap.Round,
+                )
+            }
         }
         Box(
             Modifier.fillMaxWidth().padding(start = 40.dp, end = 40.dp, top = 90.dp),

@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
@@ -37,6 +38,7 @@ import com.dculus.stayfocused.feature.block.closeBlockWizard
 import com.dculus.stayfocused.feature.block.finishBlockWizard
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
 import com.dculus.stayfocused.feature.block.openBlockInAiMode
+import com.dculus.stayfocused.feature.block.requestBlockAiMode
 import com.dculus.stayfocused.feature.devices.devicesScreen
 import com.dculus.stayfocused.feature.devices.linkAddScreen
 import com.dculus.stayfocused.feature.devices.linkConfirmScreen
@@ -46,6 +48,7 @@ import com.dculus.stayfocused.feature.devices.navigateToLinkConfirm
 import com.dculus.stayfocused.feature.devices.navigateToLinkScan
 import com.dculus.stayfocused.feature.devices.navigateToRemoteDevice
 import com.dculus.stayfocused.feature.devices.remoteDeviceScreen
+import com.dculus.stayfocused.feature.home.HomeDestinations
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import com.dculus.stayfocused.feature.home.homeScreen
 import com.dculus.stayfocused.feature.insights.insightsScreen
@@ -131,7 +134,28 @@ private fun AppNavHost(
             },
         )
         navigation<MainGraph>(startDestination = Home) {
-            homeScreen(onOpenAccount = { navController.navigateToAccount() }, viewModelProvider = homeViewModel)
+            homeScreen(
+                destinations =
+                    HomeDestinations(
+                        onOpenAccount = { navController.navigateToAccount() },
+                        onNewBlock = { navController.navigateToBlockWizard() },
+                        onAiDescribe = {
+                            navController.navigateToTab(MainTab.BLOCK)
+                            navController.requestBlockAiMode()
+                        },
+                        onOpenInsights = { navController.navigateToTab(MainTab.INSIGHTS) },
+                        onOpenBlock = { navController.navigateToTab(MainTab.BLOCK) },
+                        onOpenDevices = { navController.navigateToTab(MainTab.DEVICES) },
+                        onOpenDevice = {
+                            // Devices root underneath, so reselecting the Devices tab pops back to it.
+                            navController.navigateToTab(MainTab.DEVICES)
+                            // A restored Devices stack may still hold an earlier phone: start from its root.
+                            navController.popBackStack(Devices, inclusive = false)
+                            navController.navigateToRemoteDevice(it)
+                        },
+                    ),
+                viewModelProvider = homeViewModel,
+            )
             blockScreen(
                 onOpenWizard = { target, prefill -> navController.navigateToBlockWizard(target, prefill) },
                 viewModelProvider = blockViewModel,

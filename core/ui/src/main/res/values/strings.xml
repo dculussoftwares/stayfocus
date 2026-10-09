@@ -59,6 +59,18 @@
         <item>Find %1$s and choose Don\'t optimize or Unrestricted.</item>
         <item>If your phone has an autostart or background-activity setting, allow it for %1$s.</item>
     </string-array>
+    <!-- Block row detail line, e.g. "10m on, 30m off · Instagram, YouTube". -->
+    <string name="sf_block_detail_cycle">%1$s on, %2$s off · %3$s</string>
+    <string name="sf_block_detail_limit_daily">%1$s a day · %2$s</string>
+    <string name="sf_block_detail_limit_hourly">%1$s an hour · %2$s</string>
+    <string name="sf_block_detail_schedule">%1$s · %2$s · %3$s</string>
+    <string name="sf_block_detail_now">%1$s · %2$s</string>
+    <string name="sf_block_detail_apps_many">%1$d apps</string>
+    <string name="sf_block_detail_apps_none">No apps</string>
+    <string name="sf_block_days_every_day">Every day</string>
+    <string name="sf_block_days_weekdays">Mon–Fri</string>
+    <string name="sf_block_days_weekends">Sat–Sun</string>
+    <string name="sf_block_days_none">No days</string>
     <!-- Placeholder rows on screens that are not built yet (NavPlaceholderScreen); removed with it. -->
     <string name="sf_placeholder_item">Placeholder row %1$d</string>
 </resources>

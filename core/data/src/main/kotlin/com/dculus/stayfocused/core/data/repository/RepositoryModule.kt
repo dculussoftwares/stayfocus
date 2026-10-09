@@ -37,6 +37,9 @@ internal abstract class RepositoryModule {
     abstract fun linkedDevices(impl: EmptyLinkedDevicesRepository): LinkedDevicesRepository
 
     @Binds
+    abstract fun accountProfile(impl: NoAccountProfileRepository): AccountProfileRepository
+
+    @Binds
     abstract fun settings(impl: DataStoreSettingsRepository): SettingsRepository
 
     companion object {

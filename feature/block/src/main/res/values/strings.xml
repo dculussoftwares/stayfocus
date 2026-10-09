@@ -43,19 +43,6 @@
     <string name="block_template_code_schedule">HRS</string>
     <string name="block_template_code_limit">LIM</string>
 
-    <!-- Block row detail line, e.g. "10m on, 30m off · Instagram, YouTube". -->
-    <string name="block_detail_cycle">%1$s on, %2$s off · %3$s</string>
-    <string name="block_detail_limit_daily">%1$s a day · %2$s</string>
-    <string name="block_detail_limit_hourly">%1$s an hour · %2$s</string>
-    <string name="block_detail_schedule">%1$s · %2$s · %3$s</string>
-    <string name="block_detail_now">%1$s · %2$s</string>
-    <string name="block_detail_apps_many">%1$d apps</string>
-    <string name="block_detail_apps_none">No apps</string>
-    <string name="block_days_every_day">Every day</string>
-    <string name="block_days_weekdays">Mon–Fri</string>
-    <string name="block_days_weekends">Sat–Sun</string>
-    <string name="block_days_none">No days</string>
-
     <!-- Block wizard -->
     <string name="block_wizard_back">Back</string>
     <string name="block_wizard_step">0%1$d</string>
