@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.feature.block
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -37,6 +38,7 @@ import javax.inject.Inject
 /** First wizard step (type). */
 const val WIZARD_STEP_TYPE = 1
 
+private const val TAG = "WizardViewModel"
 private const val ARG_TARGET = "target"
 private const val ARG_PREFILL = "prefill"
 
@@ -248,6 +250,7 @@ class WizardViewModel
                         },
                 )
             val device = s.targets.firstOrNull { it.target == draft.target }?.device
+            val deviceId = (draft.target as? BlockTarget.Device)?.deviceId
             mutableState.update { it.copy(saving = true) }
             viewModelScope.launch {
                 try {
@@ -256,12 +259,13 @@ class WizardViewModel
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
                     if (e is CancellationException) throw e
+                    Log.e(TAG, "Saving the block failed", e)
                     mutableState.update { it.copy(saving = false) }
                     emit(WizardEvent.SaveFailed)
                     return@launch
                 }
                 eventChannel.send(
-                    WizardEvent.Saved((draft.target as? BlockTarget.Device)?.deviceId, info.name, device?.name),
+                    WizardEvent.Saved(deviceId, info.name, if (deviceId == null) null else device?.name ?: deviceId),
                 )
             }
         }
@@ -292,6 +296,10 @@ class WizardViewModel
         fun setRange(range: TimeRange) = updateDraft { copy(range = range) }
 
         fun toggleDay(day: DayOfWeek) = updateDraft { copy(days = DaysOfWeek(days.mask xor (1 shl (day.value - 1)))) }
+
+        /** Entry point for the AI flow (M9-05): shows [draft] on the rules step under the "AI DRAFT" banner. */
+        internal fun openAiDraft(draft: BlockDraft) =
+            mutableState.update { it.copy(draft = draft.copy(fromAi = true), step = WIZARD_STEP_RULES) }
 
         /** The AI draft banner's "Change": back to the type step as a manual block. */
         fun changeType() =

@@ -2,6 +2,7 @@ package com.dculus.stayfocused.feature.block
 
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
+import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
@@ -22,10 +23,15 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 import java.time.DayOfWeek
 import java.time.Instant
 
 /** Step 3 of the wizard: editing the rules, the summary, and saving the block. */
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 @OptIn(ExperimentalCoroutinesApi::class)
 class WizardRulesViewModelTest {
     @get:Rule
@@ -107,6 +113,8 @@ class WizardRulesViewModelTest {
     fun changeTypeLeavesAiMode() {
         val vm = viewModel(SavedStateHandle())
         vm.toRules(BlockType.LIMIT)
+        vm.openAiDraft(BlockDraft(aiNote = "Instagram for 30 minutes a day"))
+        assertEquals(true, vm.state.value.draft.fromAi)
         vm.changeType()
         assertEquals(WIZARD_STEP_TYPE, vm.state.value.step)
         assertEquals(false, vm.state.value.draft.fromAi)

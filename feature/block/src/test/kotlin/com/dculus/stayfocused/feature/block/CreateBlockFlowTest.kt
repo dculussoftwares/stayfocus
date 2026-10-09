@@ -15,6 +15,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
 import com.dculus.stayfocused.core.model.AppInfo
+import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
@@ -156,5 +157,33 @@ class CreateBlockFlowTest {
         composeRule.onNodeWithText("Continue with 2 apps").performClick()
         composeRule.onNodeWithTag(WIZARD_RANGE_CUSTOM_TAG).performClick()
         composeRule.onNodeWithTag(TIME_PICKER_TAG).assertExists()
+    }
+
+    @Test
+    fun aiDraftShowsTheBannerAndTheCheckTitle() {
+        val vm =
+            WizardViewModel(
+                SavedStateHandle(),
+                FakeTargetApps(defaultApps()),
+                FakeLinkedDevicesRepository(),
+                FakeSettingsRepository(),
+                blocks,
+                TestClock(),
+            )
+        vm.openAiDraft(BlockDraft(aiNote = "Instagram for 30 minutes a day."))
+        composeRule.setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                StayFocusedTheme {
+                    val state by vm.state.collectAsState()
+                    WizardScreen(state, WizardActions(onChangeType = vm::changeType))
+                }
+            }
+        }
+        composeRule.onNodeWithText("Check your block").assertExists()
+        composeRule.onNodeWithText("AI DRAFT").assertExists()
+        composeRule.onNodeWithText("Instagram for 30 minutes a day.").assertExists()
+        composeRule.onNodeWithText("Change").performClick()
+        composeRule.onNodeWithText("Rather just describe it?").assertDoesNotExist()
+        composeRule.onNodeWithTag(wizardTypeTag(BlockType.LIMIT)).assertExists()
     }
 }
