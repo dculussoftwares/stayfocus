@@ -71,7 +71,7 @@ For `needs-human` stories use `Refs #N` instead of `Closes #N` (see the end).
 
 ## 8. CodeRabbit review loop
 Repeat until the merge gate (step 9) is met; at most 5 rounds.
-**If your prompt says `Reviewer: qodo`**, skip CodeRabbit entirely (don't wait for it, never comment `@coderabbitai`): go
+**CodeRabbit is advisory (user decision): Qodo and Greptile are the gating reviewers, so always work as if your prompt said `Reviewer: qodo`, and comment `/agentic_review` after every push.** If your prompt says `Reviewer: qodo` (always, now), skip CodeRabbit entirely (don't wait for it, never comment `@coderabbitai`): go
 straight to the Qodo steps in the next paragraph for every round, and use the fallback gate in step 9.
 1. Wait for CI and for CodeRabbit to review the current HEAD: `gh pr checks <PR> --watch`; the `CodeRabbit` check reads
    "Review completed" when its review of HEAD is done. Reviews can take 5–15 min. If nothing starts within ~15 min,
