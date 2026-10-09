@@ -379,7 +379,16 @@ class BlockingEngineTest {
                     .single()
                     .second.reason,
             )
-            second.pass(2 * 60_000L)
+            val dismissedBefore = second.presenter.dismissals
+            second.pass(117_000) // lock ends at 180s; now 62s, so this stops 1s short
+            assertEquals(
+                dismissedBefore,
+                second.presenter.dismissals,
+                "the lock must hold until lockedUntil",
+            )
+            assertEquals(1, second.presenter.shown.size)
+            second.pass(1_000) // lockedUntil reached
+            assertTrue(second.presenter.dismissals > dismissedBefore, "the block screen goes away at lockedUntil")
             second.open(LAUNCHER)
             second.open(APP)
             second.pass(30_000)
