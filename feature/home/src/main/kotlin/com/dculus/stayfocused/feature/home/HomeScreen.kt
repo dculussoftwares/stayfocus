@@ -88,8 +88,11 @@ internal fun HomeScreen(
             mins = mins,
             onMinsChange = { mins = it },
             onStart = {
-                sheetVisible = false
-                onStartBreak(mins)
+                // A second tap while the sheet slides out must not start the break twice.
+                if (sheetVisible) {
+                    sheetVisible = false
+                    onStartBreak(mins)
+                }
             },
         )
     }

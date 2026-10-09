@@ -87,6 +87,7 @@ class HomeScreenshotTest {
         composeRule.onNodeWithText("Start 30 min break").assertExists()
         composeRule.onNodeWithText("1h").performClick()
         composeRule.onNodeWithTag(BREAK_START_TAG).performClick()
+        composeRule.onNodeWithTag(BREAK_START_TAG).performClick()
         composeRule.waitForIdle()
         assertEquals(listOf(60), started)
     }
