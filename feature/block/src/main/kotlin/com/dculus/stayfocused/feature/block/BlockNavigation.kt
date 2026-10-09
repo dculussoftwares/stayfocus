@@ -108,6 +108,7 @@ internal fun BlockRoute(
                 onSelectTab = viewModel::selectTab,
                 onSetEnabled = viewModel::setBlockEnabled,
                 onTemplate = viewModel::useTemplate,
+                onSetAppLocked = viewModel::setAppLocked,
             )
         }
     BlockScreen(state, actions)

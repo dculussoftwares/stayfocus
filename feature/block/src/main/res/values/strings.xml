@@ -21,6 +21,10 @@
     <string name="block_tab_blocks">Blocks</string>
     <string name="block_tab_all_apps">All apps</string>
 
+    <string name="block_app_line">%1$s · %2$d OPENS</string>
+    <string name="block_app_lock">LOCK</string>
+    <string name="block_app_locked">LOCKED</string>
+
     <string name="block_empty_title">No blocks yet</string>
     <string name="block_empty_body">Start from a template below, or tap New block.</string>
 

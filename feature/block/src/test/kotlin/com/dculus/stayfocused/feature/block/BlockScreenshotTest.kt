@@ -70,4 +70,18 @@ class BlockScreenshotTest {
             ),
         )
     }
+
+    @Test
+    fun allApps() =
+        shot(
+            "BlockAllApps",
+            BlockUiState(
+                tab = BlockTab.ALL_APPS,
+                apps =
+                    listOf(
+                        AppRowUi(pkg("instagram"), "Instagram", 83, 12, locked = true),
+                        AppRowUi(pkg("youtube"), "YouTube", 45, 6, locked = false),
+                    ),
+            ),
+        )
 }

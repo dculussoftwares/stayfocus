@@ -34,18 +34,23 @@ import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeLockedAppsRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
 import com.dculus.stayfocused.core.ui.components.SF_PLACEHOLDER_LIST_TAG
 import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
 import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.core.usage.UsageAverages
+import com.dculus.stayfocused.core.usage.UsageRepository
 import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
@@ -54,6 +59,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import java.time.Clock
+import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -74,6 +80,20 @@ class AppNavigationTest {
                 override fun observeLaunchableApps() = flowOf(emptyList<AppInfo>())
             },
             FakeSettingsRepository(),
+            FakeLockedAppsRepository(),
+            object : UsageRepository {
+                override fun today() = emptyFlow<DayUsageStats>()
+
+                override fun requestRefresh() = Unit
+
+                override fun day(date: LocalDate) = emptyFlow<DayUsageStats?>()
+
+                override fun averages() = emptyFlow<UsageAverages>()
+
+                override fun blockedToday() = emptyFlow<Int>()
+
+                override suspend fun backfill() = Unit
+            },
         )
 
     private val homeViewModel = HomeViewModel(FakeBreakRepository(), Clock.systemUTC())

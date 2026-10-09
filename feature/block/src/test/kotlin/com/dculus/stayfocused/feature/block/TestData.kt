@@ -9,7 +9,14 @@ import com.dculus.stayfocused.core.model.KnownApps
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.usage.DayUsageStats
+import com.dculus.stayfocused.core.usage.UsageAverages
+import com.dculus.stayfocused.core.usage.UsageRepository
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import java.time.Instant
+import java.time.LocalDate
 
 fun pkg(id: String): String = KnownApps.packages.getValue(id)
 
@@ -88,3 +95,21 @@ fun device(
     id: String = "d1",
     name: String = "Aarav's phone",
 ) = LinkedDevice(id, name, "Pixel 6a", 80, null, true, Epoch, emptyList(), emptyList(), null)
+
+class FakeUsageRepository(
+    initial: DayUsageStats = DayUsageStats.empty(LocalDate.of(2026, 1, 1)),
+) : UsageRepository {
+    val today = MutableStateFlow(initial)
+
+    override fun today(): Flow<DayUsageStats> = today
+
+    override fun requestRefresh() = Unit
+
+    override fun day(date: LocalDate): Flow<DayUsageStats?> = emptyFlow()
+
+    override fun averages(): Flow<UsageAverages> = emptyFlow()
+
+    override fun blockedToday(): Flow<Int> = emptyFlow()
+
+    override suspend fun backfill() = Unit
+}
