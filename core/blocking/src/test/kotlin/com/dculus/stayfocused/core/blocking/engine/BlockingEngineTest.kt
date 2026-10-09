@@ -106,7 +106,10 @@ private class VirtualClock(
 
     override fun withZone(zone: ZoneId): Clock = this
 
-    override fun instant(): Instant = START.plusMillis(scope.testScheduler.currentTime)
+    /** Simulates the user setting the wall clock forward without the scheduler's time moving. */
+    var jumpMs = 0L
+
+    override fun instant(): Instant = START.plusMillis(scope.testScheduler.currentTime + jumpMs)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -258,6 +261,25 @@ class BlockingEngineTest {
                     .single()
                     .second.reason,
             )
+            r.engine.stop()
+        }
+
+    @Test fun clockChangeReevaluatesScheduleImmediately() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(
+                block("sched", BlockType.SCHEDULE, range = TimeRange(LocalTime.of(10, 0), LocalTime.of(11, 0))),
+            )
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty())
+
+            // The wall clock is set past 10:00 while the timer for 10:00 is still pending.
+            r.clock.jumpMs = 5 * 60_000L
+            r.engine.onClockChanged()
+            r.scope.runCurrent()
+            assertEquals(1, r.presenter.shown.size)
             r.engine.stop()
         }
 

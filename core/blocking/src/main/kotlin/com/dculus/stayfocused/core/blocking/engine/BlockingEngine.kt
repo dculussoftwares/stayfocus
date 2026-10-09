@@ -30,9 +30,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Clock
@@ -118,6 +120,17 @@ class BlockingEngine
         @Volatile private var watchedBreakEnd: Instant? = null
 
         @Volatile private var cachedAllowlist: Set<String>? = null
+
+        /** Bumped when the wall clock or time zone changes, so pending timers are re-computed. */
+        private val clockChanges = MutableStateFlow(0)
+
+        /**
+         * The wall clock or the time zone was changed (`ACTION_TIME_CHANGED` / `ACTION_TIMEZONE_CHANGED`): every
+         * schedule boundary moved, so the decision is evaluated again right away instead of at the old wake-up.
+         */
+        fun onClockChanged() {
+            clockChanges.update { it + 1 }
+        }
 
         fun start() {
             synchronized(lock) {
@@ -251,7 +264,7 @@ class BlockingEngine
                 ) { b, l, br, f, a -> EngineInputs(b, l, br, f, a) }
             coroutineScope {
                 launch { watchBreakEnd() }
-                combine(tracker.foreground.map { it?.packageName }, inputs) { pkg, i -> pkg to i }
+                combine(tracker.foreground.map { it?.packageName }, inputs, clockChanges) { pkg, i, _ -> pkg to i }
                     .collectLatest { (pkg, i) ->
                         latestInputs = i
                         evaluateWhileInFront(pkg, i)
