@@ -1,6 +1,8 @@
 package com.dculus.stayfocused.core.blocking.engine
 
+import android.content.Intent
 import com.dculus.stayfocused.core.usage.PackageUsageSource
+import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageWindow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
@@ -26,7 +28,13 @@ class UsageStatsAppUsageProviderTest {
 
     private val timing = ForegroundTimingUsage()
     private val source = FakeSource()
-    private val provider = UsageStatsAppUsageProvider(source, timing, timing)
+    private val access =
+        object : UsageAccess {
+            override fun isGranted() = source.granted
+
+            override fun settingsIntent(): Intent = error("unused")
+        }
+    private val provider = UsageStatsAppUsageProvider(source, access, timing, timing)
 
     private fun at(time: String) = Instant.parse("2023-11-14T${time}Z")
 

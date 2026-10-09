@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.blocking.engine
 
 import com.dculus.stayfocused.core.blocking.evaluator.AppUsageSnapshot
 import com.dculus.stayfocused.core.usage.PackageUsageSource
+import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageWindow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -29,6 +30,7 @@ class UsageStatsAppUsageProvider
     @Inject
     internal constructor(
         private val source: PackageUsageSource,
+        private val access: UsageAccess,
         private val live: LiveForegroundSource,
         private val fallback: ForegroundTimingUsage,
     ) : AppUsageProvider {
@@ -77,6 +79,10 @@ class UsageStatsAppUsageProvider
             now: ZonedDateTime,
         ): Aggregate? =
             mutex.withLock {
+                if (!access.isGranted()) {
+                    cached = null
+                    return@withLock null
+                }
                 val at = now.toInstant()
                 val dayStart = now.toLocalDate().atStartOfDay(now.zone).toInstant()
                 val hourStart = now.truncatedTo(ChronoUnit.HOURS).toInstant()
