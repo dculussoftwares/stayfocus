@@ -122,6 +122,8 @@ class BlockingEngine
         // Only touched by the (single) collecting coroutine of a run.
         private var handledClockTick = 0
 
+        @Volatile private var announcedBreakEnd: Instant? = null
+
         @Volatile private var cachedAllowlist: Set<String>? = null
 
         /** Bumped when the wall clock or time zone changes, so pending timers are re-computed. */
@@ -193,6 +195,7 @@ class BlockingEngine
                 bookingInputs = null
                 latestInputs = null
                 watchedBreakEnd = null
+                announcedBreakEnd = null
                 cachedAllowlist = null
                 cycleCache.clear()
                 unsaved.clear()
@@ -283,6 +286,17 @@ class BlockingEngine
         }
 
         /**
+         * After a clock change, a checkpoint further back than the engine ever waits is a jump of the wall clock, not
+         * time spent in the app: count again from the new clock. A time-zone change keeps the instant, so its
+         * (short) interval is booked as usual.
+         */
+        private fun discardClockJump() {
+            val s = session ?: return
+            val now = clock.instant()
+            if (Duration.between(s.flushedAt, now).toMillis() !in 0..MAX_IDLE_MS * 2) s.flushedAt = now
+        }
+
+        /**
          * Tells the user when a break runs out while the engine is watching. A break that is ended early or
          * replaced is not announced, and neither is one that had already elapsed before the engine first saw it.
          * A break the engine was already waiting for is still announced after a restart of the run, and the
@@ -296,6 +310,7 @@ class BlockingEngine
                     return@collectLatest
                 }
                 val end = session.endsAt
+                if (end == announcedBreakEnd) return@collectLatest // a clock moved back must not repeat the alert
                 if (watchedBreakEnd != end) {
                     if (!end.isAfter(clock.instant())) return@collectLatest
                     watchedBreakEnd = end
@@ -306,6 +321,7 @@ class BlockingEngine
                     delay(wait)
                 }
                 watchedBreakEnd = null
+                announcedBreakEnd = end
                 try {
                     breakEnd.breakEnded()
                 } catch (e: CancellationException) {

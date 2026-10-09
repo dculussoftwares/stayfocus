@@ -313,6 +313,34 @@ class BlockingEngineTest {
             r.engine.stop()
         }
 
+    @Test fun timeZoneChangeKeepsBookedForegroundTime() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(30_000)
+            r.clock.currentZone = ZoneOffset.ofHours(2)
+            r.engine.onClockChanged()
+            r.pass(30_000)
+            assertEquals(1, r.presenter.shown.size, "30 s before and 30 s after the zone change both count")
+            r.engine.stop()
+        }
+
+    @Test fun clockRolledBackDoesNotRepeatBreakEnd() =
+        runTest {
+            val r = rig(this)
+            r.breaks.start(5)
+            r.engine.start()
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(1, r.breakEnds)
+            r.clock.jumpMs = -10 * 60_000L
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
     @Test fun timeZoneChangeReevaluatesScheduleImmediately() =
         runTest {
             val r = rig(this)
