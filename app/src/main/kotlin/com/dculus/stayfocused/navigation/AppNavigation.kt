@@ -33,6 +33,7 @@ import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.blockScreen
 import com.dculus.stayfocused.feature.block.blockWizardScreen
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
+import com.dculus.stayfocused.feature.block.openBlockInAiMode
 import com.dculus.stayfocused.feature.devices.devicesScreen
 import com.dculus.stayfocused.feature.devices.linkAddScreen
 import com.dculus.stayfocused.feature.devices.linkConfirmScreen
@@ -115,7 +116,10 @@ private fun AppNavHost(
                 onOpenWizard = { target, prefill -> navController.navigateToBlockWizard(target, prefill) },
                 viewModelProvider = blockViewModel,
             )
-            blockWizardScreen()
+            blockWizardScreen(
+                onClose = { navController.popBackStack() },
+                onDescribeWithAi = { navController.openBlockInAiMode() },
+            )
             devicesScreen(
                 onLinkPhone = { navController.navigateToLinkAdd() },
                 onOpenDevice = { navController.navigateToRemoteDevice(it) },

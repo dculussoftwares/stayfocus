@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="block_title">Block</string>
-    <string name="block_wizard_title">New block</string>
 
     <string name="block_blocking_on">Blocking on</string>
     <string name="block_this_phone">This phone</string>
@@ -50,4 +49,34 @@
     <string name="block_days_weekdays">Mon–Fri</string>
     <string name="block_days_weekends">Sat–Sun</string>
     <string name="block_days_none">No days</string>
+
+    <!-- Block wizard -->
+    <string name="block_wizard_back">Back</string>
+    <string name="block_wizard_step">0%1$d</string>
+    <string name="block_wizard_step_total">/03</string>
+    <string name="block_wizard_chip_now">NOW</string>
+    <string name="block_wizard_on">ON</string>
+    <string name="block_wizard_step1_title">How should\nit block?</string>
+    <string name="block_wizard_describe">Rather just describe it?</string>
+    <string name="block_wizard_type_limit_name">Limit time</string>
+    <string name="block_wizard_type_limit_desc">An allowance per day or hour. When it runs out, the app locks.</string>
+    <string name="block_wizard_type_cycle_name">Use, then rest</string>
+    <string name="block_wizard_type_cycle_desc">Each time you open it, use it for a while. Then it locks for a while.</string>
+    <string name="block_wizard_type_schedule_name">Block during hours</string>
+    <string name="block_wizard_type_schedule_desc">Locked between set times, e.g. 9:00–17:00 on weekdays.</string>
+    <string name="block_wizard_type_now_name">Block now</string>
+    <string name="block_wizard_type_now_desc">Locks straight away for a set time.</string>
+    <string name="block_wizard_step2_title">Which apps?</string>
+    <string name="block_wizard_selected">%1$d SELECTED</string>
+    <string name="block_wizard_cta_continue">Continue</string>
+    <plurals name="block_wizard_cta_continue_apps">
+        <item quantity="one">Continue with %1$d app</item>
+        <item quantity="other">Continue with %1$d apps</item>
+    </plurals>
+    <string name="block_wizard_cta_turn_on">Turn on block</string>
+    <string name="block_wizard_pick_one_app">Pick at least one app</string>
+    <string name="block_wizard_step3_limit">How much time?</string>
+    <string name="block_wizard_step3_schedule">When should it lock?</string>
+    <string name="block_wizard_step3_now">Lock for how long?</string>
+    <string name="block_wizard_step3_cycle">On for, off for</string>
 </resources>
