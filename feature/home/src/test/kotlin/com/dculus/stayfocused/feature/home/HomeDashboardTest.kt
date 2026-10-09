@@ -81,6 +81,12 @@ class HomeDashboardTest {
         composeRule.onNodeWithText("Morning").assertExists()
     }
 
+    @Test fun aiDescribeIsHiddenWhileAiIsOff() {
+        show(homeState(aiAvailable = false))
+        composeRule.onNodeWithTag(HOME_AI_DESCRIBE_TAG).assertDoesNotExist()
+        composeRule.onNodeWithTag(HOME_NEW_BLOCK_TAG).assertExists()
+    }
+
     @Test fun avatarOpensAccount() {
         show(homeState())
         composeRule.onNodeWithTag(HOME_AVATAR_TAG).performClick()

@@ -87,4 +87,6 @@ internal data class HomeUiState(
     val gauge: GaugeUi,
     val blocks: List<HomeBlockUi>,
     val devices: List<LinkedDevice>,
+    /** AI is switched on in settings; "AI Describe" is hidden otherwise. */
+    val aiAvailable: Boolean,
 )

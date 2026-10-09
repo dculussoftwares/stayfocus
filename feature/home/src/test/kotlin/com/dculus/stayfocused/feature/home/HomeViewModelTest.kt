@@ -11,6 +11,7 @@ import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.usage.UsageAverages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -53,6 +54,7 @@ class HomeViewModelTest {
         val installed: FakeInstalledApps = FakeInstalledApps(),
         val devices: FakeLinkedDevicesRepository = FakeLinkedDevicesRepository(),
         val profile: FakeAccountProfileRepository = FakeAccountProfileRepository(),
+        val settings: FakeSettingsRepository = FakeSettingsRepository(),
     )
 
     /** Lets the pending flow work run, then returns the newest state the turbine received. */
@@ -75,6 +77,7 @@ class HomeViewModelTest {
         env.installed,
         env.devices,
         env.profile,
+        env.settings,
     )
 
     @Before fun setUp() = Dispatchers.setMain(StandardTestDispatcher())
@@ -253,6 +256,7 @@ class HomeViewModelTest {
                 testScheduler.runCurrent()
                 assertIs<GaugeUi.Ready>(latest(testScheduler).gauge)
                 assertEquals(1, env.usage.refreshes)
+                assertEquals(1, env.usage.backfills)
             }
         }
 
@@ -301,6 +305,17 @@ class HomeViewModelTest {
             vm.events.test {
                 vm.setBlockEnabled("b1", true)
                 assertEquals(HomeEvent.BlockToggleFailed, awaitItem())
+            }
+        }
+
+    @Test fun aiDescribeFollowsTheAiSetting() =
+        runTest {
+            val env = Env()
+            val vm = viewModel(VirtualClock(testScheduler), env)
+            vm.state.test {
+                assertEquals(false, latest(testScheduler).aiAvailable)
+                env.settings.setAiEnabled(true)
+                assertEquals(true, latest(testScheduler).aiAvailable)
             }
         }
 

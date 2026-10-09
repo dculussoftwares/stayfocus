@@ -6,7 +6,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,6 +36,9 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import timber.log.Timber
 
 private const val DEFAULT_BREAK_MINS = 30
+
+/** Rows are 8 dp apart; each new card or section starts 14 dp below the previous one (8 + 6). */
+private val SectionGap = 6.dp
 
 /** Where each tappable part of Home leads. Supplied by the app's navigation graph. */
 class HomeDestinations(
@@ -128,21 +133,39 @@ internal fun HomeScreen(
         state = rememberLazyListState(),
         modifier = Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).testTag(HOME_LIST_TAG),
         contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "header") { HomeHeader(state.header, destinations.onOpenAccount) }
-        item(key = "actions") { HomeActionRow(destinations.onNewBlock, destinations.onAiDescribe) }
+        item(key = "actions") {
+            HomeActionRow(
+                destinations.onNewBlock,
+                destinations.onAiDescribe,
+                showAi = state.aiAvailable,
+                modifier = Modifier.padding(top = SectionGap),
+            )
+        }
         item(key = "gauge") {
-            GaugeCard(state.gauge, destinations.onOpenInsights, actions.onAllowUsageAccess)
+            GaugeCard(
+                state.gauge,
+                destinations.onOpenInsights,
+                actions.onAllowUsageAccess,
+                Modifier.padding(top = SectionGap),
+            )
         }
         item(key = "break") {
-            when (breakUi) {
-                BreakUi.Idle -> BreakIdleCard(onClick = { sheetVisible = true })
-                is BreakUi.Active -> BreakActiveCard(breakUi, onEnd = actions.onEndBreak)
+            Box(Modifier.padding(top = SectionGap)) {
+                when (breakUi) {
+                    BreakUi.Idle -> BreakIdleCard(onClick = { sheetVisible = true })
+                    is BreakUi.Active -> BreakActiveCard(breakUi, onEnd = actions.onEndBreak)
+                }
             }
         }
-        item(key = "blocks") {
-            ActiveBlocksSection(state.blocks, destinations.onOpenBlock, actions.onSetBlockEnabled)
+        item(key = "blocks-header") { ActiveBlocksHeader(destinations.onOpenBlock, Modifier.padding(top = SectionGap)) }
+        if (state.blocks.isEmpty()) {
+            item(key = "blocks-empty") { EmptyBlocks() }
+        } else {
+            // One lazy item per row so a long list only composes what is on screen.
+            items(state.blocks, key = { it.block.id }) { row -> BlockRow(row, actions.onSetBlockEnabled) }
         }
         item(key = "devices") {
             LinkedPhonesSection(
@@ -150,6 +173,7 @@ internal fun HomeScreen(
                 destinations.onOpenDevices,
                 destinations.onOpenDevice,
                 destinations.onOpenDevices,
+                Modifier.padding(top = SectionGap),
             )
         }
     }

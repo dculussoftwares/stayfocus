@@ -158,6 +158,8 @@ internal fun HomeActionRow(
     onNewBlock: () -> Unit,
     onAiDescribe: () -> Unit,
     modifier: Modifier = Modifier,
+    /** False while AI is switched off in settings: "AI Describe" would lead nowhere, so it is hidden. */
+    showAi: Boolean = true,
 ) {
     val c = StayFocusedTheme.colors
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -167,6 +169,14 @@ internal fun HomeActionRow(
             modifier = Modifier.weight(1f).testTag(HOME_NEW_BLOCK_TAG),
             leadingIcon = { IconTile { Text("+", color = c.accent, fontSize = 16.sp) } },
         )
+        if (showAi) AiDescribeButton(onAiDescribe)
+    }
+}
+
+@Composable
+private fun AiDescribeButton(onAiDescribe: () -> Unit) {
+    val c = StayFocusedTheme.colors
+    run {
         val describe = stringResource(R.string.home_ai_describe_description)
         Row(
             Modifier
@@ -208,9 +218,10 @@ internal fun SectionRow(
     action: String,
     actionTag: String,
     onAction: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+        modifier.fillMaxWidth().padding(horizontal = 4.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -232,31 +243,23 @@ internal fun SectionRow(
     }
 }
 
-/** "Active blocks · this phone": one row per block with its switch, or an empty state. */
+/** Header of "Active blocks · this phone"; the rows follow as separate lazy items. */
 @Composable
-internal fun ActiveBlocksSection(
-    blocks: List<HomeBlockUi>,
+internal fun ActiveBlocksHeader(
     onManage: () -> Unit,
-    onToggle: (id: String, enabled: Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        SectionRow(
-            stringResource(R.string.home_blocks_title),
-            stringResource(R.string.home_blocks_manage),
-            HOME_MANAGE_TAG,
-            onManage,
-        )
-        if (blocks.isEmpty()) {
-            EmptyBlocks()
-        } else {
-            blocks.forEach { row -> BlockRow(row, onToggle) }
-        }
-    }
+    SectionRow(
+        stringResource(R.string.home_blocks_title),
+        stringResource(R.string.home_blocks_manage),
+        HOME_MANAGE_TAG,
+        onManage,
+        modifier,
+    )
 }
 
 @Composable
-private fun EmptyBlocks() {
+internal fun EmptyBlocks() {
     val c = StayFocusedTheme.colors
     val shape = StayFocusedTheme.shapes.card
     Column(
@@ -275,7 +278,7 @@ private fun EmptyBlocks() {
 }
 
 @Composable
-private fun BlockRow(
+internal fun BlockRow(
     row: HomeBlockUi,
     onToggle: (id: String, enabled: Boolean) -> Unit,
 ) {

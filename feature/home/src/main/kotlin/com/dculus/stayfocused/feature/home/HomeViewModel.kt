@@ -7,6 +7,7 @@ import com.dculus.stayfocused.core.data.repository.AccountProfileRepository
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
+import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.fallbackAppLabel
 import com.dculus.stayfocused.core.model.ledLevels
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -64,6 +66,7 @@ class HomeViewModel
         installedApps: InstalledAppsRepository,
         linkedDevices: LinkedDevicesRepository,
         profile: AccountProfileRepository,
+        settings: SettingsRepository,
     ) : ViewModel() {
         private val accessGranted = MutableStateFlow(usageAccess.isGranted())
 
@@ -117,8 +120,14 @@ class HomeViewModel
 
         /** The dashboard: header, gauge card, this phone's blocks and the linked phones. */
         internal val state: StateFlow<HomeUiState> =
-            combine(header, gauge, blockRows, linkedDevices.observeAll(), ::HomeUiState)
-                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), initialState())
+            combine(
+                header,
+                gauge,
+                blockRows,
+                linkedDevices.observeAll(),
+                settings.settings.map { it.aiEnabled },
+                ::HomeUiState,
+            ).stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS), initialState())
 
         private fun initialState() =
             HomeUiState(
@@ -126,13 +135,30 @@ class HomeViewModel
                 gauge = if (accessGranted.value) GaugeUi.Ready(0, null, emptyList(), 0, 0, 0) else GaugeUi.NoAccess,
                 blocks = emptyList(),
                 devices = emptyList(),
+                aiAvailable = false,
             )
 
         /** Re-reads the usage-access permission, e.g. when the person returns from the system settings. */
         fun refreshUsageAccess() {
             val granted = usageAccess.isGranted()
             accessGranted.value = granted
-            if (granted) usage.requestRefresh()
+            if (granted) {
+                usage.requestRefresh()
+                // Days that were skipped while access was off (the startup backfill needs it) fill the average.
+                viewModelScope.launch { backfillHistory() }
+            }
+        }
+
+        private suspend fun backfillHistory() {
+            try {
+                usage.backfill()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Timber.w(e, "Usage backfill failed")
+            }
         }
 
         /** The system "Usage access" settings screen. */

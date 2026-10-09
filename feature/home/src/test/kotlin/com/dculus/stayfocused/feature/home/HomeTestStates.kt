@@ -26,11 +26,13 @@ internal fun homeState(
     blocks: List<HomeBlockUi> = emptyList(),
     devices: List<LinkedDevice> = emptyList(),
     firstName: String? = "Sam",
+    aiAvailable: Boolean = true,
 ) = HomeUiState(
     header = headerFor(ZonedDateTime.of(2026, 10, 6, 10, 42, 0, 0, ZoneOffset.UTC), firstName, Locale.ENGLISH),
     gauge = gauge,
     blocks = blocks,
     devices = devices,
+    aiAvailable = aiAvailable,
 )
 
 /** Rows for [blocks] with the prototype names as app labels. */

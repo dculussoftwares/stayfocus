@@ -61,6 +61,7 @@ internal class FakeUsage(
     val averages = MutableStateFlow(avg)
     val blocked = MutableStateFlow(blocked)
     var refreshes = 0
+    var backfills = 0
 
     override fun today(): Flow<DayUsageStats> = today
 
@@ -74,7 +75,9 @@ internal class FakeUsage(
 
     override fun blockedToday(): Flow<Int> = blocked
 
-    override suspend fun backfill() = Unit
+    override suspend fun backfill() {
+        backfills++
+    }
 }
 
 internal class FakeUsageAccess(

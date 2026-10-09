@@ -22,6 +22,7 @@ import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.dculus.stayfocused.core.model.AppInfo
+import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.navigation.Account
 import com.dculus.stayfocused.core.navigation.Block
@@ -125,6 +126,7 @@ class AppNavigationTest {
             },
             FakeLinkedDevicesRepository(),
             FakeAccountProfileRepository(),
+            FakeSettingsRepository(AppSettings(aiEnabled = true)),
         )
     private val wizardViewModel =
         WizardViewModel(
