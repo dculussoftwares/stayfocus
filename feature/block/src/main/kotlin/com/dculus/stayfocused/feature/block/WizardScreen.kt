@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,13 +27,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -41,20 +51,37 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.DialConfig
+import com.dculus.stayfocused.core.model.DialConfigs
+import com.dculus.stayfocused.core.model.LimitPeriod
+import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.model.durationLabel
 import com.dculus.stayfocused.core.model.formatMinutes
+import com.dculus.stayfocused.core.ui.components.DayChips
+import com.dculus.stayfocused.core.ui.components.DialPresets
 import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
+import com.dculus.stayfocused.core.ui.components.RotaryDial
+import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.icon.AppIcon
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import java.time.DayOfWeek
 
 const val WIZARD_BACK_TAG = "wizard_back"
 const val WIZARD_CTA_TAG = "wizard_cta"
 const val WIZARD_DESCRIBE_TAG = "wizard_describe"
 const val WIZARD_RULES_TAG = "wizard_rules"
+const val WIZARD_SUMMARY_TAG = "wizard_summary"
+const val WIZARD_AI_BANNER_TAG = "wizard_ai_banner"
+const val WIZARD_RANGE_CUSTOM_TAG = "wizard_range_custom"
+
+fun wizardRangeTag(range: String): String = "wizard_range_$range"
 
 fun wizardTypeTag(type: BlockType): String = "wizard_type_${type.name.lowercase()}"
 
@@ -68,6 +95,14 @@ data class WizardActions(
     val onNext: () -> Unit = {},
     val onDescribe: () -> Unit = {},
     val onSelectTarget: (BlockTarget) -> Unit = {},
+    val onPeriod: (LimitPeriod) -> Unit = {},
+    val onMins: (Int) -> Unit = {},
+    val onNow: (Int) -> Unit = {},
+    val onCycleValue: (Int) -> Unit = {},
+    val onCycleEdit: (CycleEdit) -> Unit = {},
+    val onRange: (TimeRange) -> Unit = {},
+    val onToggleDay: (DayOfWeek) -> Unit = {},
+    val onChangeType: () -> Unit = {},
 )
 
 private val WizardTypes = BlockType.entries
@@ -135,7 +170,7 @@ fun WizardScreen(
                 when (state.step) {
                     WIZARD_STEP_TYPE -> TypeStep(state.draft.type, state.aiAvailable, actions)
                     WIZARD_STEP_APPS -> AppsStep(state, actions.onToggleApp)
-                    else -> RulesStep(state.draft.type)
+                    else -> RulesStep(state, actions)
                 }
             }
         }
@@ -433,13 +468,266 @@ private fun AppTile(
     }
 }
 
-/** Step 3 hosts the rules (dial, presets, days, summary) added by M4-03/M4-04; for now just its title. */
-@Composable
-private fun RulesStep(type: BlockType) {
-    Text(
-        stringResource(type.step3TitleRes()),
-        style = StayFocusedTheme.type.displayL,
-        color = StayFocusedTheme.colors.text,
-        modifier = Modifier.testTag(WIZARD_RULES_TAG),
+private val RangePresets =
+    listOf(
+        "09:00–17:00" to R.string.block_wizard_range_work,
+        "16:00–20:00" to R.string.block_wizard_range_study,
+        "22:00–07:00" to R.string.block_wizard_range_night,
     )
+
+/** Step 3: the rules of the chosen type, the day chips and the plain-language summary. */
+@Composable
+private fun RulesStep(
+    state: WizardUiState,
+    actions: WizardActions,
+) {
+    val c = StayFocusedTheme.colors
+    val draft = state.draft
+    Column(
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(WIZARD_RULES_TAG),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Text(
+            stringResource(if (draft.fromAi) R.string.block_wizard_step3_ai else draft.type.step3TitleRes()),
+            style = StayFocusedTheme.type.displayL,
+            color = c.text,
+        )
+        if (draft.fromAi) AiDraftBanner(draft, actions.onChangeType)
+        when (draft.type) {
+            BlockType.LIMIT -> {
+                SegmentedTabs(
+                    options =
+                        listOf(
+                            stringResource(R.string.block_wizard_period_day),
+                            stringResource(R.string.block_wizard_period_hour),
+                        ),
+                    selectedIndex = if (draft.period == LimitPeriod.DAILY) 0 else 1,
+                    onSelect = { actions.onPeriod(if (it == 0) LimitPeriod.DAILY else LimitPeriod.HOURLY) },
+                )
+                DialWithPresets(draft.mins, DialConfigs.Limit, actions.onMins)
+            }
+
+            BlockType.CYCLE -> {
+                CycleTabs(draft, state.cycleEdit, actions.onCycleEdit)
+                if (state.cycleEdit == CycleEdit.USE) {
+                    DialWithPresets(draft.use, DialConfigs.CycleUse, actions.onCycleValue)
+                } else {
+                    DialWithPresets(draft.rest, DialConfigs.CycleRest, actions.onCycleValue)
+                }
+            }
+
+            BlockType.SCHEDULE -> {
+                RangeOptions(draft.range, actions.onRange)
+            }
+
+            BlockType.NOW -> {
+                DialWithPresets(draft.now, DialConfigs.BlockNow, actions.onNow)
+            }
+        }
+        if (draft.type != BlockType.NOW) {
+            DayChips(
+                selected = DayOfWeek.entries.filterTo(hashSetOf()) { it in draft.days },
+                onToggle = actions.onToggleDay,
+            )
+        }
+        Text(
+            state.summary,
+            style = StayFocusedTheme.type.body,
+            color = c.text,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .dashedBorder(c.hairline14, 16.dp)
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .testTag(WIZARD_SUMMARY_TAG),
+        )
+    }
 }
+
+/** The "AI DRAFT" banner above the rules; filled by the AI flow (M9-05) through `BlockDraft.fromAi` / `aiNote`. */
+@Composable
+private fun AiDraftBanner(
+    draft: BlockDraft,
+    onChange: () -> Unit,
+) {
+    val c = StayFocusedTheme.colors
+    val shape = RoundedCornerShape(18.dp)
+    Column(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .clip(shape)
+                .background(c.accent.copy(alpha = 0.08f))
+                .border(1.dp, c.accent.copy(alpha = 0.3f), shape)
+                .padding(14.dp)
+                .testTag(WIZARD_AI_BANNER_TAG),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                stringResource(R.string.block_wizard_ai_draft),
+                style = StayFocusedTheme.type.labelS,
+                color = c.onAccent,
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(c.accent)
+                        .padding(horizontal = 7.dp, vertical = 3.dp),
+            )
+            Text(stringResource(draft.type.nameRes()), style = StayFocusedTheme.type.bodyS, color = c.text)
+            Spacer(Modifier.weight(1f))
+            Text(
+                stringResource(R.string.block_wizard_ai_change),
+                style = StayFocusedTheme.type.bodyS,
+                color = c.accent,
+                modifier = Modifier.clickable(role = Role.Button, onClick = onChange).padding(vertical = 8.dp),
+            )
+        }
+        Text(
+            draft.aiNote.ifBlank { stringResource(R.string.block_wizard_ai_note_default) },
+            style = StayFocusedTheme.type.bodyS,
+            color = c.secondary,
+        )
+    }
+}
+
+@Composable
+private fun CycleTabs(
+    draft: BlockDraft,
+    edit: CycleEdit,
+    onSelect: (CycleEdit) -> Unit,
+) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        CycleTab(
+            label = stringResource(R.string.block_wizard_cycle_use),
+            mins = draft.use,
+            selected = edit == CycleEdit.USE,
+            onClick = { onSelect(CycleEdit.USE) },
+            modifier = Modifier.weight(1f),
+        )
+        CycleTab(
+            label = stringResource(R.string.block_wizard_cycle_rest),
+            mins = draft.rest,
+            selected = edit == CycleEdit.REST,
+            onClick = { onSelect(CycleEdit.REST) },
+            modifier = Modifier.weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun CycleTab(
+    label: String,
+    mins: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val c = StayFocusedTheme.colors
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        modifier =
+            modifier
+                .clip(shape)
+                .background(if (selected) c.accent.copy(alpha = 0.1f) else c.panel)
+                .border(1.5.dp, if (selected) c.accent else c.hairline06, shape)
+                .selectable(selected = selected, role = Role.Tab, onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(label, style = StayFocusedTheme.type.labelS, color = if (selected) c.accent else c.secondary)
+        Text(durationLabel(mins), style = StayFocusedTheme.type.title, color = if (selected) c.accent else c.text)
+    }
+}
+
+@Composable
+private fun DialWithPresets(
+    value: Int,
+    config: DialConfig,
+    onChange: (Int) -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        RotaryDial(value = value, onValueChange = onChange, config = config)
+        DialPresets(config = config, value = value, onPick = onChange)
+    }
+}
+
+@Composable
+private fun RangeOptions(
+    range: TimeRange,
+    onRange: (TimeRange) -> Unit,
+) {
+    var picking by remember { mutableStateOf(false) }
+    val formatted = range.format()
+    val custom = RangePresets.none { it.first == formatted }
+    val customText = stringResource(R.string.block_wizard_range_custom)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        RangePresets.forEach { (text, hintRes) ->
+            RangeRow(text, stringResource(hintRes), selected = text == formatted, tag = wizardRangeTag(text)) {
+                onRange(TimeRange.parse(text))
+            }
+        }
+        RangeRow(
+            label = if (custom) formatted else customText,
+            hint = if (custom) customText else stringResource(R.string.block_wizard_range_pick),
+            selected = custom,
+            tag = WIZARD_RANGE_CUSTOM_TAG,
+        ) { picking = true }
+    }
+    if (picking) {
+        TimeRangePickerDialog(
+            initial = range,
+            onDismiss = { picking = false },
+            onConfirm = {
+                picking = false
+                onRange(it)
+            },
+        )
+    }
+}
+
+@Composable
+private fun RangeRow(
+    label: String,
+    hint: String,
+    selected: Boolean,
+    tag: String,
+    onClick: () -> Unit,
+) {
+    val c = StayFocusedTheme.colors
+    val shape = RoundedCornerShape(18.dp)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(60.dp)
+                .clip(shape)
+                .background(if (selected) c.accent else c.panel)
+                .border(1.5.dp, if (selected) c.accent else c.hairline06, shape)
+                .testTag(tag)
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+                .padding(horizontal = 18.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(label, style = StayFocusedTheme.type.title, color = if (selected) c.onAccent else c.text)
+        Text(hint, style = StayFocusedTheme.type.bodyS, color = if (selected) c.onAccent else c.secondary)
+    }
+}
+
+private fun Modifier.dashedBorder(
+    color: Color,
+    radius: Dp,
+): Modifier =
+    drawBehind {
+        val dash = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))
+        drawRoundRect(
+            color = color,
+            cornerRadius = CornerRadius(radius.toPx()),
+            style = Stroke(width = 1.dp.toPx(), pathEffect = dash),
+        )
+    }

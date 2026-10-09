@@ -34,6 +34,7 @@ import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.block.blockScreen
 import com.dculus.stayfocused.feature.block.blockWizardScreen
 import com.dculus.stayfocused.feature.block.closeBlockWizard
+import com.dculus.stayfocused.feature.block.finishBlockWizard
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
 import com.dculus.stayfocused.feature.block.openBlockInAiMode
 import com.dculus.stayfocused.feature.devices.devicesScreen
@@ -138,6 +139,7 @@ private fun AppNavHost(
             blockWizardScreen(
                 onClose = { navController.closeBlockWizard() },
                 onDescribeWithAi = { navController.openBlockInAiMode() },
+                onFinish = { deviceId, message -> navController.finishBlockWizard(deviceId, message) },
                 viewModelProvider = wizardViewModel,
             )
             devicesScreen(

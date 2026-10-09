@@ -5,9 +5,11 @@ import app.cash.turbine.test
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DaysOfWeek
+import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.testing.MainDispatcherRule
+import com.dculus.stayfocused.core.testing.TestClock
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,6 +46,8 @@ class WizardViewModelTest {
     private val apps = FakeTargetApps(defaultApps())
     private val devices = FakeLinkedDevicesRepository()
     private val settings = FakeSettingsRepository()
+    private val blocks = FakeBlockRepository()
+    private val clock = TestClock()
 
     private fun viewModel(
         target: String? = null,
@@ -52,7 +56,7 @@ class WizardViewModelTest {
         val handle = SavedStateHandle()
         target?.let { handle["target"] = it }
         prefill?.let { handle["prefill"] = it }
-        return WizardViewModel(handle, apps, devices, settings)
+        return WizardViewModel(handle, apps, devices, settings, blocks, clock)
     }
 
     @Test
@@ -229,7 +233,7 @@ class WizardViewModelTest {
             object : TargetAppsProvider {
                 override fun apps(target: BlockTarget): Flow<List<TargetApp>> = pending
             }
-        val vm = WizardViewModel(SavedStateHandle(), loading, devices, settings)
+        val vm = WizardViewModel(SavedStateHandle(), loading, devices, settings, blocks, clock)
         assertFalse(vm.state.value.ready)
         vm.next()
         assertEquals(WIZARD_STEP_TYPE, vm.state.value.step)
@@ -244,7 +248,7 @@ class WizardViewModelTest {
                     MutableStateFlow(if (target == BlockTarget.ThisPhone) defaultApps() else emptyList())
             }
         val handle = SavedStateHandle(mapOf("target" to "d1", "prefill" to "social_limit"))
-        val vm = WizardViewModel(handle, perTarget, devices, settings)
+        val vm = WizardViewModel(handle, perTarget, devices, settings, blocks, clock)
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
         vm.pickType(BlockType.NOW)
         vm.selectTarget(BlockTarget.ThisPhone)

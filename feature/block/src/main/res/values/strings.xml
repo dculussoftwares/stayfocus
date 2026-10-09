@@ -85,4 +85,25 @@
     <string name="block_wizard_step3_schedule">When should it lock?</string>
     <string name="block_wizard_step3_now">Lock for how long?</string>
     <string name="block_wizard_step3_cycle">On for, off for</string>
+    <string name="block_wizard_step3_ai">Check your block</string>
+    <string name="block_wizard_ai_draft">AI DRAFT</string>
+    <string name="block_wizard_ai_change">Change</string>
+    <string name="block_wizard_ai_note_default">Here is what I understood. Change anything before turning it on.</string>
+    <string name="block_wizard_period_day">Per day</string>
+    <string name="block_wizard_period_hour">Per hour</string>
+    <string name="block_wizard_cycle_use">USE FOR</string>
+    <string name="block_wizard_cycle_rest">THEN LOCKED</string>
+    <string name="block_wizard_range_work">Work</string>
+    <string name="block_wizard_range_study">Study</string>
+    <string name="block_wizard_range_night">Night</string>
+    <string name="block_wizard_range_custom">Custom</string>
+    <string name="block_wizard_range_pick">Pick times</string>
+    <string name="block_wizard_picker_start">From</string>
+    <string name="block_wizard_picker_end">To</string>
+    <string name="block_wizard_picker_next">Next</string>
+    <string name="block_wizard_picker_set">Set</string>
+    <string name="block_wizard_picker_cancel">Cancel</string>
+    <string name="block_wizard_picker_same_time">Start and end must differ</string>
+    <string name="block_wizard_saved">%1$s is on · %2$s</string>
+    <string name="block_wizard_save_failed">Couldn\'t turn on the block. Try again.</string>
 </resources>
