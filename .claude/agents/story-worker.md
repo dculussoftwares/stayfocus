@@ -71,7 +71,7 @@ For `needs-human` stories use `Refs #N` instead of `Closes #N` (see the end).
 
 ## 8. CodeRabbit review loop
 Repeat until the merge gate (step 9) is met; at most 5 rounds.
-**If your prompt says `Reviewer: qodo`**, skip CodeRabbit entirely (don't wait for it, never comment `@coderabbitai`): go
+**CodeRabbit is advisory (user decision): Qodo and Greptile are the gating reviewers, so always work as if your prompt said `Reviewer: qodo`, and comment `/agentic_review` after every push.** If your prompt says `Reviewer: qodo` (always, now), skip CodeRabbit entirely (don't wait for it, never comment `@coderabbitai`): go
 straight to the Qodo steps in the next paragraph for every round, and use the fallback gate in step 9.
 1. Wait for CI and for CodeRabbit to review the current HEAD: `gh pr checks <PR> --watch`; the `CodeRabbit` check reads
    "Review completed" when its review of HEAD is done. Reviews can take 5–15 min. If nothing starts within ~15 min,
@@ -96,11 +96,9 @@ straight to the Qodo steps in the next paragraph for every round, and use the fa
 
 ## 9. Merge gate, then merge
 Merge only when **all** of these hold for the current HEAD:
-- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Qodo fallback, where `ci-pass` and the other CI checks are what count;
+- every required check is green (`gh pr checks <PR>`): `ci-pass`, `security-pass`, `gradle-dependency-graph`. The `CodeRabbit` check is not required;
 - **0 unresolved review threads**;
-- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit unavailable and Qodo fallback used) Qodo
-  has reviewed HEAD and no `critical`/`high` finding is open, and any CodeRabbit review on HEAD has no unaddressed comments — **or**, if its approval hasn't updated within ~20 min after
-  its HEAD review completed, its review(s) of HEAD contain **no new actionable comments** (say so in the report).
+- Qodo has reviewed HEAD and no `critical`/`high` finding is open (Greptile findings handled the same way); CodeRabbit is advisory: answer its comments, but its approval, check or a stale "changes requested" never blocks the merge (mention it in the report).
 
 If `main` moved: `git fetch origin && git rebase origin/main && git push --force-with-lease` (your branch only), then
 the gate again. Then: `gh pr merge <PR> --repo dculussoftwares/stayfocus --squash --delete-branch`.

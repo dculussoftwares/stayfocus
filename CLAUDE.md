@@ -17,7 +17,7 @@ Phase 1 is planned, not built yet. The Android code starts with story **M1-01** 
 | `infra/github/` | Terraform that turns `backlog/` into labels, milestones and issues |
 | `scripts/backlog/sync_project.py` | Post-apply sync: sub-issues, "blocked by" links, Projects v2 board |
 | `.github/workflows/backlog.yml` | Plan on PR, apply on merge to `main`; board status sync when issues close |
-| `.coderabbit.yaml` | CodeRabbit review config (required reviewer on every PR) |
+| `.coderabbit.yaml` | CodeRabbit review config (advisory reviewer; never blocks a merge) |
 | `scripts/backlog/board.py` | Move a card on the kanban board / list Ready cards |
 | `docs/agents/PHASE1_EXECUTION.md` | How to run the backlog (`/wave`, `/next-wave`, `/story`), CodeRabbit rules, the 16-wave order |
 | `.claude/commands/`, `.claude/agents/story-worker.md` | The `/wave`, `/next-wave`, `/story` commands and the per-story subagent |
