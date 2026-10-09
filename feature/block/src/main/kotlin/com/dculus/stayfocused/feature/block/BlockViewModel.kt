@@ -77,6 +77,7 @@ private data class Remote(
     val aiEnabled: Boolean,
 )
 
+@Suppress("TooManyFunctions")
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class BlockViewModel
@@ -128,6 +129,9 @@ class BlockViewModel
         fun selectTarget(target: BlockTarget) = local.update { it.copy(selected = target) }
 
         fun selectTab(tab: BlockTab) = local.update { it.copy(tab = tab) }
+
+        /** Opens the "Describe" panel (from the wizard's "Rather just describe it?"). */
+        fun openAi() = local.update { it.copy(aiOpen = true, tab = BlockTab.BLOCKS) }
 
         fun toggleAi() = local.update { it.copy(aiOpen = !it.aiOpen) }
 

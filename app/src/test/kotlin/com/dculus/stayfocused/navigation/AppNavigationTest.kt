@@ -12,10 +12,12 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToIndex
+import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.dculus.stayfocused.core.model.AppInfo
+import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.navigation.Account
 import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
@@ -40,6 +42,9 @@ import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.feature.block.BlockViewModel
+import com.dculus.stayfocused.feature.block.TargetApp
+import com.dculus.stayfocused.feature.block.TargetAppsProvider
+import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -72,6 +77,15 @@ class AppNavigationTest {
         )
 
     private val homeViewModel = HomeViewModel(FakeBreakRepository(), Clock.systemUTC())
+    private val wizardViewModel =
+        WizardViewModel(
+            SavedStateHandle(),
+            object : TargetAppsProvider {
+                override fun apps(target: BlockTarget) = flowOf(emptyList<TargetApp>())
+            },
+            FakeLinkedDevicesRepository(),
+            FakeSettingsRepository(),
+        )
 
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {
         composeRule.setContent {
@@ -81,6 +95,7 @@ class AppNavigationTest {
                     startGraph = startGraph,
                     navController = navController,
                     blockViewModel = { blockViewModel },
+                    wizardViewModel = { wizardViewModel },
                     insightsContent = { NavPlaceholderScreen(title = "Insights") },
                     homeViewModel = { homeViewModel },
                 )
