@@ -142,13 +142,11 @@ class WizardViewModel
             viewModelScope.launch {
                 val installed = targetApps.apps(newTarget).first().mapTo(hashSetOf()) { it.pkg }
                 mutableState.update { s ->
-                    val prefill = template?.prefill(newTarget, installed)
-                    if (prefill != null) {
-                        s.copy(draft = prefill.draft, step = prefill.startStep)
-                    } else {
-                        val apps = BlockDraft().apps.filterTo(linkedSetOf()) { it in installed }
-                        s.copy(draft = s.draft.copy(target = newTarget, apps = apps))
-                    }
+                    // Keep the type and step the user already chose; only the apps depend on the target.
+                    val apps =
+                        template?.prefill(newTarget, installed)?.draft?.apps
+                            ?: BlockDraft().apps.filterTo(linkedSetOf()) { it in installed }
+                    s.copy(draft = s.draft.copy(target = newTarget, apps = apps))
                 }
                 target.value = newTarget
             }

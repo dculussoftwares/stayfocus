@@ -10,6 +10,7 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOf
+import java.text.Collator
 import javax.inject.Inject
 
 /** One tile of the wizard's app grid. [todayMins] is the time spent in the app today. */
@@ -37,11 +38,12 @@ class DefaultTargetAppsProvider
         override fun apps(target: BlockTarget): Flow<List<TargetApp>> =
             when (target) {
                 BlockTarget.ThisPhone -> {
+                    val collator = Collator.getInstance()
                     combine(installedApps.observeLaunchableApps(), usage.today()) { installed, today ->
                         val minsByPkg = today.apps.associate { it.pkg to it.mins }
                         installed
                             .map { TargetApp(it.pkg, it.label, minsByPkg[it.pkg] ?: 0) }
-                            .sortedBy { it.label.lowercase() }
+                            .sortedWith(compareBy(collator) { it.label })
                     }
                 }
 

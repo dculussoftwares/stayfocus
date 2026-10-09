@@ -16,6 +16,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
@@ -48,8 +49,16 @@ fun NavGraphBuilder.blockScreen(
 /** Saved-state key the wizard sets on the Block entry to open the Block tab in AI mode. */
 internal const val OPEN_AI_KEY = "block_open_ai"
 
-/** Leaves the wizard for the Block tab with the "Describe" panel open. */
+private fun NavController.onWizard(): Boolean = currentDestination?.hasRoute<BlockWizard>() == true
+
+/** Closes the wizard. A repeated call (double tap) is ignored once the wizard is gone. */
+fun NavController.closeBlockWizard() {
+    if (onWizard()) popBackStack()
+}
+
+/** Leaves the wizard for the Block tab with the "Describe" panel open. Ignored once the wizard is gone. */
 fun NavController.openBlockInAiMode() {
+    if (!onWizard()) return
     if (!popBackStack<Block>(inclusive = false)) navigate(Block)
     runCatching { getBackStackEntry<Block>() }.getOrNull()?.savedStateHandle?.set(OPEN_AI_KEY, true)
 }

@@ -236,7 +236,7 @@ class WizardViewModelTest {
     }
 
     @Test
-    fun retargetingATemplateKeepsItsAppsAndStep() {
+    fun retargetingATemplateKeepsItsAppsTypeAndStep() {
         devices.devices.value = listOf(device())
         val perTarget =
             object : TargetAppsProvider {
@@ -246,8 +246,10 @@ class WizardViewModelTest {
         val handle = SavedStateHandle(mapOf("target" to "d1", "prefill" to "social_limit"))
         val vm = WizardViewModel(handle, perTarget, devices, settings)
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
+        vm.pickType(BlockType.NOW)
         vm.selectTarget(BlockTarget.ThisPhone)
-        assertEquals(WIZARD_STEP_RULES, vm.state.value.step)
+        assertEquals(BlockType.NOW, vm.state.value.draft.type)
+        assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
         assertEquals(setOf(pkg("instagram"), pkg("reddit"), pkg("x")), vm.state.value.draft.apps)
         assertEquals(BlockTarget.ThisPhone, vm.state.value.draft.target)
     }
