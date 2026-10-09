@@ -319,11 +319,15 @@ class BlockingEngineTest {
             r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
             r.engine.start()
             r.open(APP)
-            r.pass(30_000)
+            r.pass(20_000)
             r.clock.currentZone = ZoneOffset.ofHours(2)
             r.engine.onClockChanged()
-            r.pass(30_000)
-            assertEquals(1, r.presenter.shown.size, "30 s before and 30 s after the zone change both count")
+            r.pass(1_000)
+            assertEquals(
+                20_000L,
+                r.cycles.states[CycleKey("cycle", APP)]?.usedMs,
+                "the 20 s before the zone change count",
+            )
             r.engine.stop()
         }
 

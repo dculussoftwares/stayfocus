@@ -277,8 +277,7 @@ class BlockingEngine
                     latestInputs = i
                     if (tick != handledClockTick) {
                         handledClockTick = tick
-                        // The jump is not time spent in the app: start counting again from the new clock.
-                        session?.flushedAt = clock.instant()
+                        discardClockJump()
                     }
                     evaluateWhileInFront(pkg, i)
                 }
