@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Firestore security rules tests (run against the Firestore emulator)",
   "scripts": {
-    "test": "firebase emulators:exec --config ../firebase.json --only firestore --project demo-stayfocus \"node --test\""
+    "test": "firebase emulators:exec --config ../firebase.json --only firestore --project demo-stayfocus \"node --test\"",
+    "test:android": "firebase emulators:exec --config ../firebase.json --only auth,firestore --project demo-stayfocus \"JAVA_HOME=${GRADLE_JAVA_HOME:-$JAVA_HOME} ../../gradlew -p ../.. :core:sync:testDebugUnitTest --tests *FirebaseAuthRepositoryEmulatorTest\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "5.0.0",

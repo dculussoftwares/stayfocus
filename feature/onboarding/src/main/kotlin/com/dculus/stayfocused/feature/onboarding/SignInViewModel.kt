@@ -178,7 +178,9 @@ class SignInViewModel
         private fun AuthResult.Failure.toError(): AuthError =
             when (reason) {
                 AuthFailure.InvalidCredentials -> AuthError.WrongCredentials
+                AuthFailure.InvalidEmail -> AuthError.InvalidEmail
                 AuthFailure.EmailInUse -> AuthError.EmailInUse
+                AuthFailure.WeakPassword -> AuthError.ShortPassword
                 AuthFailure.Network -> AuthError.Network
                 AuthFailure.Other -> AuthError.Other
             }

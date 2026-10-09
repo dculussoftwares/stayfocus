@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.dculus.stayfocused.core.sync.AppCheckInstaller
+import com.dculus.stayfocused.core.sync.AuthRepository
 import com.dculus.stayfocused.core.usage.UsageCacheScheduler
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
@@ -14,6 +15,10 @@ class StayFocusedApp :
     Configuration.Provider {
     @Inject
     lateinit var appCheckInstaller: AppCheckInstaller
+
+    /** Injected so the repository exists from app start: it restores the session and repairs a missing profile. */
+    @Inject
+    lateinit var authRepository: AuthRepository
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
