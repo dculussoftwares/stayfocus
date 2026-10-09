@@ -31,15 +31,15 @@ internal class FirebaseAuthRepository(
 ) : AuthRepository {
     private val profileJobs = ConcurrentHashMap<String, Job>()
 
+    init {
+        // Lives as long as the app (this repository is a singleton created at app start): every signed-in user,
+        // including a session restored after a restart, gets a profile if its earlier write never completed.
+        auth.addAuthStateListener { it.currentUser?.let(::ensureProfileInBackground) }
+    }
+
     override val currentUser: Flow<AuthUser?> =
         callbackFlow {
-            val listener =
-                FirebaseAuth.AuthStateListener {
-                    val user = it.currentUser
-                    // Also covers a session restored after a restart whose profile write never completed.
-                    if (user != null) ensureProfileInBackground(user)
-                    trySend(user?.toAuthUser())
-                }
+            val listener = FirebaseAuth.AuthStateListener { trySend(it.currentUser?.toAuthUser()) }
             auth.addAuthStateListener(listener)
             awaitClose { auth.removeAuthStateListener(listener) }
         }
@@ -103,8 +103,8 @@ internal class FirebaseAuthRepository(
 
     /**
      * Creates `users/{uid}` without holding up the sign-in: Firestore may be offline, and a queued write must not keep
-     * the sign-in screen waiting. Retries with backoff; if it still fails, the next app start (the auth state listener
-     * above) tries again. One job per uid at a time.
+     * the sign-in screen waiting. Retries with backoff; if it still fails, the next app start (the listener in `init`)
+     * tries again. One job per uid at a time.
      */
     private fun ensureProfileInBackground(user: FirebaseUser) {
         profileJobs.compute(user.uid) { _, running ->

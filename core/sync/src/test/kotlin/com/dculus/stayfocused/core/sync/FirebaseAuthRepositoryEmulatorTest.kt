@@ -109,6 +109,20 @@ class FirebaseAuthRepositoryEmulatorTest {
         error("The profile was not created")
     }
 
+    /** Wipes the emulator's documents (security rules forbid a client delete of a profile). */
+    private fun clearFirestore() {
+        val host = System.getenv("FIRESTORE_EMULATOR_HOST")
+        val endpoint = "http://$host/emulator/v1/projects/demo-stayfocus/databases/(default)/documents"
+        val connection =
+            java.net
+                .URI(endpoint)
+                .toURL()
+                .openConnection() as java.net.HttpURLConnection
+        connection.requestMethod = "DELETE"
+        check(connection.responseCode == java.net.HttpURLConnection.HTTP_OK) { "Could not clear Firestore" }
+        connection.disconnect()
+    }
+
     private fun newEmail() = "user-${UUID.randomUUID()}@example.com"
 
     @Test
@@ -123,6 +137,24 @@ class FirebaseAuthRepositoryEmulatorTest {
             assertEquals(email, profile.getString("email"))
             assertEquals(email.substringBefore('@'), profile.getString("displayName"))
             assertNotNull(profile.getTimestamp("createdAt"))
+        }
+
+    @Test
+    fun aNewRepositoryRepairsAMissingProfileForTheRestoredSession() =
+        runIdling {
+            repository.createAccount(newEmail(), "secret1")
+            val uid =
+                repository.currentUser
+                    .filterNotNull()
+                    .first()
+                    .uid
+            awaitProfile(uid)
+            clearFirestore()
+
+            // A restart: a new repository finds the persisted session and recreates the profile without a sign-in.
+            FirebaseAuthRepository(auth, firestore)
+
+            assertNotNull(awaitProfile(uid))
         }
 
     @Test
