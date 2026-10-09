@@ -6,7 +6,7 @@ tags:
 - launchApp:
     clearState: true
 - tapOn: "Get started"
-- tapOn: "Continue"
+- tapOn: "Continue without an account"
 - tapOn: "Continue"
 - assertVisible: "Lock distracting apps for a while"
 - tapOn: "Take a break"

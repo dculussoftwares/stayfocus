@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToIndex
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -31,6 +32,7 @@ import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.RemoteDevice
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
+import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
@@ -50,6 +52,7 @@ import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
+import com.dculus.stayfocused.feature.onboarding.SignInViewModel
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -96,6 +99,7 @@ class AppNavigationTest {
             },
         )
 
+    private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
     private val homeViewModel = HomeViewModel(FakeBreakRepository(), Clock.systemUTC())
     private val wizardViewModel =
         WizardViewModel(
@@ -118,6 +122,7 @@ class AppNavigationTest {
                     wizardViewModel = { wizardViewModel },
                     insightsContent = { NavPlaceholderScreen(title = "Insights") },
                     homeViewModel = { homeViewModel },
+                    signInViewModel = { signInViewModel },
                 )
             }
         }
@@ -235,10 +240,10 @@ class AppNavigationTest {
         assertTrue(!tabBarVisible())
         composeRule.onNodeWithText("Get started").performClick()
         composeRule.waitForIdle()
-        repeat(2) {
-            composeRule.onNodeWithText("Continue").performClick()
-            composeRule.waitForIdle()
-        }
+        composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
+        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
         assertTrue(tabBarVisible())
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Welcome::class) })

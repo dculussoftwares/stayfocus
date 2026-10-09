@@ -12,6 +12,14 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:sync"))
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.timber)
+
+    testImplementation(project(":core:testing"))
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
     testImplementation(libs.robolectric)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
