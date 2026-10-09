@@ -29,6 +29,16 @@ class ForegroundAppService : AccessibilityService() {
                 if (intent.action == Intent.ACTION_SCREEN_OFF) tracker.onScreenOff()
             }
         }
+    private val clockReceiver =
+        object : BroadcastReceiver() {
+            override fun onReceive(
+                context: Context,
+                intent: Intent,
+            ) {
+                // Schedules are local-time ranges: a changed clock or zone moves every boundary.
+                engine.onClockChanged()
+            }
+        }
     private var receiverRegistered = false
 
     override fun onServiceConnected() {
@@ -37,6 +47,13 @@ class ForegroundAppService : AccessibilityService() {
         engine.start()
         if (!receiverRegistered) {
             registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
+            registerReceiver(
+                clockReceiver,
+                IntentFilter().apply {
+                    addAction(Intent.ACTION_TIME_CHANGED)
+                    addAction(Intent.ACTION_TIMEZONE_CHANGED)
+                },
+            )
             receiverRegistered = true
         }
     }
@@ -59,6 +76,7 @@ class ForegroundAppService : AccessibilityService() {
         engine.stop()
         if (receiverRegistered) {
             unregisterReceiver(screenOffReceiver)
+            unregisterReceiver(clockReceiver)
             receiverRegistered = false
         }
         super.onDestroy()

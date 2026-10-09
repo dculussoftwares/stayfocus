@@ -60,3 +60,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M4-02 Block wizard host, steps 1 and 2
 - Check: on an emulator or phone, Block tab > New block opens the wizard; tapping a type card goes to the app grid (real launcher icons and today's time); Continue with 0 apps shows "Pick at least one app"; system Back steps back one step and closes from step 1; "Rather just describe it?" returns to the Block tab with the Describe panel open (needs AI enabled in settings). The Robolectric tests cover the flow with fakes.
 - How: install `:app`, open Block > New block. A Maestro flow can be added once step 3 and the save (M4-03 to M4-05) exist.
+
+## M2-08 Schedules
+- Check: a schedule starting 1 minute from now blocks the already-open app when it starts; changing the device time or time zone re-evaluates immediately.
+- How: create a "Block during hours" block starting in 1 minute for a non-allowlisted app, keep the app open and watch for the block screen at the start time. Then, with the app open, move the device time across a schedule boundary (Settings > Date & time, automatic time off) and confirm blocking changes immediately; finally switch the time zone and confirm the block follows local time. Overnight (22:00-07:00) and day-chip logic is covered by RuleEvaluatorTest; the engine timer by BlockingEngineTest.

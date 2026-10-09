@@ -30,9 +30,11 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.Clock
@@ -78,12 +80,14 @@ class BlockingEngine
         private val presenter: BlockPresenter,
         private val breakEnd: BreakEndNotifier,
         private val clock: Clock,
+        private val monotonic: MonotonicClock,
         @EngineDispatcher private val dispatcher: CoroutineDispatcher,
     ) {
         /** An uninterrupted stay of [pkg] in front. [counting] is false while it is being blocked. */
         private class Session(
             val pkg: String,
             var flushedAt: Instant,
+            var flushedMono: Long,
             var counting: Boolean = true,
         )
 
@@ -117,7 +121,23 @@ class BlockingEngine
         /** End of the break the engine is waiting to announce; survives a restart of the run, not of the engine. */
         @Volatile private var watchedBreakEnd: Instant? = null
 
+        // Only touched by the (single) collecting coroutine of a run.
+        private var handledClockTick = 0
+
+        @Volatile private var announcedBreak: BreakSession? = null
+
         @Volatile private var cachedAllowlist: Set<String>? = null
+
+        /** Bumped when the wall clock or time zone changes, so pending timers are re-computed. */
+        private val clockChanges = MutableStateFlow(0)
+
+        /**
+         * The wall clock or the time zone was changed (`ACTION_TIME_CHANGED` / `ACTION_TIMEZONE_CHANGED`): every
+         * schedule boundary moved, so the decision is evaluated again right away instead of at the old wake-up.
+         */
+        fun onClockChanged() {
+            clockChanges.update { it + 1 }
+        }
 
         fun start() {
             synchronized(lock) {
@@ -125,6 +145,7 @@ class BlockingEngine
                 val s = CoroutineScope(SupervisorJob() + dispatcher)
                 scope = s
                 running = true
+                handledClockTick = clockChanges.value
                 val previous = shutdown
                 s.launch {
                     previous?.join()
@@ -176,6 +197,7 @@ class BlockingEngine
                 bookingInputs = null
                 latestInputs = null
                 watchedBreakEnd = null
+                announcedBreak = null
                 cachedAllowlist = null
                 cycleCache.clear()
                 unsaved.clear()
@@ -251,11 +273,39 @@ class BlockingEngine
                 ) { b, l, br, f, a -> EngineInputs(b, l, br, f, a) }
             coroutineScope {
                 launch { watchBreakEnd() }
-                combine(tracker.foreground.map { it?.packageName }, inputs) { pkg, i -> pkg to i }
-                    .collectLatest { (pkg, i) ->
-                        latestInputs = i
-                        evaluateWhileInFront(pkg, i)
+                combine(tracker.foreground.map { it?.packageName }, inputs, clockChanges) { pkg, i, tick ->
+                    Triple(pkg, i, tick)
+                }.collectLatest { (pkg, i, tick) ->
+                    latestInputs = i
+                    if (tick != handledClockTick) {
+                        handledClockTick = tick
+                        discardClockJump()
                     }
+                    evaluateWhileInFront(pkg, i)
+                }
+            }
+        }
+
+        /**
+         * After a clock change the time since the last checkpoint is measured with the monotonic clock, which a
+         * changed wall clock or zone does not move. It is booked at the timestamps it really happened at (the old
+         * timeline, so a jump across midnight or an hour boundary cannot move it into another day), and counting
+         * restarts from the new clock: the jump itself is never foreground time.
+         */
+        private suspend fun discardClockJump() {
+            val s = session ?: return
+            val inputs = bookingInputs
+            // Taken first: use while the bookings below wait for storage counts towards the next checkpoint.
+            val newAt = clock.instant()
+            val newMono = monotonic.elapsedMs()
+            val elapsed = (newMono - s.flushedMono).coerceAtLeast(0L)
+            val from = s.flushedAt
+            s.flushedAt = newAt
+            s.flushedMono = newMono
+            if (s.counting && inputs != null && elapsed > 0L) {
+                withContext(NonCancellable) {
+                    bookForeground(s.pkg, from, from.plusMillis(elapsed), inputs, inputs, stateAt = newAt)
+                }
             }
         }
 
@@ -266,12 +316,14 @@ class BlockingEngine
          * wall clock is re-read after every wait so a clock that moved backwards never ends the break early.
          */
         private suspend fun watchBreakEnd() {
-            breaks.observe().collectLatest { session ->
+            // A clock change restarts the wait: the old delay still counts the previous clock.
+            combine(breaks.observe(), clockChanges) { b, _ -> b }.collectLatest { session ->
                 if (session == null) {
                     watchedBreakEnd = null
                     return@collectLatest
                 }
                 val end = session.endsAt
+                if (session == announcedBreak) return@collectLatest // a clock moved back must not repeat the alert
                 if (watchedBreakEnd != end) {
                     if (!end.isAfter(clock.instant())) return@collectLatest
                     watchedBreakEnd = end
@@ -282,6 +334,7 @@ class BlockingEngine
                     delay(wait)
                 }
                 watchedBreakEnd = null
+                announcedBreak = session
                 try {
                     breakEnd.breakEnded()
                 } catch (e: CancellationException) {
@@ -406,9 +459,10 @@ class BlockingEngine
                 when {
                     pkg == null -> null
                     previous?.pkg == pkg -> previous
-                    else -> Session(pkg, now)
+                    else -> Session(pkg, now, monotonic.elapsedMs())
                 }
             previous?.flushedAt = now
+            previous?.flushedMono = monotonic.elapsedMs()
             session = next
             bookingInputs = inputs
             if (previous != null && from != null && during != null) {
@@ -431,6 +485,7 @@ class BlockingEngine
             to: Instant,
             during: EngineInputs,
             current: EngineInputs,
+            stateAt: Instant = to,
         ) {
             recorder.record(pkg, from, to)
             val delta = Duration.between(from, to).toMillis()
@@ -442,11 +497,11 @@ class BlockingEngine
                     try {
                         val key = CycleKey(block.id, pkg)
                         val before = cycleCache[key] ?: cycleStore.load(key) ?: CycleState()
-                        val after = CycleStateMachine.advance(before, delta, to, block)
+                        val after = CycleStateMachine.advance(before, delta, stateAt, block)
                         cycleCache[key] = after
                         if (after != before || key in unsaved) {
                             unsaved += key
-                            cycleStore.save(key, after, to)
+                            cycleStore.save(key, after, stateAt)
                             unsaved -= key
                         }
                     } catch (

@@ -47,6 +47,6 @@ internal abstract class RepositoryModule {
         ): DataStore<Preferences> = context.settingsDataStore
 
         @Provides
-        fun clock(): Clock = Clock.systemUTC()
+        fun clock(): Clock = SystemZoneClock
     }
 }

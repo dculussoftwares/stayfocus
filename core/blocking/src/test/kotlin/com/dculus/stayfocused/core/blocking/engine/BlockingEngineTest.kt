@@ -102,11 +102,16 @@ private class MemoryCycleStore : CycleStateStore {
 private class VirtualClock(
     private val scope: TestScope,
 ) : Clock() {
-    override fun getZone(): ZoneId = ZoneOffset.UTC
+    var currentZone: ZoneId = ZoneOffset.UTC
+
+    override fun getZone(): ZoneId = currentZone
 
     override fun withZone(zone: ZoneId): Clock = this
 
-    override fun instant(): Instant = START.plusMillis(scope.testScheduler.currentTime)
+    /** Simulates the user setting the wall clock forward without the scheduler's time moving. */
+    var jumpMs = 0L
+
+    override fun instant(): Instant = START.plusMillis(scope.testScheduler.currentTime + jumpMs)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -150,6 +155,7 @@ class BlockingEngineTest {
                 presenter,
                 { breakEnds++ },
                 clock,
+                { scope.testScheduler.currentTime },
                 StandardTestDispatcher(scope.testScheduler),
             )
 
@@ -258,6 +264,137 @@ class BlockingEngineTest {
                     .single()
                     .second.reason,
             )
+            r.engine.stop()
+        }
+
+    @Test fun clockChangeReevaluatesScheduleImmediately() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(
+                block("sched", BlockType.SCHEDULE, range = TimeRange(LocalTime.of(10, 0), LocalTime.of(11, 0))),
+            )
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty())
+
+            // The wall clock is set past 10:00 while the timer for 10:00 is still pending.
+            r.clock.jumpMs = 5 * 60_000L
+            r.engine.onClockChanged()
+            r.scope.runCurrent()
+            assertEquals(1, r.presenter.shown.size)
+            r.engine.stop()
+        }
+
+    @Test fun clockJumpIsNotBookedAsForegroundTime() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            r.clock.jumpMs = 10 * 60_000L
+            r.engine.onClockChanged()
+            r.scope.runCurrent()
+            assertTrue(r.presenter.shown.isEmpty(), "a clock jump must not use up the cycle")
+            r.engine.stop()
+        }
+
+    @Test fun breakEndIsAnnouncedAfterClockJumpPastIt() =
+        runTest {
+            val r = rig(this)
+            r.breaks.start(5)
+            r.engine.start()
+            r.pass(1_000)
+            assertEquals(0, r.breakEnds)
+            r.clock.jumpMs = 10 * 60_000L
+            r.engine.onClockChanged()
+            r.scope.runCurrent()
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
+    @Test fun timeZoneChangeKeepsBookedForegroundTime() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(20_000)
+            r.clock.currentZone = ZoneOffset.ofHours(2)
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            assertEquals(
+                20_000L,
+                r.cycles.states[CycleKey("cycle", APP)]?.usedMs,
+                "the 20 s before the zone change count",
+            )
+            r.engine.stop()
+        }
+
+    @Test fun smallClockCorrectionIsNotChargedAsUse() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(20_000)
+            r.clock.jumpMs = 40_000L
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty())
+            assertEquals(20_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
+            r.engine.stop()
+        }
+
+    @Test fun clockRolledBackDoesNotRepeatBreakEnd() =
+        runTest {
+            val r = rig(this)
+            r.breaks.start(5)
+            r.engine.start()
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(1, r.breakEnds)
+            r.clock.jumpMs = -10 * 60_000L
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
+    @Test fun newBreakAfterRollbackIsStillAnnounced() =
+        runTest {
+            val r = rig(this)
+            r.breaks.start(5)
+            r.engine.start()
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(1, r.breakEnds)
+            // Clock rolled back, then a new break replaces the finished one: it is a different session, announce it.
+            r.clock.jumpMs = -(5 * 60_000L + 1_000)
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            r.breaks.end()
+            r.breaks.start(5)
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(2, r.breakEnds)
+            r.engine.stop()
+        }
+
+    @Test fun timeZoneChangeReevaluatesScheduleImmediately() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(
+                block("sched", BlockType.SCHEDULE, range = TimeRange(LocalTime.of(10, 0), LocalTime.of(11, 0))),
+            )
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty())
+
+            // Same instant (09:59 UTC), but the device is now at UTC+1 where it is 10:59 and the schedule runs.
+            r.clock.currentZone = ZoneOffset.ofHours(1)
+            r.engine.onClockChanged()
+            r.scope.runCurrent()
+            assertEquals(1, r.presenter.shown.size)
             r.engine.stop()
         }
 

@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.blocking.engine
 
+import android.os.SystemClock
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.screen.BlockDecisionSource
 import com.dculus.stayfocused.core.blocking.screen.BlockPresenter
@@ -75,6 +76,9 @@ internal abstract class EngineModule {
         @Provides
         @EngineDispatcher
         fun dispatcher(): CoroutineDispatcher = Dispatchers.Default
+
+        @Provides
+        fun monotonic(): MonotonicClock = MonotonicClock { SystemClock.elapsedRealtime() }
 
         /** Nothing grants temporary allowances yet (unlock requests land in a later story). */
         @Provides
