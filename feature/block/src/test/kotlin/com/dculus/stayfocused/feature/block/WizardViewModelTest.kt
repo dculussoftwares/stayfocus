@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.Assert.assertEquals
@@ -222,9 +223,32 @@ class WizardViewModelTest {
         }
 
     @Test
-    fun continueIsIgnoredUntilReady() {
-        apps.apps.value = emptyList()
-        val vm = viewModel()
-        assertTrue(vm.state.value.ready)
+    fun continueIsIgnoredWhileLoading() {
+        val pending = MutableSharedFlow<List<TargetApp>>()
+        val loading =
+            object : TargetAppsProvider {
+                override fun apps(target: BlockTarget): Flow<List<TargetApp>> = pending
+            }
+        val vm = WizardViewModel(SavedStateHandle(), loading, devices, settings)
+        assertFalse(vm.state.value.ready)
+        vm.next()
+        assertEquals(WIZARD_STEP_TYPE, vm.state.value.step)
+    }
+
+    @Test
+    fun retargetingATemplateKeepsItsAppsAndStep() {
+        devices.devices.value = listOf(device())
+        val perTarget =
+            object : TargetAppsProvider {
+                override fun apps(target: BlockTarget): Flow<List<TargetApp>> =
+                    MutableStateFlow(if (target == BlockTarget.ThisPhone) defaultApps() else emptyList())
+            }
+        val handle = SavedStateHandle(mapOf("target" to "d1", "prefill" to "social_limit"))
+        val vm = WizardViewModel(handle, perTarget, devices, settings)
+        assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
+        vm.selectTarget(BlockTarget.ThisPhone)
+        assertEquals(WIZARD_STEP_RULES, vm.state.value.step)
+        assertEquals(setOf(pkg("instagram"), pkg("reddit"), pkg("x")), vm.state.value.draft.apps)
+        assertEquals(BlockTarget.ThisPhone, vm.state.value.draft.target)
     }
 }
