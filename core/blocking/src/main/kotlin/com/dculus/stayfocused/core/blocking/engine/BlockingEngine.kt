@@ -295,13 +295,18 @@ class BlockingEngine
         private suspend fun discardClockJump() {
             val s = session ?: return
             val inputs = bookingInputs
-            val elapsed = (monotonic.elapsedMs() - s.flushedMono).coerceAtLeast(0L)
+            // Taken first: use while the bookings below wait for storage counts towards the next checkpoint.
+            val newAt = clock.instant()
+            val newMono = monotonic.elapsedMs()
+            val elapsed = (newMono - s.flushedMono).coerceAtLeast(0L)
+            val from = s.flushedAt
+            s.flushedAt = newAt
+            s.flushedMono = newMono
             if (s.counting && inputs != null && elapsed > 0L) {
-                val from = s.flushedAt
-                withContext(NonCancellable) { bookForeground(s.pkg, from, from.plusMillis(elapsed), inputs, inputs) }
+                withContext(NonCancellable) {
+                    bookForeground(s.pkg, from, from.plusMillis(elapsed), inputs, inputs, stateAt = newAt)
+                }
             }
-            s.flushedAt = clock.instant()
-            s.flushedMono = monotonic.elapsedMs()
         }
 
         /**
@@ -480,6 +485,7 @@ class BlockingEngine
             to: Instant,
             during: EngineInputs,
             current: EngineInputs,
+            stateAt: Instant = to,
         ) {
             recorder.record(pkg, from, to)
             val delta = Duration.between(from, to).toMillis()
@@ -491,11 +497,11 @@ class BlockingEngine
                     try {
                         val key = CycleKey(block.id, pkg)
                         val before = cycleCache[key] ?: cycleStore.load(key) ?: CycleState()
-                        val after = CycleStateMachine.advance(before, delta, to, block)
+                        val after = CycleStateMachine.advance(before, delta, stateAt, block)
                         cycleCache[key] = after
                         if (after != before || key in unsaved) {
                             unsaved += key
-                            cycleStore.save(key, after, to)
+                            cycleStore.save(key, after, stateAt)
                             unsaved -= key
                         }
                     } catch (
