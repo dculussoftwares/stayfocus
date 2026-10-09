@@ -1,9 +1,288 @@
 rules_version = '2';
 
-// Baseline: deny everything. M7-03 replaces this file with the real rules (plan section 7) and their emulator tests.
+// Security boundary of the app (docs/IMPLEMENTATION_PLAN.md sections 7 and 8). Deny by default; every allowed write
+// validates its fields. Tested by firebase/rules-tests (emulator, run in CI).
 // Terraform (infra/firebase/firestore.tf) releases this file; a change here shows up as a ruleset diff in the PR plan.
+//
+// Roles:
+//   parent: a non-anonymous user, owns users/{uid}.
+//   child:  a (usually anonymous) user whose uid equals devices/{id}.childUid. Device docs are created by Functions only.
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isParent(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider != 'anonymous';
+    }
+
+    // deviceDoc is the device document's data map.
+    function isChildOf(deviceDoc) {
+      return signedIn() && deviceDoc.childUid == request.auth.uid;
+    }
+
+    function deviceData(uid, deviceId) {
+      return get(/databases/$(database)/documents/users/$(uid)/devices/$(deviceId)).data;
+    }
+
+    function deviceExists(uid, deviceId) {
+      return exists(/databases/$(database)/documents/users/$(uid)/devices/$(deviceId));
+    }
+
+    function isChildOfDevice(uid, deviceId) {
+      return deviceExists(uid, deviceId) && isChildOf(deviceData(uid, deviceId));
+    }
+
+    // Only the listed fields differ between the stored and the incoming document.
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    function isStr(v, maxLen) {
+      return v is string && v.size() > 0 && v.size() <= maxLen;
+    }
+
+    function isOptStr(data, key, maxLen) {
+      return !(key in data) || isStr(data[key], maxLen);
+    }
+
+    function isIntIn(v, lo, hi) {
+      return v is int && v >= lo && v <= hi;
+    }
+
+    // Client timestamps must be the server time, so they cannot be back- or forward-dated.
+    function isNow(v) {
+      return v is timestamp && v == request.time;
+    }
+
+    function isOptTimestamp(data, key) {
+      return !(key in data) || data[key] == null || data[key] is timestamp;
+    }
+
+    function blockIsValid(b) {
+      return b.keys().hasOnly(['id', 'type', 'name', 'apps', 'limitMins', 'period', 'useMins', 'restMins', 'range',
+                               'durationMins', 'startedAt', 'days', 'enabled', 'createdAt', 'source'])
+        && b.keys().hasAll(['type', 'name', 'apps', 'days', 'enabled', 'createdAt', 'source'])
+        && isOptStr(b, 'id', 128)
+        && b.type in ['LIMIT', 'CYCLE', 'SCHEDULE', 'NOW']
+        && isStr(b.name, 100)
+        && b.apps is list && b.apps.size() <= 300
+        && b.enabled is bool
+        && isIntIn(b.days, 0, 127)
+        && b.createdAt is timestamp
+        && b.source in ['MANUAL', 'TEMPLATE', 'AI']
+        && (!('period' in b) || b.period == null || b.period in ['DAILY', 'HOURLY'])
+        && (!('limitMins' in b) || b.limitMins == null || isIntIn(b.limitMins, 1, 1440))
+        && (!('useMins' in b) || b.useMins == null || isIntIn(b.useMins, 1, 1440))
+        && (!('restMins' in b) || b.restMins == null || isIntIn(b.restMins, 1, 1440))
+        && (!('durationMins' in b) || b.durationMins == null || isIntIn(b.durationMins, 1, 1440))
+        && (!('range' in b) || b.range == null || b.range is map)
+        && isOptTimestamp(b, 'startedAt')
+        // Fields each block type needs.
+        && (b.type != 'LIMIT' || (b.get('limitMins', null) != null && b.get('period', null) != null))
+        && (b.type != 'CYCLE' || (b.get('useMins', null) != null && b.get('restMins', null) != null))
+        && (b.type != 'SCHEDULE' || rangeIsValid(b.get('range', null)))
+        && (b.type != 'NOW' || (isIntIn(b.get('durationMins', 0), 1, 480) && b.get('startedAt', null) is timestamp));
+    }
+
+    // A schedule range is {start, end} as HH:mm strings (the end may be earlier than the start: crosses midnight).
+    function rangeIsValid(r) {
+      return r is map
+        && r.keys().hasOnly(['start', 'end']) && r.keys().hasAll(['start', 'end'])
+        && r.start is string && r.start.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && r.end is string && r.end.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && r.start != r.end;
+    }
+
+    // Each command type carries a fixed payload with bounded values.
+    function payloadIsValid(type, p) {
+      return (type in ['BLOCK_APP', 'UNBLOCK_APP'] && p.keys().hasOnly(['pkg']) && p.keys().hasAll(['pkg'])
+              && isStr(p.pkg, 255))
+        || (type == 'START_FOCUS' && p.keys().hasOnly(['mins']) && p.keys().hasAll(['mins'])
+            && isIntIn(p.mins, 1, 480))
+        || (type in ['STOP_FOCUS', 'SYNC_BLOCKS'] && p.keys().size() == 0)
+        || (type == 'APPROVE_REQUEST' && p.keys().hasOnly(['reqId', 'mins']) && p.keys().hasAll(['reqId', 'mins'])
+            && isStr(p.reqId, 128) && isIntIn(p.mins, 1, 480))
+        || (type == 'DENY_REQUEST' && p.keys().hasOnly(['reqId']) && p.keys().hasAll(['reqId'])
+            && isStr(p.reqId, 128))
+        || (type == 'REMIND_PERMISSION' && p.keys().hasOnly(['permission']) && p.keys().hasAll(['permission'])
+            && isStr(p.permission, 50));
+    }
+
+    // True when `key` is unchanged or, if it changes, the new value is the server time.
+    function lastSeenIsNowIfChanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastSeen'])
+        || isNow(request.resource.data.lastSeen);
+    }
+
+    // focusEndsAt may only be cleared or set to a moment at most 8 hours ahead (the longest Block now).
+    function focusEndsAtIsValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['focusEndsAt'])
+        || request.resource.data.focusEndsAt == null
+        || (request.resource.data.focusEndsAt is timestamp
+            && request.resource.data.focusEndsAt <= request.time + duration.value(8, 'h'));
+    }
+
+    // ---------- users/{uid} (parent profile) ----------
+
+    match /users/{uid} {
+      allow read: if isParent(uid);
+      allow create: if isParent(uid)
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'createdAt'])
+        && request.resource.data.keys().hasAll(['displayName', 'email', 'createdAt'])
+        && isStr(request.resource.data.displayName, 100)
+        && isStr(request.resource.data.email, 254)
+        && isNow(request.resource.data.createdAt);
+      allow update: if isParent(uid)
+        && onlyChanges(['displayName', 'email'])
+        && isStr(request.resource.data.displayName, 100)
+        && isStr(request.resource.data.email, 254);
+      // No client delete: account deletion goes through the deleteAccount Function.
+
+      // The parent's own push tokens (document id = FCM token).
+      match /fcmTokens/{token} {
+        allow read: if isParent(uid);
+        allow create, update: if isParent(uid)
+          && token.size() <= 4096
+          && request.resource.data.keys().hasOnly(['createdAt', 'platform'])
+          && request.resource.data.keys().hasAll(['createdAt', 'platform'])
+          && isNow(request.resource.data.createdAt)
+          && request.resource.data.platform in ['android'];
+        allow delete: if isParent(uid);
+      }
+
+      // Device docs are created and deleted by Functions only (approveLink, unlinkDevice).
+      match /devices/{deviceId} {
+        allow read: if isParent(uid) || isChildOf(resource.data);
+        // The child reports its own status (and mirrors its focus end time); nothing else on the device doc is client-writable.
+        allow update: if isChildOf(resource.data)
+          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt'])
+          // The status fields are always present (approveLink creates them); the child may not delete them.
+          && request.resource.data.keys().hasAll(['battery', 'charging', 'currentApp', 'online', 'lastSeen'])
+          && (!('battery' in request.resource.data) || request.resource.data.battery == null
+              || isIntIn(request.resource.data.battery, 0, 100))
+          && (!('charging' in request.resource.data) || request.resource.data.charging is bool)
+          && (!('online' in request.resource.data) || request.resource.data.online is bool)
+          && (!('currentApp' in request.resource.data) || request.resource.data.currentApp == null
+              || isStr(request.resource.data.currentApp, 255))
+          && isOptTimestamp(request.resource.data, 'lastSeen')
+          && lastSeenIsNowIfChanged()
+          && focusEndsAtIsValid();
+
+        // Blocks that apply to this device. Written by the parent, read by the child.
+        match /blocks/{blockId} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create, update: if isParent(uid)
+            && deviceExists(uid, deviceId)
+            && blockIsValid(request.resource.data);
+          allow delete: if isParent(uid);
+        }
+
+        // Parent -> child commands. The parent creates (fixed schema); the child only acknowledges.
+        match /commands/{cmdId} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create: if isParent(uid)
+            && deviceExists(uid, deviceId)
+            && request.resource.data.keys().hasOnly(['type', 'payload', 'createdAt', 'status'])
+            && request.resource.data.keys().hasAll(['type', 'payload', 'createdAt', 'status'])
+            && request.resource.data.type in ['BLOCK_APP', 'UNBLOCK_APP', 'START_FOCUS', 'STOP_FOCUS',
+                                              'APPROVE_REQUEST', 'DENY_REQUEST', 'SYNC_BLOCKS', 'REMIND_PERMISSION']
+            && request.resource.data.payload is map
+            && payloadIsValid(request.resource.data.type, request.resource.data.payload)
+            && request.resource.data.status == 'pending'
+            && isNow(request.resource.data.createdAt);
+          allow update: if isChildOfDevice(uid, deviceId)
+            && resource.data.status == 'pending'
+            && onlyChanges(['status', 'ackAt'])
+            && request.resource.data.status in ['done', 'failed', 'expired']
+            && (!('ackAt' in request.resource.data) || isNow(request.resource.data.ackAt));
+        }
+
+        // The child asks for more time; the parent decides.
+        match /requests/{reqId} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create: if isChildOfDevice(uid, deviceId)
+            && request.resource.data.keys().hasOnly(['app', 'minutes', 'status', 'createdAt'])
+            && request.resource.data.keys().hasAll(['app', 'minutes', 'status', 'createdAt'])
+            && isStr(request.resource.data.app, 255)
+            && isIntIn(request.resource.data.minutes, 1, 480)
+            && request.resource.data.status == 'pending'
+            && isNow(request.resource.data.createdAt);
+          allow update: if isParent(uid)
+            && resource.data.status == 'pending'
+            && onlyChanges(['status', 'decidedAt'])
+            && request.resource.data.status in ['approved', 'denied']
+            && isNow(request.resource.data.decidedAt);
+        }
+
+        // Tamper and offline alerts raised by the child; the parent dismisses them.
+        match /alerts/{alertId} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create: if isChildOfDevice(uid, deviceId)
+            && request.resource.data.keys().hasOnly(['kind', 'permission', 'createdAt', 'dismissed'])
+            && request.resource.data.keys().hasAll(['kind', 'createdAt', 'dismissed'])
+            && request.resource.data.kind in ['permission_lost', 'unlinked', 'offline']
+            && isOptStr(request.resource.data, 'permission', 50)
+            && isNow(request.resource.data.createdAt)
+            && request.resource.data.dismissed == false;
+          allow update: if isParent(uid)
+            && onlyChanges(['dismissed'])
+            && request.resource.data.dismissed is bool;
+        }
+
+        // Daily usage written by the child (document id = yyyy-MM-dd).
+        match /usage/{date} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create, update: if isChildOfDevice(uid, deviceId)
+            && date.matches('^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-9]))$')
+            && request.resource.data.keys().hasOnly(['totalMins', 'apps'])
+            && request.resource.data.keys().hasAll(['totalMins', 'apps'])
+            && isIntIn(request.resource.data.totalMins, 0, 1440)
+            && request.resource.data.apps is list
+            && request.resource.data.apps.size() <= 300;
+        }
+
+        // The child's launchable apps (document id = package name).
+        match /apps/{pkg} {
+          allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
+          allow create, update: if isChildOfDevice(uid, deviceId)
+            && pkg.size() <= 255
+            && request.resource.data.keys().hasOnly(['label'])
+            && request.resource.data.keys().hasAll(['label'])
+            && isStr(request.resource.data.label, 100);
+          allow delete: if isChildOfDevice(uid, deviceId);
+        }
+      }
+    }
+
+    // ---------- link tokens (device pairing) ----------
+
+    // The child creates a short-lived token; claiming and approval go through Functions (admin SDK).
+    match /linkTokens/{token} {
+      allow read: if signedIn() && resource.data.childUid == request.auth.uid;
+      allow create: if signedIn()
+        && token.size() >= 16 && token.size() <= 128
+        && request.resource.data.keys().hasOnly(['childUid', 'model', 'createdAt', 'expiresAt', 'code', 'status'])
+        && request.resource.data.keys().hasAll(['childUid', 'model', 'createdAt', 'expiresAt', 'code', 'status'])
+        && request.resource.data.childUid == request.auth.uid
+        && isStr(request.resource.data.model, 100)
+        && isNow(request.resource.data.createdAt)
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt <= request.time + duration.value(5, 'm')
+        && request.resource.data.code is string
+        && request.resource.data.code.matches('^[0-9]{6}$')
+        && request.resource.data.status == 'open';
+      allow update, delete: if false;
+    }
+
+    // rateLimits/** and anything else: Functions (admin SDK) only.
     match /{document=**} {
       allow read, write: if false;
     }

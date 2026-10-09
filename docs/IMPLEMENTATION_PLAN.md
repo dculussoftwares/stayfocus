@@ -182,21 +182,43 @@ Dial configs (from the prototype `DIALS`):
 
 ---
 
-## 7. Firestore data model (M7/M8, refined in M7-03)
+## 7. Firestore data model (M7/M8, final in M7-03)
 
 ```
-users/{uid}                          { displayName, email, createdAt }
-users/{uid}/fcmTokens/{token}        { createdAt, platform }        parent's devices, for push
+users/{uid}                          { displayName, email, createdAt }                 parent profile
+users/{uid}/fcmTokens/{token}        { createdAt, platform: android }                  parent's devices, for push
 users/{uid}/devices/{deviceId}       { name, model, linkedAt, childUid, online, lastSeen, battery, charging, currentApp, focusEndsAt }
 users/{uid}/devices/{id}/blocks/{blockId}     Block (target = this device)
-users/{uid}/devices/{id}/commands/{cmdId}     { type, payload, createdAt, status: pending|done|failed|expired, ackAt }
-users/{uid}/devices/{id}/requests/{reqId}     { app, minutes, status: pending|approved|denied, createdAt, decidedAt }
+users/{uid}/devices/{id}/commands/{cmdId}     { type, payload, createdAt, status: pending|done|failed|expired, ackAt? }
+users/{uid}/devices/{id}/requests/{reqId}     { app, minutes, status: pending|approved|denied, createdAt, decidedAt? }
 users/{uid}/devices/{id}/alerts/{alertId}     { kind: permission_lost|unlinked|offline, permission?, createdAt, dismissed }
 users/{uid}/devices/{id}/usage/{yyyy-MM-dd}   { totalMins, apps: [{pkg, label, mins, opens}] }
 users/{uid}/devices/{id}/apps/{pkg}           { label }               child's launchable apps
 rateLimits/{uid_action}              Functions only, no client access
-linkTokens/{token}                   { childUid, model, createdAt, expiresAt (+5 min), claimedBy?, code (6 digits), status: open|claimed|used|declined }
+linkTokens/{token}                   { childUid, model, createdAt, expiresAt (<= now + 5 min), code (6 digits), status: open, claimedBy? }
+                                     claimedBy and later statuses (claimed|used|declined) are set by Functions only
 ```
+
+### Security rules (`firebase/firestore.rules`, tested in `firebase/rules-tests`)
+
+Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = user whose uid equals the device's `childUid`.
+
+| Path | Parent | Child |
+|---|---|---|
+| `users/{uid}` | read; create (`displayName`, `email`, `createdAt` = server time); update `displayName`/`email`; no delete | none |
+| `fcmTokens/{token}` | read, write, delete own | none |
+| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead); the status fields must stay present, so `approveLink` creates the doc with all of them: `online` and `charging` as booleans, `battery`, `currentApp` and `lastSeen` possibly null |
+| `blocks` | read, create, update, delete (whitelisted keys, enums and the fields each block type needs; device must exist) | read |
+| `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload fixed per type with bounded values) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
+| `requests` | read; decide a pending one (`status` approved/denied, `decidedAt`) | read; create (`app` <= 255, `minutes` 1..480, `pending`) |
+| `alerts` | read; update only `dismissed` | read; create (`kind` from the list, `dismissed: false`) |
+| `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps) |
+| `apps/{pkg}` | read | read; write `label` (<= 100), delete |
+| `linkTokens/{token}` | none | create with `childUid == auth.uid`, `expiresAt` in (now, now + 5 min], no `claimedBy`; read own; no update/delete |
+| `rateLimits/**`, anything else | none | none |
+
+Every client timestamp (`createdAt`, `decidedAt`, `ackAt`, `lastSeen`) must equal the server time (Block `createdAt`/`startedAt` and `focusEndsAt` are plain timestamps). The list contents of `usage.apps` and
+`blocks.apps` are only bounded by size (rules cannot iterate lists); readers must parse defensively.
 
 ---
 
@@ -222,6 +244,9 @@ the callable Functions and AI Logic.
 **Done without Functions:** parent → child commands (child's foreground-service Firestore listener), child status, usage,
 app list, requests and alerts (direct writes guarded by rules), offline detection (derived from `lastSeen` on the parent),
 AI (Firebase AI Logic from the app).
+
+**Firestore rules** are the main security boundary for everything done without Functions: see the table in section 7.
+Device docs, link-token claiming and deletes are denied to clients and go through Functions only.
 
 **Every Function** uses the shared secure wrapper from M7-02: App Check enforced, auth and role checked in code,
 `zod` input validation, per-uid rate limits, its own least-privilege service account, and no personal data in logs.
