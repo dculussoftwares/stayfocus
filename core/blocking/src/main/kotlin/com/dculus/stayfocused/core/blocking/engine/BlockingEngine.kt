@@ -287,13 +287,21 @@ class BlockingEngine
         }
 
         /**
-         * After a clock change the time since the last checkpoint is taken from the monotonic clock, which a changed
-         * wall clock or zone does not move: a jump is not booked as foreground time, real use before it is kept.
+         * After a clock change the time since the last checkpoint is measured with the monotonic clock, which a
+         * changed wall clock or zone does not move. It is booked at the timestamps it really happened at (the old
+         * timeline, so a jump across midnight or an hour boundary cannot move it into another day), and counting
+         * restarts from the new clock: the jump itself is never foreground time.
          */
-        private fun discardClockJump() {
+        private suspend fun discardClockJump() {
             val s = session ?: return
+            val inputs = bookingInputs
             val elapsed = (monotonic.elapsedMs() - s.flushedMono).coerceAtLeast(0L)
-            s.flushedAt = clock.instant().minusMillis(elapsed)
+            if (s.counting && inputs != null && elapsed > 0L) {
+                val from = s.flushedAt
+                withContext(NonCancellable) { bookForeground(s.pkg, from, from.plusMillis(elapsed), inputs, inputs) }
+            }
+            s.flushedAt = clock.instant()
+            s.flushedMono = monotonic.elapsedMs()
         }
 
         /**
