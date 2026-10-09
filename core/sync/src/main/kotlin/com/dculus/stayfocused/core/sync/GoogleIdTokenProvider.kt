@@ -6,7 +6,6 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.GetCredentialException
-import androidx.credentials.exceptions.GetCredentialInterruptedException
 import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
@@ -70,11 +69,14 @@ internal class CredentialManagerTokenProvider : GoogleIdTokenProvider {
     }
 }
 
-/** Cancelling the picker is not an error; no Google account on the device and a dropped connection are worded apart. */
+/**
+ * Cancelling the picker is not an error. No usable credential (no account, or one that needs signing in again) is
+ * worded apart; everything else, including an interrupted request, is a generic "try again": none of them proves the
+ * connection is down, and detecting that would need a new permission.
+ */
 internal fun GetCredentialException.toTokenResult(): GoogleTokenResult =
     when (this) {
         is GetCredentialCancellationException -> GoogleTokenResult.Cancelled
         is NoCredentialException -> GoogleTokenResult.Failed(AuthFailure.NoGoogleAccount)
-        is GetCredentialInterruptedException -> GoogleTokenResult.Failed(AuthFailure.Network)
         else -> GoogleTokenResult.Failed(AuthFailure.Other)
     }

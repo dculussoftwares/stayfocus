@@ -17,8 +17,8 @@ class GoogleIdTokenProviderTest {
     @Test fun noGoogleAccountIsWordedApart() =
         assertEquals(GoogleTokenResult.Failed(AuthFailure.NoGoogleAccount), map(NoCredentialException()))
 
-    @Test fun anInterruptedRequestIsANetworkProblem() =
-        assertEquals(GoogleTokenResult.Failed(AuthFailure.Network), map(GetCredentialInterruptedException()))
+    @Test fun anInterruptedRequestIsNotBlamedOnTheConnection() =
+        assertEquals(GoogleTokenResult.Failed(AuthFailure.Other), map(GetCredentialInterruptedException()))
 
     @Test fun anythingElseIsOther() =
         assertEquals(GoogleTokenResult.Failed(AuthFailure.Other), map(GetCredentialUnknownException()))
