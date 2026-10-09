@@ -58,6 +58,7 @@ data class BlockActions(
     val onSelectTab: (BlockTab) -> Unit = {},
     val onSetEnabled: (id: String, enabled: Boolean) -> Unit = { _, _ -> },
     val onTemplate: (BlockTemplate) -> Unit = {},
+    val onToggleAppLock: (pkg: String) -> Unit = {},
 )
 
 @Composable
@@ -111,8 +112,9 @@ fun BlockScreen(
                 onSelect = { actions.onSelectTab(BlockTab.entries[it]) },
             )
         }
-        // The All apps tab is filled in by M4-05.
-        if (state.tab == BlockTab.BLOCKS) {
+        if (state.tab == BlockTab.ALL_APPS) {
+            items(state.apps, key = { it.pkg }) { app -> AppRow(app) { actions.onToggleAppLock(app.pkg) } }
+        } else {
             if (state.blocks.isEmpty()) {
                 item { EmptyState() }
             } else {

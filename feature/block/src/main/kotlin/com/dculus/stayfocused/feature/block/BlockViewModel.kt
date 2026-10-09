@@ -4,13 +4,17 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
+import com.dculus.stayfocused.core.data.repository.LockedAppsRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.KnownApps
 import com.dculus.stayfocused.core.model.LinkedDevice
+import com.dculus.stayfocused.core.model.LockedApp
+import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.core.usage.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
@@ -19,11 +23,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import java.text.Collator
 import javax.inject.Inject
 
 enum class BlockTab { BLOCKS, ALL_APPS }
@@ -41,11 +49,22 @@ data class BlockRowUi(
     val appLabels: List<String>,
 )
 
+/** One row of the All apps tab. [locked] is a manual lock (indefinite) on the selected target. */
+data class AppRowUi(
+    val pkg: String,
+    val label: String,
+    val mins: Int,
+    val opens: Int,
+    val locked: Boolean,
+)
+
 data class BlockUiState(
     val targets: List<TargetUi> = listOf(TargetUi(BlockTarget.ThisPhone, null, 0)),
     val selected: BlockTarget = BlockTarget.ThisPhone,
     val tab: BlockTab = BlockTab.BLOCKS,
     val blocks: List<BlockRowUi> = emptyList(),
+    /** All apps tab: launchable apps of the selected target, A to Z. */
+    val apps: List<AppRowUi> = emptyList(),
     /** The "AI Describe" button is shown only when the AI feature is on. */
     val aiAvailable: Boolean = false,
     val aiOpen: Boolean = false,
@@ -74,6 +93,8 @@ private data class Remote(
     val devices: List<LinkedDevice>,
     val blocksByTarget: Map<BlockTarget, List<Block>>,
     val installed: List<AppInfo>,
+    val locked: List<LockedApp>,
+    val today: Map<String, AppUsageStat>,
     val aiEnabled: Boolean,
 )
 
@@ -87,8 +108,11 @@ class BlockViewModel
         linkedDevices: LinkedDevicesRepository,
         installedApps: InstalledAppsRepository,
         settings: SettingsRepository,
+        private val lockedApps: LockedAppsRepository,
+        usage: UsageRepository,
     ) : ViewModel() {
         private val local = MutableStateFlow(LocalState())
+        private val lockMutex = Mutex()
         private val eventChannel = Channel<BlockEvent>(Channel.BUFFERED)
 
         val events: Flow<BlockEvent> = eventChannel.receiveAsFlow()
@@ -117,8 +141,10 @@ class BlockViewModel
                         perTarget,
                         installedApps.observeLaunchableApps(),
                         settings.settings,
-                    ) { byTarget, installed, s ->
-                        Remote(devices, byTarget, installed, s.aiEnabled)
+                        lockedApps.observeAll(),
+                        usage.today(),
+                    ) { byTarget, installed, s, locked, today ->
+                        Remote(devices, byTarget, installed, locked, today.apps.associateBy { it.pkg }, s.aiEnabled)
                     }
                 }
 
@@ -144,6 +170,20 @@ class BlockViewModel
             viewModelScope.launch { blocks.setEnabled(id, enabled) }
         }
 
+        /**
+         * Flips the manual lock (indefinite) of [pkg] on the selected target. The current state is read from the
+         * repository, under a lock, so quick repeated taps alternate lock and unlock instead of repeating one.
+         */
+        fun toggleAppLock(pkg: String) {
+            val target = state.value.selected
+            viewModelScope.launch {
+                lockMutex.withLock {
+                    val locked = lockedApps.observeByTarget(target).first().any { it.pkg == pkg }
+                    if (locked) lockedApps.unlock(pkg, target) else lockedApps.lock(pkg, target)
+                }
+            }
+        }
+
         fun newBlock() = emit(BlockEvent.OpenWizard(state.value.selected.deviceId(), prefill = null))
 
         fun useTemplate(template: BlockTemplate) =
@@ -164,6 +204,8 @@ class BlockViewModel
             // A device that was unlinked while selected falls back to this phone.
             val selected = if (targets.any { it.target == l.selected }) l.selected else BlockTarget.ThisPhone
             val labels = installed.associate { it.pkg to it.label }
+            val lockedHere = locked.filter { it.target == selected }.mapTo(hashSetOf()) { it.pkg }
+            val collator = Collator.getInstance()
             return BlockUiState(
                 targets = targets,
                 selected = selected,
@@ -171,6 +213,22 @@ class BlockViewModel
                 blocks =
                     blocksByTarget[selected].orEmpty().map { b ->
                         BlockRowUi(b, b.apps.map { labels[it] ?: fallbackLabel(it) })
+                    },
+                // A child phone has no app list until device linking (M8-03) syncs one.
+                apps =
+                    if (selected == BlockTarget.ThisPhone) {
+                        installed
+                            .map {
+                                AppRowUi(
+                                    it.pkg,
+                                    it.label,
+                                    today[it.pkg]?.mins ?: 0,
+                                    today[it.pkg]?.opens ?: 0,
+                                    it.pkg in lockedHere,
+                                )
+                            }.sortedWith(compareBy(collator) { it.label })
+                    } else {
+                        emptyList()
                     },
                 aiAvailable = aiEnabled,
                 aiOpen = aiEnabled && l.aiOpen,

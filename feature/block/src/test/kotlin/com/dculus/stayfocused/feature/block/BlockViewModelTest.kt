@@ -5,12 +5,16 @@ import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeLockedAppsRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.testing.MainDispatcherRule
+import com.dculus.stayfocused.core.usage.AppUsageStat
+import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -37,6 +41,8 @@ class BlockViewModelTest {
     private val blocks = FakeBlockRepository()
     private val devices = FakeLinkedDevicesRepository()
     private val settings = FakeSettingsRepository()
+    private val locked = FakeLockedAppsRepository()
+    private val usage = FakeUsageRepository()
     private val installed =
         FakeInstalledApps(
             listOf(
@@ -47,7 +53,7 @@ class BlockViewModelTest {
         )
 
     private fun TestScope.viewModel(): BlockViewModel {
-        val vm = BlockViewModel(blocks, devices, installed, settings)
+        val vm = BlockViewModel(blocks, devices, installed, settings, locked, usage)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect {} }
         return vm
     }
@@ -202,4 +208,79 @@ class BlockViewModelTest {
         assertEquals("X", fallbackLabel(pkg("x")))
         assertEquals("Foo", fallbackLabel("com.example.foo"))
     }
+
+    @Test
+    fun allAppsListsLaunchableAppsAZWithTodayUsageAndLockState() =
+        runTest {
+            usage.today.value =
+                usage.today.value.copy(
+                    apps = listOf(AppUsageStat(pkg("instagram"), 83 * 60_000L, opens = 12, firstAfterUnlock = 0)),
+                )
+            val vm = viewModel()
+            assertEquals(
+                listOf("Chrome", "Instagram", "YouTube"),
+                vm.state.value.apps
+                    .map { it.label },
+            )
+            val ig =
+                vm.state.value.apps
+                    .single { it.pkg == pkg("instagram") }
+            assertEquals(83, ig.mins)
+            assertEquals(12, ig.opens)
+            assertFalse(ig.locked)
+            assertEquals(
+                0,
+                vm.state.value.apps
+                    .single { it.pkg == pkg("chrome") }
+                    .opens,
+            )
+        }
+
+    @Test
+    fun lockingAndUnlockingAnAppWritesAndRemovesTheLockedApp() =
+        runTest {
+            val vm = viewModel()
+            vm.toggleAppLock(pkg("instagram"))
+            assertEquals(listOf(pkg("instagram")), locked.observeAll().first().map { it.pkg })
+            assertTrue(
+                vm.state.value.apps
+                    .single { it.pkg == pkg("instagram") }
+                    .locked,
+            )
+            vm.toggleAppLock(pkg("instagram"))
+            assertTrue(locked.observeAll().first().isEmpty())
+            assertFalse(
+                vm.state.value.apps
+                    .single { it.pkg == pkg("instagram") }
+                    .locked,
+            )
+        }
+
+    @Test
+    fun quickRepeatedTapsAlternateLockAndUnlock() =
+        runTest {
+            val vm = viewModel()
+            repeat(3) { vm.toggleAppLock(pkg("instagram")) }
+            assertEquals(listOf(pkg("instagram")), locked.observeAll().first().map { it.pkg })
+            vm.toggleAppLock(pkg("instagram"))
+            assertTrue(locked.observeAll().first().isEmpty())
+        }
+
+    @Test
+    fun lockOnAChildPhoneDoesNotShowOnThisPhone() =
+        runTest {
+            devices.devices.value = listOf(device())
+            locked.lock(pkg("instagram"), BlockTarget.Device("d1"))
+            val vm = viewModel()
+            assertFalse(
+                vm.state.value.apps
+                    .single { it.pkg == pkg("instagram") }
+                    .locked,
+            )
+            vm.selectTarget(BlockTarget.Device("d1"))
+            assertTrue(
+                vm.state.value.apps
+                    .isEmpty(),
+            )
+        }
 }
