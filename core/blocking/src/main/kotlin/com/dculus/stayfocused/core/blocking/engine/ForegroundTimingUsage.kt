@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.core.blocking.engine
 
 import com.dculus.stayfocused.core.blocking.evaluator.AppUsageSnapshot
+import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -34,6 +35,9 @@ class ForegroundTimingUsage
         ) {
             if (!to.isAfter(from)) return
             synchronized(lock) {
+                // Nothing reads further back than the current day (about 25 h with a DST change).
+                val oldest = to.minus(RETENTION)
+                intervals.removeAll { it.to < oldest }
                 val last = intervals.lastOrNull()
                 if (last != null && last.pkg == pkg && last.to == from) {
                     last.to = to
@@ -70,6 +74,10 @@ class ForegroundTimingUsage
             synchronized(lock) {
                 intervals.filter { it.pkg == pkg }.sumOf { overlapMs(it, from, to) }
             }
+
+        private companion object {
+            val RETENTION: Duration = Duration.ofHours(36)
+        }
 
         private fun overlapMs(
             i: Interval,

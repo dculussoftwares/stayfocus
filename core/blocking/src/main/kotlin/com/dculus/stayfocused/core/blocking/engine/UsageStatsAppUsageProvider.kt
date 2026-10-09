@@ -2,7 +2,7 @@ package com.dculus.stayfocused.core.blocking.engine
 
 import com.dculus.stayfocused.core.blocking.evaluator.AppUsageSnapshot
 import com.dculus.stayfocused.core.usage.PackageUsageSource
-import com.dculus.stayfocused.core.usage.UsageAccess
+import com.dculus.stayfocused.core.usage.UsageWindow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.time.Instant
@@ -18,6 +18,10 @@ import javax.inject.Singleton
  * exhausted at the exact moment while the app stays open. The aggregate covers everything up to its own timestamp,
  * the engine delta everything after it: no second is counted twice.
  *
+ * Both numbers are lower bounds of the real usage, so the larger of "aggregate + delta" and "everything the engine
+ * measured in the window" is used: it covers UsageStats events that arrive late and sessions that started before the
+ * aggregate's event lookback while the engine was already watching.
+ *
  * Without usage access the engine's own measurements (since the process started) are used instead.
  */
 @Singleton
@@ -25,7 +29,6 @@ class UsageStatsAppUsageProvider
     @Inject
     internal constructor(
         private val source: PackageUsageSource,
-        private val access: UsageAccess,
         private val live: LiveForegroundSource,
         private val fallback: ForegroundTimingUsage,
     ) : AppUsageProvider {
@@ -45,9 +48,8 @@ class UsageStatsAppUsageProvider
             pkgs: Set<String>,
             now: ZonedDateTime,
         ): Map<String, AppUsageSnapshot> {
-            if (!access.isGranted()) return fallback.usage(pkgs, now)
+            val agg = aggregate(pkgs, now) ?: return fallback.usage(pkgs, now)
             val at = now.toInstant()
-            val agg = aggregate(pkgs, now)
             return pkgs.associateWith { pkg ->
                 AppUsageSnapshot(
                     todayMs = merge(agg.today[pkg], pkg, agg.dayStart, agg.takenAt, at),
@@ -65,26 +67,25 @@ class UsageStatsAppUsageProvider
         ): Long {
             val since = maxOf(takenAt, windowStart)
             val delta = if (now > since) live.foregroundMs(pkg, since, now) else 0L
-            return (aggregated ?: 0L) + delta
+            val measuredByEngine = if (now > windowStart) live.foregroundMs(pkg, windowStart, now) else 0L
+            return maxOf((aggregated ?: 0L) + delta, measuredByEngine)
         }
 
+        /** Null when usage access is missing (also when it was revoked while reading). */
         private suspend fun aggregate(
             pkgs: Set<String>,
             now: ZonedDateTime,
-        ): Aggregate =
+        ): Aggregate? =
             mutex.withLock {
                 val at = now.toInstant()
                 val dayStart = now.toLocalDate().atStartOfDay(now.zone).toInstant()
                 val hourStart = now.truncatedTo(ChronoUnit.HOURS).toInstant()
-                cached?.takeIf { fresh(it, pkgs, dayStart, hourStart, at) } ?: run {
-                    Aggregate(
-                        pkgs = pkgs,
-                        dayStart = dayStart,
-                        hourStart = hourStart,
-                        takenAt = at,
-                        today = source.foregroundMillis(dayStart, at),
-                        hour = source.foregroundMillis(hourStart, at),
-                    ).also { cached = it }
+                val reusable = cached?.takeIf { fresh(it, pkgs, dayStart, hourStart, at) }
+                if (reusable != null) return@withLock reusable
+                cached = null
+                val windows = source.foregroundMillis(listOf(UsageWindow(dayStart, at), UsageWindow(hourStart, at)))
+                windows?.let { (today, hour) ->
+                    Aggregate(pkgs, dayStart, hourStart, at, today, hour).also { cached = it }
                 }
             }
 

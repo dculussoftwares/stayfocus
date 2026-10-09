@@ -1,8 +1,7 @@
 package com.dculus.stayfocused.core.blocking.engine
 
-import android.content.Intent
 import com.dculus.stayfocused.core.usage.PackageUsageSource
-import com.dculus.stayfocused.core.usage.UsageAccess
+import com.dculus.stayfocused.core.usage.UsageWindow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.time.Instant
@@ -11,35 +10,23 @@ import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
 class UsageStatsAppUsageProviderTest {
-    /** Answers [today] for the window that starts at midnight and [hour] for any other window. */
+    /** Answers [today] for the first window (the day) and [hour] for the second; null simulates missing access. */
     private class FakeSource(
         var today: Map<String, Long> = emptyMap(),
         var hour: Map<String, Long> = emptyMap(),
+        var granted: Boolean = true,
     ) : PackageUsageSource {
         var calls = 0
 
-        override suspend fun foregroundMillis(
-            from: Instant,
-            to: Instant,
-        ): Map<String, Long> {
+        override suspend fun foregroundMillis(windows: List<UsageWindow>): List<Map<String, Long>>? {
             calls++
-            val z = from.atZone(ZoneOffset.UTC)
-            return if (z.hour == 0 && z.minute == 0) today else hour
+            return if (granted) listOf(today, hour) else null
         }
-    }
-
-    private class FakeAccess(
-        var granted: Boolean = true,
-    ) : UsageAccess {
-        override fun isGranted() = granted
-
-        override fun settingsIntent(): Intent = error("unused")
     }
 
     private val timing = ForegroundTimingUsage()
     private val source = FakeSource()
-    private val access = FakeAccess()
-    private val provider = UsageStatsAppUsageProvider(source, access, timing, timing)
+    private val provider = UsageStatsAppUsageProvider(source, timing, timing)
 
     private fun at(time: String) = Instant.parse("2023-11-14T${time}Z")
 
@@ -59,7 +46,7 @@ class UsageStatsAppUsageProviderTest {
             val second = provider.usage(setOf("a"), zoned("10:30:12")).getValue("a")
             assertEquals(40 * MIN + 12_000, second.todayMs)
             assertEquals(5 * MIN + 12_000, second.thisHourMs)
-            assertEquals(2, source.calls)
+            assertEquals(1, source.calls)
         }
 
     @Test
@@ -74,6 +61,16 @@ class UsageStatsAppUsageProviderTest {
         }
 
     @Test
+    fun keepsEngineTimeWhenUsageStatsHasNotCaughtUp() =
+        runTest {
+            // The session's resume event is not in the query result yet: UsageStats says 0, the engine saw 10 min.
+            timing.record("a", at("10:20:00"), at("10:30:00"))
+            val u = provider.usage(setOf("a"), zoned("10:30:00")).getValue("a")
+            assertEquals(10 * MIN, u.todayMs)
+            assertEquals(10 * MIN, u.thisHourMs)
+        }
+
+    @Test
     fun rereadsAfterTheCacheExpires() =
         runTest {
             source.today = mapOf("a" to MIN)
@@ -81,6 +78,7 @@ class UsageStatsAppUsageProviderTest {
             source.today = mapOf("a" to 2 * MIN)
             val u = provider.usage(setOf("a"), zoned("10:30:30")).getValue("a")
             assertEquals(2 * MIN, u.todayMs)
+            assertEquals(2, source.calls)
         }
 
     @Test
@@ -102,12 +100,22 @@ class UsageStatsAppUsageProviderTest {
     @Test
     fun usesOnlyTheEnginesOwnTimeWithoutUsageAccess() =
         runTest {
-            access.granted = false
-            source.today = mapOf("a" to 99 * MIN)
+            source.granted = false
             timing.record("a", at("10:00:00"), at("10:10:00"))
             val u = provider.usage(setOf("a"), zoned("10:30:00")).getValue("a")
             assertEquals(10 * MIN, u.todayMs)
-            assertEquals(0, source.calls)
+        }
+
+    @Test
+    fun accessRevokedWhileReadingDoesNotCacheAnEmptyAggregate() =
+        runTest {
+            source.granted = false
+            timing.record("a", at("10:00:00"), at("10:10:00"))
+            provider.usage(setOf("a"), zoned("10:30:00"))
+            source.granted = true
+            source.today = mapOf("a" to 15 * MIN)
+            val u = provider.usage(setOf("a"), zoned("10:30:05")).getValue("a")
+            assertEquals(15 * MIN, u.todayMs)
         }
 
     private companion object {
