@@ -86,8 +86,8 @@ class HomeScreenshotTest {
         composeRule.onNodeWithTag(BREAK_IDLE_CARD_TAG).performClick()
         composeRule.onNodeWithText("Start 30 min break").assertExists()
         composeRule.onNodeWithText("1h").performClick()
-        composeRule.onNodeWithTag(BREAK_START_TAG).performClick()
-        composeRule.onNodeWithTag(BREAK_START_TAG).performClick()
+        val start = composeRule.onNodeWithTag(BREAK_START_TAG)
+        start.performClick()
         composeRule.waitForIdle()
         assertEquals(listOf(60), started)
     }
