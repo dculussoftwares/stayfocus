@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -31,10 +32,18 @@ internal class FirebaseAuthRepository(
 ) : AuthRepository {
     private val profileJobs = ConcurrentHashMap<String, Job>()
 
+    // Lives as long as the app (this repository is a singleton created at app start): every signed-in user,
+    // including a session restored after a restart, gets a profile if its earlier write never completed.
+    private val profileListener = FirebaseAuth.AuthStateListener { it.currentUser?.let(::ensureProfileInBackground) }
+
     init {
-        // Lives as long as the app (this repository is a singleton created at app start): every signed-in user,
-        // including a session restored after a restart, gets a profile if its earlier write never completed.
-        auth.addAuthStateListener { it.currentUser?.let(::ensureProfileInBackground) }
+        auth.addAuthStateListener(profileListener)
+    }
+
+    /** Stops the profile repair. Production never calls this; tests do, so repositories do not pile up. */
+    internal fun close() {
+        auth.removeAuthStateListener(profileListener)
+        scope.cancel()
     }
 
     override val currentUser: Flow<AuthUser?> =
