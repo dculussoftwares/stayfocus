@@ -34,9 +34,6 @@ fun NavGraphBuilder.onboardingGraph(
 }
 
 @Composable
-internal fun SignInRoute(onContinue: () -> Unit) = Step(stringResource(R.string.sign_in_title), onContinue)
-
-@Composable
 internal fun PermissionsRoute(onContinue: () -> Unit) = Step(stringResource(R.string.permissions_title), onContinue)
 
 @Composable

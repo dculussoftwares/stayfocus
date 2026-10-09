@@ -12,6 +12,27 @@
     <string name="welcome_sheet_body">Your child\'s phone runs a separate app, Stay Focused Kids. Install it on their phone, then link it from your own phone with this app.</string>
     <string name="welcome_sheet_open_play">Open Stay Focused Kids on Google Play</string>
     <string name="sign_in_title">Sign in</string>
+    <string name="auth_create_title">Create account</string>
+    <string name="auth_subtitle">Your account keeps blocks and linked phones in sync.</string>
+    <string name="auth_google">Continue with Google</string>
+    <string name="auth_or_email">OR EMAIL</string>
+    <string name="auth_email_label">Email</string>
+    <string name="auth_email_placeholder">you@example.com</string>
+    <string name="auth_password_label">Password</string>
+    <string name="auth_password_placeholder">At least 6 characters</string>
+    <string name="auth_forgot">Forgot password?</string>
+    <string name="auth_switch_to_create">New here? Create an account</string>
+    <string name="auth_switch_to_sign_in">Have an account? Sign in</string>
+    <string name="auth_skip">Continue without an account</string>
+    <string name="auth_error_email">Enter a valid email address.</string>
+    <string name="auth_error_password">Password needs at least 6 characters.</string>
+    <string name="auth_error_forgot">Enter your email first, then tap Forgot password.</string>
+    <string name="auth_reset_sent">Reset link sent to %1$s</string>
+    <!-- PROVISIONAL: server-side failure wording is not in the design handoff. -->
+    <string name="auth_error_wrong_credentials">Email or password is incorrect.</string>
+    <string name="auth_error_email_in_use">An account with this email already exists.</string>
+    <string name="auth_error_network">No connection. Check your internet and try again.</string>
+    <string name="auth_error_other">Something went wrong. Try again.</string>
     <string name="permissions_title">Permissions</string>
     <!-- Placeholder navigation; removed when the real onboarding screens land. -->
     <string name="onboarding_placeholder_continue">Continue</string>
