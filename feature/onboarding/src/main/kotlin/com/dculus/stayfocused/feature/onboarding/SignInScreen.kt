@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -75,6 +76,7 @@ internal fun SignInRoute(
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle().value
     val resources = LocalResources.current
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
     val currentOnContinue by rememberUpdatedState(onContinue)
@@ -93,7 +95,7 @@ internal fun SignInRoute(
             onPasswordChange = viewModel::onPasswordChange,
             onSubmit = viewModel::submit,
             onToggleMode = viewModel::toggleMode,
-            onGoogle = viewModel::continueWithGoogle,
+            onGoogle = { viewModel.continueWithGoogle(context) },
             onForgotPassword = viewModel::forgotPassword,
             onSkip = viewModel::skip,
             onBack = onBack,
@@ -216,6 +218,7 @@ private fun AuthError.messageRes(): Int =
         AuthError.WrongCredentials -> R.string.auth_error_wrong_credentials
         AuthError.EmailInUse -> R.string.auth_error_email_in_use
         AuthError.Network -> R.string.auth_error_network
+        AuthError.NoGoogleAccount -> R.string.auth_error_no_google_account
         AuthError.Other -> R.string.auth_error_other
     }
 

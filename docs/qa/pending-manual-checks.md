@@ -80,3 +80,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M6-03 Email and password auth: session survives a restart
 - Check: sign in with email on a debug build that has a Firebase configuration, force-stop the app (Settings, Apps, Force stop), relaunch: the account is still signed in (`AuthRepository.currentUser` emits the user). Also tap "Forgot password" with a real mailbox and confirm the reset email arrives.
 - How: needs the dev `google-services.json` (see `docs/INFRASTRUCTURE.md`) and a throwaway account; a person on a device or emulator. The Firebase SDK persists the session, so this is expected to pass.
+
+## M6-04 Google sign-in: account picker with two accounts
+- Check: on a device with 2 Google accounts, tap "Continue with Google": the account picker lists both; choosing one signs in and continues; closing the picker shows no error; with no Google account on the device the "No Google account found" line shows; airplane mode shows the "No connection" line.
+- How: needs the dev `google-services.json` (with the web client ID and the debug SHA-1 registered, see `docs/INFRASTRUCTURE.md`) and a physical device or Google Play emulator with two accounts. Record the result in the PR.

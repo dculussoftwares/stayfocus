@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.sync
 
+import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
@@ -35,7 +36,7 @@ class FakeAuthRepository
             password: String,
         ): AuthResult = result(email)
 
-        override suspend fun signInWithGoogle(): AuthResult = result()
+        override suspend fun signInWithGoogle(activityContext: Context): AuthResult = result()
 
         override suspend fun sendPasswordReset(email: String): AuthResult =
             failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success

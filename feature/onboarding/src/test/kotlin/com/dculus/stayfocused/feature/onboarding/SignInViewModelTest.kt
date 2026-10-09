@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.feature.onboarding
 
+import android.content.Context
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.sync.AuthFailure
@@ -7,6 +8,7 @@ import com.dculus.stayfocused.core.sync.AuthRepository
 import com.dculus.stayfocused.core.sync.AuthResult
 import com.dculus.stayfocused.core.sync.AuthUser
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -32,6 +34,7 @@ class SignInViewModelTest {
     private class RecordingAuth : AuthRepository {
         val calls = mutableListOf<String>()
         var failWith: AuthFailure? = null
+        var cancel = false
         override val currentUser: Flow<AuthUser?> = flowOf(null)
 
         override suspend fun signOut() = Unit
@@ -54,9 +57,9 @@ class SignInViewModelTest {
             return result()
         }
 
-        override suspend fun signInWithGoogle(): AuthResult {
+        override suspend fun signInWithGoogle(activityContext: Context): AuthResult {
             calls += "signInWithGoogle"
-            return result()
+            return if (cancel) AuthResult.Cancelled else result()
         }
 
         override suspend fun sendPasswordReset(email: String): AuthResult {
@@ -65,6 +68,7 @@ class SignInViewModelTest {
         }
     }
 
+    private val context = mockk<Context>()
     private val auth = RecordingAuth()
     private val settings = FakeSettingsRepository()
 
@@ -179,7 +183,7 @@ class SignInViewModelTest {
         runTest {
             settings.setAccountSkipped(true)
             val vm = vm()
-            vm.continueWithGoogle()
+            vm.continueWithGoogle(context)
             advanceUntilIdle()
             assertFalse(settings.settings.first().accountSkipped)
         }
@@ -188,11 +192,24 @@ class SignInViewModelTest {
         runTest {
             val vm = vm()
             vm.events.test {
-                vm.continueWithGoogle()
+                vm.continueWithGoogle(context)
                 advanceUntilIdle()
                 assertEquals(SignInEvent.Done, awaitItem())
             }
             assertEquals(listOf("signInWithGoogle"), auth.calls)
+        }
+
+    @Test fun cancellingTheGooglePickerShowsNothingAndStaysPut() =
+        runTest {
+            auth.cancel = true
+            val vm = vm()
+            vm.events.test {
+                vm.continueWithGoogle(context)
+                advanceUntilIdle()
+                expectNoEvents()
+            }
+            assertNull(vm.state.value.error)
+            assertFalse(vm.state.value.busy)
         }
 
     @Test fun failedSettingsWriteAfterSignInShowsErrorInsteadOfContinuing() =
@@ -202,7 +219,7 @@ class SignInViewModelTest {
                     override suspend fun setAccountSkipped(skipped: Boolean) = throw IOException("disk full")
                 }
             val vm = SignInViewModel(auth, failing)
-            vm.continueWithGoogle()
+            vm.continueWithGoogle(context)
             vm.events.test {
                 advanceUntilIdle()
                 expectNoEvents()
@@ -229,6 +246,7 @@ class SignInViewModelTest {
                 AuthFailure.InvalidCredentials to AuthError.WrongCredentials,
                 AuthFailure.EmailInUse to AuthError.EmailInUse,
                 AuthFailure.Network to AuthError.Network,
+                AuthFailure.NoGoogleAccount to AuthError.NoGoogleAccount,
                 AuthFailure.Other to AuthError.Other,
             ).forEach { (failure, error) ->
                 auth.failWith = failure

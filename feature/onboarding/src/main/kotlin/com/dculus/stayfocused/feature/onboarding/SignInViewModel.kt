@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.feature.onboarding
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
@@ -31,6 +32,7 @@ internal enum class AuthError(
     WrongCredentials(ErrorSlot.Password),
     EmailInUse(ErrorSlot.Email),
     Network(ErrorSlot.General),
+    NoGoogleAccount(ErrorSlot.General),
     Other(ErrorSlot.General),
 }
 
@@ -103,9 +105,10 @@ class SignInViewModel
             }
         }
 
-        internal fun continueWithGoogle() {
+        /** [activityContext] is only used while the account picker is open; it is not kept. */
+        internal fun continueWithGoogle(activityContext: Context) {
             if (mutableState.value.busy) return
-            launchAuth { auth.signInWithGoogle() }
+            launchAuth { auth.signInWithGoogle(activityContext) }
         }
 
         internal fun forgotPassword() {
@@ -141,6 +144,11 @@ class SignInViewModel
             viewModelScope.launch {
                 mutableState.update { it.copy(busy = true, error = null) }
                 val result = attempt(call)
+                if (result is AuthResult.Cancelled) {
+                    // The user closed the account picker: stay on the screen without an error.
+                    mutableState.update { it.copy(busy = false) }
+                    return@launch
+                }
                 val error =
                     when {
                         result is AuthResult.Failure -> result.toError()
@@ -182,6 +190,7 @@ class SignInViewModel
                 AuthFailure.EmailInUse -> AuthError.EmailInUse
                 AuthFailure.WeakPassword -> AuthError.ShortPassword
                 AuthFailure.Network -> AuthError.Network
+                AuthFailure.NoGoogleAccount -> AuthError.NoGoogleAccount
                 AuthFailure.Other -> AuthError.Other
             }
     }
