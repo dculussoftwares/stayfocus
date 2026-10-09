@@ -171,7 +171,7 @@ App Check: Play Integrity is configured for both apps, debug tokens are register
 ### Firebase AI Logic (M9-03)
 
 `infra/firebase/ai.tf` enables the Firebase AI Logic API (`firebasevertexai.googleapis.com`), the Gemini Developer API
-(`generativelanguage.googleapis.com`) and `apikeys.googleapis.com`, and enforces App Check on `firebasevertexai.googleapis.com`
+(`generativelanguage.googleapis.com`) and `apikeys.googleapis.com`, and enforces App Check on `firebaseml.googleapis.com` (the App Check service ID for AI Logic)
 with the same `app_check_enforcement` switch as Firestore, so an AI request without a valid App Check token is rejected.
 It creates one Android-restricted API key per app (package + SHA-1 fingerprints, limited to the Firebase and AI Logic APIs),
 an optional Gemini quota cap (`gemini_quota_overrides`, empty by default) and a Gemini budget alert (`gemini_budget_amount`,

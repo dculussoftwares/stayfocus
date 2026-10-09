@@ -4,6 +4,7 @@
 locals {
   ai_apis = [
     "firebasevertexai.googleapis.com",   # Firebase AI Logic API (the proxy the SDK calls)
+    "firebaseml.googleapis.com",         # App Check service ID for Firebase AI Logic
     "generativelanguage.googleapis.com", # Gemini Developer API behind the proxy
     "apikeys.googleapis.com",
   ]
@@ -36,7 +37,7 @@ resource "google_firebase_app_check_service_config" "ai_logic" {
   provider = google-beta
 
   project          = var.project_id
-  service_id       = "firebasevertexai.googleapis.com"
+  service_id       = "firebaseml.googleapis.com" # App Check's service ID for Firebase AI Logic
   enforcement_mode = var.app_check_enforcement
 
   depends_on = [
