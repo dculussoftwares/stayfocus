@@ -119,6 +119,9 @@ class BlockingEngine
         /** End of the break the engine is waiting to announce; survives a restart of the run, not of the engine. */
         @Volatile private var watchedBreakEnd: Instant? = null
 
+        // Only touched by the (single) collecting coroutine of a run.
+        private var handledClockTick = 0
+
         @Volatile private var cachedAllowlist: Set<String>? = null
 
         /** Bumped when the wall clock or time zone changes, so pending timers are re-computed. */
@@ -138,6 +141,7 @@ class BlockingEngine
                 val s = CoroutineScope(SupervisorJob() + dispatcher)
                 scope = s
                 running = true
+                handledClockTick = clockChanges.value
                 val previous = shutdown
                 s.launch {
                     previous?.join()
@@ -264,11 +268,17 @@ class BlockingEngine
                 ) { b, l, br, f, a -> EngineInputs(b, l, br, f, a) }
             coroutineScope {
                 launch { watchBreakEnd() }
-                combine(tracker.foreground.map { it?.packageName }, inputs, clockChanges) { pkg, i, _ -> pkg to i }
-                    .collectLatest { (pkg, i) ->
-                        latestInputs = i
-                        evaluateWhileInFront(pkg, i)
+                combine(tracker.foreground.map { it?.packageName }, inputs, clockChanges) { pkg, i, tick ->
+                    Triple(pkg, i, tick)
+                }.collectLatest { (pkg, i, tick) ->
+                    latestInputs = i
+                    if (tick != handledClockTick) {
+                        handledClockTick = tick
+                        // The jump is not time spent in the app: start counting again from the new clock.
+                        session?.flushedAt = clock.instant()
                     }
+                    evaluateWhileInFront(pkg, i)
+                }
             }
         }
 
@@ -279,7 +289,8 @@ class BlockingEngine
          * wall clock is re-read after every wait so a clock that moved backwards never ends the break early.
          */
         private suspend fun watchBreakEnd() {
-            breaks.observe().collectLatest { session ->
+            // A clock change restarts the wait: the old delay still counts the previous clock.
+            combine(breaks.observe(), clockChanges) { b, _ -> b }.collectLatest { session ->
                 if (session == null) {
                     watchedBreakEnd = null
                     return@collectLatest
