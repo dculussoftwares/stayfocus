@@ -1,4 +1,4 @@
-# M1-09: the app opens on onboarding (flag stub = false); Get started then Continue x2 reaches Home, then the tabs work.
+# M1-09: the app opens on onboarding (flag stub = false); Get started, Continue without an account, Continue reaches Home, then the tabs work.
 appId: com.dculus.stayfocused
 tags:
   - smoke
@@ -8,7 +8,7 @@ tags:
 - assertVisible: "Get started"
 - tapOn: "Get started"
 - assertVisible: "Sign in"
-- tapOn: "Continue"
+- tapOn: "Continue without an account"
 - assertVisible: "Permissions"
 - tapOn: "Continue"
 - assertVisible: "Home"

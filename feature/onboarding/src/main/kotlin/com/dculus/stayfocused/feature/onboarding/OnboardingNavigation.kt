@@ -3,6 +3,7 @@ package com.dculus.stayfocused.feature.onboarding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -21,14 +22,23 @@ fun NavController.navigateToSignIn(navOptions: NavOptions? = null) = navigate(Si
 
 fun NavController.navigateToPermissions(navOptions: NavOptions? = null) = navigate(Permissions, navOptions)
 
-/** The onboarding graph: Welcome, SignIn, Permissions. [onFinished] runs after the last step. */
+/**
+ * The onboarding graph: Welcome, SignIn, Permissions. [onFinished] runs after the last step. [signInViewModel] null
+ * uses Hilt (navigation tests run without it).
+ */
 fun NavGraphBuilder.onboardingGraph(
     navController: NavController,
     onFinished: () -> Unit,
+    signInViewModel: (@Composable () -> SignInViewModel)? = null,
 ) {
     navigation<OnboardingGraph>(startDestination = Welcome) {
         composable<Welcome> { WelcomeRoute(onContinue = { navController.navigateToSignIn() }) }
-        composable<SignIn> { SignInRoute(onContinue = { navController.navigateToPermissions() }) }
+        composable<SignIn> {
+            SignInRoute(
+                onContinue = { navController.navigateToPermissions() },
+                viewModel = signInViewModel?.invoke() ?: hiltViewModel(),
+            )
+        }
         composable<Permissions> { PermissionsRoute(onContinue = onFinished) }
     }
 }

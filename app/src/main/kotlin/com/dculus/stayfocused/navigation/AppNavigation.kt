@@ -48,6 +48,7 @@ import com.dculus.stayfocused.feature.devices.remoteDeviceScreen
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import com.dculus.stayfocused.feature.home.homeScreen
 import com.dculus.stayfocused.feature.insights.insightsScreen
+import com.dculus.stayfocused.feature.onboarding.SignInViewModel
 import com.dculus.stayfocused.feature.onboarding.onboardingGraph
 
 /** The whole app UI: the nav host plus the floating tab bar on the destinations that show it. */
@@ -61,6 +62,7 @@ fun StayFocusedNavigation(
     wizardViewModel: (@Composable () -> WizardViewModel)? = null,
     insightsContent: (@Composable () -> Unit)? = null,
     homeViewModel: (@Composable () -> HomeViewModel)? = null,
+    signInViewModel: (@Composable () -> SignInViewModel)? = null,
 ) {
     val destination = navController.currentBackStackEntryAsState().value?.destination
     val tabItems = MainTab.entries.map { tab -> SfTabItem(tab.name, stringResource(tab.label), tab.icon) }
@@ -83,6 +85,7 @@ fun StayFocusedNavigation(
                 wizardViewModel,
                 insightsContent,
                 homeViewModel,
+                signInViewModel,
             )
         }
         if (destination.showsTabBar()) {
@@ -105,6 +108,7 @@ private fun AppNavHost(
     wizardViewModel: (@Composable () -> WizardViewModel)?,
     insightsContent: (@Composable () -> Unit)?,
     homeViewModel: (@Composable () -> HomeViewModel)?,
+    signInViewModel: (@Composable () -> SignInViewModel)?,
 ) {
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
@@ -119,6 +123,7 @@ private fun AppNavHost(
     ) {
         onboardingGraph(
             navController = navController,
+            signInViewModel = signInViewModel,
             onFinished = {
                 onFinishOnboarding()
                 navController.navigate(MainGraph) { popUpTo(OnboardingGraph) { inclusive = true } }

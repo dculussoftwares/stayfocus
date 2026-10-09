@@ -76,11 +76,11 @@ class AppNavigationInstrumentedTest {
         ) { composeRule.onAllNodesWithText("Get started").fetchSemanticsNodes().isNotEmpty() }
         assertTrue("no tab bar during onboarding", !tabBarVisible())
         composeRule.onNodeWithText("Get started").performClick()
-        repeat(ONBOARDING_PLACEHOLDER_STEPS) {
+        listOf("Continue without an account", "Continue").forEach { label ->
             composeRule.waitUntil(
                 TIMEOUT_MS,
-            ) { composeRule.onAllNodesWithText("Continue").fetchSemanticsNodes().isNotEmpty() }
-            composeRule.onNodeWithText("Continue").performClick()
+            ) { composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty() }
+            composeRule.onNodeWithText(label).performClick()
         }
         composeRule.waitUntil(TIMEOUT_MS) { tabBarVisible() }
         tab(MainTab.HOME).assertIsSelected()
@@ -111,6 +111,5 @@ class AppNavigationInstrumentedTest {
 
     private companion object {
         const val TIMEOUT_MS = 10_000L
-        const val ONBOARDING_PLACEHOLDER_STEPS = 2
     }
 }
