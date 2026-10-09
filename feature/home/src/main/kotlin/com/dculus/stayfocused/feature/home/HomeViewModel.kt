@@ -141,10 +141,12 @@ class HomeViewModel
         /** Re-reads the usage-access permission, e.g. when the person returns from the system settings. */
         fun refreshUsageAccess() {
             val granted = usageAccess.isGranted()
+            val newlyGranted = granted && !accessGranted.value
             accessGranted.value = granted
-            if (granted) {
-                usage.requestRefresh()
-                // Days that were skipped while access was off (the startup backfill needs it) fill the average.
+            if (granted) usage.requestRefresh()
+            if (newlyGranted) {
+                // Days skipped while access was off (the startup backfill needs it) fill the average. Only on the
+                // denied -> granted change, so ordinary resumes never rescan the history.
                 viewModelScope.launch { backfillHistory() }
             }
         }

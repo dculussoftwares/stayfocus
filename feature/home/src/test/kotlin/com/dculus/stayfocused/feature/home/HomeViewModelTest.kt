@@ -260,6 +260,19 @@ class HomeViewModelTest {
             }
         }
 
+    @Test fun ordinaryResumesDoNotBackfillAgain() =
+        runTest {
+            val env = Env()
+            val vm = viewModel(VirtualClock(testScheduler), env)
+            vm.state.test {
+                latest(testScheduler)
+                vm.refreshUsageAccess()
+                vm.refreshUsageAccess()
+                testScheduler.runCurrent()
+                assertEquals(0, env.usage.backfills)
+            }
+        }
+
     @Test fun usageSettingsIntentComesFromTheAccessChecker() {
         val env = Env()
         val vm = viewModel(VirtualClock(TestCoroutineScheduler()), env)
