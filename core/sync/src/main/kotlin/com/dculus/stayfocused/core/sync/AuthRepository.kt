@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 /** Why an auth call failed, in terms the UI can word. */
 enum class AuthFailure {
     InvalidCredentials,
+    InvalidEmail,
     EmailInUse,
     WeakPassword,
     Network,

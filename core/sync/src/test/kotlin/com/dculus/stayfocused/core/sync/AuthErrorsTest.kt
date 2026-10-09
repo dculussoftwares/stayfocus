@@ -26,6 +26,14 @@ class AuthErrorsTest {
     }
 
     @Test
+    fun malformedEmailIsInvalidEmail() {
+        assertEquals(
+            AuthFailure.InvalidEmail,
+            FirebaseAuthInvalidCredentialsException("ERROR_INVALID_EMAIL", "x").toAuthFailure(),
+        )
+    }
+
+    @Test
     fun existingEmailIsEmailInUse() {
         assertEquals(
             AuthFailure.EmailInUse,

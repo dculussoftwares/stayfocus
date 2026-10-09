@@ -15,6 +15,7 @@ android {
 // never reused as a passing emulator run.
 tasks.withType<Test>().configureEach {
     inputs.property("authEmulator", providers.environmentVariable("FIREBASE_AUTH_EMULATOR_HOST").orElse(""))
+    inputs.property("firestoreEmulator", providers.environmentVariable("FIRESTORE_EMULATOR_HOST").orElse(""))
 }
 
 dependencies {

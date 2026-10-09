@@ -4,10 +4,12 @@ import android.os.Looper
 import com.google.firebase.FirebaseApp
 import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import org.junit.Assume.assumeTrue
@@ -26,7 +28,8 @@ import kotlin.test.assertTrue
 /**
  * Runs [FirebaseAuthRepository] against the Firebase Auth and Firestore emulators. Skipped unless
  * `FIREBASE_AUTH_EMULATOR_HOST` is set; CI starts the emulators with `firebase emulators:exec` (job `auth-emulator`).
- * The emulators run without security rules here: the rules are covered by `firebase/rules-tests`.
+ * Firestore runs with `firebase/firestore.rules` (see `firebase/firebase.json`), so the profile write is also checked
+ * against the real `users/{uid}` rules.
  */
 @RunWith(RobolectricTestRunner::class)
 class FirebaseAuthRepositoryEmulatorTest {
@@ -86,6 +89,22 @@ class FirebaseAuthRepositoryEmulatorTest {
 
         const val TIMEOUT_MS = 60_000L
         const val POLL_MS = 10L
+        const val PROFILE_POLLS = 100
+    }
+
+    /** The profile is written in the background after sign-in, so wait for it. */
+    private suspend fun awaitProfile(uid: String): DocumentSnapshot {
+        repeat(PROFILE_POLLS) {
+            val doc =
+                firestore
+                    .collection("users")
+                    .document(uid)
+                    .get()
+                    .await()
+            if (doc.exists()) return doc
+            delay(POLL_MS * 10)
+        }
+        error("The profile was not created")
     }
 
     private fun newEmail() = "user-${UUID.randomUUID()}@example.com"
@@ -98,12 +117,7 @@ class FirebaseAuthRepositoryEmulatorTest {
 
             val user = assertNotNull(repository.currentUser.first())
             assertEquals(email, user.email)
-            val profile =
-                firestore
-                    .collection("users")
-                    .document(user.uid)
-                    .get()
-                    .await()
+            val profile = awaitProfile(user.uid)
             assertEquals(email, profile.getString("email"))
             assertEquals(email.substringBefore('@'), profile.getString("displayName"))
             assertNotNull(profile.getTimestamp("createdAt"))
