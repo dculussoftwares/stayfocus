@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.core.blocking.engine
 
 import com.dculus.stayfocused.core.blocking.evaluator.AppUsageSnapshot
+import java.time.Duration
 import java.time.Instant
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -8,15 +9,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Temporary [AppUsageProvider]: only knows what the engine itself measured since the process started.
- * M2-06 replaces or augments it with UsageStats.
+ * What the engine itself measured since the process started. It is the [AppUsageProvider] only while usage access
+ * is missing; otherwise [UsageStatsAppUsageProvider] adds its [LiveForegroundSource] delta to the UsageStats aggregate.
  */
 @Singleton
 class ForegroundTimingUsage
     @Inject
     constructor() :
     AppUsageProvider,
-        ForegroundTimeRecorder {
+        ForegroundTimeRecorder,
+        LiveForegroundSource {
         private class Interval(
             val pkg: String,
             val from: Instant,
@@ -33,6 +35,9 @@ class ForegroundTimingUsage
         ) {
             if (!to.isAfter(from)) return
             synchronized(lock) {
+                // Nothing reads further back than the current day (about 25 h with a DST change).
+                val oldest = to.minus(RETENTION)
+                intervals.removeAll { it.to < oldest }
                 val last = intervals.lastOrNull()
                 if (last != null && last.pkg == pkg && last.to == from) {
                     last.to = to
@@ -59,6 +64,19 @@ class ForegroundTimingUsage
                     )
                 }
             }
+        }
+
+        override fun foregroundMs(
+            pkg: String,
+            from: Instant,
+            to: Instant,
+        ): Long =
+            synchronized(lock) {
+                intervals.filter { it.pkg == pkg }.sumOf { overlapMs(it, from, to) }
+            }
+
+        private companion object {
+            val RETENTION: Duration = Duration.ofHours(36)
         }
 
         private fun overlapMs(

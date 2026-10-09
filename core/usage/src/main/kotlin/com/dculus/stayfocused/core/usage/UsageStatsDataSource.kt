@@ -11,6 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -21,6 +22,21 @@ interface UsageStatsDataSource {
     suspend fun dayUsage(date: LocalDate): DayUsageStats
 }
 
+/** A time window [from, to) to total foreground time over. */
+data class UsageWindow(
+    val from: Instant,
+    val to: Instant,
+)
+
+/** Foreground time per package over arbitrary windows; used by the blocking engine for limits. */
+interface PackageUsageSource {
+    /**
+     * Per window, the foreground milliseconds of each package; the events are read once for all windows. Own apps,
+     * launchers and system UI are never included. Null when usage access isn't granted (not the same as no usage).
+     */
+    suspend fun foregroundMillis(windows: List<UsageWindow>): List<Map<String, Long>>?
+}
+
 private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
 
 @Singleton
@@ -29,7 +45,8 @@ class AndroidUsageStatsDataSource
     constructor(
         @ApplicationContext private val context: Context,
         private val usageAccess: UsageAccess,
-    ) : UsageStatsDataSource {
+    ) : UsageStatsDataSource,
+        PackageUsageSource {
         private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
         override suspend fun dayUsage(date: LocalDate): DayUsageStats =
@@ -56,6 +73,21 @@ class AndroidUsageStatsDataSource
                         UnlockSignal.SCREEN_INTERACTIVE
                     }
                 UsageAggregator(zone, excludedPackages(), signal).aggregate(date, events, queryEnd)
+            }
+
+        override suspend fun foregroundMillis(windows: List<UsageWindow>): List<Map<String, Long>>? =
+            withContext(ioDispatcher) {
+                if (!usageAccess.isGranted()) return@withContext null
+                val valid = windows.filter { it.to > it.from }
+                if (valid.isEmpty()) return@withContext windows.map { emptyMap() }
+                val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+                val earliest = valid.minOf { it.from.toEpochMilli() }
+                val latest = valid.maxOf { it.to.toEpochMilli() }
+                val events = readEvents(manager, earliest - UsageAggregator.LOOKBACK_MILLIS, latest)
+                // The unlock signal is irrelevant for foreground time.
+                val aggregator =
+                    UsageAggregator(ZoneId.systemDefault(), excludedPackages(), UnlockSignal.SCREEN_INTERACTIVE)
+                windows.map { aggregator.foregroundMillis(events, it.from.toEpochMilli(), it.to.toEpochMilli()) }
             }
 
         private fun readEvents(

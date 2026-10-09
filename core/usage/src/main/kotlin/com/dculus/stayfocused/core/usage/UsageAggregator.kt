@@ -49,6 +49,24 @@ class UsageAggregator(
         return run.toStats(date)
     }
 
+    /**
+     * Foreground milliseconds per package inside [startMillis, endMillis), for any window (not only a day).
+     * [events] should include the lead-in before the window; same exclusion and screen-off rules as [aggregate].
+     */
+    fun foregroundMillis(
+        events: List<RawUsageEvent>,
+        startMillis: Long,
+        endMillis: Long,
+    ): Map<String, Long> {
+        if (endMillis <= startMillis) return emptyMap()
+        val run = Run(startMillis, endMillis)
+        events.sortedBy { it.timeMillis }.forEach { event ->
+            if (event.timeMillis < endMillis) run.handle(event)
+        }
+        run.closeAll(endMillis)
+        return run.millisByPackage()
+    }
+
     private inner class Run(
         private val windowStart: Long,
         private val windowEnd: Long,
@@ -172,6 +190,8 @@ class UsageAggregator(
                     .toEpochMilli()
             return if (next > at) next else at + 1
         }
+
+        fun millisByPackage(): Map<String, Long> = HashMap(millis)
 
         fun toStats(date: LocalDate): DayUsageStats {
             val apps =
