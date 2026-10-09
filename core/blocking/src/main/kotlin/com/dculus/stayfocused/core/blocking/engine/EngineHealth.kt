@@ -31,7 +31,7 @@ class EngineHealthMonitor
         private val _health = MutableStateFlow(EngineHealth())
         val health: StateFlow<EngineHealth> = _health.asStateFlow()
 
-        fun onServiceConnected() = _health.update { it.copy(serviceBound = true, lastEventAt = clock.instant()) }
+        fun onServiceConnected() = _health.update { it.copy(serviceBound = true) }
 
         fun onServiceUnbound() = _health.update { it.copy(serviceBound = false) }
 
