@@ -6,10 +6,12 @@ import com.google.firebase.FirebaseOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.tasks.await
 import org.junit.Assume.assumeTrue
@@ -99,9 +101,9 @@ class FirebaseAuthRepositoryEmulatorTest {
                 firestore
                     .collection("users")
                     .document(uid)
-                    .get()
+                    .get(Source.SERVER)
                     .await()
-            if (doc.exists()) return doc
+            if (doc.exists() && doc.getTimestamp("createdAt") != null) return doc
             delay(POLL_MS * 10)
         }
         error("The profile was not created")
@@ -115,7 +117,7 @@ class FirebaseAuthRepositoryEmulatorTest {
             val email = newEmail()
             assertEquals(AuthResult.Success, repository.createAccount(email, "secret1"))
 
-            val user = assertNotNull(repository.currentUser.first())
+            val user = repository.currentUser.filterNotNull().first()
             assertEquals(email, user.email)
             val profile = awaitProfile(user.uid)
             assertEquals(email, profile.getString("email"))
