@@ -72,3 +72,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M4-03 Wizard step 3 (rules, summary, save)
 - Check: on an emulator or phone, create each of the four block types through Block > New block (dial drag and presets, Per day/Per hour tabs, USE FOR / THEN LOCKED tabs, schedule presets and the Custom time picker, day chips). "Turn on block" returns to the Block tab with that target selected, shows the toast "{name} is on · {target}" and the new block is in the list. The custom picker works with TalkBack and the 24 h dials look right in the dark theme.
 - How: install `:app`, run through the four types. The summary sentences, saved fields and the create-and-find-in-list journey are covered by `BlockSummaryTest`, `WizardRulesViewModelTest` and `CreateBlockFlowTest` (Robolectric). A Maestro flow is a follow-up because it needs an emulator run.
+
+## M2-09 Engine robustness
+- Check: fill in the device columns of `docs/qa/blocking-matrix.md` (Pixel API 36, API 26 emulator, Samsung, Xiaomi); every FAIL needs a fixed bug or a filed issue.
+- How: follow each row (reboot, `adb shell am kill`, force-stop, split-screen, picture-in-picture, app updates, language change) with an active block, cycle and break. Unit tests cover the health monitor and engine restart; the platform rows need a device.
