@@ -11,4 +11,4 @@ tags:
 - assertVisible: "SCREEN TIME"
 - assertVisible: "Take a break"
 - tapOn: "New block"
-- assertVisible: "Rather just describe it?"
+- assertVisible: "Limit time"
