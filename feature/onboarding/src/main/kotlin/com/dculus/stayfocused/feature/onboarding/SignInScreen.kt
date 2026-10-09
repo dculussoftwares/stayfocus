@@ -2,7 +2,10 @@
 
 package com.dculus.stayfocused.feature.onboarding
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +19,7 @@ import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +30,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
@@ -52,10 +64,13 @@ internal const val SIGN_IN_SUBMIT_TAG = "sign_in_submit"
 internal const val SIGN_IN_TOGGLE_TAG = "sign_in_toggle"
 internal const val SIGN_IN_FORGOT_TAG = "sign_in_forgot"
 internal const val SIGN_IN_SKIP_TAG = "sign_in_skip"
+internal const val SIGN_IN_BACK_TAG = "sign_in_back"
+internal const val SIGN_IN_GENERAL_ERROR_TAG = "sign_in_general_error"
 
 @Composable
 internal fun SignInRoute(
     onContinue: () -> Unit,
+    onBack: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle().value
@@ -81,6 +96,7 @@ internal fun SignInRoute(
             onGoogle = viewModel::continueWithGoogle,
             onForgotPassword = viewModel::forgotPassword,
             onSkip = viewModel::skip,
+            onBack = onBack,
         )
         SfToastHost(toast, bottomPadding = 24.dp)
     }
@@ -96,6 +112,7 @@ internal fun SignInScreen(
     onGoogle: () -> Unit,
     onForgotPassword: () -> Unit,
     onSkip: () -> Unit,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = StayFocusedTheme.colors
@@ -111,6 +128,7 @@ internal fun SignInScreen(
             .padding(horizontal = 24.dp, vertical = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        BackButton(onBack)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 stringResource(if (signIn) R.string.sign_in_title else R.string.auth_create_title),
@@ -137,7 +155,7 @@ internal fun SignInScreen(
                 onValueChange = onEmailChange,
                 label = stringResource(R.string.auth_email_label),
                 placeholder = stringResource(R.string.auth_email_placeholder),
-                error = error.takeIf { state.error?.onEmailField == true },
+                error = error.takeIf { state.error?.slot == ErrorSlot.Email },
                 keyboardType = KeyboardType.Email,
                 enabled = !state.busy,
                 modifier = Modifier.testTag(SIGN_IN_EMAIL_TAG),
@@ -147,11 +165,19 @@ internal fun SignInScreen(
                 onValueChange = onPasswordChange,
                 label = stringResource(R.string.auth_password_label),
                 placeholder = stringResource(R.string.auth_password_placeholder),
-                error = error.takeIf { state.error?.onEmailField == false },
+                error = error.takeIf { state.error?.slot == ErrorSlot.Password },
                 isPassword = true,
                 enabled = !state.busy,
                 modifier = Modifier.testTag(SIGN_IN_PASSWORD_TAG),
             )
+            if (error != null && state.error?.slot == ErrorSlot.General) {
+                Text(
+                    error,
+                    style = StayFocusedTheme.type.bodyS.copy(fontSize = 13.sp),
+                    color = colors.alertText,
+                    modifier = Modifier.testTag(SIGN_IN_GENERAL_ERROR_TAG),
+                )
+            }
             if (signIn) {
                 GhostButton(
                     text = stringResource(R.string.auth_forgot),
@@ -193,6 +219,38 @@ private fun AuthError.messageRes(): Int =
         AuthError.Other -> R.string.auth_error_other
     }
 
+/** The 42 dp back tile from the prototype: panel fill, hairline border, a 2 px arrow. */
+@Composable
+private fun BackButton(onClick: () -> Unit) {
+    val colors = StayFocusedTheme.colors
+    val description = stringResource(R.string.auth_back)
+    val shape = RoundedCornerShape(14.dp)
+    Box(
+        Modifier
+            .testTag(SIGN_IN_BACK_TAG)
+            .size(42.dp)
+            .clip(shape)
+            .background(colors.panel)
+            .border(1.dp, colors.hairline08, shape)
+            .clickable(role = Role.Button, onClickLabel = description, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        Canvas(Modifier.size(18.dp)) {
+            val unit = size.minDimension / 24f
+            val path =
+                Path().apply {
+                    moveTo(19f * unit, 12f * unit)
+                    lineTo(5f * unit, 12f * unit)
+                    moveTo(11f * unit, 6f * unit)
+                    lineTo(5f * unit, 12f * unit)
+                    lineTo(11f * unit, 18f * unit)
+                }
+            drawPath(path, colors.text, style = Stroke(2f * unit, cap = StrokeCap.Round, join = StrokeJoin.Round))
+        }
+    }
+}
+
 /** The prototype's stand-in for the Google logo: an off-white disc with a "G". */
 @Composable
 private fun GoogleMark() {
@@ -224,6 +282,6 @@ private fun OrDivider() {
 @Composable
 internal fun SignInScreenPreview() {
     StayFocusedTheme {
-        SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, {}, {})
+        SignInScreen(SignInUiState(), {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

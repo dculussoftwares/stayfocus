@@ -36,6 +36,7 @@ fun NavGraphBuilder.onboardingGraph(
         composable<SignIn> {
             SignInRoute(
                 onContinue = { navController.navigateToPermissions() },
+                onBack = { navController.popBackStack() },
                 viewModel = signInViewModel?.invoke() ?: hiltViewModel(),
             )
         }

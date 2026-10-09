@@ -38,8 +38,9 @@ class SignInScreenTest {
         state: SignInUiState,
         onSkip: () -> Unit = {},
         onToggle: () -> Unit = {},
+        onBack: () -> Unit = {},
     ) = show {
-        SignInScreen(state, {}, {}, {}, onToggle, {}, {}, onSkip)
+        SignInScreen(state, {}, {}, {}, onToggle, {}, {}, onSkip, onBack)
     }
 
     @Test
@@ -83,8 +84,23 @@ class SignInScreenTest {
     @Test
     fun typingReportsText() {
         var typed = ""
-        show { SignInScreen(SignInUiState(), { typed = it }, {}, {}, {}, {}, {}, {}) }
+        show { SignInScreen(SignInUiState(), { typed = it }, {}, {}, {}, {}, {}, {}, {}) }
         composeRule.onNodeWithContentDescription("Email").performTextInput("a")
         assertEquals("a", typed)
+    }
+
+    @Test
+    fun backButtonInvokesCallback() {
+        var backed = 0
+        screen(SignInUiState(), onBack = { backed++ })
+        composeRule.onNodeWithTag(SIGN_IN_BACK_TAG).performClick()
+        assertEquals(1, backed)
+    }
+
+    @Test
+    fun generalFailureShowsAsItsOwnLine() {
+        screen(SignInUiState(error = AuthError.Network))
+        composeRule.onNodeWithTag(SIGN_IN_GENERAL_ERROR_TAG).assertIsDisplayed()
+        composeRule.onNodeWithText("No connection. Check your internet and try again.").assertIsDisplayed()
     }
 }

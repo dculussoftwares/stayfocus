@@ -23,16 +23,19 @@ internal enum class AuthMode { SignIn, CreateAccount }
 
 /** What is wrong, shown inline. The wording lives in `strings.xml`. */
 internal enum class AuthError(
-    val onEmailField: Boolean,
+    val slot: ErrorSlot,
 ) {
-    InvalidEmail(true),
-    EmailFirst(true),
-    ShortPassword(false),
-    WrongCredentials(false),
-    EmailInUse(true),
-    Network(false),
-    Other(false),
+    InvalidEmail(ErrorSlot.Email),
+    EmailFirst(ErrorSlot.Email),
+    ShortPassword(ErrorSlot.Password),
+    WrongCredentials(ErrorSlot.Password),
+    EmailInUse(ErrorSlot.Email),
+    Network(ErrorSlot.General),
+    Other(ErrorSlot.General),
 }
+
+/** Where an error is shown: under a field, or as a line of its own for failures that blame neither. */
+internal enum class ErrorSlot { Email, Password, General }
 
 internal data class SignInUiState(
     val mode: AuthMode = AuthMode.SignIn,
@@ -138,11 +141,14 @@ class SignInViewModel
             viewModelScope.launch {
                 mutableState.update { it.copy(busy = true, error = null) }
                 val result = attempt(call)
-                if (result is AuthResult.Success) {
-                    storeSkipped(false)
-                    eventChannel.send(SignInEvent.Done)
-                }
-                mutableState.update { it.copy(busy = false, error = (result as? AuthResult.Failure)?.toError()) }
+                val error =
+                    when {
+                        result is AuthResult.Failure -> result.toError()
+                        !storeSkipped(false) -> AuthError.Other
+                        else -> null
+                    }
+                if (error == null) eventChannel.send(SignInEvent.Done)
+                mutableState.update { it.copy(busy = false, error = error) }
             }
         }
 

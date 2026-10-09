@@ -12,6 +12,7 @@
     <string name="welcome_sheet_body">Your child\'s phone runs a separate app, Stay Focused Kids. Install it on their phone, then link it from your own phone with this app.</string>
     <string name="welcome_sheet_open_play">Open Stay Focused Kids on Google Play</string>
     <string name="sign_in_title">Sign in</string>
+    <string name="auth_back">Back</string>
     <string name="auth_create_title">Create account</string>
     <string name="auth_subtitle">Your account keeps blocks and linked phones in sync.</string>
     <string name="auth_google">Continue with Google</string>

@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.feature.onboarding
 
 import app.cash.turbine.test
+import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.sync.AuthFailure
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
@@ -15,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
@@ -82,7 +84,7 @@ class SignInViewModelTest {
         vm.fill("me@example.com", "12345")
         vm.submit()
         assertEquals(AuthError.ShortPassword, vm.state.value.error)
-        assertFalse(AuthError.ShortPassword.onEmailField)
+        assertEquals(ErrorSlot.Password, AuthError.ShortPassword.slot)
     }
 
     @Test fun emailErrorTakesPriorityOverPasswordError() {
@@ -113,6 +115,7 @@ class SignInViewModelTest {
             }
             assertNull(vm.state.value.error)
             assertFalse(vm.state.value.busy)
+            assertEquals(listOf("signInWithEmail:me@example.com:123456"), auth.calls)
         }
 
     @Test fun createAccountAlsoValidatesAndContinues() =
@@ -128,6 +131,7 @@ class SignInViewModelTest {
                 advanceUntilIdle()
                 assertEquals(SignInEvent.Done, awaitItem())
             }
+            assertEquals(listOf("createAccount:me@example.com:123456"), auth.calls)
         }
 
     @Test fun successfulSignInClearsAccountSkipped() =
@@ -147,6 +151,35 @@ class SignInViewModelTest {
                 advanceUntilIdle()
                 assertEquals(SignInEvent.Done, awaitItem())
             }
+            assertEquals(listOf("signInWithGoogle"), auth.calls)
+        }
+
+    @Test fun failedSettingsWriteAfterSignInShowsErrorInsteadOfContinuing() =
+        runTest {
+            val failing =
+                object : SettingsRepository by settings {
+                    override suspend fun setAccountSkipped(skipped: Boolean) = throw IOException("disk full")
+                }
+            val vm = SignInViewModel(auth, failing)
+            vm.continueWithGoogle()
+            vm.events.test {
+                advanceUntilIdle()
+                expectNoEvents()
+            }
+            assertEquals(AuthError.Other, vm.state.value.error)
+            assertFalse(vm.state.value.busy)
+        }
+
+    @Test fun failedSettingsWriteOnSkipShowsError() =
+        runTest {
+            val failing =
+                object : SettingsRepository by settings {
+                    override suspend fun setAccountSkipped(skipped: Boolean) = throw IOException("disk full")
+                }
+            val vm = SignInViewModel(auth, failing)
+            vm.skip()
+            advanceUntilIdle()
+            assertEquals(AuthError.Other, vm.state.value.error)
         }
 
     @Test fun failuresAreMappedToErrorsAndDoNotContinue() =
@@ -174,7 +207,7 @@ class SignInViewModelTest {
         val vm = vm()
         vm.forgotPassword()
         assertEquals(AuthError.EmailFirst, vm.state.value.error)
-        assertTrue(AuthError.EmailFirst.onEmailField)
+        assertEquals(ErrorSlot.Email, AuthError.EmailFirst.slot)
     }
 
     @Test fun forgotPasswordWithoutAtSignShowsHint() {
@@ -193,6 +226,7 @@ class SignInViewModelTest {
                 advanceUntilIdle()
                 assertEquals(SignInEvent.ResetSent("me@example.com"), awaitItem())
             }
+            assertEquals(listOf("sendPasswordReset:me@example.com"), auth.calls)
             assertNull(vm.state.value.error)
         }
 
