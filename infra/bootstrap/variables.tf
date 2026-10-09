@@ -56,6 +56,8 @@ variable "deploy_roles" {
     "roles/storage.admin",
     "roles/iam.serviceAccountAdmin",
     "roles/iam.serviceAccountUser",
+    # M9-03: API keys (google_apikeys_key); quota overrides use serviceUsageAdmin above.
+    "roles/serviceusage.apiKeysAdmin",
   ]
 }
 
@@ -73,6 +75,8 @@ variable "plan_roles" {
     "roles/storage.objectViewer",
     "roles/storage.legacyBucketReader",
     "roles/iam.securityReviewer",
+    # M9-03: refresh API keys.
+    "roles/serviceusage.apiKeysViewer",
   ]
 }
 

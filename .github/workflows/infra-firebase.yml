@@ -46,6 +46,8 @@ env:
   # App Check: debug tokens (JSON secret, e.g. {"app":{"ci":"<uuid>"},"kids":{}}) and the Firestore enforcement switch.
   TF_VAR_app_check_debug_tokens: ${{ secrets.APP_CHECK_DEBUG_TOKENS_DEV || '{}' }}
   TF_VAR_app_check_enforcement: ${{ vars.APP_CHECK_ENFORCEMENT_DEV || 'ENFORCED' }}
+  # Gemini quota caps (JSON list, see docs/INFRASTRUCTURE.md "Firebase AI Logic"). Empty list = none.
+  TF_VAR_gemini_quota_overrides: ${{ vars.GEMINI_QUOTA_OVERRIDES_DEV || '[]' }}
   TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
   TF_VAR_sha256_fingerprints: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
 

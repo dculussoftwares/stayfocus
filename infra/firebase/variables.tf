@@ -80,6 +80,28 @@ variable "app_check_enforcement" {
   }
 }
 
+variable "gemini_quota_overrides" {
+  description = "Quota caps for the Gemini Developer API, for example [{metric=\"generativelanguage.googleapis.com/generate_content_requests\", unit=\"/min/project\", limit=60}]. The unit is the limit identifier without a leading 1/ or braces, for example /min/project. Look up metric and limit names with `gcloud alpha services quota list`. Empty applies none."
+  type = list(object({
+    metric = string
+    unit   = string
+    limit  = number
+  }))
+  default = []
+}
+
+variable "gemini_budget_amount" {
+  description = "Monthly Gemini budget (whole units of the billing account currency) that triggers alerts at 50%, 90% and 100%."
+  type        = number
+  default     = 5
+}
+
+variable "gemini_billing_services" {
+  description = "Billing service IDs the Gemini budget covers (Generative Language API, Vertex AI)."
+  type        = list(string)
+  default     = ["services/AEFD-7695-64FA", "services/C7E2-9256-1C43"]
+}
+
 variable "app_check_debug_tokens" {
   description = "App Check debug tokens (UUIDs) for dev and CI builds, per app and name, for example {\"app\":{\"ci\":\"<uuid>\"},\"kids\":{}}. Pass as TF_VAR_app_check_debug_tokens from a GitHub secret; never commit."
   type        = map(map(string))
