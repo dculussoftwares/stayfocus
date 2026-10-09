@@ -30,6 +30,7 @@ import com.dculus.stayfocused.core.ui.theme.sfScreenExit
 import com.dculus.stayfocused.feature.account.accountScreen
 import com.dculus.stayfocused.feature.account.navigateToAccount
 import com.dculus.stayfocused.feature.block.BlockViewModel
+import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.block.blockScreen
 import com.dculus.stayfocused.feature.block.blockWizardScreen
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
@@ -56,6 +57,7 @@ fun StayFocusedNavigation(
     onFinishOnboarding: () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     blockViewModel: (@Composable () -> BlockViewModel)? = null,
+    wizardViewModel: (@Composable () -> WizardViewModel)? = null,
     insightsContent: (@Composable () -> Unit)? = null,
     homeViewModel: (@Composable () -> HomeViewModel)? = null,
 ) {
@@ -71,7 +73,17 @@ fun StayFocusedNavigation(
     ) {
         Box(
             Modifier.weight(1f),
-        ) { AppNavHost(navController, startGraph, onFinishOnboarding, blockViewModel, insightsContent, homeViewModel) }
+        ) {
+            AppNavHost(
+                navController,
+                startGraph,
+                onFinishOnboarding,
+                blockViewModel,
+                wizardViewModel,
+                insightsContent,
+                homeViewModel,
+            )
+        }
         if (destination.showsTabBar()) {
             SfTabBar(
                 items = tabItems,
@@ -89,6 +101,7 @@ private fun AppNavHost(
     startGraph: StartGraph,
     onFinishOnboarding: () -> Unit,
     blockViewModel: (@Composable () -> BlockViewModel)?,
+    wizardViewModel: (@Composable () -> WizardViewModel)?,
     insightsContent: (@Composable () -> Unit)?,
     homeViewModel: (@Composable () -> HomeViewModel)?,
 ) {
@@ -119,6 +132,7 @@ private fun AppNavHost(
             blockWizardScreen(
                 onClose = { navController.popBackStack() },
                 onDescribeWithAi = { navController.openBlockInAiMode() },
+                viewModelProvider = wizardViewModel,
             )
             devicesScreen(
                 onLinkPhone = { navController.navigateToLinkAdd() },
