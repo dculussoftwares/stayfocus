@@ -73,7 +73,6 @@ variable "plan_roles" {
     "roles/cloudfunctions.viewer",
     "roles/run.viewer",
     "roles/storage.objectViewer",
-    "roles/storage.legacyBucketReader",
     "roles/iam.securityReviewer",
     # M9-03: refresh API keys.
     "roles/serviceusage.apiKeysViewer",

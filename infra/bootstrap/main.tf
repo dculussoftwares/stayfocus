@@ -94,6 +94,27 @@ resource "google_project_iam_member" "plan_extra" {
   member  = "serviceAccount:${google_service_account.plan[each.value.env].email}"
 }
 
+# roles/storage.legacyBucketReader cannot be granted on a project, so the plan identity gets a custom role that lets it
+# refresh bucket metadata and IAM (the functions source bucket).
+resource "google_project_iam_custom_role" "plan_bucket_reader" {
+  for_each = var.environments
+
+  project     = google_project.env[each.key].project_id
+  role_id     = "planBucketReader"
+  title       = "Plan: read bucket metadata"
+  permissions = ["storage.buckets.get", "storage.buckets.getIamPolicy"]
+
+  depends_on = [google_project_service.bootstrap]
+}
+
+resource "google_project_iam_member" "plan_bucket_reader" {
+  for_each = var.environments
+
+  project = google_project.env[each.key].project_id
+  role    = google_project_iam_custom_role.plan_bucket_reader[each.key].name
+  member  = "serviceAccount:${google_service_account.plan[each.key].email}"
+}
+
 # M6-01: budgets live on the billing account, not the project. Costs Manager manages budgets; Viewer lets PR plans read them.
 resource "google_billing_account_iam_member" "deploy_budgets" {
   billing_account_id = var.billing_account
