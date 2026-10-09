@@ -12,6 +12,7 @@ import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
+import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.UsageAverages
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -257,6 +258,36 @@ class HomeViewModelTest {
                 assertIs<GaugeUi.Ready>(latest(testScheduler).gauge)
                 assertEquals(1, env.usage.refreshes)
                 assertEquals(1, env.usage.backfills)
+            }
+        }
+
+    @Test fun failedBackfillIsRetriedOnTheNextResume() =
+        runTest {
+            val env = Env(access = FakeUsageAccess(granted = false))
+            env.usage.failBackfill = true
+            val vm = viewModel(VirtualClock(testScheduler), env)
+            vm.state.test {
+                latest(testScheduler)
+                env.access.granted = true
+                vm.refreshUsageAccess()
+                testScheduler.runCurrent()
+                env.usage.failBackfill = false
+                vm.refreshUsageAccess()
+                testScheduler.runCurrent()
+                vm.refreshUsageAccess()
+                testScheduler.runCurrent()
+                assertEquals(2, env.usage.backfills)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test fun shortSessionsStillLightTheirHour() =
+        runTest {
+            val short = DayUsageStats.empty(TestDay).copy(hourlyMillis = List(24) { if (it == 9) 30_000L else 0L })
+            val vm = viewModel(VirtualClock(testScheduler), Env(usage = FakeUsage(short)))
+            vm.state.test {
+                val gauge = assertIs<GaugeUi.Ready>(latest(testScheduler).gauge)
+                assertEquals(HOME_LED_ROWS, gauge.levels[9].level)
             }
         }
 

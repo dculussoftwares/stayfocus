@@ -62,6 +62,7 @@ internal class FakeUsage(
     val blocked = MutableStateFlow(blocked)
     var refreshes = 0
     var backfills = 0
+    var failBackfill = false
 
     override fun today(): Flow<DayUsageStats> = today
 
@@ -77,6 +78,7 @@ internal class FakeUsage(
 
     override suspend fun backfill() {
         backfills++
+        check(!failBackfill) { "scan failed" }
     }
 }
 

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.LinkedDevice
+import com.dculus.stayfocused.core.model.UnlockRequestStatus
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.components.IconTile
 import com.dculus.stayfocused.core.ui.components.LedBarChart
@@ -82,7 +83,8 @@ private fun DeviceRow(
 ) {
     val c = StayFocusedTheme.colors
     val shape = StayFocusedTheme.shapes.card
-    val badge = device.alerts.size + device.requests.size
+    val badge =
+        device.alerts.count { !it.dismissed } + device.requests.count { it.status == UnlockRequestStatus.PENDING }
     Row(
         Modifier
             .fillMaxWidth()
@@ -143,6 +145,8 @@ private fun DeviceRow(
 /** "80% · INSTAGRAM"; falls back to ONLINE or OFFLINE when the phone reports neither battery nor app. */
 @Composable
 private fun deviceStatus(device: LinkedDevice): String {
+    // Telemetry of a phone that is offline is stale, so it is not shown as activity.
+    if (!device.online) return stringResource(R.string.home_device_offline)
     val battery = device.battery?.let { "$it%" }
     val app = device.currentApp?.uppercase()
     return when {

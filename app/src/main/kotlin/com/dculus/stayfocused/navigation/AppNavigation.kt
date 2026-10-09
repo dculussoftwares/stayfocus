@@ -145,7 +145,11 @@ private fun AppNavHost(
                         onOpenInsights = { navController.navigateToTab(MainTab.INSIGHTS) },
                         onOpenBlock = { navController.navigateToTab(MainTab.BLOCK) },
                         onOpenDevices = { navController.navigateToTab(MainTab.DEVICES) },
-                        onOpenDevice = { navController.navigateToRemoteDevice(it) },
+                        onOpenDevice = {
+                            // Devices root underneath, so reselecting the Devices tab pops back to it.
+                            navController.navigateToTab(MainTab.DEVICES)
+                            navController.navigateToRemoteDevice(it)
+                        },
                     ),
                 viewModelProvider = homeViewModel,
             )

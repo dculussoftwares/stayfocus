@@ -96,7 +96,11 @@ class HomeViewModel
                         usage.blockedToday(),
                         minuteTicks,
                     ) { today, averages, blocked, now ->
-                        val hourlyMins = today.hourlyMillis.map { (it / MILLIS_PER_MINUTE).toInt() }
+                        val hourlyMins =
+                            today.hourlyMillis.map {
+                                ((it + MILLIS_PER_MINUTE - 1) / MILLIS_PER_MINUTE)
+                                    .toInt()
+                            }
                         GaugeUi.Ready(
                             totalMins = today.totalMins,
                             avgMins = averages.takeIf { it.hasData }?.avgTotalMins,
@@ -141,25 +145,33 @@ class HomeViewModel
         /** Re-reads the usage-access permission, e.g. when the person returns from the system settings. */
         fun refreshUsageAccess() {
             val granted = usageAccess.isGranted()
-            val newlyGranted = granted && !accessGranted.value
+            if (!granted) historyPending = true
             accessGranted.value = granted
-            if (granted) usage.requestRefresh()
-            if (newlyGranted) {
-                // Days skipped while access was off (the startup backfill needs it) fill the average. Only on the
-                // denied -> granted change, so ordinary resumes never rescan the history.
-                viewModelScope.launch { backfillHistory() }
+            if (granted) {
+                usage.requestRefresh()
+                // Days skipped while access was off fill the average. Retried on later resumes until one scan
+                // succeeds; ordinary resumes with nothing pending never rescan the history.
+                if (historyPending && !backfilling) viewModelScope.launch { backfillHistory() }
             }
         }
 
+        /** Set while access is off; cleared once a backfill has completed. */
+        private var historyPending = !accessGranted.value
+        private var backfilling = false
+
         private suspend fun backfillHistory() {
+            backfilling = true
             try {
                 usage.backfill()
+                historyPending = false
             } catch (e: CancellationException) {
                 throw e
             } catch (
                 @Suppress("TooGenericExceptionCaught") e: Exception,
             ) {
                 Timber.w(e, "Usage backfill failed")
+            } finally {
+                backfilling = false
             }
         }
 
