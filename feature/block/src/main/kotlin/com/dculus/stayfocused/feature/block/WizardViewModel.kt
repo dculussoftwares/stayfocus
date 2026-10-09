@@ -17,6 +17,7 @@ import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.model.fallbackAppLabel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,7 +72,7 @@ data class WizardUiState(
     val appLabels: List<String>
         get() {
             val byPkg = apps.associate { it.pkg to it.label }
-            return draft.apps.map { byPkg[it] ?: fallbackLabel(it) }
+            return draft.apps.map { byPkg[it] ?: fallbackAppLabel(it) }
         }
 
     val summary: String get() = BlockSummary.sentence(draft, appLabels)

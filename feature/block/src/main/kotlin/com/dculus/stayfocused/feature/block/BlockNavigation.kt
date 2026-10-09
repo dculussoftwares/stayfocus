@@ -1,3 +1,5 @@
+@file:Suppress("TooManyFunctions") // The Block tab's whole navigation surface lives here.
+
 package com.dculus.stayfocused.feature.block
 
 import androidx.activity.compose.BackHandler
