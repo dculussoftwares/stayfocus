@@ -70,3 +70,8 @@ fun interface BlockEventLog {
 fun interface BreakEndNotifier {
     fun breakEnded()
 }
+
+/** Time since boot that does not follow changes of the wall clock or the time zone. */
+fun interface MonotonicClock {
+    fun elapsedMs(): Long
+}

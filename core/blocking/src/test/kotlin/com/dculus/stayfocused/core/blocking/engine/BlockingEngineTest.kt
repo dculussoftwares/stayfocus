@@ -155,6 +155,7 @@ class BlockingEngineTest {
                 presenter,
                 { breakEnds++ },
                 clock,
+                { scope.testScheduler.currentTime },
                 StandardTestDispatcher(scope.testScheduler),
             )
 
@@ -328,6 +329,21 @@ class BlockingEngineTest {
                 r.cycles.states[CycleKey("cycle", APP)]?.usedMs,
                 "the 20 s before the zone change count",
             )
+            r.engine.stop()
+        }
+
+    @Test fun smallClockCorrectionIsNotChargedAsUse() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(20_000)
+            r.clock.jumpMs = 40_000L
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty())
+            assertEquals(20_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
             r.engine.stop()
         }
 

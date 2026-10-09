@@ -80,12 +80,14 @@ class BlockingEngine
         private val presenter: BlockPresenter,
         private val breakEnd: BreakEndNotifier,
         private val clock: Clock,
+        private val monotonic: MonotonicClock,
         @EngineDispatcher private val dispatcher: CoroutineDispatcher,
     ) {
         /** An uninterrupted stay of [pkg] in front. [counting] is false while it is being blocked. */
         private class Session(
             val pkg: String,
             var flushedAt: Instant,
+            var flushedMono: Long,
             var counting: Boolean = true,
         )
 
@@ -285,14 +287,13 @@ class BlockingEngine
         }
 
         /**
-         * After a clock change, a checkpoint further back than the engine ever waits is a jump of the wall clock, not
-         * time spent in the app: count again from the new clock. A time-zone change keeps the instant, so its
-         * (short) interval is booked as usual.
+         * After a clock change the time since the last checkpoint is taken from the monotonic clock, which a changed
+         * wall clock or zone does not move: a jump is not booked as foreground time, real use before it is kept.
          */
         private fun discardClockJump() {
             val s = session ?: return
-            val now = clock.instant()
-            if (Duration.between(s.flushedAt, now).toMillis() !in 0..MAX_IDLE_MS * 2) s.flushedAt = now
+            val elapsed = (monotonic.elapsedMs() - s.flushedMono).coerceAtLeast(0L)
+            s.flushedAt = clock.instant().minusMillis(elapsed)
         }
 
         /**
@@ -445,9 +446,10 @@ class BlockingEngine
                 when {
                     pkg == null -> null
                     previous?.pkg == pkg -> previous
-                    else -> Session(pkg, now)
+                    else -> Session(pkg, now, monotonic.elapsedMs())
                 }
             previous?.flushedAt = now
+            previous?.flushedMono = monotonic.elapsedMs()
             session = next
             bookingInputs = inputs
             if (previous != null && from != null && during != null) {
