@@ -76,3 +76,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M2-09 Engine robustness
 - Check: fill in the device columns of `docs/qa/blocking-matrix.md` (Pixel API 36, API 26 emulator, Samsung, Xiaomi); every FAIL needs a fixed bug or a filed issue.
 - How: follow each row (reboot, `adb shell am kill`, force-stop, split-screen, picture-in-picture, app updates, language change) with an active block, cycle and break. Unit tests cover the health monitor and engine restart; the platform rows need a device.
+
+## M6-03 Email and password auth: session survives a restart
+- Check: sign in with email on a debug build that has a Firebase configuration, force-stop the app (Settings, Apps, Force stop), relaunch: the account is still signed in (`AuthRepository.currentUser` emits the user). Also tap "Forgot password" with a real mailbox and confirm the reset email arrives.
+- How: needs the dev `google-services.json` (see `docs/INFRASTRUCTURE.md`) and a throwaway account; a person on a device or emulator. The Firebase SDK persists the session, so this is expected to pass.

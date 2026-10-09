@@ -179,6 +179,7 @@ class SignInViewModel
             when (reason) {
                 AuthFailure.InvalidCredentials -> AuthError.WrongCredentials
                 AuthFailure.EmailInUse -> AuthError.EmailInUse
+                AuthFailure.WeakPassword -> AuthError.ShortPassword
                 AuthFailure.Network -> AuthError.Network
                 AuthFailure.Other -> AuthError.Other
             }

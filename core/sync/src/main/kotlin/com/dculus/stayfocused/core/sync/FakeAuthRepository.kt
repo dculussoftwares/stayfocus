@@ -1,15 +1,13 @@
 package com.dculus.stayfocused.core.sync
 
-import dagger.Binds
-import dagger.Module
-import dagger.hilt.InstallIn
-import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * In-memory stand-in that succeeds unless [failWith] is set. Bound until the Firebase implementations (M6-03, M6-04)
- * replace it; it keeps nothing, so no account actually exists.
+ * In-memory stand-in used when the build has no Firebase configuration (and in tests). It succeeds unless
+ * [failWith] is set; it keeps nothing, so no account actually exists.
  */
 @Singleton
 class FakeAuthRepository
@@ -17,26 +15,32 @@ class FakeAuthRepository
     constructor() : AuthRepository {
         @Volatile var failWith: AuthFailure? = null
 
-        private fun result(): AuthResult = failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success
+        private val user = MutableStateFlow<AuthUser?>(null)
+        override val currentUser: Flow<AuthUser?> = user
+
+        private fun result(email: String? = null): AuthResult {
+            val failure = failWith
+            if (failure != null) return AuthResult.Failure(failure)
+            user.value = AuthUser(uid = "fake", email = email, displayName = null)
+            return AuthResult.Success
+        }
 
         override suspend fun signInWithEmail(
             email: String,
             password: String,
-        ): AuthResult = result()
+        ): AuthResult = result(email)
 
         override suspend fun createAccount(
             email: String,
             password: String,
-        ): AuthResult = result()
+        ): AuthResult = result(email)
 
         override suspend fun signInWithGoogle(): AuthResult = result()
 
-        override suspend fun sendPasswordReset(email: String): AuthResult = result()
-    }
+        override suspend fun sendPasswordReset(email: String): AuthResult =
+            failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success
 
-@Module
-@InstallIn(SingletonComponent::class)
-internal abstract class AuthModule {
-    @Binds
-    abstract fun auth(impl: FakeAuthRepository): AuthRepository
-}
+        override suspend fun signOut() {
+            user.value = null
+        }
+    }

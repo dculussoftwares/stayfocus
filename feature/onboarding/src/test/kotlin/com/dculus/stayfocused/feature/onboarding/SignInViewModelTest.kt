@@ -5,10 +5,13 @@ import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.sync.AuthFailure
 import com.dculus.stayfocused.core.sync.AuthRepository
 import com.dculus.stayfocused.core.sync.AuthResult
+import com.dculus.stayfocused.core.sync.AuthUser
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -29,6 +32,9 @@ class SignInViewModelTest {
     private class RecordingAuth : AuthRepository {
         val calls = mutableListOf<String>()
         var failWith: AuthFailure? = null
+        override val currentUser: Flow<AuthUser?> = flowOf(null)
+
+        override suspend fun signOut() = Unit
 
         private fun result(): AuthResult = failWith?.let { AuthResult.Failure(it) } ?: AuthResult.Success
 
