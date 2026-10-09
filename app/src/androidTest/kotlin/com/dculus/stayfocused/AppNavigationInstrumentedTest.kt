@@ -76,7 +76,7 @@ class AppNavigationInstrumentedTest {
         ) { composeRule.onAllNodesWithText("Get started").fetchSemanticsNodes().isNotEmpty() }
         assertTrue("no tab bar during onboarding", !tabBarVisible())
         composeRule.onNodeWithText("Get started").performClick()
-        listOf("Continue without an account", "Continue").forEach { label ->
+        listOf("Continue without an account", "Continue for now").forEach { label ->
             composeRule.waitUntil(
                 TIMEOUT_MS,
             ) { composeRule.onAllNodesWithText(label).fetchSemanticsNodes().isNotEmpty() }

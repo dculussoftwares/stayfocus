@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Continue"
+- tapOn: "Continue for now"
 - assertVisible: "SCREEN TIME"
 - assertVisible: "Take a break"
 - tapOn: "New block"

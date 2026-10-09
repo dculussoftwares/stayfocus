@@ -1,8 +1,6 @@
 package com.dculus.stayfocused.feature.onboarding
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
@@ -13,8 +11,6 @@ import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
-import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
-import com.dculus.stayfocused.core.ui.components.PlaceholderAction
 
 fun NavController.navigateToOnboarding(navOptions: NavOptions? = null) = navigate(OnboardingGraph, navOptions)
 
@@ -23,13 +19,15 @@ fun NavController.navigateToSignIn(navOptions: NavOptions? = null) = navigate(Si
 fun NavController.navigateToPermissions(navOptions: NavOptions? = null) = navigate(Permissions, navOptions)
 
 /**
- * The onboarding graph: Welcome, SignIn, Permissions. [onFinished] runs after the last step. [signInViewModel] null
- * uses Hilt (navigation tests run without it).
+ * The onboarding graph: Welcome, SignIn, Permissions. [onFinished] runs after the last step with the toast to show
+ * on the next screen (null when all four permissions are on). The view-model parameters are null to use Hilt
+ * (navigation tests run without it).
  */
 fun NavGraphBuilder.onboardingGraph(
     navController: NavController,
-    onFinished: () -> Unit,
+    onFinished: (toast: String?) -> Unit,
     signInViewModel: (@Composable () -> SignInViewModel)? = null,
+    permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
     navigation<OnboardingGraph>(startDestination = Welcome) {
         composable<Welcome> { WelcomeRoute(onContinue = { navController.navigateToSignIn() }) }
@@ -40,19 +38,8 @@ fun NavGraphBuilder.onboardingGraph(
                 viewModel = signInViewModel?.invoke() ?: hiltViewModel(),
             )
         }
-        composable<Permissions> { PermissionsRoute(onContinue = onFinished) }
+        composable<Permissions> {
+            PermissionsRoute(onFinish = onFinished, viewModel = permissionsViewModel?.invoke() ?: hiltViewModel())
+        }
     }
-}
-
-@Composable
-internal fun PermissionsRoute(onContinue: () -> Unit) = Step(stringResource(R.string.permissions_title), onContinue)
-
-@Composable
-private fun Step(
-    title: String,
-    onContinue: () -> Unit,
-) {
-    val next = stringResource(R.string.onboarding_placeholder_continue)
-    val actions = remember(next, onContinue) { listOf(PlaceholderAction(next, onContinue)) }
-    NavPlaceholderScreen(title = title, actions = actions)
 }

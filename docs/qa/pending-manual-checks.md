@@ -84,3 +84,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M6-04 Google sign-in: account picker with two accounts
 - Check: on a device with 2 Google accounts, tap "Continue with Google": the account picker lists both; choosing one signs in and continues; closing the picker shows no error; with no Google account on the device the "No Google account found" line shows; airplane mode shows the "No connection" line.
 - How: needs the dev `google-services.json` (with the web client ID and the debug SHA-1 registered, see `docs/INFRASTRUCTURE.md`) and a physical device or Google Play emulator with two accounts. Record the result in the PR.
+
+## M5-04 System check screen
+- Check: on a real device, each Allow row opens the right system screen and the row flips to On live on return; Accessibility goes through the disclosure first ("No thanks" leaves it as Allow); notifications ask once, then open the app's notification settings; "Continue for now" with fewer than 4 shows "Blocking needs all 4. Finish in Account." on Home.
+- How: install a debug build, revoke permissions, walk the onboarding; repeat on API 33+ (runtime notification dialog) and below 33.

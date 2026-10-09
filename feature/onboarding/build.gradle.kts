@@ -12,6 +12,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:blocking"))
     implementation(project(":core:sync"))
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.timber)

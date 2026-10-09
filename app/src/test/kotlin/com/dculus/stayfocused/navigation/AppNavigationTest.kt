@@ -5,11 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -21,6 +24,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.model.BlockTarget
@@ -59,7 +63,9 @@ import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
+import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import com.dculus.stayfocused.feature.onboarding.SignInViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
@@ -72,6 +78,7 @@ import java.time.Clock
 import java.time.LocalDate
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import com.dculus.stayfocused.core.model.Permissions as CorePermissions
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -110,6 +117,8 @@ class AppNavigationTest {
         )
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
+    private val fakePermissions = FakePermissionsRepository()
+    private val permissionsViewModel = PermissionsViewModel(fakePermissions)
     private val homeViewModel =
         HomeViewModel(
             FakeBreakRepository(),
@@ -152,6 +161,7 @@ class AppNavigationTest {
                     insightsContent = { NavPlaceholderScreen(title = "Insights") },
                     homeViewModel = { homeViewModel },
                     signInViewModel = { signInViewModel },
+                    permissionsViewModel = { permissionsViewModel },
                 )
             }
         }
@@ -299,10 +309,53 @@ class AppNavigationTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
         composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
-        composeRule.onNodeWithText("Continue").performClick()
+        composeRule.onNodeWithText("Continue for now").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
         assertTrue(tabBarVisible())
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Welcome::class) })
+        composeRule.onNodeWithText("Blocking needs all 4. Finish in Account.").assertIsDisplayed()
     }
+
+    @Test
+    fun onboardingWithAllFourPermissionsUpdatesLiveAndFinishesWithoutToast() {
+        launch(StartGraph.ONBOARDING)
+        composeRule.onNodeWithText("Get started").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
+        composeRule.onNodeWithText("0/4").assertIsDisplayed()
+        // "No thanks" on the disclosure leaves the row as Allow.
+        composeRule.onNodeWithTag("perms_allow_accessibility").performClick()
+        composeRule.onNodeWithTag("perms_disclosure_no").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithText("0/4").assertIsDisplayed()
+        // The user comes back from Settings with everything granted.
+        fakePermissions.grant(usage = true, accessibility = true, overlay = true, notifications = true)
+        composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("4/4").fetchSemanticsNodes().isNotEmpty() }
+        composeRule.onNodeWithText("All set · Continue").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(Home::class))
+        composeRule.onAllNodesWithText("Blocking needs all 4. Finish in Account.").assertCountEquals(0)
+    }
+}
+
+private class FakePermissionsRepository : PermissionsRepository {
+    private val state =
+        MutableStateFlow(CorePermissions(usage = false, accessibility = false, overlay = false, notifications = false))
+
+    fun grant(
+        usage: Boolean,
+        accessibility: Boolean,
+        overlay: Boolean,
+        notifications: Boolean,
+    ) {
+        state.value = CorePermissions(usage, accessibility, overlay, notifications)
+    }
+
+    override fun observe() = state
+
+    override fun current() = state.value
+
+    override fun needsRestrictedSettingsGuidance() = false
 }
