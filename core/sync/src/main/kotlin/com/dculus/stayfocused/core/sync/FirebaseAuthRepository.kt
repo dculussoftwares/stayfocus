@@ -1,8 +1,10 @@
 package com.dculus.stayfocused.core.sync
 
+import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CancellationException
@@ -21,7 +23,7 @@ import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Email and password accounts on Firebase Auth. The SDK keeps the session on disk, so [currentUser] emits the
+ * Email/password and Google accounts on Firebase Auth. The SDK keeps the session on disk, so [currentUser] emits the
  * signed-in user again after a restart. The profile `users/{uid}` is created in the background if it does not exist.
  */
 internal class FirebaseAuthRepository(
@@ -29,6 +31,7 @@ internal class FirebaseAuthRepository(
     private val firestore: FirebaseFirestore,
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val retryDelaysMs: List<Long> = PROFILE_RETRY_DELAYS_MS,
+    private val tokenProvider: GoogleIdTokenProvider = CredentialManagerTokenProvider(),
 ) : AuthRepository {
     private val profileJobs = ConcurrentHashMap<String, Job>()
 
@@ -77,8 +80,27 @@ internal class FirebaseAuthRepository(
                 ?.let(::ensureProfileInBackground)
         }
 
-    /** Google sign-in is M6-04. */
-    override suspend fun signInWithGoogle(): AuthResult = AuthResult.Failure(AuthFailure.Other)
+    @Suppress("TooGenericExceptionCaught")
+    override suspend fun signInWithGoogle(activityContext: Context): AuthResult =
+        when (val token = tokenProvider.getIdToken(activityContext)) {
+            GoogleTokenResult.Cancelled -> {
+                AuthResult.Cancelled
+            }
+
+            is GoogleTokenResult.Failed -> {
+                AuthResult.Failure(token.reason)
+            }
+
+            is GoogleTokenResult.Token -> {
+                call {
+                    auth
+                        .signInWithCredential(GoogleAuthProvider.getCredential(token.idToken, null))
+                        .await()
+                        .user
+                        ?.let(::ensureProfileInBackground)
+                }
+            }
+        }
 
     @Suppress("TooGenericExceptionCaught")
     override suspend fun sendPasswordReset(email: String): AuthResult =

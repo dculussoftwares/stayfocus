@@ -30,6 +30,8 @@ detekt = "2.0.0-alpha.6"
 kover = "0.9.11"
 firebaseBom = "34.19.0"
 googleServices = "4.5.0"
+credentials = "1.6.0"
+googleid = "1.2.1"
 
 [libraries]
 # Build-logic only
@@ -83,6 +85,9 @@ firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appch
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
 firebase-auth = { module = "com.google.firebase:firebase-auth" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
 
 # Misc
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }

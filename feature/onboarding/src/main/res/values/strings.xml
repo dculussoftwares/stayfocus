@@ -33,6 +33,7 @@
     <string name="auth_error_wrong_credentials">Email or password is incorrect.</string>
     <string name="auth_error_email_in_use">An account with this email already exists.</string>
     <string name="auth_error_network">No connection. Check your internet and try again.</string>
+    <string name="auth_error_no_google_account">Couldn\'t find a Google account to use. Add or sign in to one in Settings, then try again.</string>
     <string name="auth_error_other">Something went wrong. Try again.</string>
     <string name="permissions_title">Permissions</string>
     <!-- Placeholder navigation; removed when the real onboarding screens land. -->

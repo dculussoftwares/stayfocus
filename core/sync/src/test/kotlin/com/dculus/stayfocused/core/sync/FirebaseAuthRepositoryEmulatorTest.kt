@@ -156,6 +156,36 @@ class FirebaseAuthRepositoryEmulatorTest {
         }
 
     @Test
+    fun googleSignInUsesTheIdTokenAndWritesTheProfile() =
+        runIdling {
+            val email = newEmail()
+            // The Auth emulator accepts an unsigned JSON object as a Google ID token.
+            val token = """{"sub":"${UUID.randomUUID()}","email":"$email","email_verified":true}"""
+            val google =
+                FirebaseAuthRepository(auth, firestore, tokenProvider = { GoogleTokenResult.Token(token) })
+            try {
+                assertEquals(AuthResult.Success, google.signInWithGoogle(RuntimeEnvironment.getApplication()))
+                val user = google.currentUser.filterNotNull().first()
+                assertEquals(email, user.email)
+                assertEquals(email, awaitProfile(user.uid).getString("email"))
+            } finally {
+                google.close()
+            }
+        }
+
+    @Test
+    fun cancellingGoogleSignInIsNotAnErrorAndKeepsNoSession() =
+        runIdling {
+            val google = FirebaseAuthRepository(auth, firestore, tokenProvider = { GoogleTokenResult.Cancelled })
+            try {
+                assertEquals(AuthResult.Cancelled, google.signInWithGoogle(RuntimeEnvironment.getApplication()))
+                assertNull(auth.currentUser)
+            } finally {
+                google.close()
+            }
+        }
+
+    @Test
     fun signOutThenSignInAgain() =
         runIdling {
             val email = newEmail()
