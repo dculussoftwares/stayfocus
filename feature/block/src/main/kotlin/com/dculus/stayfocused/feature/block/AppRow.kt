@@ -41,7 +41,11 @@ internal fun AppRow(
     val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(18.dp)
     val pillShape = RoundedCornerShape(10.dp)
-    val pillDescription = stringResource(R.string.block_app_lock_description, app.label)
+    val pillDescription =
+        stringResource(
+            if (app.locked) R.string.block_app_unlock_description else R.string.block_app_lock_description,
+            app.label,
+        )
     Row(
         modifier =
             Modifier
