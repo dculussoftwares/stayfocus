@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -25,6 +26,8 @@ import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.ui.components.SfTabBar
 import com.dculus.stayfocused.core.ui.components.SfTabItem
+import com.dculus.stayfocused.core.ui.components.SfToastHost
+import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
@@ -52,6 +55,7 @@ import com.dculus.stayfocused.feature.home.HomeDestinations
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import com.dculus.stayfocused.feature.home.homeScreen
 import com.dculus.stayfocused.feature.insights.insightsScreen
+import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import com.dculus.stayfocused.feature.onboarding.SignInViewModel
 import com.dculus.stayfocused.feature.onboarding.onboardingGraph
 
@@ -67,7 +71,10 @@ fun StayFocusedNavigation(
     insightsContent: (@Composable () -> Unit)? = null,
     homeViewModel: (@Composable () -> HomeViewModel)? = null,
     signInViewModel: (@Composable () -> SignInViewModel)? = null,
+    permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
+    val scope = rememberCoroutineScope()
+    val toast = remember(scope) { ToastController(scope) }
     val destination = navController.currentBackStackEntryAsState().value?.destination
     val tabItems = MainTab.entries.map { tab -> SfTabItem(tab.name, stringResource(tab.label), tab.icon) }
     Column(
@@ -90,7 +97,10 @@ fun StayFocusedNavigation(
                 insightsContent,
                 homeViewModel,
                 signInViewModel,
+                permissionsViewModel,
+                toast::show,
             )
+            SfToastHost(toast, bottomPadding = 24.dp)
         }
         if (destination.showsTabBar()) {
             SfTabBar(
@@ -113,6 +123,8 @@ private fun AppNavHost(
     insightsContent: (@Composable () -> Unit)?,
     homeViewModel: (@Composable () -> HomeViewModel)?,
     signInViewModel: (@Composable () -> SignInViewModel)?,
+    permissionsViewModel: (@Composable () -> PermissionsViewModel)?,
+    showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
@@ -128,8 +140,10 @@ private fun AppNavHost(
         onboardingGraph(
             navController = navController,
             signInViewModel = signInViewModel,
-            onFinished = {
+            permissionsViewModel = permissionsViewModel,
+            onFinished = { toast ->
                 onFinishOnboarding()
+                toast?.let(showToast)
                 navController.navigate(MainGraph) { popUpTo(OnboardingGraph) { inclusive = true } }
             },
         )

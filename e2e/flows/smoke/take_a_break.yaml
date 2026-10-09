@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Continue"
+- tapOn: "Continue for now"
 - assertVisible: "Lock distracting apps for a while"
 - tapOn: "Take a break"
 - assertVisible: "Start 30 min break"

@@ -35,7 +35,27 @@
     <string name="auth_error_network">No connection. Check your internet and try again.</string>
     <string name="auth_error_no_google_account">Couldn\'t find a Google account to use. Add or sign in to one in Settings, then try again.</string>
     <string name="auth_error_other">Something went wrong. Try again.</string>
-    <string name="permissions_title">Permissions</string>
-    <!-- Placeholder navigation; removed when the real onboarding screens land. -->
-    <string name="onboarding_placeholder_continue">Continue</string>
+    <string name="perms_system_check">System check</string>
+    <string name="perms_count">%1$d/4</string>
+    <string name="perms_headline_1">Four switches,</string>
+    <string name="perms_headline_2">then you\'re in.</string>
+    <string name="perms_body">Android needs these before Stay Focused can see and block apps.</string>
+    <string name="perms_usage_title">Usage access</string>
+    <string name="perms_usage_why">Shows screen time and knows when limits are reached.</string>
+    <string name="perms_accessibility_title">Accessibility</string>
+    <string name="perms_accessibility_why">Notices when a blocked app opens.</string>
+    <string name="perms_overlay_title">Display over apps</string>
+    <string name="perms_overlay_why">Shows the block screen on top.</string>
+    <string name="perms_notifications_title">Notifications</string>
+    <string name="perms_notifications_why">Breaks, limits and requests.</string>
+    <string name="perms_allow">Allow</string>
+    <string name="perms_on">On</string>
+    <string name="perms_continue_all">All set · Continue</string>
+    <string name="perms_continue_now">Continue for now</string>
+    <string name="perms_toast_incomplete">Blocking needs all 4. Finish in Account.</string>
+    <!-- PROVISIONAL: replaced by the full disclosure sheet in M5-05; the two buttons are final. -->
+    <string name="perms_disclosure_title">Accessibility access</string>
+    <string name="perms_disclosure_body">Stay Focused uses Accessibility only to notice which app is open, so it can show the block screen.</string>
+    <string name="perms_disclosure_agree">Agree and open Settings</string>
+    <string name="perms_disclosure_no">No thanks</string>
 </resources>
