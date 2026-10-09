@@ -39,6 +39,8 @@ fun NavPlaceholderScreen(
     title: String,
     modifier: Modifier = Modifier,
     actions: List<PlaceholderAction> = emptyList(),
+    /** Real content shown under the title, above the placeholder rows (screens that are being built up). */
+    header: (@Composable () -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
     LazyColumn(
@@ -52,6 +54,7 @@ fun NavPlaceholderScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Text(text = title, style = StayFocusedTheme.type.display, color = StayFocusedTheme.colors.text) }
+        if (header != null) item { header() }
         items(actions) { action ->
             OutlineButton(text = action.label, onClick = action.onClick, modifier = Modifier.fillMaxWidth())
         }

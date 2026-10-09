@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.ResolveInfo
+import android.telecom.TelecomManager
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.blocking.ForegroundEnvironment
 import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
@@ -46,6 +47,7 @@ import kotlin.test.assertTrue
 private const val APP = "com.social"
 private const val OTHER = "com.news"
 private const val LAUNCHER = "com.launcher"
+private const val DIALER = "com.dialer"
 
 /** Tuesday 2023-11-14 09:59:00Z. */
 private val START: Instant = Instant.parse("2023-11-14T09:59:00Z")
@@ -127,6 +129,7 @@ class BlockingEngineTest {
         val cycles = MemoryCycleStore()
         val events = mutableListOf<Triple<String, String?, String>>()
         var failEvents = false
+        var breakEnds = 0
         val usage = ForegroundTimingUsage()
         val engine =
             BlockingEngine(
@@ -145,6 +148,7 @@ class BlockingEngineTest {
                 usage,
                 AndroidBlockAllowlistProvider(context),
                 presenter,
+                { breakEnds++ },
                 clock,
                 StandardTestDispatcher(scope.testScheduler),
             )
@@ -328,6 +332,81 @@ class BlockingEngineTest {
                     .second.reason,
             )
             r.engine.stop()
+        }
+
+    @Test fun breakBlocksEverythingButTheAllowlistAndEndsOnTime() =
+        runTest {
+            val r = rig(this)
+            shadowOf(context.getSystemService(TelecomManager::class.java)).setDefaultDialer(DIALER)
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertTrue(r.presenter.shown.isEmpty(), "no break yet")
+
+            r.breaks.start(5)
+            r.pass(1_000)
+            val (pkg, decision) = r.presenter.shown.single()
+            assertEquals(APP, pkg)
+            assertEquals(BlockReason.BREAK, decision.reason)
+
+            r.open(DIALER)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.shown.size, "the dialer stays reachable during a break")
+
+            r.open(LAUNCHER)
+            r.pass(5 * 60_000L)
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.shown.size, "opens normally after the break")
+            r.engine.stop()
+        }
+
+    @Test fun breakEndIsAnnouncedOnceWhenItRunsOut() =
+        runTest {
+            val r = rig(this)
+            r.engine.start()
+            r.breaks.start(5)
+            r.pass(5 * 60_000L - 1)
+            assertEquals(0, r.breakEnds)
+            r.pass(2)
+            assertEquals(1, r.breakEnds)
+            r.pass(10 * 60_000L)
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
+    @Test fun breakEndIsStillAnnouncedAfterTheEngineIsRestartedMidBreak() =
+        runTest {
+            val r = rig(this)
+            r.engine.start()
+            r.breaks.start(5)
+            r.pass(60_000)
+            r.engine.stop()
+            r.pass(1_000)
+            r.engine.start()
+            r.pass(5 * 60_000L)
+            assertEquals(1, r.breakEnds)
+            r.engine.stop()
+        }
+
+    @Test fun breakEndedEarlyOrAlreadyElapsedIsNotAnnounced() =
+        runTest {
+            val r = rig(this)
+            r.engine.start()
+            r.breaks.start(5)
+            r.pass(60_000)
+            r.breaks.end()
+            r.pass(10 * 60_000L)
+            assertEquals(0, r.breakEnds)
+            r.engine.stop()
+
+            // An elapsed break that is still stored when the engine starts is old news.
+            val again = Rig(this, context).also { it.breaks.start(1) }
+            again.pass(2 * 60_000L)
+            again.engine.start()
+            again.pass(60_000)
+            assertEquals(0, again.breakEnds)
+            again.engine.stop()
         }
 
     @Test fun allowlistedAppsAreNeverBlocked() =

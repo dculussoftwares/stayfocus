@@ -1,0 +1,20 @@
+# M2-05: Home -> Take a break sheet -> pick 1 h on the dial presets -> live countdown card -> End early.
+appId: com.dculus.stayfocused
+tags:
+  - smoke
+---
+- launchApp:
+    clearState: true
+- tapOn: "Get started"
+- tapOn: "Continue"
+- tapOn: "Continue"
+- assertVisible: "Lock distracting apps for a while"
+- tapOn: "Take a break"
+- assertVisible: "Start 30 min break"
+- tapOn: "1h"
+- assertVisible: "Start 1 h break"
+- tapOn: "Start 1 h break"
+- assertVisible: "ON A BREAK · APPS LOCKED"
+- assertVisible: "End early"
+- tapOn: "End early"
+- assertVisible: "Lock distracting apps for a while"

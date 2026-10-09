@@ -5,6 +5,11 @@
     <!-- Restricted settings guidance (Android 13+ sideloaded installs) -->
     <string name="restricted_settings_guidance">App info → ⋮ → Allow restricted settings</string>
 
+    <!-- Break over notification (channel "breaks") -->
+    <string name="break_channel_name">Breaks</string>
+    <string name="break_over_title">Break over</string>
+    <string name="break_over_text">Your break has ended.</string>
+
     <!-- Block screen -->
     <string name="block_locked_label">%1$s · LOCKED</string>
     <string name="block_go_home">Go to home screen</string>
