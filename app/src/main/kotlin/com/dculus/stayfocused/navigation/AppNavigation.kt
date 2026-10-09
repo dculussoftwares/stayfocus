@@ -19,6 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
+import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
@@ -148,6 +149,8 @@ private fun AppNavHost(
                         onOpenDevice = {
                             // Devices root underneath, so reselecting the Devices tab pops back to it.
                             navController.navigateToTab(MainTab.DEVICES)
+                            // A restored Devices stack may still hold an earlier phone: start from its root.
+                            navController.popBackStack(Devices, inclusive = false)
                             navController.navigateToRemoteDevice(it)
                         },
                     ),

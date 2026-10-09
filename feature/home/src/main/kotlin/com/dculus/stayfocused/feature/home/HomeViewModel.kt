@@ -163,7 +163,8 @@ class HomeViewModel
             backfilling = true
             try {
                 usage.backfill()
-                historyPending = false
+                // The scan is a no-op when access was revoked meanwhile; keep it pending then.
+                if (usageAccess.isGranted()) historyPending = false
             } catch (e: CancellationException) {
                 throw e
             } catch (
