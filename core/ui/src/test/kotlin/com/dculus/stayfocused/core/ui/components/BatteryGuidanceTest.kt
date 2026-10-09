@@ -4,6 +4,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -69,6 +70,19 @@ class BatteryGuidanceTest {
         composeRule.onNodeWithTag(BATTERY_GUIDANCE_GUIDE_TAG).performClick()
         assertEquals(1, settings)
         assertEquals("https://dontkillmyapp.com/samsung", guide)
+    }
+
+    @Test
+    fun stepsNameTheGivenApp() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                StayFocusedTheme {
+                    BatteryGuidance({}, {}, family = OemFamily.XIAOMI, appName = "Stay Focused Kids")
+                }
+            }
+        }
+        composeRule.onNodeWithText("Keep Stay Focused Kids running").assertExists()
+        composeRule.onNodeWithText("Open Settings, then Apps, then Manage apps, then Stay Focused Kids.").assertExists()
     }
 
     @Test

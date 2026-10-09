@@ -19,45 +19,45 @@
     <string name="sf_dial_minutes">MINUTES</string>
     <string name="sf_dial_hour">HOUR</string>
     <string name="sf_dial_hours">HOURS</string>
-    <string name="sf_battery_title">Keep Stay Focused running</string>
-    <string name="sf_battery_intro">Your phone may stop Stay Focused in the background to save battery, which pauses your blocks. Follow these steps for your phone.</string>
+    <string name="sf_battery_title">Keep %1$s running</string>
+    <string name="sf_battery_intro">Your phone may stop %1$s in the background to save battery, which pauses your blocks. Follow these steps for your phone.</string>
     <string name="sf_battery_open_settings">Open battery settings</string>
     <string name="sf_battery_open_guide">See steps for your phone on dontkillmyapp.com</string>
     <string-array name="sf_battery_steps_xiaomi">
-        <item>Open Settings, then Apps, then Manage apps, then Stay Focused.</item>
+        <item>Open Settings, then Apps, then Manage apps, then %1$s.</item>
         <item>Turn on Autostart.</item>
         <item>Tap Battery saver and choose No restrictions.</item>
-        <item>In Recent apps, lock Stay Focused so it is not cleared.</item>
+        <item>In Recent apps, lock %1$s so it is not cleared.</item>
     </string-array>
     <string-array name="sf_battery_steps_oppo">
-        <item>Open Settings, then Battery, then Stay Focused.</item>
+        <item>Open Settings, then Battery, then %1$s.</item>
         <item>Allow background activity and allow auto launch.</item>
-        <item>In Recent apps, lock Stay Focused so it is not cleared.</item>
+        <item>In Recent apps, lock %1$s so it is not cleared.</item>
     </string-array>
     <string-array name="sf_battery_steps_vivo">
         <item>Open Settings, then Battery, then Background power consumption.</item>
-        <item>Choose Stay Focused and allow high background power use.</item>
-        <item>Allow Autostart for Stay Focused in Settings, then Apps.</item>
+        <item>Choose %1$s and allow high background power use.</item>
+        <item>Allow Autostart for %1$s in Settings, then Apps.</item>
     </string-array>
     <string-array name="sf_battery_steps_samsung">
         <item>Open Settings, then Battery, then Background usage limits.</item>
-        <item>Remove Stay Focused from Sleeping apps and Deep sleeping apps.</item>
-        <item>Open Settings, then Apps, then Stay Focused, then Battery, and choose Unrestricted.</item>
+        <item>Remove %1$s from Sleeping apps and Deep sleeping apps.</item>
+        <item>Open Settings, then Apps, then %1$s, then Battery, and choose Unrestricted.</item>
     </string-array>
     <string-array name="sf_battery_steps_oneplus">
         <item>Open Settings, then Battery, then Battery optimization.</item>
-        <item>Choose Stay Focused and select Don\'t optimize.</item>
-        <item>In Recent apps, lock Stay Focused so it is not cleared.</item>
+        <item>Choose %1$s and select Don\'t optimize.</item>
+        <item>In Recent apps, lock %1$s so it is not cleared.</item>
     </string-array>
     <string-array name="sf_battery_steps_huawei">
         <item>Open Settings, then Battery, then App launch.</item>
-        <item>Turn off Manage automatically for Stay Focused.</item>
+        <item>Turn off Manage automatically for %1$s.</item>
         <item>Turn on Auto-launch, Secondary launch and Run in background.</item>
     </string-array>
     <string-array name="sf_battery_steps_default">
         <item>Open the battery settings below.</item>
-        <item>Find Stay Focused and choose Don\'t optimize or Unrestricted.</item>
-        <item>If your phone has an autostart or background-activity setting, allow it for Stay Focused.</item>
+        <item>Find %1$s and choose Don\'t optimize or Unrestricted.</item>
+        <item>If your phone has an autostart or background-activity setting, allow it for %1$s.</item>
     </string-array>
     <!-- Placeholder rows on screens that are not built yet (NavPlaceholderScreen); removed with it. -->
     <string name="sf_placeholder_item">Placeholder row %1$d</string>

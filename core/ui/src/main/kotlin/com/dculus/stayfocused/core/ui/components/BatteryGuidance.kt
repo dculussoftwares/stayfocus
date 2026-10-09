@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
@@ -60,7 +62,8 @@ enum class OemFamily(
 /**
  * OEM-specific steps for keeping Stay Focused alive in the background, plus a button for the battery optimisation
  * list and a link to dontkillmyapp.com. Navigation is the caller's job: [onOpenBatterySettings] and [onOpenGuide]
- * receive the click (the guide with the URL to open).
+ * receive the click (the guide with the URL to open). [appName] defaults to the host app's label, so the steps name
+ * "Stay Focused" or "Stay Focused Kids" as installed.
  */
 @Composable
 fun BatteryGuidance(
@@ -68,17 +71,27 @@ fun BatteryGuidance(
     onOpenGuide: (url: String) -> Unit,
     modifier: Modifier = Modifier,
     family: OemFamily = OemFamily.fromManufacturer(Build.MANUFACTURER),
+    appName: String? = null,
 ) {
     val c = StayFocusedTheme.colors
-    val steps = stringArrayResource(family.stepsRes)
+    val context = LocalContext.current
+    val name =
+        remember(context, appName) {
+            appName ?: context.applicationInfo.loadLabel(context.packageManager).toString()
+        }
+    val steps = stringArrayResource(family.stepsRes).map { it.format(name) }
     Panel(modifier.fillMaxWidth()) {
         Column(Modifier.padding(StayFocusedTheme.spacing.gap16), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(
-                stringResource(R.string.sf_battery_title),
+                stringResource(R.string.sf_battery_title, name),
                 style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.ExtraBold),
                 color = c.text,
             )
-            Text(stringResource(R.string.sf_battery_intro), style = StayFocusedTheme.type.body, color = c.secondary)
+            Text(
+                stringResource(R.string.sf_battery_intro, name),
+                style = StayFocusedTheme.type.body,
+                color = c.secondary,
+            )
             steps.forEachIndexed { index, step ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
@@ -108,7 +121,12 @@ fun BatteryGuidance(
 internal fun BatteryGuidancePreview() {
     StayFocusedTheme {
         Column(Modifier.padding(StayFocusedTheme.spacing.screen)) {
-            BatteryGuidance(onOpenBatterySettings = {}, onOpenGuide = {}, family = OemFamily.XIAOMI)
+            BatteryGuidance(
+                onOpenBatterySettings = {},
+                onOpenGuide = {},
+                family = OemFamily.XIAOMI,
+                appName = "Stay Focused",
+            )
         }
     }
 }
