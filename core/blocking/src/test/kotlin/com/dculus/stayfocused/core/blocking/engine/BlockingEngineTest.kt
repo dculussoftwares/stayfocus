@@ -341,6 +341,24 @@ class BlockingEngineTest {
             r.engine.stop()
         }
 
+    @Test fun newBreakAfterRollbackIsStillAnnounced() =
+        runTest {
+            val r = rig(this)
+            r.breaks.start(5)
+            r.engine.start()
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(1, r.breakEnds)
+            // Clock rolled back, then a new break replaces the finished one: it is a different session, announce it.
+            r.clock.jumpMs = -(5 * 60_000L + 1_000)
+            r.engine.onClockChanged()
+            r.pass(1_000)
+            r.breaks.end()
+            r.breaks.start(5)
+            r.pass(5 * 60_000L + 1_000)
+            assertEquals(2, r.breakEnds)
+            r.engine.stop()
+        }
+
     @Test fun timeZoneChangeReevaluatesScheduleImmediately() =
         runTest {
             val r = rig(this)

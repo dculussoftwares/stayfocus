@@ -122,7 +122,7 @@ class BlockingEngine
         // Only touched by the (single) collecting coroutine of a run.
         private var handledClockTick = 0
 
-        @Volatile private var announcedBreakEnd: Instant? = null
+        @Volatile private var announcedBreak: BreakSession? = null
 
         @Volatile private var cachedAllowlist: Set<String>? = null
 
@@ -195,7 +195,7 @@ class BlockingEngine
                 bookingInputs = null
                 latestInputs = null
                 watchedBreakEnd = null
-                announcedBreakEnd = null
+                announcedBreak = null
                 cachedAllowlist = null
                 cycleCache.clear()
                 unsaved.clear()
@@ -310,7 +310,7 @@ class BlockingEngine
                     return@collectLatest
                 }
                 val end = session.endsAt
-                if (end == announcedBreakEnd) return@collectLatest // a clock moved back must not repeat the alert
+                if (session == announcedBreak) return@collectLatest // a clock moved back must not repeat the alert
                 if (watchedBreakEnd != end) {
                     if (!end.isAfter(clock.instant())) return@collectLatest
                     watchedBreakEnd = end
@@ -321,7 +321,7 @@ class BlockingEngine
                     delay(wait)
                 }
                 watchedBreakEnd = null
-                announcedBreakEnd = end
+                announcedBreak = session
                 try {
                     breakEnd.breakEnded()
                 } catch (e: CancellationException) {
