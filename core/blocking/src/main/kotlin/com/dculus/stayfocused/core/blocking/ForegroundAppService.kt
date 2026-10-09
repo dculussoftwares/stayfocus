@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
 import com.dculus.stayfocused.core.blocking.engine.BlockingEngine
+import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -19,6 +20,8 @@ class ForegroundAppService : AccessibilityService() {
     @Inject lateinit var launcher: BlockScreenLauncher
 
     @Inject lateinit var engine: BlockingEngine
+
+    @Inject lateinit var health: EngineHealthMonitor
 
     private val screenOffReceiver =
         object : BroadcastReceiver() {
@@ -44,7 +47,10 @@ class ForegroundAppService : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         launcher.attach(this)
+        // A rebind (reboot, update, the user toggling the service) must not trust a foreground app from before it.
+        tracker.onScreenOff()
         engine.start()
+        health.onServiceConnected()
         if (!receiverRegistered) {
             registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
             registerReceiver(
@@ -60,12 +66,14 @@ class ForegroundAppService : AccessibilityService() {
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        health.onEvent()
         tracker.onWindowStateChanged(event.packageName?.toString(), event.className?.toString())
     }
 
     override fun onInterrupt() = Unit
 
     override fun onUnbind(intent: Intent?): Boolean {
+        health.onServiceUnbound()
         engine.stop()
         tracker.onScreenOff()
         launcher.detach()
@@ -73,6 +81,7 @@ class ForegroundAppService : AccessibilityService() {
     }
 
     override fun onDestroy() {
+        health.onServiceUnbound()
         engine.stop()
         if (receiverRegistered) {
             unregisterReceiver(screenOffReceiver)
