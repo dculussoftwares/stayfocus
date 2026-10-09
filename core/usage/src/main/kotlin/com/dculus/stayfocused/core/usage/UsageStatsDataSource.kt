@@ -11,6 +11,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import javax.inject.Inject
@@ -21,6 +22,15 @@ interface UsageStatsDataSource {
     suspend fun dayUsage(date: LocalDate): DayUsageStats
 }
 
+/** Foreground time per package over an arbitrary window; used by the blocking engine for limits. */
+interface PackageUsageSource {
+    /** Empty without usage access. Own apps, launchers and system UI are never included. */
+    suspend fun foregroundMillis(
+        from: Instant,
+        to: Instant,
+    ): Map<String, Long>
+}
+
 private const val SYSTEM_UI_PACKAGE = "com.android.systemui"
 
 @Singleton
@@ -29,7 +39,8 @@ class AndroidUsageStatsDataSource
     constructor(
         @ApplicationContext private val context: Context,
         private val usageAccess: UsageAccess,
-    ) : UsageStatsDataSource {
+    ) : UsageStatsDataSource,
+        PackageUsageSource {
         private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 
         override suspend fun dayUsage(date: LocalDate): DayUsageStats =
@@ -56,6 +67,21 @@ class AndroidUsageStatsDataSource
                         UnlockSignal.SCREEN_INTERACTIVE
                     }
                 UsageAggregator(zone, excludedPackages(), signal).aggregate(date, events, queryEnd)
+            }
+
+        override suspend fun foregroundMillis(
+            from: Instant,
+            to: Instant,
+        ): Map<String, Long> =
+            withContext(ioDispatcher) {
+                if (!usageAccess.isGranted()) return@withContext emptyMap()
+                val end = minOf(to.toEpochMilli(), System.currentTimeMillis())
+                val start = from.toEpochMilli()
+                if (end <= start) return@withContext emptyMap()
+                val manager = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+                val events = readEvents(manager, start - UsageAggregator.LOOKBACK_MILLIS, end)
+                UsageAggregator(ZoneId.systemDefault(), excludedPackages(), UnlockSignal.SCREEN_INTERACTIVE)
+                    .foregroundMillis(events, start, end)
             }
 
         private fun readEvents(

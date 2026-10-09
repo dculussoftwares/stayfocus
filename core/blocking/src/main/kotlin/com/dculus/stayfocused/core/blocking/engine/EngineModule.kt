@@ -51,7 +51,10 @@ internal abstract class EngineModule {
     abstract fun presenter(impl: BlockScreenLauncher): BlockPresenter
 
     @Binds
-    abstract fun usageProvider(impl: ForegroundTimingUsage): AppUsageProvider
+    abstract fun usageProvider(impl: UsageStatsAppUsageProvider): AppUsageProvider
+
+    @Binds
+    abstract fun liveForeground(impl: ForegroundTimingUsage): LiveForegroundSource
 
     @Binds
     abstract fun recorder(impl: ForegroundTimingUsage): ForegroundTimeRecorder

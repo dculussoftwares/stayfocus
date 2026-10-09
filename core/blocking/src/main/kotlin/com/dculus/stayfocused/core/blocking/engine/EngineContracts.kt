@@ -25,6 +25,16 @@ fun interface ForegroundTimeRecorder {
     )
 }
 
+/** Foreground time the engine itself has measured, for the part UsageStats has not caught up with yet. */
+fun interface LiveForegroundSource {
+    /** Milliseconds [pkg] was in front between [from] and [to]. */
+    fun foregroundMs(
+        pkg: String,
+        from: Instant,
+        to: Instant,
+    ): Long
+}
+
 /** Packages that may never be blocked: the user must always be able to call, text, change settings and go home. */
 fun interface BlockAllowlistProvider {
     fun allowlist(): Set<String>

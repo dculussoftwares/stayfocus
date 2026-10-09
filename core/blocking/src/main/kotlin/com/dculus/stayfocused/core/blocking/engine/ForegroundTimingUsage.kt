@@ -8,15 +8,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Temporary [AppUsageProvider]: only knows what the engine itself measured since the process started.
- * M2-06 replaces or augments it with UsageStats.
+ * What the engine itself measured since the process started. It is the [AppUsageProvider] only while usage access
+ * is missing; otherwise [UsageStatsAppUsageProvider] adds its [LiveForegroundSource] delta to the UsageStats aggregate.
  */
 @Singleton
 class ForegroundTimingUsage
     @Inject
     constructor() :
     AppUsageProvider,
-        ForegroundTimeRecorder {
+        ForegroundTimeRecorder,
+        LiveForegroundSource {
         private class Interval(
             val pkg: String,
             val from: Instant,
@@ -60,6 +61,15 @@ class ForegroundTimingUsage
                 }
             }
         }
+
+        override fun foregroundMs(
+            pkg: String,
+            from: Instant,
+            to: Instant,
+        ): Long =
+            synchronized(lock) {
+                intervals.filter { it.pkg == pkg }.sumOf { overlapMs(it, from, to) }
+            }
 
         private fun overlapMs(
             i: Interval,

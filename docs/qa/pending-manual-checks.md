@@ -49,3 +49,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M7-02 Cloud Functions scaffold
 - Check: after the first apply on `main`, `ping` is deployed, a call without an App Check token or sign-in is refused, a call from a debug build succeeds, and a later PR changing only another function leaves `ping` untouched in the plan.
 - How: first re-run `infra-bootstrap` with a temporary key (new deploy roles for Cloud Functions, Cloud Run, Storage and a conditional `projectIamAdmin`, docs/INFRASTRUCTURE.md "Cloud Functions"), then merge. Check the plan comment for `allUsers` on the Cloud Run services (an organisation policy may block it). Call `ping` with `curl` (expect 401) and from a debug build of `:app` once M7-07 adds a client.
+
+## M2-06 Daily and hourly limits
+- Check: on a device with usage access and the accessibility service on, a 2-minute daily limit on Chrome blocks after about 2 minutes of use (within 10 s) and stays blocked until midnight; an hourly limit unblocks at the next clock-hour boundary.
+- How: create a daily limit block (2 min) with Chrome, open Chrome and keep it open; note the time to the block screen. Reopen Chrome: still blocked. Change the device clock past midnight (or wait): unblocked. Repeat with an hourly limit near the top of an hour. The unit tests already cover the UsageStats + live-delta merge and the hour/day resets.
