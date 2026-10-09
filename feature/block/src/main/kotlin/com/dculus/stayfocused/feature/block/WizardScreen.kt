@@ -64,6 +64,7 @@ data class WizardActions(
     val onToggleApp: (String) -> Unit = {},
     val onNext: () -> Unit = {},
     val onDescribe: () -> Unit = {},
+    val onSelectTarget: (BlockTarget) -> Unit = {},
 )
 
 private val WizardTypes = BlockType.entries
@@ -125,11 +126,11 @@ fun WizardScreen(
         verticalArrangement = Arrangement.spacedBy(spacing.screen),
     ) {
         WizardHeader(state.step, actions.onBack)
-        TargetPills(state.targets, state.draft.target)
+        TargetPills(state.targets, state.draft.target, actions.onSelectTarget)
         Box(Modifier.weight(1f)) {
             if (state.ready) {
                 when (state.step) {
-                    WIZARD_STEP_TYPE -> TypeStep(state.draft.type, actions)
+                    WIZARD_STEP_TYPE -> TypeStep(state.draft.type, state.aiAvailable, actions)
                     WIZARD_STEP_APPS -> AppsStep(state, actions.onToggleApp)
                     else -> RulesStep(state.draft.type)
                 }
@@ -139,6 +140,7 @@ fun WizardScreen(
             text = ctaLabel(state),
             onClick = actions.onNext,
             modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
+            enabled = state.ready,
         )
     }
 }
@@ -212,6 +214,7 @@ private fun WizardHeader(
 private fun TargetPills(
     targets: List<WizardTargetUi>,
     selected: BlockTarget,
+    onSelect: (BlockTarget) -> Unit,
 ) {
     val c = StayFocusedTheme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -232,8 +235,12 @@ private fun TargetPills(
                         .clip(shape)
                         .background(if (on) c.text else Color.Transparent)
                         .border(1.dp, if (on) c.text else c.hairline14, shape)
-                        .selectable(selected = on, enabled = t.enabled, role = Role.RadioButton, onClick = {})
-                        .padding(horizontal = 12.dp, vertical = 7.dp),
+                        .selectable(
+                            selected = on,
+                            enabled = t.enabled,
+                            role = Role.RadioButton,
+                            onClick = { onSelect(t.target) },
+                        ).padding(horizontal = 12.dp, vertical = 7.dp),
             )
         }
     }
@@ -242,6 +249,7 @@ private fun TargetPills(
 @Composable
 private fun TypeStep(
     selected: BlockType,
+    aiAvailable: Boolean,
     actions: WizardActions,
 ) {
     val c = StayFocusedTheme.colors
@@ -253,40 +261,42 @@ private fun TypeStep(
                 color = c.text,
             )
         }
-        item {
-            val shape = RoundedCornerShape(16.dp)
-            Row(
-                modifier =
-                    Modifier
-                        .padding(bottom = 4.dp)
-                        .fillMaxWidth()
-                        .clip(shape)
-                        .background(c.accent.copy(alpha = 0.06f))
-                        .border(1.dp, c.accent.copy(alpha = 0.4f), shape)
-                        .testTag(WIZARD_DESCRIBE_TAG)
-                        .clickable(role = Role.Button, onClick = actions.onDescribe)
-                        .padding(horizontal = 14.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    stringResource(R.string.block_ai_badge),
-                    style = StayFocusedTheme.type.labelS,
-                    color = c.onAccent,
+        if (aiAvailable) {
+            item {
+                val shape = RoundedCornerShape(16.dp)
+                Row(
                     modifier =
                         Modifier
-                            .clip(
-                                RoundedCornerShape(5.dp),
-                            ).background(c.accent)
-                            .padding(horizontal = 6.dp, vertical = 3.dp),
-                )
-                Text(
-                    stringResource(R.string.block_wizard_describe),
-                    style = StayFocusedTheme.type.body,
-                    color = c.text,
-                    modifier = Modifier.weight(1f),
-                )
-                Text("→", color = c.accent)
+                            .padding(bottom = 4.dp)
+                            .fillMaxWidth()
+                            .clip(shape)
+                            .background(c.accent.copy(alpha = 0.06f))
+                            .border(1.dp, c.accent.copy(alpha = 0.4f), shape)
+                            .testTag(WIZARD_DESCRIBE_TAG)
+                            .clickable(role = Role.Button, onClick = actions.onDescribe)
+                            .padding(horizontal = 14.dp, vertical = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        stringResource(R.string.block_ai_badge),
+                        style = StayFocusedTheme.type.labelS,
+                        color = c.onAccent,
+                        modifier =
+                            Modifier
+                                .clip(
+                                    RoundedCornerShape(5.dp),
+                                ).background(c.accent)
+                                .padding(horizontal = 6.dp, vertical = 3.dp),
+                    )
+                    Text(
+                        stringResource(R.string.block_wizard_describe),
+                        style = StayFocusedTheme.type.body,
+                        color = c.text,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text("→", color = c.accent)
+                }
             }
         }
         items(WizardTypes, key = { it.name }) { type ->

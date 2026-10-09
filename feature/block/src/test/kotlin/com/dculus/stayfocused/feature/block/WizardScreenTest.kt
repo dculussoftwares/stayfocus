@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.lifecycle.SavedStateHandle
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import org.junit.Rule
 import org.junit.Test
@@ -27,10 +28,11 @@ class WizardScreenTest {
     @get:Rule
     val composeRule = createComposeRule()
 
-    private fun launch(
-        vm: WizardViewModel =
-            WizardViewModel(SavedStateHandle(), FakeTargetApps(defaultApps()), FakeLinkedDevicesRepository()),
-    ) {
+    private fun launch() {
+        val settings = FakeSettingsRepository()
+        kotlinx.coroutines.runBlocking { settings.setAiEnabled(true) }
+        val vm =
+            WizardViewModel(SavedStateHandle(), FakeTargetApps(defaultApps()), FakeLinkedDevicesRepository(), settings)
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 StayFocusedTheme {
@@ -43,6 +45,7 @@ class WizardScreenTest {
                             onToggleApp = vm::toggleApp,
                             onNext = vm::next,
                             onDescribe = vm::describeWithAi,
+                            onSelectTarget = vm::selectTarget,
                         ),
                     )
                 }

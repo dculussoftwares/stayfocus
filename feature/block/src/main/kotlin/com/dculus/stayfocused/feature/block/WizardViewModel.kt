@@ -4,17 +4,20 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
+import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.LinkedDevice
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -40,6 +43,8 @@ data class WizardUiState(
     val draft: BlockDraft = BlockDraft(),
     val apps: List<TargetApp> = emptyList(),
     val targets: List<WizardTargetUi> = listOf(WizardTargetUi(BlockTarget.ThisPhone, null, enabled = true)),
+    /** "Rather just describe it?" is offered only when the AI feature is on. */
+    val aiAvailable: Boolean = false,
 ) {
     val selectedCount: Int get() = draft.apps.size
 }
@@ -59,6 +64,7 @@ sealed interface WizardEvent {
  * State of the 3-step block wizard. Created from the route (`target`, `prefill` = a [BlockTemplate] id); the draft's
  * defaults match the prototype `openWizard`. The rules of step 3 and the save belong to M4-03 to M4-05.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class WizardViewModel
     @Inject
@@ -66,12 +72,14 @@ class WizardViewModel
         savedStateHandle: SavedStateHandle,
         private val targetApps: TargetAppsProvider,
         linkedDevices: LinkedDevicesRepository,
+        settings: SettingsRepository,
     ) : ViewModel() {
-        private val target: BlockTarget =
+        private val initialTarget: BlockTarget =
             savedStateHandle.get<String>(ARG_TARGET)?.let { BlockTarget.Device(it) } ?: BlockTarget.ThisPhone
+        private val target = MutableStateFlow(initialTarget)
         private val template: BlockTemplate? = BlockTemplate.fromId(savedStateHandle.get<String>(ARG_PREFILL))
 
-        private val mutableState = MutableStateFlow(WizardUiState(draft = BlockDraft(target = target)))
+        private val mutableState = MutableStateFlow(WizardUiState(draft = BlockDraft(target = initialTarget)))
         val state: StateFlow<WizardUiState> = mutableState.asStateFlow()
 
         private val eventChannel = Channel<WizardEvent>(Channel.BUFFERED)
@@ -80,9 +88,28 @@ class WizardViewModel
         init {
             viewModelScope.launch {
                 // The first app list decides which template/default apps exist on this target.
-                val first = targetApps.apps(target).first()
+                val first = targetApps.apps(initialTarget).first()
                 mutableState.update { applyPrefill(it, first) }
-                targetApps.apps(target).collect { apps -> mutableState.update { it.copy(apps = apps) } }
+                target.flatMapLatest { targetApps.apps(it) }.collect { apps ->
+                    // An app that disappears (uninstalled) must not stay selected.
+                    val available = apps.mapTo(hashSetOf()) { it.pkg }
+                    mutableState.update { s ->
+                        s.copy(
+                            apps = apps,
+                            draft =
+                                s.draft.copy(
+                                    apps =
+                                        s.draft.apps.filterTo(linkedSetOf()) {
+                                            it in
+                                                available
+                                        },
+                                ),
+                        )
+                    }
+                }
+            }
+            viewModelScope.launch {
+                settings.settings.collect { s -> mutableState.update { it.copy(aiAvailable = s.aiEnabled) } }
             }
             viewModelScope.launch {
                 linkedDevices.observeAll().collect { devices ->
@@ -99,13 +126,27 @@ class WizardViewModel
             apps: List<TargetApp>,
         ): WizardUiState {
             val installed = apps.mapTo(hashSetOf()) { it.pkg }
-            val prefill = template?.prefill(target, installed)
+            val prefill = template?.prefill(initialTarget, installed)
             if (prefill != null) {
                 return current.copy(ready = true, apps = apps, draft = prefill.draft, step = prefill.startStep)
             }
             val draft = current.draft
             val available = draft.apps.filterTo(linkedSetOf()) { it in installed }
             return current.copy(ready = true, apps = apps, draft = draft.copy(apps = available))
+        }
+
+        /** An enabled "ON" pill: re-targets the draft; the default apps are re-resolved for the new target. */
+        fun selectTarget(newTarget: BlockTarget) {
+            val pill = mutableState.value.targets.firstOrNull { it.target == newTarget }
+            if (pill == null || !pill.enabled || newTarget == mutableState.value.draft.target) return
+            viewModelScope.launch {
+                val installed = targetApps.apps(newTarget).first().mapTo(hashSetOf()) { it.pkg }
+                mutableState.update { s ->
+                    val apps = BlockDraft().apps.filterTo(linkedSetOf()) { it in installed }
+                    s.copy(draft = s.draft.copy(target = newTarget, apps = apps))
+                }
+                target.value = newTarget
+            }
         }
 
         /** Picking a type is selecting it and moving on to the apps. */
@@ -124,6 +165,7 @@ class WizardViewModel
         fun next() {
             val s = mutableState.value
             when {
+                !s.ready -> Unit
                 s.step == WIZARD_STEP_APPS && s.draft.apps.isEmpty() -> emit(WizardEvent.PickAtLeastOneApp)
                 s.step < WIZARD_STEP_RULES -> mutableState.update { it.copy(step = it.step + 1) }
             }

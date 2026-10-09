@@ -84,6 +84,7 @@ class AppNavigationTest {
                 override fun apps(target: BlockTarget) = flowOf(emptyList<TargetApp>())
             },
             FakeLinkedDevicesRepository(),
+            FakeSettingsRepository(),
         )
 
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {

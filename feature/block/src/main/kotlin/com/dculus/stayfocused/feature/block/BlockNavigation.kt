@@ -133,6 +133,7 @@ internal fun BlockWizardRoute(
                 onToggleApp = viewModel::toggleApp,
                 onNext = viewModel::next,
                 onDescribe = viewModel::describeWithAi,
+                onSelectTarget = viewModel::selectTarget,
             )
         }
     Box(Modifier.fillMaxSize()) {

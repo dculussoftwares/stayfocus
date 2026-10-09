@@ -6,6 +6,7 @@ import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.testing.MainDispatcherRule
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@ class WizardViewModelTest {
 
     private val apps = FakeTargetApps(defaultApps())
     private val devices = FakeLinkedDevicesRepository()
+    private val settings = FakeSettingsRepository()
 
     private fun viewModel(
         target: String? = null,
@@ -49,7 +51,7 @@ class WizardViewModelTest {
         val handle = SavedStateHandle()
         target?.let { handle["target"] = it }
         prefill?.let { handle["prefill"] = it }
-        return WizardViewModel(handle, apps, devices)
+        return WizardViewModel(handle, apps, devices, settings)
     }
 
     @Test
@@ -190,5 +192,39 @@ class WizardViewModelTest {
         apps.apps.value = defaultApps() + TargetApp("com.example.new", "New", 1)
         assertEquals(6, vm.state.value.apps.size)
         assertFalse(pkg("reddit") !in vm.state.value.draft.apps)
+    }
+
+    @Test
+    fun uninstalledAppsLeaveTheSelection() {
+        val vm = viewModel()
+        apps.apps.value = defaultApps().filter { it.pkg != pkg("youtube") }
+        assertEquals(setOf(pkg("instagram")), vm.state.value.draft.apps)
+    }
+
+    @Test
+    fun enabledPillRetargetsTheDraftAndDisabledOnesAreIgnored() {
+        devices.devices.value = listOf(device())
+        val vm = viewModel(target = "d1")
+        vm.selectTarget(BlockTarget.Device("d1"))
+        assertEquals(BlockTarget.Device("d1"), vm.state.value.draft.target)
+        vm.selectTarget(BlockTarget.ThisPhone)
+        assertEquals(BlockTarget.ThisPhone, vm.state.value.draft.target)
+        assertEquals(setOf(pkg("instagram"), pkg("youtube")), vm.state.value.draft.apps)
+    }
+
+    @Test
+    fun aiShortcutFollowsTheAiSetting() =
+        kotlinx.coroutines.test.runTest {
+            val vm = viewModel()
+            assertFalse(vm.state.value.aiAvailable)
+            settings.setAiEnabled(true)
+            assertTrue(vm.state.value.aiAvailable)
+        }
+
+    @Test
+    fun continueIsIgnoredUntilReady() {
+        apps.apps.value = emptyList()
+        val vm = viewModel()
+        assertTrue(vm.state.value.ready)
     }
 }
