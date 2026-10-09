@@ -27,9 +27,9 @@ class EngineHealthMonitorTest {
         assertNull(monitor.health.value.lastEventAt)
     }
 
-    @Test fun connectingBindsAndStampsTime() {
+    @Test fun connectingBindsWithoutInventingAnEvent() {
         monitor.onServiceConnected()
-        assertEquals(EngineHealth(true, now), monitor.health.value)
+        assertEquals(EngineHealth(true, null), monitor.health.value)
     }
 
     @Test fun eventsMoveLastEventTime() {
@@ -41,6 +41,7 @@ class EngineHealthMonitorTest {
 
     @Test fun unbindKeepsLastEventButClearsBound() {
         monitor.onServiceConnected()
+        monitor.onEvent()
         monitor.onServiceUnbound()
         assertFalse(monitor.health.value.serviceBound)
         assertNotNull(monitor.health.value.lastEventAt)
