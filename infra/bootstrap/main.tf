@@ -103,6 +103,8 @@ resource "google_project_iam_custom_role" "plan_bucket_reader" {
   role_id     = "planBucketReader"
   title       = "Plan: read bucket metadata"
   permissions = ["storage.buckets.get", "storage.buckets.getIamPolicy"]
+
+  depends_on = [google_project_service.bootstrap]
 }
 
 resource "google_project_iam_member" "plan_bucket_reader" {
