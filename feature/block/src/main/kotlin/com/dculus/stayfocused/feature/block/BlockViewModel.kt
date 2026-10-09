@@ -23,11 +23,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.text.Collator
 import javax.inject.Inject
 
@@ -109,6 +112,7 @@ class BlockViewModel
         usage: UsageRepository,
     ) : ViewModel() {
         private val local = MutableStateFlow(LocalState())
+        private val lockMutex = Mutex()
         private val eventChannel = Channel<BlockEvent>(Channel.BUFFERED)
 
         val events: Flow<BlockEvent> = eventChannel.receiveAsFlow()
@@ -166,13 +170,18 @@ class BlockViewModel
             viewModelScope.launch { blocks.setEnabled(id, enabled) }
         }
 
-        /** Locks (or unlocks) [pkg] on the selected target: a manual lock with no end. */
-        fun setAppLocked(
-            pkg: String,
-            locked: Boolean,
-        ) {
+        /**
+         * Flips the manual lock (indefinite) of [pkg] on the selected target. The current state is read from the
+         * repository, under a lock, so quick repeated taps alternate lock and unlock instead of repeating one.
+         */
+        fun toggleAppLock(pkg: String) {
             val target = state.value.selected
-            viewModelScope.launch { if (locked) lockedApps.lock(pkg, target) else lockedApps.unlock(pkg, target) }
+            viewModelScope.launch {
+                lockMutex.withLock {
+                    val locked = lockedApps.observeByTarget(target).first().any { it.pkg == pkg }
+                    if (locked) lockedApps.unlock(pkg, target) else lockedApps.lock(pkg, target)
+                }
+            }
         }
 
         fun newBlock() = emit(BlockEvent.OpenWizard(state.value.selected.deviceId(), prefill = null))

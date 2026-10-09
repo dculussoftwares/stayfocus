@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Text
@@ -31,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -41,12 +39,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
-import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.components.SfToggle
 import com.dculus.stayfocused.core.ui.components.TypeChip
-import com.dculus.stayfocused.core.ui.icon.AppIcon
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
@@ -62,7 +58,7 @@ data class BlockActions(
     val onSelectTab: (BlockTab) -> Unit = {},
     val onSetEnabled: (id: String, enabled: Boolean) -> Unit = { _, _ -> },
     val onTemplate: (BlockTemplate) -> Unit = {},
-    val onSetAppLocked: (pkg: String, locked: Boolean) -> Unit = { _, _ -> },
+    val onToggleAppLock: (pkg: String) -> Unit = {},
 )
 
 @Composable
@@ -117,7 +113,7 @@ fun BlockScreen(
             )
         }
         if (state.tab == BlockTab.ALL_APPS) {
-            items(state.apps, key = { it.pkg }) { app -> AppRow(app) { actions.onSetAppLocked(app.pkg, !app.locked) } }
+            items(state.apps, key = { it.pkg }) { app -> AppRow(app) { actions.onToggleAppLock(app.pkg) } }
         } else {
             if (state.blocks.isEmpty()) {
                 item { EmptyState() }

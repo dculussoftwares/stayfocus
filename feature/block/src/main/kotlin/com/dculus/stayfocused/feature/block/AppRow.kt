@@ -22,7 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.components.MonoLabel
@@ -38,6 +41,7 @@ internal fun AppRow(
     val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(18.dp)
     val pillShape = RoundedCornerShape(10.dp)
+    val pillDescription = stringResource(R.string.block_app_lock_description, app.label)
     Row(
         modifier =
             Modifier
@@ -67,6 +71,7 @@ internal fun AppRow(
                     .clip(pillShape)
                     .background(if (app.locked) c.alert.copy(alpha = 0.16f) else Color.Transparent)
                     .border(1.dp, if (app.locked) c.alert.copy(alpha = 0.35f) else c.hairline14, pillShape)
+                    .semantics { contentDescription = pillDescription }
                     .toggleable(value = app.locked, role = Role.Switch, onValueChange = { onToggle() })
                     .padding(horizontal = 12.dp),
             contentAlignment = Alignment.Center,
@@ -81,3 +86,14 @@ internal fun AppRow(
 }
 
 fun appLockTag(pkg: String): String = "block_app_lock_$pkg"
+
+@Preview(widthDp = 360)
+@Composable
+internal fun AppRowPreview() {
+    StayFocusedTheme {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            AppRow(AppRowUi("com.instagram.android", "Instagram", 83, 12, locked = true)) {}
+            AppRow(AppRowUi("com.google.android.youtube", "YouTube", 45, 6, locked = false)) {}
+        }
+    }
+}

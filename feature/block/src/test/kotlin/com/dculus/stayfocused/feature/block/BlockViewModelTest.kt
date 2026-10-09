@@ -240,20 +240,30 @@ class BlockViewModelTest {
     fun lockingAndUnlockingAnAppWritesAndRemovesTheLockedApp() =
         runTest {
             val vm = viewModel()
-            vm.setAppLocked(pkg("instagram"), true)
+            vm.toggleAppLock(pkg("instagram"))
             assertEquals(listOf(pkg("instagram")), locked.observeAll().first().map { it.pkg })
             assertTrue(
                 vm.state.value.apps
                     .single { it.pkg == pkg("instagram") }
                     .locked,
             )
-            vm.setAppLocked(pkg("instagram"), false)
+            vm.toggleAppLock(pkg("instagram"))
             assertTrue(locked.observeAll().first().isEmpty())
             assertFalse(
                 vm.state.value.apps
                     .single { it.pkg == pkg("instagram") }
                     .locked,
             )
+        }
+
+    @Test
+    fun quickRepeatedTapsAlternateLockAndUnlock() =
+        runTest {
+            val vm = viewModel()
+            repeat(3) { vm.toggleAppLock(pkg("instagram")) }
+            assertEquals(listOf(pkg("instagram")), locked.observeAll().first().map { it.pkg })
+            vm.toggleAppLock(pkg("instagram"))
+            assertTrue(locked.observeAll().first().isEmpty())
         }
 
     @Test
