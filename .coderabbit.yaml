@@ -6,8 +6,8 @@ early_access: false
 
 reviews:
   profile: "assertive"
-  # Request changes on actionable comments; approve once they're resolved.
-  request_changes_workflow: true
+  # Advisory only: comments, but never a blocking "changes requested" review (a stale one cannot be cleared when rate limited).
+  request_changes_workflow: false
   # PR authors are coding agents: they must not approve their own PRs with "@coderabbitai approve".
   allow_author_approval: false
   high_level_summary: true

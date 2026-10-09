@@ -96,11 +96,9 @@ straight to the Qodo steps in the next paragraph for every round, and use the fa
 
 ## 9. Merge gate, then merge
 Merge only when **all** of these hold for the current HEAD:
-- every required check is green (`gh pr checks <PR>`), including the `CodeRabbit` check ("Review completed") — except in the Qodo fallback, where `ci-pass` and the other CI checks are what count;
+- every required check is green (`gh pr checks <PR>`): `ci-pass`, `security-pass`, `gradle-dependency-graph`. The `CodeRabbit` check is not required;
 - **0 unresolved review threads**;
-- CodeRabbit's latest review state on HEAD is `APPROVED` — **or** (CodeRabbit unavailable and Qodo fallback used) Qodo
-  has reviewed HEAD and no `critical`/`high` finding is open, and any CodeRabbit review on HEAD has no unaddressed comments — **or**, if its approval hasn't updated within ~20 min after
-  its HEAD review completed, its review(s) of HEAD contain **no new actionable comments** (say so in the report).
+- Qodo has reviewed HEAD and no `critical`/`high` finding is open (Greptile findings handled the same way); CodeRabbit is advisory: answer its comments, but its approval, check or a stale "changes requested" never blocks the merge (mention it in the report).
 
 If `main` moved: `git fetch origin && git rebase origin/main && git push --force-with-lease` (your branch only), then
 the gate again. Then: `gh pr merge <PR> --repo dculussoftwares/stayfocus --squash --delete-branch`.

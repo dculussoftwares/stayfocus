@@ -85,10 +85,12 @@ Closing an issue also re-runs the board sync, which moves newly unblocked storie
 - If it still disagrees on something that matters (security, Play policy, architecture), stop and ask a human.
 - **Never** post `@coderabbitai approve`, `@coderabbitai resolve` or `@coderabbitai ignore`, and never dismiss its review.
   `@coderabbitai review` only if no review started.
-- **Merge gate:** all required checks green (including the `CodeRabbit` check, "Review completed"), 0 unresolved threads,
-  and CodeRabbit's latest review on HEAD is *Approved* — or, if its approval hasn't updated ~20 min after its HEAD review
-  completed, that review has no new actionable comments (the worker states this in its report). Seen on PR #85: the
-  approval flag can stay on an old "changes requested" even after every finding is fixed and confirmed.
+- **CodeRabbit is advisory (decision: it never blocks a merge).** `.coderabbit.yaml` sets `request_changes_workflow: false`,
+  so it only comments. A stale "changes requested" review left by it must not hold a PR: once its findings are fixed or
+  answered, a maintainer may dismiss that review, or the worker reports it.
+- **Merge gate:** `ci-pass`, `security-pass` and `gradle-dependency-graph` green, 0 unresolved threads, every finding from
+  CodeRabbit (if it reviewed), Qodo and Greptile fixed or answered, and Qodo has reviewed HEAD with no open `critical`/`high`
+  finding. The `CodeRabbit` check and CodeRabbit's approval are not required.
 
 ### Fallback reviewer: Qodo
 
