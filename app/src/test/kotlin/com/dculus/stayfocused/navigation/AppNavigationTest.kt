@@ -109,6 +109,8 @@ class AppNavigationTest {
             },
             FakeLinkedDevicesRepository(),
             FakeSettingsRepository(),
+            FakeBlockRepository(),
+            Clock.systemUTC(),
         )
 
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {
