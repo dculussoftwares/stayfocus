@@ -1,6 +1,10 @@
 package com.dculus.stayfocused.core.sync
 
 import com.dculus.stayfocused.core.model.AiBlockResult
+import com.dculus.stayfocused.core.model.AiNormalizer
+import com.dculus.stayfocused.core.model.AppInfo
+import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.KnownApps
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -14,8 +18,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
@@ -41,6 +45,9 @@ class GeminiEvalTest {
         val cases: List<Case>,
     )
 
+    private val installed =
+        KnownApps.packages.map { (id, pkg) -> AppInfo(pkg, id.replaceFirstChar { it.uppercase() }) }
+
     @Test
     fun `live model accuracy on the fixture`() {
         val key = System.getenv("GEMINI_API_KEY")
@@ -55,7 +62,7 @@ class GeminiEvalTest {
         cases.forEach { case ->
             // Request failures (bad key, quota, outage) must fail the eval, not count as model misses.
             val got = AiBlockResult.parse(call(key!!, case.sentence))
-            val problems = got?.let { diff(it, case.expected) } ?: listOf("no usable response")
+            val problems = got?.let { diff(case.sentence, it, case.expected) } ?: listOf("no usable response")
             if (problems.isEmpty()) {
                 correct++
             } else {
@@ -72,53 +79,63 @@ class GeminiEvalTest {
     }
 
     @Test
-    fun `omitted days and all seven days are the same effective schedule`() {
+    fun `effective rules apply the app's normalisation defaults`() {
+        fun same(
+            sentence: String,
+            a: AiBlockResult,
+            b: AiBlockResult,
+        ) = diff(sentence, a, b).isEmpty()
         val all = listOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
-        assertEquals(effectiveDays(null), effectiveDays(all))
-        assertEquals(effectiveDays(emptyList()), effectiveDays(all))
-        assertNotEquals(effectiveDays(listOf("mon", "tue")), effectiveDays(all))
-        assertEquals(effectiveDays(listOf("Mon", "tuesday")), effectiveDays(listOf("mon", "tue")))
+        // Omitted days = all seven days; sentence keywords override the model's days.
+        assertTrue(same("Instagram 30 min", AiBlockResult(type = "limit", days = all), AiBlockResult(type = "limit")))
+        assertTrue(same("on school days", AiBlockResult(type = "limit", days = all), AiBlockResult(type = "limit")))
+        val monday = AiBlockResult(type = "limit", days = listOf("mon"))
+        assertFalse(same("Instagram 30 min", monday, AiBlockResult(type = "limit")))
+        // Rounding and defaults.
+        assertTrue(same("x", AiBlockResult(type = "limit", mins = 44.6), AiBlockResult(type = "limit", mins = 45.0)))
+        assertTrue(same("x", AiBlockResult(type = "schedule"), AiBlockResult(type = "schedule", range = "09:00–17:00")))
+        assertTrue(same("x", AiBlockResult(type = "now"), AiBlockResult(type = "now", now = 60.0)))
     }
 
-    /** The app maps an absent or empty list to all seven days (`AiNormalizer.toDays`), so compare effective days. */
-    private fun effectiveDays(days: List<String>?): Set<String> {
-        val chosen = days.orEmpty().map { it.take(3).lowercase() }.toSet()
-        return if (chosen.isEmpty()) ALL_DAYS else chosen
-    }
-
-    /** Effective values per type, with the app's normalisation defaults, so an omitted field equals its default. */
-    private fun comparable(r: AiBlockResult): Map<String, Any?> =
-        buildMap {
-            put("type", r.type)
-            put("apps", r.apps.orEmpty().toSet())
-            put("days", effectiveDays(r.days))
-            when (r.type) {
-                "limit" -> {
-                    put("mins", r.mins ?: 30.0)
-                    put("period", r.period ?: "daily")
+    /** What the app would build (`AiNormalizer`) from a result, so defaults, rounding and clamping match. */
+    private fun comparable(
+        r: AiBlockResult,
+        sentence: String,
+    ): Map<String, Any?> {
+        val d = AiNormalizer.normalize(r, sentence, installed)
+        return buildMap {
+            put("type", d.type)
+            put("apps", d.apps)
+            put("days", d.days)
+            when (d.type) {
+                BlockType.LIMIT -> {
+                    put("mins", d.mins)
+                    put("period", d.period)
                 }
 
-                "cycle" -> {
-                    put("use", r.use ?: 10.0)
-                    put("rest", r.rest ?: 30.0)
+                BlockType.CYCLE -> {
+                    put("use", d.use)
+                    put("rest", d.rest)
                 }
 
-                "schedule" -> {
-                    put("range", r.range)
+                BlockType.SCHEDULE -> {
+                    put("range", d.range)
                 }
 
-                "now" -> {
-                    put("now", r.now ?: 60.0)
+                BlockType.NOW -> {
+                    put("now", d.now)
                 }
             }
         }
+    }
 
     private fun diff(
+        sentence: String,
         got: AiBlockResult,
         want: AiBlockResult,
     ): List<String> {
-        val g = comparable(got)
-        val w = comparable(want)
+        val g = comparable(got, sentence)
+        val w = comparable(want, sentence)
         return (w.keys + g.keys).filter { g[it] != w[it] }.map { "$it ${g[it]} != ${w[it]}" }
     }
 
@@ -216,6 +233,5 @@ class GeminiEvalTest {
         const val TIMEOUT_MS = 30_000
         const val MAX_ERROR_CHARS = 500
         val HTTP_OK_RANGE = 200..299
-        val ALL_DAYS = setOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
     }
 }
