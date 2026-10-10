@@ -71,6 +71,14 @@ class AiBlockBuilderTest {
         }
 
     @Test
+    fun `falls back when the JSON has no valid type`() =
+        runTest {
+            val draft = builder(FakeModel { "{}" }).build("Block Instagram for 10 minutes", installed)
+            assertEquals(BlockType.NOW, draft.type)
+            assertEquals(10, draft.now)
+        }
+
+    @Test
     fun `falls back when the model throws`() =
         runTest {
             val draft = builder(FakeModel { throw IOException("offline") }).build(sentence, installed)

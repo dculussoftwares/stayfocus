@@ -16,7 +16,12 @@ android {
 // never reused as a passing emulator run.
 tasks.withType<Test>().configureEach {
     inputs.property("authEmulator", providers.environmentVariable("FIREBASE_AUTH_EMULATOR_HOST").orElse(""))
-    inputs.property("geminiEval", providers.environmentVariable("GEMINI_API_KEY").map { "on" }.orElse(""))
+    inputs.files(rootProject.layout.projectDirectory.file("fixtures/ai/block-sentences.json"))
+    // A keyed run is the live Gemini eval: always execute it, never reuse an up-to-date or cached result.
+    if (providers.environmentVariable("GEMINI_API_KEY").isPresent) {
+        outputs.upToDateWhen { false }
+        outputs.cacheIf { false }
+    }
     inputs.property("firestoreEmulator", providers.environmentVariable("FIRESTORE_EMULATOR_HOST").orElse(""))
 }
 

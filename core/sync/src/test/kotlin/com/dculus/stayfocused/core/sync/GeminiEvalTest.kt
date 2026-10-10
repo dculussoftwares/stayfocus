@@ -53,7 +53,8 @@ class GeminiEvalTest {
         val cases = fixture.cases.filterNot { it.localOnly }
         var correct = 0
         cases.forEach { case ->
-            val got = runCatching { AiBlockResult.parse(call(key!!, case.sentence)) }.getOrNull()
+            // Request failures (bad key, quota, outage) must fail the eval, not count as model misses.
+            val got = AiBlockResult.parse(call(key!!, case.sentence))
             val problems = got?.let { diff(it, case.expected) } ?: listOf("no usable response")
             if (problems.isEmpty()) {
                 correct++
@@ -85,40 +86,41 @@ class GeminiEvalTest {
         return if (chosen.isEmpty()) ALL_DAYS else chosen
     }
 
-    private fun diff(
-        got: AiBlockResult,
-        want: AiBlockResult,
-    ): List<String> =
-        buildList {
-            if (got.type != want.type) add("type ${got.type} != ${want.type}")
-            if (got.apps.orEmpty().toSet() != want.apps.orEmpty().toSet()) add("apps ${got.apps} != ${want.apps}")
-            when (want.type) {
+    /** Effective values per type, with the app's normalisation defaults, so an omitted field equals its default. */
+    private fun comparable(r: AiBlockResult): Map<String, Any?> =
+        buildMap {
+            put("type", r.type)
+            put("apps", r.apps.orEmpty().toSet())
+            put("days", effectiveDays(r.days))
+            when (r.type) {
                 "limit" -> {
-                    if (got.mins != want.mins) add("mins ${got.mins} != ${want.mins}")
-                    if (got.period != want.period) add("period ${got.period} != ${want.period}")
+                    put("mins", r.mins ?: 30.0)
+                    put("period", r.period ?: "daily")
                 }
 
                 "cycle" -> {
-                    if (got.use != want.use) add("use ${got.use} != ${want.use}")
-                    if (got.rest != want.rest) add("rest ${got.rest} != ${want.rest}")
+                    put("use", r.use ?: 10.0)
+                    put("rest", r.rest ?: 30.0)
                 }
 
                 "schedule" -> {
-                    if (got.range != want.range) add("range ${got.range} != ${want.range}")
+                    put("range", r.range)
                 }
 
                 "now" -> {
-                    if (got.now != want.now) add("now ${got.now} != ${want.now}")
+                    put("now", r.now ?: 60.0)
                 }
             }
-            // The app maps an absent or empty days list to all seven days.
-            val gotDays =
-                got.days
-                    .orEmpty()
-                    .ifEmpty { null }
-                    ?.toSet()
-            if (gotDays != want.days?.toSet()) add("days ${got.days} != ${want.days}")
         }
+
+    private fun diff(
+        got: AiBlockResult,
+        want: AiBlockResult,
+    ): List<String> {
+        val g = comparable(got)
+        val w = comparable(want)
+        return (w.keys + g.keys).filter { g[it] != w[it] }.map { "$it ${g[it]} != ${w[it]}" }
+    }
 
     private fun call(
         key: String,
@@ -152,6 +154,15 @@ class GeminiEvalTest {
             conn.readTimeout = TIMEOUT_MS
             conn.doOutput = true
             conn.outputStream.use { it.write(body.toString().toByteArray()) }
+            if (conn.responseCode !in HTTP_OK_RANGE) {
+                val details =
+                    conn.errorStream
+                        ?.bufferedReader()
+                        ?.readText()
+                        .orEmpty()
+                        .take(MAX_ERROR_CHARS)
+                error("Gemini request failed: HTTP ${conn.responseCode} $details")
+            }
             val text = conn.inputStream.bufferedReader().readText()
             return Json
                 .parseToJsonElement(text)
@@ -203,6 +214,8 @@ class GeminiEvalTest {
 
     private companion object {
         const val TIMEOUT_MS = 30_000
+        const val MAX_ERROR_CHARS = 500
+        val HTTP_OK_RANGE = 200..299
         val ALL_DAYS = setOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
     }
 }

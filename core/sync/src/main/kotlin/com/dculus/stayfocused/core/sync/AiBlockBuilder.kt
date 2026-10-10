@@ -46,11 +46,11 @@ class AiBlockBuilder
             try {
                 val text =
                     withTimeoutOrNull(timeoutMs) { model.generate(sentence.trim().take(AiPrompt.MAX_SENTENCE_LENGTH)) }
-                val parsed = text?.let(AiBlockResult::parse)
+                val parsed = text?.let(AiBlockResult::parse)?.takeIf { it.type in VALID_TYPES }
                 if (parsed ==
                     null
                 ) {
-                    Timber.w("Gemini gave no usable result (timeout or malformed); using on-device parser")
+                    Timber.w("Gemini gave no usable result (timeout, malformed or no type); using on-device parser")
                 }
                 parsed
             } catch (e: CancellationException) {
@@ -59,4 +59,8 @@ class AiBlockBuilder
                 Timber.w(e, "Gemini failed; using on-device parser")
                 null
             }
+
+        private companion object {
+            val VALID_TYPES = setOf("limit", "cycle", "schedule", "now")
+        }
     }
