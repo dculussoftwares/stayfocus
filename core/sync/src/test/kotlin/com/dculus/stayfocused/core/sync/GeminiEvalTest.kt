@@ -14,6 +14,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
 import kotlinx.serialization.json.putJsonObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.File
@@ -66,6 +68,21 @@ class GeminiEvalTest {
                 100.0 * correct / cases.size,
             )}%) model=${AiPrompt.MODEL_NAME}",
         )
+    }
+
+    @Test
+    fun `omitted days and all seven days are the same effective schedule`() {
+        val all = listOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+        assertEquals(effectiveDays(null), effectiveDays(all))
+        assertEquals(effectiveDays(emptyList()), effectiveDays(all))
+        assertNotEquals(effectiveDays(listOf("mon", "tue")), effectiveDays(all))
+        assertEquals(effectiveDays(listOf("Mon", "tuesday")), effectiveDays(listOf("mon", "tue")))
+    }
+
+    /** The app maps an absent or empty list to all seven days (`AiNormalizer.toDays`), so compare effective days. */
+    private fun effectiveDays(days: List<String>?): Set<String> {
+        val chosen = days.orEmpty().map { it.take(3).lowercase() }.toSet()
+        return if (chosen.isEmpty()) ALL_DAYS else chosen
     }
 
     private fun diff(
@@ -168,6 +185,7 @@ class GeminiEvalTest {
             }
         return buildJsonObject {
             put("type", "OBJECT")
+            putJsonArray("required") { add(JsonPrimitive("type")) }
             putJsonObject("properties") {
                 put("type", enum("limit", "cycle", "schedule", "now"))
                 put("apps", array(prim("STRING")))
@@ -185,5 +203,6 @@ class GeminiEvalTest {
 
     private companion object {
         const val TIMEOUT_MS = 30_000
+        val ALL_DAYS = setOf("mon", "tue", "wed", "thu", "fri", "sat", "sun")
     }
 }
