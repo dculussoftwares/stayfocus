@@ -1,6 +1,7 @@
 plugins {
     id("stayfocused.android.library")
     id("stayfocused.android.hilt")
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -15,6 +16,12 @@ android {
 // never reused as a passing emulator run.
 tasks.withType<Test>().configureEach {
     inputs.property("authEmulator", providers.environmentVariable("FIREBASE_AUTH_EMULATOR_HOST").orElse(""))
+    inputs.files(rootProject.layout.projectDirectory.file("fixtures/ai/block-sentences.json"))
+    // A keyed run is the live Gemini eval: always execute it, never reuse an up-to-date or cached result.
+    if (providers.environmentVariable("GEMINI_API_KEY").isPresent) {
+        outputs.upToDateWhen { false }
+        outputs.cacheIf { false }
+    }
     inputs.property("firestoreEmulator", providers.environmentVariable("FIRESTORE_EMULATOR_HOST").orElse(""))
 }
 
@@ -26,6 +33,7 @@ dependencies {
     implementation(libs.firebase.appcheck)
     releaseImplementation(libs.firebase.appcheck.playintegrity)
     debugImplementation(libs.firebase.appcheck.debug)
+    implementation(libs.firebase.ai)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.androidx.credentials)
@@ -39,4 +47,5 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.robolectric)
+    testImplementation(libs.kotlinx.serialization.json)
 }

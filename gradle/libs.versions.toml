@@ -80,6 +80,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 
 # Firebase (versions come from the BoM)
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-ai = { module = "com.google.firebase:firebase-ai" }
 firebase-appcheck = { module = "com.google.firebase:firebase-appcheck" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }

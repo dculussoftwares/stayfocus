@@ -88,3 +88,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M5-04 System check screen
 - Check: on a real device, each Allow row opens the right system screen and the row flips to On live on return; Accessibility goes through the disclosure first ("No thanks" leaves it as Allow); notifications ask once, then open the app's notification settings; "Continue for now" with fewer than 4 shows "Blocking needs all 4. Finish in Account." on Home.
 - How: install a debug build, revoke permissions, walk the onboarding; repeat on API 33+ (runtime notification dialog) and below 33.
+
+## M9-04 Gemini client via Firebase AI Logic
+- Check: (1) the live eval reports accuracy on the shared fixture; (2) on a debug build with Firebase configured and an App Check debug token registered, "Describe it" returns a Gemini-built rule, and with airplane mode on it still returns a rule from the on-device parser; a build without `google-services.json` also works.
+- How: (1) `GEMINI_API_KEY=<key> ./gradlew :core:sync:testDebugUnitTest --tests '*GeminiEvalTest*' -i` and read the `EVAL ACCURACY` line (the key is a personal Gemini Developer API key; never commit it). Run it nightly or before changing the prompt or model. (2) The UI that calls `AiBlockBuilder.build` lands with M9-05; until then exercise it from a debug build or test. The fake-model unit tests cover timeout, malformed JSON, errors and the fallback.
