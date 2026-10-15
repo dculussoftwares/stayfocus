@@ -483,6 +483,8 @@ class BlockingEngine
                 val previous = cycleRules.put(b.id, rule)
                 if (previous != null && previous != rule) cycleCache.keys.removeAll { it.blockId == b.id }
             }
+            val ids = inputs.blocks.mapTo(hashSetOf()) { it.id }
+            cycleRules.keys.retainAll(ids)
             cycleCache.keys.removeAll { key -> inputs.blocks.none { it.id == key.blockId && key.pkg in it.apps } }
         }
 
@@ -499,7 +501,8 @@ class BlockingEngine
             during.blocks
                 .filter { b ->
                     b.enabled && b.type == BlockType.CYCLE && pkg in b.apps &&
-                        current.blocks.any { it.id == b.id && pkg in it.apps }
+                        // A block edited to another cycle rule meanwhile must not be charged under the old one.
+                        current.blocks.any { it.id == b.id && pkg in it.apps && it.sameCycleRule(b) }
                 }.forEach { block ->
                     try {
                         val key = CycleKey(block.id, pkg)
@@ -558,3 +561,6 @@ class BlockingEngine
             private const val DISMISS_GRACE_MS = 2_000L
         }
     }
+
+private fun Block.sameCycleRule(other: Block): Boolean =
+    type == other.type && useMins == other.useMins && restMins == other.restMins
