@@ -3,10 +3,12 @@ package com.dculus.stayfocused.feature.onboarding
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.model.Permissions
+import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -15,6 +17,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PermissionsViewModelTest {
@@ -40,7 +43,7 @@ class PermissionsViewModelTest {
     fun rowsFollowTheRepositoryLive() =
         runTest {
             val repo = FakePermissions()
-            val viewModel = PermissionsViewModel(repo)
+            val viewModel = PermissionsViewModel(repo, FakeSettingsRepository())
             viewModel.permissions.test {
                 assertEquals(0, awaitItem().grantedCount())
                 repo.state.value = NONE.copy(usage = true)
@@ -58,16 +61,26 @@ class PermissionsViewModelTest {
 
     @Test
     fun notificationsAskOnceThenOpenSettings() {
-        val viewModel = PermissionsViewModel(FakePermissions())
+        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository())
         assertEquals(NotificationStep.RequestRuntime, viewModel.nextNotificationStep(runtimePermissionExists = true))
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = true))
     }
 
     @Test
     fun notificationsOpenSettingsWhenThereIsNoRuntimePermission() {
-        val viewModel = PermissionsViewModel(FakePermissions())
+        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository())
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = false))
     }
+
+    @Test
+    fun agreeingStoresTheConsentTime() =
+        runTest {
+            val settings = FakeSettingsRepository()
+            val viewModel = PermissionsViewModel(FakePermissions(), settings)
+            assertEquals(null, settings.settings.first().accessibilityConsentAt)
+            viewModel.onAccessibilityAgreed()
+            assertNotNull(settings.settings.first().accessibilityConsentAt)
+        }
 
     private companion object {
         val NONE = Permissions(usage = false, accessibility = false, overlay = false, notifications = false)

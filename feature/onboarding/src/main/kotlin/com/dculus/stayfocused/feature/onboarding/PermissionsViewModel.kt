@@ -4,11 +4,14 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
+import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.Permissions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.time.Instant
 import javax.inject.Inject
 
 /** The four rows of the system check, in display order. */
@@ -43,6 +46,7 @@ class PermissionsViewModel
     @Inject
     constructor(
         repository: PermissionsRepository,
+        private val settings: SettingsRepository,
     ) : ViewModel() {
         internal val permissions: StateFlow<Permissions> =
             repository
@@ -50,6 +54,11 @@ class PermissionsViewModel
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), repository.current())
 
         private var notificationRequests = 0
+
+        /** The user tapped "Agree and open Settings": remember when (Play consent record). */
+        fun onAccessibilityAgreed() {
+            viewModelScope.launch { settings.setAccessibilityConsentAt(Instant.now()) }
+        }
 
         /**
          * The runtime dialog is tried once; if it did not grant (the user said no, or Android no longer shows it),

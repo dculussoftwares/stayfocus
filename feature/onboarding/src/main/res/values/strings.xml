@@ -53,9 +53,17 @@
     <string name="perms_continue_all">All set · Continue</string>
     <string name="perms_continue_now">Continue for now</string>
     <string name="perms_toast_incomplete">Blocking needs all 4. Finish in Account.</string>
-    <!-- PROVISIONAL: replaced by the full disclosure sheet in M5-05; the two buttons are final. -->
-    <string name="perms_disclosure_title">Accessibility access</string>
-    <string name="perms_disclosure_body">Stay Focused uses Accessibility only to notice which app is open, so it can show the block screen.</string>
+    <!-- Accessibility prominent disclosure (Play). Keep in step with foreground_service_description in :core:blocking. -->
+    <string name="perms_disclosure_eyebrow">BEFORE YOU CONTINUE</string>
+    <string name="perms_disclosure_title">Stay Focused uses the Accessibility service</string>
+    <string name="perms_disclosure_reads_label">WHAT IT READS</string>
+    <string name="perms_disclosure_reads">The app on your screen, and the website address in supported browsers.</string>
+    <string name="perms_disclosure_why_label">WHY</string>
+    <string name="perms_disclosure_why">To show the block screen when a blocked app opens, and to count screen time.</string>
+    <string name="perms_disclosure_never_label">NEVER</string>
+    <string name="perms_disclosure_never">Reads messages, passwords or typing. Never shared or sold. Stays on this phone unless you link a child\'s device.</string>
+    <string name="perms_disclosure_footer">Turn it off anytime in Android Settings.</string>
+    <string name="perms_disclosure_privacy">Privacy policy</string>
     <string name="perms_disclosure_agree">Agree and open Settings</string>
     <string name="perms_disclosure_no">No thanks</string>
 </resources>

@@ -94,9 +94,44 @@ class PermissionsScreenTest {
     fun disclosureNoThanksNeverAgrees() {
         var agreed = 0
         var dismissed = 0
-        show { ProvisionalAccessibilityDisclosure(visible = true, onAgree = { agreed++ }, onDismiss = { dismissed++ }) }
+        show {
+            PhoneAccessibilityDisclosure(
+                visible = true,
+                onAgree = { agreed++ },
+                onDismiss = { dismissed++ },
+                onPrivacyPolicy = {},
+            )
+        }
         composeRule.onNodeWithTag(PERMS_DISCLOSURE_NO_TAG).performClick()
         assertEquals(0, agreed)
         assertEquals(1, dismissed)
+    }
+
+    @Test
+    fun disclosureShowsTheFinalCopyAndAgreeReports() {
+        var agreed = 0
+        show {
+            PhoneAccessibilityDisclosure(
+                visible = true,
+                onAgree = { agreed++ },
+                onDismiss = {},
+                onPrivacyPolicy = {},
+            )
+        }
+        listOf(
+            "BEFORE YOU CONTINUE",
+            "Stay Focused uses the Accessibility service",
+            "WHAT IT READS",
+            "The app on your screen, and the website address in supported browsers.",
+            "WHY",
+            "To show the block screen when a blocked app opens, and to count screen time.",
+            "NEVER",
+            "Reads messages, passwords or typing. Never shared or sold. " +
+                "Stays on this phone unless you link a child's device.",
+            "Turn it off anytime in Android Settings.",
+            "Privacy policy",
+        ).forEach { composeRule.onNodeWithText(it).assertExists() }
+        composeRule.onNodeWithTag(PERMS_DISCLOSURE_AGREE_TAG).performClick()
+        assertEquals(1, agreed)
     }
 }

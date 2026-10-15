@@ -120,7 +120,7 @@ class AppNavigationTest {
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
     private val fakePermissions = FakePermissionsRepository()
-    private val permissionsViewModel = PermissionsViewModel(fakePermissions)
+    private val permissionsViewModel = PermissionsViewModel(fakePermissions, FakeSettingsRepository())
     private val accountViewModel =
         AccountViewModel(FakeAuthRepository(), fakePermissions, EngineHealthMonitor(Clock.systemUTC()))
     private val homeViewModel =
@@ -347,7 +347,7 @@ class AppNavigationTest {
         composeRule.onNodeWithText("0/4").assertIsDisplayed()
         // "No thanks" on the disclosure leaves the row as Allow.
         composeRule.onNodeWithTag("perms_allow_accessibility").performClick()
-        composeRule.onNodeWithTag("perms_disclosure_no").performClick()
+        composeRule.onNodeWithTag("accessibility_disclosure_no").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("0/4").assertIsDisplayed()
         // The user comes back from Settings with everything granted.

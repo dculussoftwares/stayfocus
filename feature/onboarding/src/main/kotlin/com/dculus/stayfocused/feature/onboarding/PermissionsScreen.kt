@@ -5,6 +5,7 @@ package com.dculus.stayfocused.feature.onboarding
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -45,18 +45,21 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
-import com.dculus.stayfocused.core.ui.components.GhostButton
+import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_AGREE_TAG
+import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_NO_TAG
+import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosure
+import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosureCopy
 import com.dculus.stayfocused.core.ui.components.LedDot
 import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import timber.log.Timber
 
 internal const val PERMS_CONTINUE_TAG = "perms_continue"
-internal const val PERMS_DISCLOSURE_AGREE_TAG = "perms_disclosure_agree"
-internal const val PERMS_DISCLOSURE_NO_TAG = "perms_disclosure_no"
+internal const val PERMS_DISCLOSURE_AGREE_TAG = ACCESSIBILITY_DISCLOSURE_AGREE_TAG
+internal const val PERMS_DISCLOSURE_NO_TAG = ACCESSIBILITY_DISCLOSURE_NO_TAG
+internal const val PRIVACY_URL = "https://dculussoftwares.github.io/stayfocus/privacy.html"
 
 internal fun permsAllowTag(row: PermissionRow) = "perms_allow_${row.tag}"
 
@@ -70,8 +73,6 @@ private val OffLed = Color(0xFF3A3E35)
 internal fun PermissionsRoute(
     onFinish: (message: String?) -> Unit,
     viewModel: PermissionsViewModel = hiltViewModel(),
-    disclosure: @Composable (visible: Boolean, onAgree: () -> Unit, onDismiss: () -> Unit) -> Unit =
-        { visible, onAgree, onDismiss -> ProvisionalAccessibilityDisclosure(visible, onAgree, onDismiss) },
 ) {
     val permissions by viewModel.permissions.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -112,13 +113,15 @@ internal fun PermissionsRoute(
         },
         onContinue = { onFinish(if (permissions.grantedCount() < PermissionRow.entries.size) incomplete else null) },
     )
-    disclosure(
-        disclosureVisible,
-        {
+    PhoneAccessibilityDisclosure(
+        visible = disclosureVisible,
+        onAgree = {
             disclosureVisible = false
+            viewModel.onAccessibilityAgreed()
             context.open(PermissionIntents.accessibility())
         },
-        { disclosureVisible = false },
+        onDismiss = { disclosureVisible = false },
+        onPrivacyPolicy = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) },
     )
 }
 
@@ -256,45 +259,29 @@ private fun PermissionCard(
     }
 }
 
-/** PROVISIONAL: M5-05 replaces this with the full disclosure (what it reads, why, never). */
 @Composable
-internal fun ProvisionalAccessibilityDisclosure(
+internal fun PhoneAccessibilityDisclosure(
     visible: Boolean,
     onAgree: () -> Unit,
     onDismiss: () -> Unit,
+    onPrivacyPolicy: () -> Unit,
 ) {
-    val colors = StayFocusedTheme.colors
-    SfBottomSheet(visible = visible, onDismiss = onDismiss) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(max = 520.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Text(
-                stringResource(R.string.perms_disclosure_title),
-                style = StayFocusedTheme.type.displayM,
-                color = colors.text,
-            )
-            Text(
-                stringResource(R.string.perms_disclosure_body),
-                style = StayFocusedTheme.type.body,
-                color = colors.secondary,
-            )
-            PrimaryButton(
-                text = stringResource(R.string.perms_disclosure_agree),
-                onClick = onAgree,
-                modifier = Modifier.testTag(PERMS_DISCLOSURE_AGREE_TAG),
-            )
-            GhostButton(
-                text = stringResource(R.string.perms_disclosure_no),
-                onClick = onDismiss,
-                modifier = Modifier.testTag(PERMS_DISCLOSURE_NO_TAG),
-            )
-        }
-    }
+    val copy =
+        AccessibilityDisclosureCopy(
+            eyebrow = stringResource(R.string.perms_disclosure_eyebrow),
+            title = stringResource(R.string.perms_disclosure_title),
+            readsLabel = stringResource(R.string.perms_disclosure_reads_label),
+            reads = stringResource(R.string.perms_disclosure_reads),
+            whyLabel = stringResource(R.string.perms_disclosure_why_label),
+            why = stringResource(R.string.perms_disclosure_why),
+            neverLabel = stringResource(R.string.perms_disclosure_never_label),
+            never = stringResource(R.string.perms_disclosure_never),
+            footer = stringResource(R.string.perms_disclosure_footer),
+            privacyPolicy = stringResource(R.string.perms_disclosure_privacy),
+            agree = stringResource(R.string.perms_disclosure_agree),
+            noThanks = stringResource(R.string.perms_disclosure_no),
+        )
+    AccessibilityDisclosure(visible, copy, onAgree, onDismiss, onPrivacyPolicy)
 }
 
 @Preview(widthDp = 360, heightDp = 780)
