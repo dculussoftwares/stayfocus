@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="foreground_service_description">Stay Focused sees which app is on your screen so it can block the apps you choose. It never reads messages, passwords or typing, and nothing leaves this phone.</string>
+    <string name="foreground_service_description">Stay Focused sees which app is on your screen, and the website address in supported browsers, so it can block the apps you choose. It never reads messages, passwords or typing. Nothing is shared or sold, and it stays on this phone unless you link a child\'s device.</string>
 
     <!-- Restricted settings guidance (Android 13+ sideloaded installs) -->
     <string name="restricted_settings_guidance">App info → ⋮ → Allow restricted settings</string>
