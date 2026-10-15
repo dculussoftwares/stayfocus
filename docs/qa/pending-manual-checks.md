@@ -96,3 +96,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M4-04 Edit, toggle and delete blocks
 - Check: on a device, tap a block row on the Block tab: the wizard opens at step 3 with its values and "Save changes"; saving keeps the row's position (same `createdAt`) and its on/off state. "Delete block" opens the bottom sheet ("Delete this block?" / "Delete" / "Keep it"); "Delete" removes the row and the app is no longer blocked by it. Toggling a block on the Block tab is reflected on Home and vice versa.
 - How: debug build; create a block, edit and delete it. A Maestro flow for this journey is a follow-up (needs the emulator pipeline).
+
+## M7-06 Link a child's phone: QR scanner
+- Check: (1) with the M7-05 QR on a second phone, in normal indoor light, the scanner reads it in under 2 s and opens "Confirm link"; (2) the first visit shows the camera rationale, "Allow camera" asks, and denying shows "Camera is off" with "Open Settings" (turning the camera on there and coming back starts the preview); (3) scanning a non-Stay-Focused QR (e.g. a URL) shows the "That isn't a Stay Focused code" toast and keeps scanning; (4) signed out, "Link a child's phone" shows the sign-in prompt.
+- How: a physical device (camera) plus a second phone or screen showing a `stayfocused://link?t=...` QR. Note the time-to-scan in the PR. The status bar above the scanner is the app background (#0E0F0D), not pure black: check it is acceptable.

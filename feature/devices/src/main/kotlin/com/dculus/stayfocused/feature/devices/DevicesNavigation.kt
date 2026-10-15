@@ -1,5 +1,7 @@
 package com.dculus.stayfocused.feature.devices
 
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
@@ -34,12 +36,25 @@ fun NavGraphBuilder.devicesScreen(
     composable<Devices> { DevicesRoute(onLinkPhone, onOpenDevice) }
 }
 
-fun NavGraphBuilder.linkAddScreen(onScan: () -> Unit) {
-    composable<LinkAdd> { LinkAddRoute(onScan) }
+/** "Link a child's phone": [onScan] opens the camera; [onSignIn] when the parent has no account yet. */
+fun NavGraphBuilder.linkAddScreen(
+    onBack: () -> Unit,
+    onScan: () -> Unit,
+    onSignIn: () -> Unit,
+    viewModelProvider: (@Composable () -> LinkAddViewModel)? = null,
+) {
+    composable<LinkAdd> {
+        LinkAddRoute(onBack, onScan, onSignIn, viewModelProvider?.invoke() ?: hiltViewModel())
+    }
 }
 
-fun NavGraphBuilder.linkScanScreen(onScan: (token: String) -> Unit) {
-    composable<LinkScan> { LinkScanRoute(onScan) }
+/** The QR scanner. [onScan] gets the pairing token of a valid code; [onMessage] shows a toast for a bad one. */
+fun NavGraphBuilder.linkScanScreen(
+    onBack: () -> Unit,
+    onScan: (token: String) -> Unit,
+    onMessage: (String) -> Unit,
+) {
+    composable<LinkScan> { LinkScanRoute(onBack, onScan, onMessage) }
 }
 
 fun NavGraphBuilder.linkConfirmScreen() {

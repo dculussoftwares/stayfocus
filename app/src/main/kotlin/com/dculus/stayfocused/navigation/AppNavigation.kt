@@ -19,9 +19,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
+import com.dculus.stayfocused.core.navigation.LinkScan
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.ui.components.SfTabBar
 import com.dculus.stayfocused.core.ui.components.SfTabItem
@@ -43,6 +45,7 @@ import com.dculus.stayfocused.feature.block.navigateToBlockEditor
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
 import com.dculus.stayfocused.feature.block.openBlockInAiMode
 import com.dculus.stayfocused.feature.block.requestBlockAiMode
+import com.dculus.stayfocused.feature.devices.LinkAddViewModel
 import com.dculus.stayfocused.feature.devices.devicesScreen
 import com.dculus.stayfocused.feature.devices.linkAddScreen
 import com.dculus.stayfocused.feature.devices.linkConfirmScreen
@@ -75,6 +78,7 @@ fun StayFocusedNavigation(
     signInViewModel: (@Composable () -> SignInViewModel)? = null,
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
     accountViewModel: (@Composable () -> AccountViewModel)? = null,
+    linkAddViewModel: (@Composable () -> LinkAddViewModel)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
@@ -102,6 +106,7 @@ fun StayFocusedNavigation(
                 signInViewModel,
                 permissionsViewModel,
                 accountViewModel,
+                linkAddViewModel,
                 toast::show,
             )
             SfToastHost(toast, bottomPadding = 24.dp)
@@ -129,6 +134,7 @@ private fun AppNavHost(
     signInViewModel: (@Composable () -> SignInViewModel)?,
     permissionsViewModel: (@Composable () -> PermissionsViewModel)?,
     accountViewModel: (@Composable () -> AccountViewModel)?,
+    linkAddViewModel: (@Composable () -> LinkAddViewModel)?,
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -198,8 +204,23 @@ private fun AppNavHost(
                 // Account deletion arrives with M6-06.
                 viewModelProvider = accountViewModel,
             )
-            linkAddScreen(onScan = { navController.navigateToLinkScan() })
-            linkScanScreen(onScan = { navController.navigateToLinkConfirm(it) })
+            linkAddScreen(
+                onBack = { navController.popBackStack() },
+                onScan = { navController.navigateToLinkScan() },
+                onSignIn = { navController.navigateToSignIn() },
+                viewModelProvider = linkAddViewModel,
+            )
+            linkScanScreen(
+                onBack = { navController.popBackStack() },
+                // The scanner is replaced by the confirm step, so Back from there returns to "Link a child's phone".
+                onScan = {
+                    navController.navigateToLinkConfirm(
+                        it,
+                        navOptions { popUpTo<LinkScan> { inclusive = true } },
+                    )
+                },
+                onMessage = showToast,
+            )
             linkConfirmScreen()
             remoteDeviceScreen()
         }
