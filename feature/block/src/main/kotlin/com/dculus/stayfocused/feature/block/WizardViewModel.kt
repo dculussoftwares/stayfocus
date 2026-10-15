@@ -106,6 +106,12 @@ sealed interface WizardEvent {
         val edited: Boolean = false,
     ) : WizardEvent
 
+    /** Saving an edit failed; the wizard stays open. */
+    data object UpdateFailed : WizardEvent
+
+    /** Deleting the block failed; the wizard stays open. */
+    data object DeleteFailed : WizardEvent
+
     /** The block being edited was deleted: go to the Block tab with [deviceId] (null = this phone) selected. */
     data class Deleted(
         val deviceId: String?,
@@ -294,7 +300,7 @@ class WizardViewModel
                     if (e is CancellationException) throw e
                     Log.e(TAG, "Saving the block failed", e)
                     mutableState.update { it.copy(saving = false) }
-                    emit(WizardEvent.SaveFailed)
+                    emit(if (old != null) WizardEvent.UpdateFailed else WizardEvent.SaveFailed)
                     return@launch
                 }
                 eventChannel.send(
@@ -322,7 +328,7 @@ class WizardViewModel
                     if (e is CancellationException) throw e
                     Log.e(TAG, "Deleting the block failed", e)
                     mutableState.update { it.copy(saving = false) }
-                    emit(WizardEvent.SaveFailed)
+                    emit(WizardEvent.DeleteFailed)
                     return@launch
                 }
                 eventChannel.send(WizardEvent.Deleted((old.target as? BlockTarget.Device)?.deviceId))

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.LocalDate
 
+@Suppress("TooManyFunctions")
 @Dao
 interface BlockDao {
     @Transaction
@@ -33,12 +34,22 @@ interface BlockDao {
         block: BlockEntity,
         apps: List<BlockAppEntity>,
     ) {
+        // A changed cycle rule (or type) must start from a clean state, not from the old rest timers and usage.
+        val old = cycleRuleOf(block.id)
+        val rule = block.cycleRule()
         upsertBlock(block)
+        if (old != null && old != rule) deleteCycleState(block.id)
         deleteApps(block.id)
         insertApps(apps)
         // Cycle state of apps dropped from the block must not resurface if they are re-added later.
         deleteCycleStateOfRemovedApps(block.id)
     }
+
+    @Query("SELECT type || ':' || IFNULL(useMins, '') || ':' || IFNULL(restMins, '') FROM blocks WHERE id = :id")
+    suspend fun cycleRuleOf(id: String): String?
+
+    @Query("DELETE FROM cycle_state WHERE blockId = :blockId")
+    suspend fun deleteCycleState(blockId: String)
 
     /** Deletes the block; its apps and cycle state go with it (foreign key cascade). */
     @Query("DELETE FROM blocks WHERE id = :id")
@@ -204,3 +215,6 @@ interface UsageDao {
     @Query("DELETE FROM usage_hour WHERE date < :date")
     suspend fun deleteHoursBefore(date: LocalDate)
 }
+
+/** Matches the SQL of [BlockDao.cycleRuleOf]: what the cycle state of a block depends on. */
+private fun BlockEntity.cycleRule(): String = "${type.name}:${useMins ?: ""}:${restMins ?: ""}"

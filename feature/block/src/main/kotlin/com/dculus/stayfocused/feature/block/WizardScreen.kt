@@ -188,7 +188,7 @@ fun WizardScreen(
             modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
             enabled = state.ready,
         )
-        if (state.editing && state.step == WIZARD_STEP_RULES) {
+        if (state.editing && state.step == WIZARD_STEP_RULES && !state.saving) {
             DeleteButton(onClick = { confirmDelete = true })
         }
     }

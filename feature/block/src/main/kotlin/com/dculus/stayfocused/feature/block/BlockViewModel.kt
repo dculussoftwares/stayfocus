@@ -190,7 +190,13 @@ class BlockViewModel
             }
         }
 
-        fun editBlock(id: String) = emit(BlockEvent.EditBlock(id, state.value.selected.deviceId()))
+        fun editBlock(id: String) {
+            val block =
+                state.value.blocks
+                    .firstOrNull { it.block.id == id }
+                    ?.block ?: return
+            emit(BlockEvent.EditBlock(id, block.target.deviceId()))
+        }
 
         fun newBlock() = emit(BlockEvent.OpenWizard(state.value.selected.deviceId(), prefill = null))
 

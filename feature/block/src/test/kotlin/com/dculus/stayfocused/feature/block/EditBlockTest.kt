@@ -3,6 +3,7 @@ package com.dculus.stayfocused.feature.block
 import androidx.lifecycle.SavedStateHandle
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.model.BlockTarget
+import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
@@ -17,6 +18,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
+import java.time.Instant
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditBlockTest {
@@ -109,6 +111,28 @@ class EditBlockTest {
                 vm.deleteBlock()
                 assertEquals(WizardEvent.Deleted("d1"), awaitItem())
             }
+        }
+
+    @Test
+    fun anUnchangedRunningBlockNowKeepsItsStartedAt() =
+        runTest {
+            val started = Instant.parse("2026-01-01T08:00:00Z")
+            blocks.upsert(
+                limitBlock(id = "n1").copy(
+                    type = BlockType.NOW,
+                    limitMins = null,
+                    period = null,
+                    durationMins = 60,
+                    startedAt = started,
+                ),
+            )
+            val vm = viewModel("n1")
+            vm.next()
+            assertEquals(started, blocks.get("n1")!!.startedAt)
+            val changed = viewModel("n1")
+            changed.setNow(120)
+            changed.next()
+            assertTrue(blocks.get("n1")!!.startedAt != started)
         }
 
     @Test

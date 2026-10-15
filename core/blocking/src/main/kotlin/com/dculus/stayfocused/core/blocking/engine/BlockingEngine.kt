@@ -112,6 +112,7 @@ class BlockingEngine
         /** The inputs the time since the last evaluation has to be booked against. */
         private var bookingInputs: EngineInputs? = null
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
+        private val cycleRules = ConcurrentHashMap<String, String>()
 
         /** Cycle states whose last save failed; they are saved again at the next opportunity, even if unchanged. */
         private val unsaved = ConcurrentHashMap.newKeySet<CycleKey>()
@@ -476,6 +477,12 @@ class BlockingEngine
 
         /** Drops cached cycle state of apps that are no longer part of a block (the DAO deletes it too). */
         private fun pruneCycleCache(inputs: EngineInputs) {
+            // An edited cycle rule starts fresh (the DAO clears the stored state of the block the same way).
+            for (b in inputs.blocks) {
+                val rule = "${b.type}:${b.useMins}:${b.restMins}"
+                val previous = cycleRules.put(b.id, rule)
+                if (previous != null && previous != rule) cycleCache.keys.removeAll { it.blockId == b.id }
+            }
             cycleCache.keys.removeAll { key -> inputs.blocks.none { it.id == key.blockId && key.pkg in it.apps } }
         }
 

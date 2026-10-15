@@ -194,6 +194,8 @@ internal fun BlockWizardRoute(
     val pickOneApp = stringResource(R.string.block_wizard_pick_one_app)
     val saveFailed = stringResource(R.string.block_wizard_save_failed)
     val deleted = stringResource(R.string.block_deleted)
+    val updateFailed = stringResource(R.string.block_wizard_update_failed)
+    val deleteFailed = stringResource(R.string.block_delete_failed)
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -223,6 +225,14 @@ internal fun BlockWizardRoute(
                             resources.getString(R.string.block_wizard_saved, event.name, target)
                         }
                     currentSaved(event.deviceId, message)
+                }
+
+                WizardEvent.UpdateFailed -> {
+                    toast.show(updateFailed)
+                }
+
+                WizardEvent.DeleteFailed -> {
+                    toast.show(deleteFailed)
                 }
 
                 is WizardEvent.Deleted -> {

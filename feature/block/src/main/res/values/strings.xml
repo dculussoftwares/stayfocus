@@ -76,6 +76,8 @@
     <string name="block_delete_confirm">Delete</string>
     <string name="block_delete_keep">Keep it</string>
     <string name="block_deleted">Block deleted</string>
+    <string name="block_delete_failed">Couldn\'t delete the block. Try again.</string>
+    <string name="block_wizard_update_failed">Couldn\'t save the changes. Try again.</string>
     <string name="block_wizard_pick_one_app">Pick at least one app</string>
     <string name="block_wizard_step3_limit">How much time?</string>
     <string name="block_wizard_step3_schedule">When should it lock?</string>
