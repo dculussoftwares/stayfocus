@@ -54,6 +54,8 @@ class CreateBlockFlowTest {
                 settings,
                 blocks,
                 TestClock(),
+                AiDraftHandoff(),
+                FakeAiReporter(),
             )
         val installed =
             object : InstalledAppsRepository {
@@ -68,6 +70,8 @@ class CreateBlockFlowTest {
                 settings,
                 FakeLockedAppsRepository(),
                 FakeUsageRepository(),
+                FakeBlockDescriber(),
+                AiDraftHandoff(),
             )
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
@@ -169,6 +173,8 @@ class CreateBlockFlowTest {
                 FakeSettingsRepository(),
                 blocks,
                 TestClock(),
+                AiDraftHandoff(),
+                FakeAiReporter(),
             )
         vm.openAiDraft(BlockDraft(aiNote = "Instagram for 30 minutes a day."))
         composeRule.setContent {

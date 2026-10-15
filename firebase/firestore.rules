@@ -100,6 +100,29 @@ service cloud.firestore {
         && r.start != r.end;
     }
 
+    // The draft stored with an AI report: the fields of the block the AI proposed, all bounded.
+    function aiDraftIsValid(d) {
+      return d is map
+        && d.keys().hasOnly(['type', 'apps', 'period', 'mins', 'use', 'rest', 'range', 'now', 'days', 'note'])
+        && d.keys().hasAll(['type', 'apps', 'days'])
+        && d.type in ['LIMIT', 'CYCLE', 'SCHEDULE', 'NOW']
+        && d.apps is list && d.apps.size() <= 300
+        && isIntIn(d.days, 0, 127)
+        && (!('period' in d) || d.period in ['DAILY', 'HOURLY'])
+        && (!('mins' in d) || isIntIn(d.mins, 1, 1440))
+        && (!('use' in d) || isIntIn(d.use, 1, 1440))
+        && (!('rest' in d) || isIntIn(d.rest, 1, 1440))
+        && (!('now' in d) || isIntIn(d.now, 1, 480))
+        && (!('range' in d) || (d.range is string
+            && d.range.matches('^([01][0-9]|2[0-3]):[0-5][0-9]–([01][0-9]|2[0-3]):[0-5][0-9]$')))
+        // Fields each block type needs.
+        && (d.type != 'LIMIT' || ('period' in d && 'mins' in d))
+        && (d.type != 'CYCLE' || ('use' in d && 'rest' in d))
+        && (d.type != 'SCHEDULE' || 'range' in d)
+        && (d.type != 'NOW' || 'now' in d)
+        && (!('note' in d) || (d.note is string && d.note.size() <= 300));
+    }
+
     // Each command type carries a fixed payload with bounded values.
     function payloadIsValid(type, p) {
       return (type in ['BLOCK_APP', 'UNBLOCK_APP'] && p.keys().hasOnly(['pkg']) && p.keys().hasAll(['pkg'])
@@ -280,6 +303,22 @@ service cloud.firestore {
         && request.resource.data.code.matches('^[0-9]{6}$')
         && request.resource.data.status == 'open';
       allow update, delete: if false;
+    }
+
+    // ---------- AI reports ("Report a bad result", M9-05) ----------
+
+    // A signed-in account (not an anonymous session) files the sentence they wrote and the draft the AI returned.
+    // Create-only: reports are read by the maintainers through the admin SDK.
+    match /aiReports/{reportId} {
+      allow create: if signedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && request.resource.data.keys().hasOnly(['uid', 'sentence', 'draft', 'createdAt'])
+        && request.resource.data.keys().hasAll(['uid', 'sentence', 'draft', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && isStr(request.resource.data.sentence, 500)
+        && aiDraftIsValid(request.resource.data.draft)
+        && isNow(request.resource.data.createdAt);
+      allow read, update, delete: if false;
     }
 
     // rateLimits/** and anything else: Functions (admin SDK) only.

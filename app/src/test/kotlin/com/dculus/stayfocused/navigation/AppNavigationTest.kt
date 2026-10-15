@@ -28,6 +28,7 @@ import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.AppSettings
+import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.navigation.Account
 import com.dculus.stayfocused.core.navigation.Block
@@ -42,6 +43,9 @@ import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.RemoteDevice
 import com.dculus.stayfocused.core.navigation.SignIn
 import com.dculus.stayfocused.core.navigation.Welcome
+import com.dculus.stayfocused.core.sync.AiReport
+import com.dculus.stayfocused.core.sync.AiReporter
+import com.dculus.stayfocused.core.sync.BlockDescriber
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
@@ -60,6 +64,7 @@ import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
 import com.dculus.stayfocused.feature.account.AccountViewModel
+import com.dculus.stayfocused.feature.block.AiDraftHandoff
 import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
@@ -106,6 +111,22 @@ class AppNavigationTest {
             override suspend fun backfill() = Unit
         }
 
+    private val handoff = AiDraftHandoff()
+
+    private val describer =
+        object : BlockDescriber {
+            override suspend fun build(
+                sentence: String,
+                installed: List<AppInfo>,
+                target: BlockTarget,
+            ) = BlockDraft(target = target, fromAi = true)
+        }
+
+    private val reporter =
+        object : AiReporter {
+            override suspend fun report(report: AiReport) = true
+        }
+
     private val blockViewModel =
         BlockViewModel(
             FakeBlockRepository(),
@@ -116,6 +137,8 @@ class AppNavigationTest {
             FakeSettingsRepository(),
             FakeLockedAppsRepository(),
             idleUsage,
+            describer,
+            handoff,
         )
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
@@ -151,6 +174,8 @@ class AppNavigationTest {
             FakeSettingsRepository(),
             FakeBlockRepository(),
             Clock.systemUTC(),
+            handoff,
+            reporter,
         )
 
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {

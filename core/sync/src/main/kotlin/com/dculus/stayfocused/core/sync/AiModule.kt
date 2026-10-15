@@ -13,4 +13,12 @@ internal object AiModule {
     @Provides
     @Singleton
     fun aiModel(): AiModel = GeminiAiModel()
+
+    @Provides
+    @Singleton
+    fun describer(builder: AiBlockBuilder): BlockDescriber = builder
+
+    @Provides
+    @Singleton
+    fun reporter(reporter: FirebaseAiReporter): AiReporter = reporter
 }

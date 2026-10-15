@@ -149,6 +149,7 @@ internal fun BlockRoute(
             savedStateHandle?.set(SAVED_TOAST_KEY, null)
         }
     }
+    val describeFirst = stringResource(R.string.block_ai_describe_first)
     val currentOpenWizard by rememberUpdatedState(onOpenWizard)
     val currentEditBlock by rememberUpdatedState(onEditBlock)
     LaunchedEffect(viewModel) {
@@ -156,6 +157,7 @@ internal fun BlockRoute(
             when (event) {
                 is BlockEvent.OpenWizard -> currentOpenWizard(event.target, event.prefill)
                 is BlockEvent.EditBlock -> currentEditBlock(event.blockId, event.target)
+                BlockEvent.DescribeFirst -> toast.show(describeFirst)
             }
         }
     }
@@ -166,6 +168,7 @@ internal fun BlockRoute(
                 onNewBlock = viewModel::newBlock,
                 onToggleAi = viewModel::toggleAi,
                 onAiText = viewModel::setAiText,
+                onAiSubmit = viewModel::submitAi,
                 onSelectTab = viewModel::selectTab,
                 onSetEnabled = viewModel::setBlockEnabled,
                 onEdit = viewModel::editBlock,
@@ -196,6 +199,8 @@ internal fun BlockWizardRoute(
     val deleted = stringResource(R.string.block_deleted)
     val updateFailed = stringResource(R.string.block_wizard_update_failed)
     val deleteFailed = stringResource(R.string.block_delete_failed)
+    val reportSent = stringResource(R.string.block_report_sent)
+    val reportFailed = stringResource(R.string.block_report_failed)
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -235,6 +240,14 @@ internal fun BlockWizardRoute(
                     toast.show(deleteFailed)
                 }
 
+                WizardEvent.ReportSent -> {
+                    toast.show(reportSent)
+                }
+
+                WizardEvent.ReportFailed -> {
+                    toast.show(reportFailed)
+                }
+
                 is WizardEvent.Deleted -> {
                     currentSaved(event.deviceId, deleted)
                 }
@@ -260,6 +273,7 @@ internal fun BlockWizardRoute(
                 onToggleDay = viewModel::toggleDay,
                 onChangeType = viewModel::changeType,
                 onDelete = viewModel::deleteBlock,
+                onReport = viewModel::reportBadResult,
             )
         }
     Box(Modifier.fillMaxSize()) {

@@ -56,7 +56,7 @@ class WizardViewModelTest {
         val handle = SavedStateHandle()
         target?.let { handle["target"] = it }
         prefill?.let { handle["prefill"] = it }
-        return WizardViewModel(handle, apps, devices, settings, blocks, clock)
+        return WizardViewModel(handle, apps, devices, settings, blocks, clock, AiDraftHandoff(), FakeAiReporter())
     }
 
     @Test
@@ -233,7 +233,17 @@ class WizardViewModelTest {
             object : TargetAppsProvider {
                 override fun apps(target: BlockTarget): Flow<List<TargetApp>> = pending
             }
-        val vm = WizardViewModel(SavedStateHandle(), loading, devices, settings, blocks, clock)
+        val vm =
+            WizardViewModel(
+                SavedStateHandle(),
+                loading,
+                devices,
+                settings,
+                blocks,
+                clock,
+                AiDraftHandoff(),
+                FakeAiReporter(),
+            )
         assertFalse(vm.state.value.ready)
         vm.next()
         assertEquals(WIZARD_STEP_TYPE, vm.state.value.step)
@@ -248,7 +258,8 @@ class WizardViewModelTest {
                     MutableStateFlow(if (target == BlockTarget.ThisPhone) defaultApps() else emptyList())
             }
         val handle = SavedStateHandle(mapOf("target" to "d1", "prefill" to "social_limit"))
-        val vm = WizardViewModel(handle, perTarget, devices, settings, blocks, clock)
+        val vm =
+            WizardViewModel(handle, perTarget, devices, settings, blocks, clock, AiDraftHandoff(), FakeAiReporter())
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
         vm.pickType(BlockType.NOW)
         vm.selectTarget(BlockTarget.ThisPhone)

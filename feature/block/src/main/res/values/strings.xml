@@ -17,6 +17,17 @@
     <string name="block_ai_example_2">No YouTube on school days 8am–3pm</string>
     <string name="block_ai_example_3">Social media 45 min a day</string>
     <string name="block_ai_create">Create block</string>
+    <string name="block_ai_reading">READING YOUR REQUEST</string>
+    <string name="block_ai_describe_first">Describe the block first</string>
+    <string name="block_report_action">Report a bad result</string>
+    <string name="block_report_title">Report this result?</string>
+    <string name="block_report_body">This is exactly what will be sent, together with your account ID and the time. Nothing else leaves your phone.</string>
+    <string name="block_report_sentence_label">WHAT YOU WROTE</string>
+    <string name="block_report_draft_label">WHAT THE AI DRAFTED</string>
+    <string name="block_report_send">Send report</string>
+    <string name="block_report_cancel">Cancel</string>
+    <string name="block_report_sent">Thanks, the report was sent</string>
+    <string name="block_report_failed">Couldn\'t send the report. Check your connection and that you\'re signed in.</string>
 
     <string name="block_tab_blocks">Blocks</string>
     <string name="block_tab_all_apps">All apps</string>

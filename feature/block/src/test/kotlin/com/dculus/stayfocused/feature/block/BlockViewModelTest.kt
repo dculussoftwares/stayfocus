@@ -12,6 +12,7 @@ import com.dculus.stayfocused.core.testing.MainDispatcherRule
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,6 +45,8 @@ class BlockViewModelTest {
     private val settings = FakeSettingsRepository()
     private val locked = FakeLockedAppsRepository()
     private val usage = FakeUsageRepository()
+    private val describer = FakeBlockDescriber()
+    private val handoff = AiDraftHandoff()
     private val installed =
         FakeInstalledApps(
             listOf(
@@ -54,7 +57,7 @@ class BlockViewModelTest {
         )
 
     private fun TestScope.viewModel(): BlockViewModel {
-        val vm = BlockViewModel(blocks, devices, installed, settings, locked, usage)
+        val vm = BlockViewModel(blocks, devices, installed, settings, locked, usage, describer, handoff)
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect {} }
         return vm
     }
@@ -255,6 +258,54 @@ class BlockViewModelTest {
                     .single { it.pkg == pkg("instagram") }
                     .locked,
             )
+        }
+
+    @Test
+    fun emptyDescriptionToastsInsteadOfBuilding() =
+        runTest {
+            settings.setAiEnabled(true)
+            val vm = viewModel()
+            vm.setAiText("   ")
+            vm.events.test {
+                vm.submitAi()
+                assertEquals(BlockEvent.DescribeFirst, awaitItem())
+            }
+            assertTrue(describer.sentences.isEmpty())
+        }
+
+    @Test
+    fun submitBuildsADraftAndOpensTheWizardWithoutSavingAnything() =
+        runTest {
+            settings.setAiEnabled(true)
+            val vm = viewModel()
+            vm.setAiText("  Instagram 45 min a day ")
+            vm.events.test {
+                vm.submitAi()
+                assertEquals(BlockEvent.OpenWizard(target = null, prefill = AI_PREFILL), awaitItem())
+            }
+            assertEquals(listOf("Instagram 45 min a day"), describer.sentences)
+            val request = handoff.take()
+            assertEquals("Instagram 45 min a day", request?.sentence)
+            assertEquals(45, request?.draft?.mins)
+            assertTrue(blocks.observeByTarget(BlockTarget.ThisPhone).first().isEmpty())
+            assertFalse(vm.state.value.aiBusy)
+            assertEquals("", vm.state.value.aiText)
+        }
+
+    @Test
+    fun aSecondSubmitWhileReadingIsIgnored() =
+        runTest {
+            settings.setAiEnabled(true)
+            val gate = CompletableDeferred<Unit>()
+            describer.gate = gate
+            val vm = viewModel()
+            vm.setAiText("No YouTube on school days 8am-3pm")
+            vm.submitAi()
+            assertTrue(vm.state.value.aiBusy)
+            vm.submitAi()
+            gate.complete(Unit)
+            assertEquals(1, describer.sentences.size)
+            assertFalse(vm.state.value.aiBusy)
         }
 
     @Test

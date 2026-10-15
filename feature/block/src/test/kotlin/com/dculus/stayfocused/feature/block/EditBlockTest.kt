@@ -36,6 +36,8 @@ class EditBlockTest {
             FakeSettingsRepository(),
             blocks,
             TestClock(),
+            AiDraftHandoff(),
+            FakeAiReporter(),
         )
     }
 
@@ -106,6 +108,8 @@ class EditBlockTest {
                     FakeSettingsRepository(),
                     blocks,
                     TestClock(),
+                    AiDraftHandoff(),
+                    FakeAiReporter(),
                 )
             vm.events.test {
                 vm.deleteBlock()

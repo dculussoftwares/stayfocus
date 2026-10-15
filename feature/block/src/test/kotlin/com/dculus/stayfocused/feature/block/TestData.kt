@@ -1,6 +1,8 @@
 package com.dculus.stayfocused.feature.block
 
+import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.Block
+import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
@@ -9,6 +11,9 @@ import com.dculus.stayfocused.core.model.KnownApps
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.sync.AiReport
+import com.dculus.stayfocused.core.sync.AiReporter
+import com.dculus.stayfocused.core.sync.BlockDescriber
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
@@ -112,4 +117,35 @@ class FakeUsageRepository(
     override fun blockedToday(): Flow<Int> = emptyFlow()
 
     override suspend fun backfill() = Unit
+}
+
+/** Returns [draft] for any sentence and records what it was asked. */
+class FakeBlockDescriber(
+    var draft: BlockDraft = BlockDraft(type = BlockType.LIMIT, mins = 45, fromAi = true, aiNote = "Instagram 45 min"),
+) : BlockDescriber {
+    val sentences = mutableListOf<String>()
+    val targets = mutableListOf<BlockTarget>()
+    var gate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
+    override suspend fun build(
+        sentence: String,
+        installed: List<AppInfo>,
+        target: BlockTarget,
+    ): BlockDraft {
+        sentences += sentence
+        targets += target
+        gate?.await()
+        return draft.copy(target = target)
+    }
+}
+
+class FakeAiReporter(
+    var succeeds: Boolean = true,
+) : AiReporter {
+    val reports = mutableListOf<AiReport>()
+
+    override suspend fun report(report: AiReport): Boolean {
+        reports += report
+        return succeeds
+    }
 }

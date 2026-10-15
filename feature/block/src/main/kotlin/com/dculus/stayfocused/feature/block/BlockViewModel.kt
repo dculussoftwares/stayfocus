@@ -12,6 +12,7 @@ import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
 import com.dculus.stayfocused.core.model.fallbackAppLabel
+import com.dculus.stayfocused.core.sync.BlockDescriber
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
@@ -69,6 +70,8 @@ data class BlockUiState(
     val aiAvailable: Boolean = false,
     val aiOpen: Boolean = false,
     val aiText: String = "",
+    /** True while the sentence is being turned into a draft: the CTA shows the spinner. */
+    val aiBusy: Boolean = false,
     val installedPackages: Set<String> = emptySet(),
 ) {
     val selectedTarget: TargetUi get() = targets.first { it.target == selected }
@@ -86,6 +89,9 @@ sealed interface BlockEvent {
         val blockId: String,
         val target: String?,
     ) : BlockEvent
+
+    /** "Create block" was tapped with an empty text: toast "Describe the block first". */
+    data object DescribeFirst : BlockEvent
 }
 
 private data class LocalState(
@@ -93,6 +99,7 @@ private data class LocalState(
     val tab: BlockTab = BlockTab.BLOCKS,
     val aiOpen: Boolean = false,
     val aiText: String = "",
+    val aiBusy: Boolean = false,
 )
 
 private data class Remote(
@@ -112,10 +119,12 @@ class BlockViewModel
     constructor(
         private val blocks: BlockRepository,
         linkedDevices: LinkedDevicesRepository,
-        installedApps: InstalledAppsRepository,
+        private val installedApps: InstalledAppsRepository,
         settings: SettingsRepository,
         private val lockedApps: LockedAppsRepository,
         usage: UsageRepository,
+        private val describer: BlockDescriber,
+        private val handoff: AiDraftHandoff,
     ) : ViewModel() {
         private val local = MutableStateFlow(LocalState())
         private val lockMutex = Mutex()
@@ -168,6 +177,33 @@ class BlockViewModel
         fun toggleAi() = local.update { it.copy(aiOpen = !it.aiOpen) }
 
         fun setAiText(text: String) = local.update { it.copy(aiText = text) }
+
+        /**
+         * "Create block": turns the sentence into a draft and opens the wizard on step 3 under the AI DRAFT banner.
+         * Nothing is saved here; the block turns on only when the user taps "Turn on block" in the wizard.
+         */
+        fun submitAi() {
+            val l = local.value
+            val sentence = l.aiText.trim()
+            if (l.aiBusy) return
+            if (sentence.isEmpty()) {
+                emit(BlockEvent.DescribeFirst)
+                return
+            }
+            local.update { it.copy(aiBusy = true) }
+            val target = state.value.selected
+            viewModelScope.launch {
+                try {
+                    val installed = installedApps.observeLaunchableApps().first()
+                    val draft = describer.build(sentence, installed, target)
+                    handoff.put(AiDraftRequest(sentence, draft))
+                    local.update { it.copy(aiBusy = false, aiOpen = false, aiText = "") }
+                    eventChannel.send(BlockEvent.OpenWizard(target.deviceId(), AI_PREFILL))
+                } finally {
+                    local.update { it.copy(aiBusy = false) }
+                }
+            }
+        }
 
         fun setBlockEnabled(
             id: String,
@@ -247,6 +283,7 @@ class BlockViewModel
                 aiAvailable = aiEnabled,
                 aiOpen = aiEnabled && l.aiOpen,
                 aiText = l.aiText,
+                aiBusy = l.aiBusy,
                 installedPackages = installed.mapTo(hashSetOf()) { it.pkg },
             )
         }
