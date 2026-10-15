@@ -23,7 +23,6 @@ import androidx.navigation.navigation
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.MainGraph
-import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.ui.components.SfTabBar
 import com.dculus.stayfocused.core.ui.components.SfTabItem
 import com.dculus.stayfocused.core.ui.components.SfToastHost
@@ -31,6 +30,7 @@ import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
+import com.dculus.stayfocused.feature.account.AccountViewModel
 import com.dculus.stayfocused.feature.account.accountScreen
 import com.dculus.stayfocused.feature.account.navigateToAccount
 import com.dculus.stayfocused.feature.block.BlockViewModel
@@ -57,6 +57,7 @@ import com.dculus.stayfocused.feature.home.homeScreen
 import com.dculus.stayfocused.feature.insights.insightsScreen
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import com.dculus.stayfocused.feature.onboarding.SignInViewModel
+import com.dculus.stayfocused.feature.onboarding.navigateToSignIn
 import com.dculus.stayfocused.feature.onboarding.onboardingGraph
 
 /** The whole app UI: the nav host plus the floating tab bar on the destinations that show it. */
@@ -72,6 +73,7 @@ fun StayFocusedNavigation(
     homeViewModel: (@Composable () -> HomeViewModel)? = null,
     signInViewModel: (@Composable () -> SignInViewModel)? = null,
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
+    accountViewModel: (@Composable () -> AccountViewModel)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
@@ -98,6 +100,7 @@ fun StayFocusedNavigation(
                 homeViewModel,
                 signInViewModel,
                 permissionsViewModel,
+                accountViewModel,
                 toast::show,
             )
             SfToastHost(toast, bottomPadding = 24.dp)
@@ -124,6 +127,7 @@ private fun AppNavHost(
     homeViewModel: (@Composable () -> HomeViewModel)?,
     signInViewModel: (@Composable () -> SignInViewModel)?,
     permissionsViewModel: (@Composable () -> PermissionsViewModel)?,
+    accountViewModel: (@Composable () -> AccountViewModel)?,
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -144,7 +148,8 @@ private fun AppNavHost(
             onFinished = { toast ->
                 onFinishOnboarding()
                 toast?.let(showToast)
-                navController.navigate(MainGraph) { popUpTo(OnboardingGraph) { inclusive = true } }
+                // Clears everything, so signing in from Account does not leave the old Account underneath the new Home.
+                navController.navigate(MainGraph) { popUpTo(navController.graph.id) { inclusive = true } }
             },
         )
         navigation<MainGraph>(startDestination = Home) {
@@ -185,7 +190,12 @@ private fun AppNavHost(
                 onOpenDevice = { navController.navigateToRemoteDevice(it) },
             )
             insightsScreen(insightsContent)
-            accountScreen()
+            accountScreen(
+                onBack = { navController.popBackStack() },
+                onSignIn = { navController.navigateToSignIn() },
+                // Account deletion arrives with M6-06.
+                viewModelProvider = accountViewModel,
+            )
             linkAddScreen(onScan = { navController.navigateToLinkScan() })
             linkScanScreen(onScan = { navController.navigateToLinkConfirm(it) })
             linkConfirmScreen()

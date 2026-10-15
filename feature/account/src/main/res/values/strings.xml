@@ -1,4 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="account_title">Account</string>
+    <string name="account_back">Back</string>
+    <string name="account_not_signed_in">Not signed in</string>
+    <string name="account_not_signed_in_hint">Sign in to keep blocks and linked phones in sync.</string>
+    <string name="account_sign_in">Sign in</string>
+    <string name="account_system_check">System check</string>
+    <string name="account_perm_usage">Usage access</string>
+    <string name="account_perm_accessibility">Accessibility</string>
+    <string name="account_perm_overlay">Display over apps</string>
+    <string name="account_perm_notifications">Notifications</string>
+    <string name="account_perm_battery">Battery</string>
+    <string name="account_perm_engine">Blocking engine</string>
+    <string name="account_cta_allow">Allow</string>
+    <string name="account_cta_on">On</string>
+    <string name="account_cta_fix">Fix</string>
+    <string name="account_engine_running">Running</string>
+    <string name="account_engine_stopped">Stopped</string>
+    <string name="account_oss_blurb">Stay Focused is free and open source, with no ads.</string>
+    <string name="account_link_github">Source on GitHub</string>
+    <string name="account_link_license">GPL-3.0 licence</string>
+    <string name="account_link_oss">Open-source licences</string>
+    <string name="account_link_privacy">Privacy policy</string>
+    <string name="account_version">v%1$s</string>
+    <string name="account_sign_out">Sign out</string>
+    <string name="account_delete">Delete account and all data</string>
+    <string name="account_oss_title">Open-source licences</string>
+    <string name="account_oss_body">Stay Focused is released under GPL-3.0. It also uses these open-source projects and fonts:</string>
+    <string name="account_oss_list">AndroidX, Jetpack Compose and Material (Apache-2.0)\nKotlin and kotlinx.coroutines (Apache-2.0)\nDagger and Hilt (Apache-2.0)\nFirebase Android SDK (Apache-2.0)\nTimber (Apache-2.0)\nCoil (Apache-2.0)\nAndroidX Credentials and Google Identity Services (Apache-2.0)\nSpace Grotesk, Plus Jakarta Sans and Geist Mono fonts (SIL OFL 1.1)</string>
+    <string name="account_oss_close">Close</string>
+    <string name="account_disclosure_title">Accessibility access</string>
+    <string name="account_disclosure_body">Stay Focused uses Accessibility only to notice which app is open, so it can show the block screen.</string>
+    <string name="account_disclosure_agree">Agree and open Settings</string>
+    <string name="account_disclosure_no">No thanks</string>
 </resources>
