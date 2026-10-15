@@ -323,6 +323,21 @@ class AppNavigationTest {
     }
 
     @Test
+    fun signingInFromAccountLeavesNoOldAccountUnderHome() {
+        launch()
+        composeRule.onNodeWithContentDescription("Account").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("account_sign_in").performClick()
+        composeRule.waitUntil(5_000) { currentIs(SignIn::class) }
+        composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
+        composeRule.onNodeWithText("Continue for now").performClick()
+        composeRule.waitForIdle()
+        assertTrue(currentIs(Home::class))
+        assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Account::class) })
+    }
+
+    @Test
     fun onboardingWithAllFourPermissionsUpdatesLiveAndFinishesWithoutToast() {
         launch(StartGraph.ONBOARDING)
         composeRule.onNodeWithText("Get started").performClick()
