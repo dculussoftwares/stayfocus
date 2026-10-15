@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -54,6 +55,7 @@ import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 internal const val PERMS_CONTINUE_TAG = "perms_continue"
@@ -76,6 +78,7 @@ internal fun PermissionsRoute(
 ) {
     val permissions by viewModel.permissions.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var disclosureVisible by rememberSaveable { mutableStateOf(false) }
     val notificationRuntime = PermissionIntents.notificationRuntimePermission()
     // The result needs no handling: the repository re-reads when the app resumes after the dialog closes.
@@ -116,9 +119,12 @@ internal fun PermissionsRoute(
     PhoneAccessibilityDisclosure(
         visible = disclosureVisible,
         onAgree = {
-            disclosureVisible = false
-            viewModel.onAccessibilityAgreed()
-            context.open(PermissionIntents.accessibility())
+            scope.launch {
+                if (viewModel.recordAccessibilityConsent()) {
+                    disclosureVisible = false
+                    context.open(PermissionIntents.accessibility())
+                }
+            }
         },
         onDismiss = { disclosureVisible = false },
         onPrivacyPolicy = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) },

@@ -120,7 +120,8 @@ class AppNavigationTest {
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
     private val fakePermissions = FakePermissionsRepository()
-    private val permissionsViewModel = PermissionsViewModel(fakePermissions, FakeSettingsRepository())
+    private val permissionsViewModel =
+        PermissionsViewModel(fakePermissions, FakeSettingsRepository(), Clock.systemUTC())
     private val accountViewModel =
         AccountViewModel(FakeAuthRepository(), fakePermissions, EngineHealthMonitor(Clock.systemUTC()))
     private val homeViewModel =

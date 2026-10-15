@@ -16,8 +16,10 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PermissionsViewModelTest {
@@ -43,7 +45,7 @@ class PermissionsViewModelTest {
     fun rowsFollowTheRepositoryLive() =
         runTest {
             val repo = FakePermissions()
-            val viewModel = PermissionsViewModel(repo, FakeSettingsRepository())
+            val viewModel = PermissionsViewModel(repo, FakeSettingsRepository(), CLOCK)
             viewModel.permissions.test {
                 assertEquals(0, awaitItem().grantedCount())
                 repo.state.value = NONE.copy(usage = true)
@@ -61,14 +63,14 @@ class PermissionsViewModelTest {
 
     @Test
     fun notificationsAskOnceThenOpenSettings() {
-        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository())
+        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), CLOCK)
         assertEquals(NotificationStep.RequestRuntime, viewModel.nextNotificationStep(runtimePermissionExists = true))
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = true))
     }
 
     @Test
     fun notificationsOpenSettingsWhenThereIsNoRuntimePermission() {
-        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository())
+        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), CLOCK)
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = false))
     }
 
@@ -76,13 +78,14 @@ class PermissionsViewModelTest {
     fun agreeingStoresTheConsentTime() =
         runTest {
             val settings = FakeSettingsRepository()
-            val viewModel = PermissionsViewModel(FakePermissions(), settings)
+            val viewModel = PermissionsViewModel(FakePermissions(), settings, CLOCK)
             assertEquals(null, settings.settings.first().accessibilityConsentAt)
-            viewModel.onAccessibilityAgreed()
-            assertNotNull(settings.settings.first().accessibilityConsentAt)
+            assertEquals(true, viewModel.recordAccessibilityConsent())
+            assertEquals(Instant.parse("2026-01-02T03:04:05Z"), settings.settings.first().accessibilityConsentAt)
         }
 
     private companion object {
+        val CLOCK: Clock = Clock.fixed(Instant.parse("2026-01-02T03:04:05Z"), ZoneOffset.UTC)
         val NONE = Permissions(usage = false, accessibility = false, overlay = false, notifications = false)
         val ALL = Permissions(usage = true, accessibility = true, overlay = true, notifications = true)
     }

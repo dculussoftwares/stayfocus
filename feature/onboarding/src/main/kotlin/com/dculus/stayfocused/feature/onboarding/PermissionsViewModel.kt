@@ -7,10 +7,12 @@ import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.Permissions
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 
@@ -47,6 +49,7 @@ class PermissionsViewModel
     constructor(
         repository: PermissionsRepository,
         private val settings: SettingsRepository,
+        private val clock: Clock,
     ) : ViewModel() {
         internal val permissions: StateFlow<Permissions> =
             repository
@@ -55,10 +58,22 @@ class PermissionsViewModel
 
         private var notificationRequests = 0
 
-        /** The user tapped "Agree and open Settings": remember when (Play consent record). */
-        fun onAccessibilityAgreed() {
-            viewModelScope.launch { settings.setAccessibilityConsentAt(Instant.now()) }
-        }
+        /**
+         * The user tapped "Agree and open Settings": record when (Play consent record) and report whether it was
+         * stored, so Settings only opens once the consent is on disk.
+         */
+        internal suspend fun recordAccessibilityConsent(): Boolean =
+            try {
+                settings.setAccessibilityConsentAt(Instant.now(clock))
+                true
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                Timber.w(e, "Could not store the accessibility consent")
+                false
+            }
 
         /**
          * The runtime dialog is tried once; if it did not grant (the user said no, or Android no longer shows it),

@@ -6,7 +6,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -82,7 +81,7 @@ fun AccessibilityDisclosure(
                 DisclosureSection(copy.whyLabel, copy.why)
                 DisclosureSection(copy.neverLabel, copy.never)
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(copy.footer, style = type.bodyS.copy(fontSize = 12.sp), color = colors.secondary)
                 Text(
                     copy.privacyPolicy,
