@@ -24,4 +24,10 @@ internal object AuthModule {
         } else {
             fake.get()
         }
+
+    /** The Kids phone's anonymous identity; none without Firebase. */
+    @Provides
+    @Singleton
+    fun deviceAuth(availability: FirebaseAvailability): DeviceAuth =
+        if (availability.isConfigured) FirebaseDeviceAuth(FirebaseAuth.getInstance()) else NoDeviceAuth
 }

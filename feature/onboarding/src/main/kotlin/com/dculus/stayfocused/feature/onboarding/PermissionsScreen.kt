@@ -9,6 +9,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -71,12 +72,29 @@ internal fun permsAllowTag(row: PermissionRow) = "perms_allow_${row.tag}"
 private val OffLed = Color(0xFF3A3E35)
 
 /**
+ * The words that differ between hosts (the phone app and the Kids app); everything else is shared.
+ * [disclosureReads], [disclosureWhy] and [disclosureNever] are the three body paragraphs of the Play disclosure.
+ */
+data class PermissionsCopy(
+    @StringRes val headline1: Int = R.string.perms_headline_1,
+    @StringRes val headline2: Int = R.string.perms_headline_2,
+    @StringRes val body: Int = R.string.perms_body,
+    @StringRes val disclosureReads: Int = R.string.perms_disclosure_reads,
+    @StringRes val disclosureWhy: Int = R.string.perms_disclosure_why,
+    @StringRes val disclosureNever: Int = R.string.perms_disclosure_never,
+)
+
+/**
  * The system check. [onFinish] gets the "Blocking needs all 4" message when leaving with fewer than four
- * permissions (the host shows it on the next screen), or null when all four are on.
+ * permissions (the host shows it on the next screen), or null when all four are on. [copy] swaps the headline and
+ * disclosure words; [footer] is extra content under the four cards (the Kids app puts battery guidance there).
  */
 @Composable
-internal fun PermissionsRoute(
+fun PermissionsRoute(
     onFinish: (message: String?) -> Unit,
+    modifier: Modifier = Modifier,
+    copy: PermissionsCopy = PermissionsCopy(),
+    footer: (@Composable () -> Unit)? = null,
     viewModel: PermissionsViewModel = hiltViewModel(),
 ) {
     val permissions by viewModel.permissions.collectAsStateWithLifecycle()
@@ -91,6 +109,9 @@ internal fun PermissionsRoute(
     val incomplete = stringResource(R.string.perms_toast_incomplete)
     PermissionsScreen(
         permissions = permissions,
+        modifier = modifier,
+        copy = copy,
+        footer = footer,
         onAllow = { row ->
             when (row) {
                 PermissionRow.Usage -> {
@@ -123,6 +144,7 @@ internal fun PermissionsRoute(
     )
     PhoneAccessibilityDisclosure(
         visible = disclosureVisible,
+        words = copy,
         onAgree = {
             // One agreement at a time; "No thanks" cancels a pending one so Settings never opens after it.
             if (agreeJob?.isActive != true) {
@@ -159,6 +181,8 @@ internal fun PermissionsScreen(
     onAllow: (PermissionRow) -> Unit,
     onContinue: () -> Unit,
     modifier: Modifier = Modifier,
+    copy: PermissionsCopy = PermissionsCopy(),
+    footer: (@Composable () -> Unit)? = null,
 ) {
     val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
@@ -199,17 +223,18 @@ internal fun PermissionsScreen(
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(R.string.perms_headline_1) + "\n" + stringResource(R.string.perms_headline_2),
+                    stringResource(copy.headline1) + "\n" + stringResource(copy.headline2),
                     style = type.displayL.copy(fontSize = 32.sp, lineHeight = 33.sp, letterSpacing = (-0.6).sp),
                     color = colors.text,
                 )
-                Text(stringResource(R.string.perms_body), style = type.body, color = colors.secondary)
+                Text(stringResource(copy.body), style = type.body, color = colors.secondary)
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 PermissionRow.entries.forEach { row ->
                     PermissionCard(row, row.isGranted(permissions)) { onAllow(row) }
                 }
             }
+            footer?.invoke()
         }
         if (granted == total) {
             PrimaryButton(
@@ -285,17 +310,18 @@ internal fun PhoneAccessibilityDisclosure(
     onAgree: () -> Unit,
     onDismiss: () -> Unit,
     onPrivacyPolicy: () -> Unit,
+    words: PermissionsCopy = PermissionsCopy(),
 ) {
     val copy =
         AccessibilityDisclosureCopy(
             eyebrow = stringResource(R.string.perms_disclosure_eyebrow),
             title = stringResource(R.string.perms_disclosure_title),
             readsLabel = stringResource(R.string.perms_disclosure_reads_label),
-            reads = stringResource(R.string.perms_disclosure_reads),
+            reads = stringResource(words.disclosureReads),
             whyLabel = stringResource(R.string.perms_disclosure_why_label),
-            why = stringResource(R.string.perms_disclosure_why),
+            why = stringResource(words.disclosureWhy),
             neverLabel = stringResource(R.string.perms_disclosure_never_label),
-            never = stringResource(R.string.perms_disclosure_never),
+            never = stringResource(words.disclosureNever),
             footer = stringResource(R.string.perms_disclosure_footer),
             privacyPolicy = stringResource(R.string.perms_disclosure_privacy),
             agree = stringResource(R.string.perms_disclosure_agree),
