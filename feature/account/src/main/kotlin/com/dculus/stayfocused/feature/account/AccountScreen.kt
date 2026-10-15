@@ -212,17 +212,20 @@ internal fun AccountScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val back = stringResource(R.string.account_back)
-        Box(
-            Modifier
-                .testTag(ACCOUNT_BACK_TAG)
-                .size(42.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(colors.panel)
-                .border(1.dp, colors.hairline10, RoundedCornerShape(14.dp))
-                .clickable(onClickLabel = back, role = Role.Button, onClick = onBack),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("←", color = colors.text, style = type.bodyL)
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                Modifier
+                    .testTag(ACCOUNT_BACK_TAG)
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(colors.panel)
+                    .border(1.dp, colors.hairline10, RoundedCornerShape(14.dp))
+                    .clickable(onClickLabel = back, role = Role.Button, onClick = onBack),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("←", color = colors.text, style = type.bodyL)
+            }
+            Text(stringResource(R.string.account_title), style = type.displayM, color = colors.text)
         }
         ProfileHeader(state.user, onSignIn)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
