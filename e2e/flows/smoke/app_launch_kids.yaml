@@ -1,8 +1,8 @@
-# Smoke: the Kids app starts and shows its screen.
+# Smoke: a fresh Kids install opens on the permission setup.
 appId: com.dculus.stayfocused.kids
 tags:
   - smoke
 ---
 - launchApp:
     clearState: true
-- assertVisible: "Stay Focused Kids"
+- assertVisible: "SYSTEM CHECK"

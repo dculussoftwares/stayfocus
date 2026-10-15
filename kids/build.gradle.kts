@@ -13,7 +13,10 @@ android {
 }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(project(":core:navigation"))
     implementation(project(":core:ui"))
+    implementation(project(":feature:onboarding"))
     implementation(project(":core:data"))
     implementation(project(":core:usage"))
     implementation(project(":core:blocking"))
@@ -21,7 +24,12 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.timber)
 
+    testImplementation(project(":core:testing"))
+    testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
