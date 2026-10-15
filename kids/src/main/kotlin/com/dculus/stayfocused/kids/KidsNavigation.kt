@@ -19,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -116,13 +115,14 @@ private fun KidsPermissionsRoute(
             PermissionsCopy(
                 body = R.string.kids_perms_body,
                 disclosureTitle = R.string.kids_perms_disclosure_title,
+                disclosureReads = R.string.kids_perms_disclosure_reads,
                 disclosureWhy = R.string.kids_perms_disclosure_why,
                 disclosureNever = R.string.kids_perms_disclosure_never,
             )
         }
     val appName = stringResource(R.string.app_name)
     val footer: @Composable () -> Unit = {
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap10)) {
             Text(
                 stringResource(R.string.kids_battery_strong),
                 style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.Bold),

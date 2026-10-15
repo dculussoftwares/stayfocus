@@ -2,6 +2,7 @@
 <resources>
     <string name="app_name">Stay Focused Kids</string>
     <string name="kids_perms_body">Android needs these before Stay Focused Kids can share app use with your parent.</string>
+    <string name="kids_perms_disclosure_reads">Which app is on your screen.</string>
     <string name="kids_perms_disclosure_why">To show the block screen when an app your parent blocked opens, and to share screen time with them.</string>
     <string name="kids_perms_disclosure_never">Reads messages, passwords or typing. Never sold. Shared only with the parent you link.</string>
     <string name="kids_perms_disclosure_title">Stay Focused Kids uses the Accessibility service</string>
