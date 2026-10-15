@@ -58,7 +58,7 @@ class KidsStartViewModelTest {
     fun completingSetupSavesTheFlagButKeepsTheStartRoute() {
         val repository = settings(false)
         val viewModel = KidsStartViewModel(repository, FakeDeviceAuth())
-        viewModel.completeSetup()
+        runBlocking { viewModel.completeSetup() }
         assertEquals(true, runBlocking { repository.settings.first().onboardingComplete })
         assertEquals(KidsPermissions, viewModel.startRoute.value)
     }

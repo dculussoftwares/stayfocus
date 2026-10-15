@@ -4,6 +4,10 @@
     <string name="kids_perms_body">Android needs these before Stay Focused Kids can share app use with your parent.</string>
     <string name="kids_perms_disclosure_why">To show the block screen when an app your parent blocked opens, and to share screen time with them.</string>
     <string name="kids_perms_disclosure_never">Reads messages, passwords or typing. Never sold. Shared only with the parent you link.</string>
+    <string name="kids_perms_disclosure_title">Stay Focused Kids uses the Accessibility service</string>
+    <string name="kids_battery_strong">Strongly recommended on this phone: without it, Android may stop blocking in the background.</string>
+    <!-- Shown in Android\'s Accessibility settings; overrides the phone app\'s text from :core:blocking. -->
+    <string name="foreground_service_description">Stay Focused Kids sees which app is on your screen so it can block the apps your parent chose. It never reads messages, passwords or typing. Nothing is sold, and it is shared only with the parent you link.</string>
     <!-- Placeholder screens until the Link (QR), Consent and Home stories land. -->
     <string name="kids_link_title">Link</string>
     <string name="kids_consent_title">Consent</string>

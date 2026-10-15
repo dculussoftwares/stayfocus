@@ -5,15 +5,21 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,6 +39,7 @@ import com.dculus.stayfocused.core.ui.theme.sfScreenExit
 import com.dculus.stayfocused.feature.onboarding.PermissionsCopy
 import com.dculus.stayfocused.feature.onboarding.PermissionsRoute
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
@@ -43,7 +50,7 @@ import timber.log.Timber
 fun KidsNavigation(
     startRoute: Any,
     modifier: Modifier = Modifier,
-    onSetupComplete: () -> Unit = {},
+    onSetupComplete: suspend () -> Unit = {},
     navController: NavHostController = rememberNavController(),
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
@@ -60,10 +67,18 @@ fun KidsNavigation(
             popExitTransition = { exit },
         ) {
             composable<KidsPermissions> {
+                val scope = rememberCoroutineScope()
                 KidsPermissionsRoute(
-                    onFinish = {
-                        onSetupComplete()
-                        navController.navigate(KidsLink, navOptions { popUpTo<KidsPermissions> { inclusive = true } })
+                    onFinish = { incomplete ->
+                        scope.launch {
+                            // Setup only counts as done with all four on, so the next launch asks again otherwise.
+                            // The flag is stored before leaving, so a restart right after cannot show this again.
+                            if (!incomplete) onSetupComplete()
+                            navController.navigate(
+                                KidsLink,
+                                navOptions { popUpTo<KidsPermissions> { inclusive = true } },
+                            )
+                        }
                     },
                     viewModel = permissionsViewModel,
                 )
@@ -92,7 +107,7 @@ fun KidsNavigation(
 /** The shared system check with Kids words and the battery guidance (strongly recommended on a child's phone). */
 @Composable
 private fun KidsPermissionsRoute(
-    onFinish: () -> Unit,
+    onFinish: (incomplete: Boolean) -> Unit,
     viewModel: (@Composable () -> PermissionsViewModel)?,
 ) {
     val context = LocalContext.current
@@ -100,23 +115,33 @@ private fun KidsPermissionsRoute(
         remember {
             PermissionsCopy(
                 body = R.string.kids_perms_body,
+                disclosureTitle = R.string.kids_perms_disclosure_title,
                 disclosureWhy = R.string.kids_perms_disclosure_why,
                 disclosureNever = R.string.kids_perms_disclosure_never,
             )
         }
     val appName = stringResource(R.string.app_name)
     val footer: @Composable () -> Unit = {
-        BatteryGuidance(
-            onOpenBatterySettings = { context.openSafely(PermissionIntents.batteryOptimizationSettings()) },
-            onOpenGuide = { url -> context.openSafely(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
-            appName = appName,
-        )
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                stringResource(R.string.kids_battery_strong),
+                style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.Bold),
+                color = StayFocusedTheme.colors.accent,
+            )
+            BatteryGuidance(
+                onOpenBatterySettings = { context.openSafely(PermissionIntents.batteryOptimizationSettings()) },
+                onOpenGuide = { url -> context.openSafely(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
+                appName = appName,
+            )
+        }
     }
-    // The message about fewer than four permissions is for the phone app's Account screen; Kids has none.
+    // PermissionsRoute reports "fewer than four" with a message for the phone app's Account screen; Kids has none.
     if (viewModel != null) {
-        PermissionsRoute(onFinish = { onFinish() }, copy = copy, footer = footer, viewModel = viewModel())
+        PermissionsRoute(onFinish = { message ->
+            onFinish(message != null)
+        }, copy = copy, footer = footer, viewModel = viewModel())
     } else {
-        PermissionsRoute(onFinish = { onFinish() }, copy = copy, footer = footer)
+        PermissionsRoute(onFinish = { message -> onFinish(message != null) }, copy = copy, footer = footer)
     }
 }
 

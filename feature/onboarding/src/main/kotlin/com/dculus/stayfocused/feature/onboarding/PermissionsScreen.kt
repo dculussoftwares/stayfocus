@@ -79,6 +79,7 @@ data class PermissionsCopy(
     @StringRes val headline1: Int = R.string.perms_headline_1,
     @StringRes val headline2: Int = R.string.perms_headline_2,
     @StringRes val body: Int = R.string.perms_body,
+    @StringRes val disclosureTitle: Int = R.string.perms_disclosure_title,
     @StringRes val disclosureReads: Int = R.string.perms_disclosure_reads,
     @StringRes val disclosureWhy: Int = R.string.perms_disclosure_why,
     @StringRes val disclosureNever: Int = R.string.perms_disclosure_never,
@@ -315,7 +316,7 @@ internal fun PhoneAccessibilityDisclosure(
     val copy =
         AccessibilityDisclosureCopy(
             eyebrow = stringResource(R.string.perms_disclosure_eyebrow),
-            title = stringResource(R.string.perms_disclosure_title),
+            title = stringResource(words.disclosureTitle),
             readsLabel = stringResource(R.string.perms_disclosure_reads_label),
             reads = stringResource(words.disclosureReads),
             whyLabel = stringResource(R.string.perms_disclosure_why_label),

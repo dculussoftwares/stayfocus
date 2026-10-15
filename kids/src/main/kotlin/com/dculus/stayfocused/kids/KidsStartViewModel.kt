@@ -42,7 +42,7 @@ class KidsStartViewModel
         }
 
         /** Remembers that the permission setup is done, so the next launch opens on Link. */
-        fun completeSetup() {
-            viewModelScope.launch { settings.setOnboardingComplete(true) }
+        suspend fun completeSetup() {
+            settings.setOnboardingComplete(true)
         }
     }
