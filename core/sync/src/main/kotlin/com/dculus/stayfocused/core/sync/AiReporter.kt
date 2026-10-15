@@ -58,7 +58,7 @@ interface AiReporter {
     suspend fun report(report: AiReport): Boolean
 }
 
-/** Firestore `aiReports/{id}`: `{uid, sentence, draft, createdAt}`; create-only for any signed-in user (see rules). */
+/** Firestore `aiReports/{id}`: `{uid, sentence, draft, createdAt}`; create-only for a signed-in account (see rules). */
 @Singleton
 class FirebaseAiReporter
     @Inject
@@ -69,7 +69,13 @@ class FirebaseAiReporter
         override suspend fun report(report: AiReport): Boolean {
             if (!availability.isConfigured) return false
             return try {
-                val uid = uid()
+                // Reporting needs an account (the rules refuse anonymous sessions); it never signs anyone in.
+                val uid =
+                    FirebaseAuth
+                        .getInstance()
+                        .currentUser
+                        ?.takeUnless { it.isAnonymous }
+                        ?.uid
                 if (uid != null) write(uid, report)
                 uid != null
             } catch (e: Exception) {
@@ -77,16 +83,6 @@ class FirebaseAiReporter
                 Timber.w(e, "Reporting the AI result failed")
                 false
             }
-        }
-
-        /** The describe feature needs no account: a signed-out user reports under an anonymous uid. */
-        private suspend fun uid(): String? {
-            val auth = FirebaseAuth.getInstance()
-            return auth.currentUser?.uid ?: auth
-                .signInAnonymously()
-                .await()
-                .user
-                ?.uid
         }
 
         private suspend fun write(

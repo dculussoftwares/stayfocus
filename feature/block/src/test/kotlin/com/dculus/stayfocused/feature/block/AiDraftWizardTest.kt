@@ -114,6 +114,8 @@ class AiDraftWizardTest {
         runTest {
             handoff.put(AiDraftRequest("Instagram 45 min a day", draft))
             val vm = viewModel()
+            // The report carries what the AI returned, not the user's later edits.
+            vm.setMins(20)
             vm.events.test {
                 vm.reportBadResult()
                 assertEquals(WizardEvent.ReportSent, awaitItem())

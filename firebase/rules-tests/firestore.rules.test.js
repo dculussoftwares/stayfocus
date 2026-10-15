@@ -490,8 +490,8 @@ describe('aiReports', () => {
   it('a signed-in user files a report under their own uid', async () => {
     await assertSucceeds(setDoc(doc(parentDb(), path), report()));
   });
-  it('an anonymous user can report too', async () => {
-    await assertSucceeds(setDoc(doc(childDb(), path), report({ uid: CHILD })));
+  it('an anonymous session cannot report', async () => {
+    await assertFails(setDoc(doc(childDb(), path), report({ uid: CHILD })));
   });
   it('rejects an unauthenticated report and a foreign uid', async () => {
     await assertFails(setDoc(doc(anonDb(), path), report()));
@@ -507,6 +507,10 @@ describe('aiReports', () => {
     await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'OTHER', apps: [], days: 1 } })));
     await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'LIMIT', apps: [], days: 1, mins: 0 } })));
     await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'LIMIT', apps: [], days: 1, extra: 'x' } })));
+    // A LIMIT report needs its period and minutes; a schedule needs a valid range.
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'LIMIT', apps: [], days: 1 } })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'SCHEDULE', apps: [], days: 1, range: 'later' } })));
+    await assertSucceeds(setDoc(doc(parentDb(), path), report({ draft: { type: 'SCHEDULE', apps: [], days: 1, range: '22:00–07:00' } })));
   });
   it('rejects a back-dated timestamp', async () => {
     await assertFails(setDoc(doc(parentDb(), path), report({ createdAt: Timestamp.fromMillis(0) })));

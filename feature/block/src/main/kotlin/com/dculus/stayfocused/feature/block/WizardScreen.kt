@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -213,7 +214,7 @@ fun WizardScreen(
     }
     SfBottomSheet(visible = confirmReport, onDismiss = { confirmReport = false }) {
         ReportSheetContent(
-            report = AiReport(state.aiSentence, state.draft),
+            report = AiReport(state.aiSentence, state.aiOriginal ?: state.draft),
             sending = state.reporting,
             onSend = {
                 // A second tap while the sheet slides out must not send twice.
@@ -242,20 +243,26 @@ private fun ColumnScope.ReportSheetContent(
     ) {
         Text(stringResource(R.string.block_report_title), style = StayFocusedTheme.type.display, color = c.text)
         Text(stringResource(R.string.block_report_body), style = StayFocusedTheme.type.body, color = c.secondary)
-        MonoLabel(stringResource(R.string.block_report_sentence_label))
-        Text(
-            report.sentence,
-            style = StayFocusedTheme.type.body,
-            color = c.text,
-            modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
-        )
-        MonoLabel(stringResource(R.string.block_report_draft_label))
-        Text(
-            report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
-            style = StayFocusedTheme.type.bodyS,
-            color = c.text,
-            modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
-        )
+        // Scrolls on its own so a long sentence never pushes "Send report" off the screen.
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            MonoLabel(stringResource(R.string.block_report_sentence_label))
+            Text(
+                report.sentence,
+                style = StayFocusedTheme.type.body,
+                color = c.text,
+                modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
+            )
+            MonoLabel(stringResource(R.string.block_report_draft_label))
+            Text(
+                report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
+                style = StayFocusedTheme.type.bodyS,
+                color = c.text,
+                modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
+            )
+        }
         PrimaryButton(
             text = stringResource(R.string.block_report_send),
             onClick = onSend,

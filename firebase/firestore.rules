@@ -113,7 +113,13 @@ service cloud.firestore {
         && (!('use' in d) || isIntIn(d.use, 1, 1440))
         && (!('rest' in d) || isIntIn(d.rest, 1, 1440))
         && (!('now' in d) || isIntIn(d.now, 1, 480))
-        && (!('range' in d) || (d.range is string && d.range.size() <= 11))
+        && (!('range' in d) || (d.range is string
+            && d.range.matches('^([01][0-9]|2[0-3]):[0-5][0-9]–([01][0-9]|2[0-3]):[0-5][0-9]$')))
+        // Fields each block type needs.
+        && (d.type != 'LIMIT' || ('period' in d && 'mins' in d))
+        && (d.type != 'CYCLE' || ('use' in d && 'rest' in d))
+        && (d.type != 'SCHEDULE' || 'range' in d)
+        && (d.type != 'NOW' || 'now' in d)
         && (!('note' in d) || (d.note is string && d.note.size() <= 300));
     }
 
@@ -301,10 +307,11 @@ service cloud.firestore {
 
     // ---------- AI reports ("Report a bad result", M9-05) ----------
 
-    // A signed-in user (anonymous included) files the sentence they wrote and the draft they were shown. Create-only:
-    // reports are read by the maintainers through the admin SDK.
+    // A signed-in account (not an anonymous session) files the sentence they wrote and the draft the AI returned.
+    // Create-only: reports are read by the maintainers through the admin SDK.
     match /aiReports/{reportId} {
       allow create: if signedIn()
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
         && request.resource.data.keys().hasOnly(['uid', 'sentence', 'draft', 'createdAt'])
         && request.resource.data.keys().hasAll(['uid', 'sentence', 'draft', 'createdAt'])
         && request.resource.data.uid == request.auth.uid

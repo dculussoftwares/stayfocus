@@ -73,6 +73,8 @@ data class WizardUiState(
     val editing: Boolean = false,
     /** The sentence the AI draft came from; what "Report a bad result" sends together with the draft. */
     val aiSentence: String = "",
+    /** The draft as the AI returned it (before the user's edits); what "Report a bad result" sends. */
+    val aiOriginal: BlockDraft? = null,
     /** True while a report is being sent. */
     val reporting: Boolean = false,
 ) {
@@ -195,6 +197,7 @@ class WizardViewModel
                                 draft = ai.draft.copy(fromAi = true),
                                 step = WIZARD_STEP_RULES,
                                 aiSentence = ai.sentence,
+                                aiOriginal = ai.draft.copy(fromAi = true),
                             )
                         } else {
                             applyPrefill(s, first)
@@ -403,7 +406,7 @@ class WizardViewModel
             viewModelScope.launch {
                 val ok =
                     try {
-                        reporter.report(AiReport(s.aiSentence, s.draft))
+                        reporter.report(AiReport(s.aiSentence, s.aiOriginal ?: s.draft))
                     } finally {
                         mutableState.update { it.copy(reporting = false) }
                     }
