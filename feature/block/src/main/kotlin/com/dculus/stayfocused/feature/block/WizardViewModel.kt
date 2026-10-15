@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.DayOfWeek
+import java.time.Instant
 import java.util.UUID
 import javax.inject.Inject
 
@@ -42,6 +43,7 @@ const val WIZARD_STEP_TYPE = 1
 private const val TAG = "WizardViewModel"
 private const val ARG_TARGET = "target"
 private const val ARG_PREFILL = "prefill"
+private const val ARG_BLOCK_ID = "blockId"
 
 /** One "ON" pill. Child phones are shown but disabled until device linking lands (M8-03). */
 data class WizardTargetUi(
@@ -65,6 +67,8 @@ data class WizardUiState(
     val cycleEdit: CycleEdit = CycleEdit.USE,
     /** True while a save is in flight; further "Turn on block" taps are ignored. */
     val saving: Boolean = false,
+    /** True when an existing block is being edited: the CTA reads "Save changes" and delete is offered. */
+    val editing: Boolean = false,
 ) {
     val selectedCount: Int get() = draft.apps.size
 
@@ -99,6 +103,12 @@ sealed interface WizardEvent {
         val deviceId: String?,
         val name: String,
         val targetName: String?,
+        val edited: Boolean = false,
+    ) : WizardEvent
+
+    /** The block being edited was deleted: go to the Block tab with [deviceId] (null = this phone) selected. */
+    data class Deleted(
+        val deviceId: String?,
     ) : WizardEvent
 }
 
@@ -123,6 +133,8 @@ class WizardViewModel
             savedStateHandle.get<String>(ARG_TARGET)?.let { BlockTarget.Device(it) } ?: BlockTarget.ThisPhone
         private val target = MutableStateFlow(initialTarget)
         private val template: BlockTemplate? = BlockTemplate.fromId(savedStateHandle.get<String>(ARG_PREFILL))
+        private val editId: String? = savedStateHandle.get<String>(ARG_BLOCK_ID)
+        private var original: Block? = null
 
         private val mutableState = MutableStateFlow(WizardUiState(draft = BlockDraft(target = initialTarget)))
         val state: StateFlow<WizardUiState> = mutableState.asStateFlow()
@@ -134,22 +146,39 @@ class WizardViewModel
             viewModelScope.launch {
                 // The first app list decides which template/default apps exist on this target.
                 val first = targetApps.apps(initialTarget).first()
-                mutableState.update { applyPrefill(it, first) }
+                if (editId != null) {
+                    val block = blocks.get(editId)
+                    if (block == null) {
+                        eventChannel.send(WizardEvent.Close)
+                        return@launch
+                    }
+                    original = block
+                    target.value = block.target
+                    mutableState.update {
+                        it.copy(
+                            ready = true,
+                            apps = first,
+                            draft = block.toDraft(),
+                            step = WIZARD_STEP_RULES,
+                            editing = true,
+                        )
+                    }
+                } else {
+                    mutableState.update { applyPrefill(it, first) }
+                }
                 target.flatMapLatest { targetApps.apps(it) }.collect { apps ->
                     // An app that disappears (uninstalled) must not stay selected.
                     val available = apps.mapTo(hashSetOf()) { it.pkg }
                     mutableState.update { s ->
-                        s.copy(
-                            apps = apps,
-                            draft =
-                                s.draft.copy(
-                                    apps =
-                                        s.draft.apps.filterTo(linkedSetOf()) {
-                                            it in
-                                                available
-                                        },
-                                ),
-                        )
+                        // An edited block keeps all its apps: saving must not silently drop an uninstalled one.
+                        if (s.editing) {
+                            s.copy(apps = apps)
+                        } else {
+                            s.copy(
+                                apps = apps,
+                                draft = s.draft.copy(apps = s.draft.apps.filterTo(linkedSetOf()) { it in available }),
+                            )
+                        }
                     }
                 }
             }
@@ -222,13 +251,21 @@ class WizardViewModel
             }
         }
 
+        private fun newSource(draft: BlockDraft): BlockSource =
+            when {
+                draft.fromAi -> BlockSource.AI
+                template != null -> BlockSource.TEMPLATE
+                else -> BlockSource.MANUAL
+            }
+
         private fun save(s: WizardUiState) {
             val draft = s.draft
             val now = clock.instant()
             val info = BlockSummary.nameAndDescription(draft, s.appLabels)
+            val old = original
             val block =
                 Block(
-                    id = UUID.randomUUID().toString(),
+                    id = old?.id ?: UUID.randomUUID().toString(),
                     target = draft.target,
                     type = draft.type,
                     name = info.name,
@@ -239,16 +276,11 @@ class WizardViewModel
                     restMins = draft.rest.takeIf { draft.type == BlockType.CYCLE },
                     range = draft.range.takeIf { draft.type == BlockType.SCHEDULE },
                     durationMins = draft.now.takeIf { draft.type == BlockType.NOW },
-                    startedAt = now.takeIf { draft.type == BlockType.NOW },
+                    startedAt = startedAtFor(draft, old, now),
                     days = draft.days,
-                    enabled = true,
-                    createdAt = now,
-                    source =
-                        when {
-                            draft.fromAi -> BlockSource.AI
-                            template != null -> BlockSource.TEMPLATE
-                            else -> BlockSource.MANUAL
-                        },
+                    enabled = old?.enabled ?: true,
+                    createdAt = old?.createdAt ?: now,
+                    source = old?.source ?: newSource(draft),
                 )
             val device = s.targets.firstOrNull { it.target == draft.target }?.device
             val deviceId = (draft.target as? BlockTarget.Device)?.deviceId
@@ -266,8 +298,34 @@ class WizardViewModel
                     return@launch
                 }
                 eventChannel.send(
-                    WizardEvent.Saved(deviceId, info.name, if (deviceId == null) null else device?.name ?: deviceId),
+                    WizardEvent.Saved(
+                        deviceId,
+                        info.name,
+                        if (deviceId == null) null else device?.name ?: deviceId,
+                        edited = old != null,
+                    ),
                 )
+            }
+        }
+
+        /** Deletes the block being edited (the database cascades its cycle state and app rows). */
+        fun deleteBlock() {
+            val old = original ?: return
+            if (mutableState.value.saving) return
+            mutableState.update { it.copy(saving = true) }
+            viewModelScope.launch {
+                try {
+                    blocks.delete(old.id)
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    if (e is CancellationException) throw e
+                    Log.e(TAG, "Deleting the block failed", e)
+                    mutableState.update { it.copy(saving = false) }
+                    emit(WizardEvent.SaveFailed)
+                    return@launch
+                }
+                eventChannel.send(WizardEvent.Deleted((old.target as? BlockTarget.Device)?.deviceId))
             }
         }
 
@@ -324,4 +382,32 @@ class WizardViewModel
         private fun emit(event: WizardEvent) {
             viewModelScope.launch { eventChannel.send(event) }
         }
+    }
+
+private fun Block.toDraft(): BlockDraft {
+    val defaults = BlockDraft()
+    return BlockDraft(
+        target = target,
+        type = type,
+        apps = apps.toCollection(linkedSetOf()),
+        period = period ?: defaults.period,
+        mins = limitMins ?: defaults.mins,
+        use = useMins ?: defaults.use,
+        rest = restMins ?: defaults.rest,
+        range = range ?: defaults.range,
+        now = durationMins ?: defaults.now,
+        days = days,
+    )
+}
+
+/** An unchanged "block now" keeps its running window; a new or changed one starts at [now]. */
+private fun startedAtFor(
+    draft: BlockDraft,
+    old: Block?,
+    now: Instant,
+): Instant? =
+    when {
+        draft.type != BlockType.NOW -> null
+        old != null && old.type == BlockType.NOW && old.durationMins == draft.now -> old.startedAt
+        else -> now
     }

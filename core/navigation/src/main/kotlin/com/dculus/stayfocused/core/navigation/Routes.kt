@@ -48,6 +48,8 @@ data object Account
 data class BlockWizard(
     val target: String? = null,
     val prefill: String? = null,
+    /** Edit mode: the id of the block to edit; the wizard opens at step 3 with its values. */
+    val blockId: String? = null,
 )
 
 @Serializable

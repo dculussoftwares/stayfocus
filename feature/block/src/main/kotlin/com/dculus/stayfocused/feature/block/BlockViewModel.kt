@@ -80,6 +80,12 @@ sealed interface BlockEvent {
         val target: String?,
         val prefill: String?,
     ) : BlockEvent
+
+    /** Open the wizard in edit mode, at step 3, for block [blockId] on [target] (null = this phone). */
+    data class EditBlock(
+        val blockId: String,
+        val target: String?,
+    ) : BlockEvent
 }
 
 private data class LocalState(
@@ -183,6 +189,8 @@ class BlockViewModel
                 }
             }
         }
+
+        fun editBlock(id: String) = emit(BlockEvent.EditBlock(id, state.value.selected.deviceId()))
 
         fun newBlock() = emit(BlockEvent.OpenWizard(state.value.selected.deviceId(), prefill = null))
 

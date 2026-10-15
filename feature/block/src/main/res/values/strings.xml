@@ -67,6 +67,15 @@
         <item quantity="other">Continue with %1$d apps</item>
     </plurals>
     <string name="block_wizard_cta_turn_on">Turn on block</string>
+    <string name="block_wizard_cta_save">Save changes</string>
+    <string name="block_wizard_saved_changes">Changes saved · %1$s</string>
+    <!-- Proposed copy, flagged for design review (M4-04). -->
+    <string name="block_delete_action">Delete block</string>
+    <string name="block_delete_title">Delete this block?</string>
+    <string name="block_delete_body">Its apps are no longer limited by it. This can\'t be undone.</string>
+    <string name="block_delete_confirm">Delete</string>
+    <string name="block_delete_keep">Keep it</string>
+    <string name="block_deleted">Block deleted</string>
     <string name="block_wizard_pick_one_app">Pick at least one app</string>
     <string name="block_wizard_step3_limit">How much time?</string>
     <string name="block_wizard_step3_schedule">When should it lock?</string>

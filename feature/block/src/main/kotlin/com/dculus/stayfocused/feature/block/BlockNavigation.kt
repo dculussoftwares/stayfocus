@@ -39,14 +39,23 @@ fun NavController.navigateToBlockWizard(
     navOptions: NavOptions? = null,
 ) = navigate(BlockWizard(target = target, prefill = prefill), navOptions)
 
+/** Opens the wizard in edit mode, at step 3, for [blockId] on [target] (a child device id, null = this phone). */
+fun NavController.navigateToBlockEditor(
+    blockId: String,
+    target: String? = null,
+    navOptions: NavOptions? = null,
+) = navigate(BlockWizard(target = target, blockId = blockId), navOptions)
+
 /** Block tab. [onOpenWizard] opens the wizard for a target (child device id, null = this phone) and template. */
 fun NavGraphBuilder.blockScreen(
     onOpenWizard: (target: String?, prefill: String?) -> Unit,
+    /** Opens the wizard in edit mode for a block id on a target (child device id, null = this phone). */
+    onEditBlock: (blockId: String, target: String?) -> Unit = { _, _ -> },
     /** Supplies the ViewModel; null uses Hilt. Lets navigation tests run without a Hilt application. */
     viewModelProvider: (@Composable () -> BlockViewModel)? = null,
 ) {
     composable<Block> { entry ->
-        BlockRoute(onOpenWizard, viewModelProvider?.invoke() ?: hiltViewModel(), entry.savedStateHandle)
+        BlockRoute(onOpenWizard, viewModelProvider?.invoke() ?: hiltViewModel(), entry.savedStateHandle, onEditBlock)
     }
 }
 
@@ -110,6 +119,7 @@ internal fun BlockRoute(
     onOpenWizard: (target: String?, prefill: String?) -> Unit,
     viewModel: BlockViewModel,
     savedStateHandle: SavedStateHandle? = null,
+    onEditBlock: (blockId: String, target: String?) -> Unit = { _, _ -> },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val openAi by (savedStateHandle?.getStateFlow(OPEN_AI_KEY, false) ?: remember { MutableStateFlow(false) })
@@ -140,10 +150,12 @@ internal fun BlockRoute(
         }
     }
     val currentOpenWizard by rememberUpdatedState(onOpenWizard)
+    val currentEditBlock by rememberUpdatedState(onEditBlock)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is BlockEvent.OpenWizard -> currentOpenWizard(event.target, event.prefill)
+                is BlockEvent.EditBlock -> currentEditBlock(event.blockId, event.target)
             }
         }
     }
@@ -156,6 +168,7 @@ internal fun BlockRoute(
                 onAiText = viewModel::setAiText,
                 onSelectTab = viewModel::selectTab,
                 onSetEnabled = viewModel::setBlockEnabled,
+                onEdit = viewModel::editBlock,
                 onTemplate = viewModel::useTemplate,
                 onToggleAppLock = viewModel::toggleAppLock,
             )
@@ -180,6 +193,7 @@ internal fun BlockWizardRoute(
     val toast = rememberToastController()
     val pickOneApp = stringResource(R.string.block_wizard_pick_one_app)
     val saveFailed = stringResource(R.string.block_wizard_save_failed)
+    val deleted = stringResource(R.string.block_deleted)
     val resources = LocalResources.current
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -202,7 +216,17 @@ internal fun BlockWizardRoute(
 
                 is WizardEvent.Saved -> {
                     val target = event.targetName ?: resources.getString(R.string.block_this_phone)
-                    currentSaved(event.deviceId, resources.getString(R.string.block_wizard_saved, event.name, target))
+                    val message =
+                        if (event.edited) {
+                            resources.getString(R.string.block_wizard_saved_changes, event.name)
+                        } else {
+                            resources.getString(R.string.block_wizard_saved, event.name, target)
+                        }
+                    currentSaved(event.deviceId, message)
+                }
+
+                is WizardEvent.Deleted -> {
+                    currentSaved(event.deviceId, deleted)
                 }
             }
         }
@@ -225,6 +249,7 @@ internal fun BlockWizardRoute(
                 onRange = viewModel::setRange,
                 onToggleDay = viewModel::toggleDay,
                 onChangeType = viewModel::changeType,
+                onDelete = viewModel::deleteBlock,
             )
         }
     Box(Modifier.fillMaxSize()) {

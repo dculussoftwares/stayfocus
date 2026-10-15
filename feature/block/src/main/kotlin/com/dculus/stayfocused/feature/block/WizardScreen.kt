@@ -10,6 +10,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,6 +69,7 @@ import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.RotaryDial
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
+import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.icon.AppIcon
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -80,6 +82,9 @@ const val WIZARD_RULES_TAG = "wizard_rules"
 const val WIZARD_SUMMARY_TAG = "wizard_summary"
 const val WIZARD_AI_BANNER_TAG = "wizard_ai_banner"
 const val WIZARD_RANGE_CUSTOM_TAG = "wizard_range_custom"
+const val WIZARD_DELETE_TAG = "wizard_delete"
+const val WIZARD_DELETE_CONFIRM_TAG = "wizard_delete_confirm"
+const val WIZARD_DELETE_KEEP_TAG = "wizard_delete_keep"
 
 fun wizardRangeTag(range: String): String = "wizard_range_$range"
 
@@ -103,6 +108,7 @@ data class WizardActions(
     val onRange: (TimeRange) -> Unit = {},
     val onToggleDay: (DayOfWeek) -> Unit = {},
     val onChangeType: () -> Unit = {},
+    val onDelete: () -> Unit = {},
 )
 
 private val WizardTypes = BlockType.entries
@@ -155,6 +161,7 @@ fun WizardScreen(
 ) {
     val c = StayFocusedTheme.colors
     val spacing = StayFocusedTheme.spacing
+    var confirmDelete by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -164,7 +171,8 @@ fun WizardScreen(
         verticalArrangement = Arrangement.spacedBy(spacing.screen),
     ) {
         WizardHeader(state.step, actions.onBack)
-        TargetPills(state.targets, state.draft.target, actions.onSelectTarget)
+        // An existing block cannot move to another phone.
+        if (!state.editing) TargetPills(state.targets, state.draft.target, actions.onSelectTarget)
         Box(Modifier.weight(1f)) {
             if (state.ready) {
                 when (state.step) {
@@ -180,6 +188,70 @@ fun WizardScreen(
             modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
             enabled = state.ready,
         )
+        if (state.editing && state.step == WIZARD_STEP_RULES) {
+            DeleteButton(onClick = { confirmDelete = true })
+        }
+    }
+    SfBottomSheet(visible = confirmDelete, onDismiss = { confirmDelete = false }) {
+        DeleteSheetContent(
+            onDelete = {
+                // A second tap while the sheet slides out must not delete twice.
+                if (confirmDelete) {
+                    confirmDelete = false
+                    actions.onDelete()
+                }
+            },
+            onKeep = { confirmDelete = false },
+        )
+    }
+}
+
+@Composable
+private fun DeleteButton(onClick: () -> Unit) {
+    val c = StayFocusedTheme.colors
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Text(
+            stringResource(R.string.block_delete_action),
+            style = StayFocusedTheme.type.title,
+            color = c.alertText,
+            modifier =
+                Modifier
+                    .testTag(WIZARD_DELETE_TAG)
+                    .clickable(role = Role.Button, onClick = onClick)
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.DeleteSheetContent(
+    onDelete: () -> Unit,
+    onKeep: () -> Unit,
+) {
+    val c = StayFocusedTheme.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(stringResource(R.string.block_delete_title), style = StayFocusedTheme.type.display, color = c.text)
+        Text(stringResource(R.string.block_delete_body), style = StayFocusedTheme.type.body, color = c.secondary)
+        PrimaryButton(
+            text = stringResource(R.string.block_delete_confirm),
+            onClick = onDelete,
+            modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_CONFIRM_TAG),
+        )
+        Text(
+            stringResource(R.string.block_delete_keep),
+            style = StayFocusedTheme.type.title,
+            color = c.text,
+            textAlign = TextAlign.Center,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .testTag(WIZARD_DELETE_KEEP_TAG)
+                    .clickable(role = Role.Button, onClick = onKeep)
+                    .padding(vertical = 12.dp),
+        )
     }
 }
 
@@ -187,7 +259,7 @@ fun WizardScreen(
 private fun ctaLabel(state: WizardUiState): String =
     when (state.step) {
         WIZARD_STEP_RULES -> {
-            stringResource(R.string.block_wizard_cta_turn_on)
+            stringResource(if (state.editing) R.string.block_wizard_cta_save else R.string.block_wizard_cta_turn_on)
         }
 
         WIZARD_STEP_APPS -> {
