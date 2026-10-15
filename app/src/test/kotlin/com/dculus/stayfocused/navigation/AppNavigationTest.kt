@@ -24,6 +24,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.AppSettings
@@ -58,6 +59,7 @@ import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
+import com.dculus.stayfocused.feature.account.AccountViewModel
 import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
@@ -119,6 +121,8 @@ class AppNavigationTest {
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
     private val fakePermissions = FakePermissionsRepository()
     private val permissionsViewModel = PermissionsViewModel(fakePermissions)
+    private val accountViewModel =
+        AccountViewModel(FakeAuthRepository(), fakePermissions, EngineHealthMonitor(Clock.systemUTC()))
     private val homeViewModel =
         HomeViewModel(
             FakeBreakRepository(),
@@ -162,6 +166,7 @@ class AppNavigationTest {
                     homeViewModel = { homeViewModel },
                     signInViewModel = { signInViewModel },
                     permissionsViewModel = { permissionsViewModel },
+                    accountViewModel = { accountViewModel },
                 )
             }
         }
