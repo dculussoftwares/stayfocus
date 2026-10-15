@@ -186,6 +186,33 @@ class DaoTest {
         }
 
     @Test
+    fun `changing a cycle rule clears its cycle state but a rename keeps it`() =
+        runBlocking {
+            val cycle =
+                block("b1", setOf("com.a")).copy(
+                    type = BlockType.CYCLE,
+                    range = null,
+                    useMins = 10,
+                    restMins = 30,
+                )
+            save(cycle)
+            db.cycleStateDao().upsert(CycleStateEntity("b1", "com.a", 5, Instant.EPOCH, Instant.ofEpochMilli(9)))
+
+            save(cycle.copy(name = "Renamed", enabled = false))
+            assertEquals(
+                5L,
+                db
+                    .cycleStateDao()
+                    .observe("b1", "com.a")
+                    .first()
+                    ?.usedMs,
+            )
+
+            save(cycle.copy(restMins = 45))
+            assertNull(db.cycleStateDao().observe("b1", "com.a").first())
+        }
+
+    @Test
     fun `dropping an app from a block clears its cycle state`() =
         runBlocking {
             save(block("b1", setOf("com.a", "com.b")))

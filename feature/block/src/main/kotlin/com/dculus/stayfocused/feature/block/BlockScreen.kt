@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -47,6 +48,8 @@ import com.dculus.stayfocused.core.ui.components.blockDetail
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
+fun blockRowTag(id: String): String = "block_row_$id"
+
 private val AiExamples =
     listOf(R.string.block_ai_example_1, R.string.block_ai_example_2, R.string.block_ai_example_3)
 
@@ -58,6 +61,7 @@ data class BlockActions(
     val onAiText: (String) -> Unit = {},
     val onSelectTab: (BlockTab) -> Unit = {},
     val onSetEnabled: (id: String, enabled: Boolean) -> Unit = { _, _ -> },
+    val onEdit: (id: String) -> Unit = {},
     val onTemplate: (BlockTemplate) -> Unit = {},
     val onToggleAppLock: (pkg: String) -> Unit = {},
 )
@@ -120,7 +124,7 @@ fun BlockScreen(
                 item { EmptyState() }
             } else {
                 items(state.blocks, key = { it.block.id }) { row ->
-                    BlockRow(row) { actions.onSetEnabled(row.block.id, it) }
+                    BlockRow(row, onClick = { actions.onEdit(row.block.id) }) { actions.onSetEnabled(row.block.id, it) }
                 }
             }
             item {
@@ -346,6 +350,7 @@ private fun EmptyState() {
 @Composable
 private fun BlockRow(
     row: BlockRowUi,
+    onClick: () -> Unit,
     onToggle: (Boolean) -> Unit,
 ) {
     val c = StayFocusedTheme.colors
@@ -357,6 +362,8 @@ private fun BlockRow(
                 .clip(shape)
                 .background(c.panel)
                 .border(1.dp, c.hairline06, shape)
+                .testTag(blockRowTag(row.block.id))
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(14.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,

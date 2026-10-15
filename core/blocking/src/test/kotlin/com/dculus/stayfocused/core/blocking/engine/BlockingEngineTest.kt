@@ -117,6 +117,7 @@ private class VirtualClock(
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
+@Suppress("LargeClass")
 class BlockingEngineTest {
     private val context: Context = RuntimeEnvironment.getApplication()
 
@@ -452,6 +453,24 @@ class BlockingEngineTest {
             val state = r.cycles.states.getValue(CycleKey("cycle", APP))
             assertEquals(r.clock.instant().plusSeconds(5 * 60), state.lockedUntil)
             r.engine.stop()
+        }
+
+    @Test fun editingTheCycleRuleStartsFromAFreshState() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 5))
+            r.engine.start()
+            r.open(APP)
+            r.pass(30_000)
+            assertEquals(30_000L, r.cycles.states[CycleKey("cycle", APP)]?.usedMs)
+
+            // The database drops the stored state of a block whose rule changed; the engine must not resurrect it.
+            r.blocks.upsert(block("cycle", BlockType.CYCLE, useMins = 1, restMins = 10))
+            r.cycles.states.clear()
+            r.pass(20_000)
+            r.engine.stop()
+            val used = r.cycles.states[CycleKey("cycle", APP)]?.usedMs ?: 0L
+            assertTrue(used <= 20_000L, "the old 30 s must not come back, was $used")
         }
 
     @Test fun cycleWindowsAreIndependentPerApp() =

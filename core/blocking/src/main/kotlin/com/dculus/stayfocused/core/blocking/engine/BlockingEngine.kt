@@ -112,6 +112,7 @@ class BlockingEngine
         /** The inputs the time since the last evaluation has to be booked against. */
         private var bookingInputs: EngineInputs? = null
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
+        private val cycleRules = ConcurrentHashMap<String, String>()
 
         /** Cycle states whose last save failed; they are saved again at the next opportunity, even if unchanged. */
         private val unsaved = ConcurrentHashMap.newKeySet<CycleKey>()
@@ -476,6 +477,14 @@ class BlockingEngine
 
         /** Drops cached cycle state of apps that are no longer part of a block (the DAO deletes it too). */
         private fun pruneCycleCache(inputs: EngineInputs) {
+            // An edited cycle rule starts fresh (the DAO clears the stored state of the block the same way).
+            for (b in inputs.blocks) {
+                val rule = "${b.type}:${b.useMins}:${b.restMins}"
+                val previous = cycleRules.put(b.id, rule)
+                if (previous != null && previous != rule) cycleCache.keys.removeAll { it.blockId == b.id }
+            }
+            val ids = inputs.blocks.mapTo(hashSetOf()) { it.id }
+            cycleRules.keys.retainAll(ids)
             cycleCache.keys.removeAll { key -> inputs.blocks.none { it.id == key.blockId && key.pkg in it.apps } }
         }
 
@@ -492,7 +501,8 @@ class BlockingEngine
             during.blocks
                 .filter { b ->
                     b.enabled && b.type == BlockType.CYCLE && pkg in b.apps &&
-                        current.blocks.any { it.id == b.id && pkg in it.apps }
+                        // A block edited to another cycle rule meanwhile must not be charged under the old one.
+                        current.blocks.any { it.id == b.id && pkg in it.apps && it.sameCycleRule(b) }
                 }.forEach { block ->
                     try {
                         val key = CycleKey(block.id, pkg)
@@ -551,3 +561,6 @@ class BlockingEngine
             private const val DISMISS_GRACE_MS = 2_000L
         }
     }
+
+private fun Block.sameCycleRule(other: Block): Boolean =
+    type == other.type && useMins == other.useMins && restMins == other.restMins
