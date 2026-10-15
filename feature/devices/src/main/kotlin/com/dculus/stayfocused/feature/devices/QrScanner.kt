@@ -101,9 +101,13 @@ internal fun QrScannerPreview(
                     .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                     .build(),
             )
-        ensureModule(context, scanner, onReady = {
-            if (!disposed) ready = true
-        }, onFailed = { if (!disposed) currentOnUnavailable() })
+        val stopWatchingModule =
+            ensureModule(
+                context,
+                scanner,
+                onReady = { if (!disposed) ready = true },
+                onFailed = { if (!disposed) currentOnUnavailable() },
+            )
         val analyzer = QrAnalyzer(scanner) { currentOnCodes(it) }
         val providerFuture = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
@@ -140,6 +144,7 @@ internal fun QrScannerPreview(
         )
         onDispose {
             disposed = true
+            stopWatchingModule()
             analyzer.close()
             provider?.unbindAll()
             executor.shutdown()
@@ -162,43 +167,63 @@ internal fun QrScannerPreview(
 /**
  * Makes sure Play services has the unbundled QR model: [onReady] when it is (already, or after the download),
  * [onFailed] when it cannot be had. The install request does not wait, so progress is tracked with a listener.
+ * Returns the function that stops watching (unregisters the listener); also called on a final update.
  */
 private fun ensureModule(
     context: Context,
     scanner: BarcodeScanner,
     onReady: () -> Unit,
     onFailed: () -> Unit,
-) {
+): () -> Unit {
     val client = ModuleInstall.getClient(context)
     val mainExecutor = ContextCompat.getMainExecutor(context)
+    var listener: InstallStatusListener? = null
+    val stop = {
+        listener?.let { client.unregisterListener(it) }
+        listener = null
+    }
     client
         .areModulesAvailable(scanner)
         .addOnSuccessListener { response ->
             if (response.areModulesAvailable()) {
                 onReady()
             } else {
-                val listener =
+                val installListener =
                     InstallStatusListener { update ->
                         when (update.installState) {
-                            ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED -> onReady()
+                            ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED -> {
+                                stop()
+                                onReady()
+                            }
 
                             ModuleInstallStatusUpdate.InstallState.STATE_FAILED,
                             ModuleInstallStatusUpdate.InstallState.STATE_CANCELED,
-                            -> onFailed()
+                            -> {
+                                stop()
+                                onFailed()
+                            }
 
-                            else -> Unit
+                            else -> {
+                                Unit
+                            }
                         }
                     }
+                listener = installListener
                 client
                     .installModules(
                         ModuleInstallRequest
                             .newBuilder()
                             .addApi(scanner)
-                            .setListener(listener, mainExecutor)
+                            .setListener(installListener, mainExecutor)
                             .build(),
-                    ).addOnSuccessListener { if (it.areModulesAlreadyInstalled()) onReady() }
-                    .addOnFailureListener {
+                    ).addOnSuccessListener {
+                        if (it.areModulesAlreadyInstalled()) {
+                            stop()
+                            onReady()
+                        }
+                    }.addOnFailureListener {
                         Timber.w(it, "Could not request the barcode model")
+                        stop()
                         onFailed()
                     }
             }
@@ -206,6 +231,7 @@ private fun ensureModule(
             Timber.w(it, "Could not check the barcode model")
             onFailed()
         }
+    return stop
 }
 
 internal fun Context.hasCameraPermission(): Boolean =
