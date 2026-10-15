@@ -1,13 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="devices_title">Devices</string>
-    <string name="link_add_title">Link a phone</string>
-    <string name="link_scan_title">Scan code</string>
+    <string name="link_back">Back</string>
+    <string name="link_add_heading">Link a\nchild\'s phone</string>
+    <string name="link_add_body">Install Stay Focused Kids on their phone first. Then scan the QR code it shows.</string>
+    <string name="link_add_scan_title">Scan their code</string>
+    <string name="link_add_scan_subtitle">Their phone shows a QR code</string>
+    <string name="link_signin_title">Sign in to\nlink a phone</string>
+    <string name="link_signin_body">Linked phones belong to your account. Sign in, then come back to scan their code.</string>
+    <string name="link_signin_cta">Sign in</string>
+    <string name="link_scan_prompt">Point at the QR code on your child\'s phone</string>
+    <string name="link_scan_invalid">That isn\'t a Stay Focused code. Scan the QR code on your child\'s phone.</string>
+    <string name="link_camera_title">Allow the camera</string>
+    <string name="link_camera_rationale">Stay Focused uses the camera only to read the QR code on your child\'s phone. Nothing is recorded or saved.</string>
+    <string name="link_camera_allow">Allow camera</string>
+    <string name="link_camera_denied_title">Camera is off</string>
+    <string name="link_camera_denied_body">To scan the code, turn the camera on for Stay Focused in Settings.</string>
+    <string name="link_camera_settings">Open Settings</string>
     <string name="link_confirm_title">Confirm link</string>
     <string name="remote_device_title">Remote device</string>
     <!-- Placeholder navigation; removed when the real screens land. -->
     <string name="devices_placeholder_link">Link a phone</string>
     <string name="devices_placeholder_open_device">Open remote device</string>
-    <string name="devices_placeholder_scan">Scan code</string>
-    <string name="devices_placeholder_scanned">Simulate a scan</string>
 </resources>
