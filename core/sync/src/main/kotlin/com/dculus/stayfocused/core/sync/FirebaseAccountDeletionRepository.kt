@@ -12,6 +12,7 @@ import com.google.firebase.functions.FirebaseFunctionsException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 import timber.log.Timber
+import java.io.IOException
 
 internal const val DELETE_ACCOUNT_FUNCTION = "deleteAccount"
 internal const val FUNCTIONS_REGION = "europe-west1"
@@ -169,7 +170,8 @@ internal fun Throwable.toDeleteResult(): DeleteAccountResult =
             DeleteAccountResult.Failure(DeleteAccountFailure.Network)
         }
 
-        this is FirebaseNetworkException || cause is FirebaseNetworkException -> {
+        // The Functions SDK wraps a connectivity failure (no network, DNS) as INTERNAL with the IOException as cause.
+        generateSequence(this) { it.cause }.any { it is FirebaseNetworkException || it is IOException } -> {
             DeleteAccountResult.Failure(DeleteAccountFailure.Network)
         }
 

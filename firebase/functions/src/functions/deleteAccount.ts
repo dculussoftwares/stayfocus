@@ -27,6 +27,10 @@ export async function deleteAccountData(db: Firestore, auth: UserDeleter, uid: s
   const reports = await db.collection("aiReports").where("uid", "==", uid).get();
   await Promise.all(reports.docs.map((doc) => doc.ref.delete()));
 
+  // A linked child can still have been writing under a device while the first pass ran; once the device document is
+  // gone the rules refuse further child writes, so a second pass removes anything created in that window.
+  await db.recursiveDelete(db.collection("users").doc(uid));
+
   try {
     await auth.deleteUser(uid);
   } catch (e) {

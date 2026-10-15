@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.sync
 
 import android.content.Context
 import com.dculus.stayfocused.core.data.repository.LocalDataWiper
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,10 +45,16 @@ class FakeAccountDeletionRepository
         override suspend fun deleteAccount(): DeleteAccountResult {
             deleteCalls++
             val result = if (staleSignIn) DeleteAccountResult.NeedsReauth else deleteResult
-            if (result == DeleteAccountResult.Success) {
-                auth.signOut()
+            if (result != DeleteAccountResult.Success) return result
+            auth.signOut()
+            return try {
                 wiper.wipe()
+                result
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                if (e is CancellationException) throw e
+                DeleteAccountResult.Failure(DeleteAccountFailure.LocalWipe)
             }
-            return result
         }
     }

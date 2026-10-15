@@ -158,7 +158,9 @@ class AccountViewModel
                     }
 
                     is AuthResult.Failure -> {
-                        deleteState.update { it.copy(working = false, error = result.reason.toDeleteError()) }
+                        deleteState.update {
+                            it.copy(working = false, error = result.reason.toDeleteError(it.usesPassword))
+                        }
                     }
                 }
             }
@@ -186,15 +188,22 @@ class AccountViewModel
                             DeleteAccountFailure.LocalWipe -> DeleteError.LocalWipe
                             DeleteAccountFailure.Other -> DeleteError.Other
                         }
-                    deleteState.update { it.copy(working = false, error = error) }
+                    deleteState.update {
+                        // Nothing is left to confirm or re-authenticate once the account is gone.
+                        val step = if (error == DeleteError.LocalWipe) DeleteStep.Confirm else it.step
+                        it.copy(step = step, working = false, error = error)
+                    }
                 }
             }
         }
 
-        private fun AuthFailure.toDeleteError(): DeleteError =
+        private fun AuthFailure.toDeleteError(usesPassword: Boolean): DeleteError =
             when (this) {
-                AuthFailure.InvalidCredentials -> DeleteError.WrongPassword
+                // Only a password account can enter a wrong password; for Google it is another account.
+                AuthFailure.InvalidCredentials -> if (usesPassword) DeleteError.WrongPassword else DeleteError.Other
+
                 AuthFailure.Network -> DeleteError.Network
+
                 else -> DeleteError.Other
             }
 
