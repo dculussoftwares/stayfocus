@@ -48,7 +48,10 @@ class AccountViewModelTest {
             val viewModel =
                 AccountViewModel(FakeAuthRepository(), FakePermissions(), EngineHealthMonitor(Clock.systemUTC()))
             viewModel.state.test {
-                assertNull(awaitItem().user)
+                var item = awaitItem()
+                if (!item.authLoaded) item = awaitItem()
+                assertTrue(item.authLoaded)
+                assertNull(item.user)
             }
         }
 
@@ -62,6 +65,7 @@ class AccountViewModelTest {
             val viewModel = AccountViewModel(auth, permissions, engine)
             viewModel.state.test {
                 var item = awaitItem()
+                if (!item.authLoaded) item = awaitItem()
                 assertNotNull(item.user)
                 permissions.state.value = permissions.state.value.copy(usage = true)
                 item = awaitItem()

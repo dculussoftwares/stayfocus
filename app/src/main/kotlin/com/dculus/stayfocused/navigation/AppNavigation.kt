@@ -23,7 +23,6 @@ import androidx.navigation.navigation
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.MainGraph
-import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.ui.components.SfTabBar
 import com.dculus.stayfocused.core.ui.components.SfTabItem
 import com.dculus.stayfocused.core.ui.components.SfToastHost
@@ -149,7 +148,8 @@ private fun AppNavHost(
             onFinished = { toast ->
                 onFinishOnboarding()
                 toast?.let(showToast)
-                navController.navigate(MainGraph) { popUpTo(OnboardingGraph) { inclusive = true } }
+                // Clears everything, so signing in from Account does not leave the old Account underneath the new Home.
+                navController.navigate(MainGraph) { popUpTo(navController.graph.id) { inclusive = true } }
             },
         )
         navigation<MainGraph>(startDestination = Home) {

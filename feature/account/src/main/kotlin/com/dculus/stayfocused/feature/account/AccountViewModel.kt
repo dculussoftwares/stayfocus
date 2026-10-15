@@ -24,6 +24,8 @@ internal data class AccountUiState(
     val permissions: Permissions =
         Permissions(usage = false, accessibility = false, overlay = false, notifications = false),
     val engine: EngineHealth = EngineHealth(),
+    /** False until the auth repository has emitted, so a persisted session is not shown as signed out. */
+    val authLoaded: Boolean = true,
 )
 
 /** Name line: the display name, else the part of the email before the "@", else null. */
@@ -44,11 +46,15 @@ class AccountViewModel
     ) : ViewModel() {
         internal val state: StateFlow<AccountUiState> =
             combine(auth.currentUser, permissions.observe(), engine.health) { user, perms, health ->
-                AccountUiState(user, perms, health)
+                AccountUiState(user, perms, health, authLoaded = true)
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-                AccountUiState(permissions = permissions.current(), engine = engine.health.value),
+                AccountUiState(
+                    permissions = permissions.current(),
+                    engine = engine.health.value,
+                    authLoaded = false,
+                ),
             )
 
         /** Signs out. Blocks stay on this device; nothing else is stored per account yet (cached devices: M7). */

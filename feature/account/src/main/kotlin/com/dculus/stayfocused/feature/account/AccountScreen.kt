@@ -36,6 +36,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -220,14 +222,15 @@ internal fun AccountScreen(
                     .clip(RoundedCornerShape(14.dp))
                     .background(colors.panel)
                     .border(1.dp, colors.hairline10, RoundedCornerShape(14.dp))
-                    .clickable(onClickLabel = back, role = Role.Button, onClick = onBack),
+                    .clickable(onClickLabel = back, role = Role.Button, onClick = onBack)
+                    .semantics { contentDescription = back },
                 contentAlignment = Alignment.Center,
             ) {
                 Text("←", color = colors.text, style = type.bodyL)
             }
             Text(stringResource(R.string.account_title), style = type.displayM, color = colors.text)
         }
-        ProfileHeader(state.user, onSignIn)
+        if (state.authLoaded) ProfileHeader(state.user, onSignIn)
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             MonoLabel(stringResource(R.string.account_system_check), Modifier.padding(horizontal = 4.dp))
             Column(

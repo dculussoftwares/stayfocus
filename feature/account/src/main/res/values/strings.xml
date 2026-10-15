@@ -27,7 +27,7 @@
     <string name="account_delete">Delete account and all data</string>
     <string name="account_oss_title">Open-source licences</string>
     <string name="account_oss_body">Stay Focused is released under GPL-3.0. It also uses these open-source projects and fonts:</string>
-    <string name="account_oss_list">AndroidX, Jetpack Compose and Material (Apache-2.0)\nKotlin and kotlinx.coroutines (Apache-2.0)\nDagger and Hilt (Apache-2.0)\nFirebase Android SDK (Apache-2.0)\nTimber (Apache-2.0)\nSpace Grotesk, Plus Jakarta Sans and Geist Mono fonts (SIL OFL 1.1)</string>
+    <string name="account_oss_list">AndroidX, Jetpack Compose and Material (Apache-2.0)\nKotlin and kotlinx.coroutines (Apache-2.0)\nDagger and Hilt (Apache-2.0)\nFirebase Android SDK (Apache-2.0)\nTimber (Apache-2.0)\nCoil (Apache-2.0)\nAndroidX Credentials and Google Identity Services (Apache-2.0)\nSpace Grotesk, Plus Jakarta Sans and Geist Mono fonts (SIL OFL 1.1)</string>
     <string name="account_oss_close">Close</string>
     <string name="account_disclosure_title">Accessibility access</string>
     <string name="account_disclosure_body">Stay Focused uses Accessibility only to notice which app is open, so it can show the block screen.</string>
