@@ -33,6 +33,11 @@ export interface SecureCallableConfig<S extends z.ZodType, Out> {
    * to refuse with `permission-denied`.
    */
   authorize?: (ctx: SecureContext<z.output<S>>) => boolean | Promise<boolean>;
+  /**
+   * Sensitive operations (account deletion): the caller's last sign-in (`auth_time` in the verified ID token) must be
+   * at most this many seconds old, else `unauthenticated` ("Sign in again") and the client re-authenticates.
+   */
+  maxAuthAgeSeconds?: number;
   /** Per-uid rate limit. Omit only for functions that are cheap and idempotent. */
   rateLimit?: RateLimit;
   /** One-shot operations (link claim/approve): the App Check token can be used once; a replay is refused. */
@@ -76,6 +81,15 @@ export function secureHandler<S extends z.ZodType, Out>(
       const uid = request.auth?.uid;
       if (!uid) {
         throw new HttpsError("unauthenticated", "Sign in to continue.");
+      }
+
+      if (config.maxAuthAgeSeconds !== undefined) {
+        const authTime = request.auth?.token?.auth_time;
+        const ageSeconds = typeof authTime === "number" ? deps.now().getTime() / 1000 - authTime : Infinity;
+        // A negative age (clock skew) is tolerated; a missing or non-numeric auth_time is treated as stale.
+        if (!(ageSeconds <= config.maxAuthAgeSeconds)) {
+          throw new HttpsError("unauthenticated", "Sign in again to continue.");
+        }
       }
 
       const db = deps.db();

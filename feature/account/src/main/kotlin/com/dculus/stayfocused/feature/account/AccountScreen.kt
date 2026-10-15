@@ -23,9 +23,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -98,10 +100,19 @@ internal fun HealthRow.isOn(state: AccountUiState): Boolean =
 internal fun AccountRoute(
     onBack: () -> Unit,
     onSignIn: () -> Unit,
-    onDeleteAccount: () -> Unit,
+    onDeleteFinish: (message: String) -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val deleteState by viewModel.delete.collectAsStateWithLifecycle()
+    val deletedMessage = stringResource(R.string.account_deleted_toast)
+    val currentOnDeleteFinish by rememberUpdatedState(onDeleteFinish)
+    LaunchedEffect(deleteState.deleted) {
+        if (deleteState.deleted) {
+            viewModel.deleteHandled()
+            currentOnDeleteFinish(deletedMessage)
+        }
+    }
     val context = LocalContext.current
     var disclosureVisible by rememberSaveable { mutableStateOf(false) }
     var batteryVisible by rememberSaveable { mutableStateOf(false) }
@@ -132,7 +143,14 @@ internal fun AccountRoute(
         onOpenUrl = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(it))) },
         onLicences = { licencesVisible = true },
         onSignOut = viewModel::signOut,
-        onDeleteAccount = onDeleteAccount,
+        onDeleteAccount = viewModel::startDelete,
+    )
+    DeleteAccountSheet(
+        state = deleteState,
+        onConfirm = viewModel::confirmDelete,
+        onCancel = viewModel::cancelDelete,
+        onPassword = viewModel::reauthenticateWithPassword,
+        onGoogle = { viewModel.reauthenticateWithGoogle(context) },
     )
     SfBottomSheet(visible = disclosureVisible, onDismiss = { disclosureVisible = false }) {
         // PROVISIONAL: M5-05 replaces this with the shared full disclosure.

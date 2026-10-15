@@ -33,4 +33,18 @@
     <string name="account_disclosure_body">Stay Focused uses Accessibility only to notice which app is open, so it can show the block screen.</string>
     <string name="account_disclosure_agree">Agree and open Settings</string>
     <string name="account_disclosure_no">No thanks</string>
+    <string name="account_deleted_toast">Account and all data deleted.</string>
+    <string name="account_delete_title">Delete account and all data?</string>
+    <string name="account_delete_body">This permanently deletes your account, your linked phones and everything synced to it. This can\'t be undone.</string>
+    <string name="account_delete_confirm">Delete account and all data</string>
+    <string name="account_delete_cancel">Cancel</string>
+    <string name="account_delete_error_password">Wrong password. Try again.</string>
+    <string name="account_delete_error_network">No connection. Try again.</string>
+    <string name="account_delete_error_other">Couldn\'t delete your account. Try again.</string>
+    <string name="account_delete_error_local">Your account is deleted, but data on this phone could not be erased. Clear the app\'s storage in Android Settings to finish.</string>
+    <string name="account_reauth_title">Confirm it\'s you</string>
+    <string name="account_reauth_body">For your security, sign in again before deleting your account.</string>
+    <string name="account_reauth_password">Password</string>
+    <string name="account_reauth_continue">Continue</string>
+    <string name="account_reauth_google">Continue with Google</string>
 </resources>

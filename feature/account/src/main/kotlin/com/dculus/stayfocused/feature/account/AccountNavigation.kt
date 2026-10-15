@@ -12,20 +12,21 @@ fun NavController.navigateToAccount(navOptions: NavOptions? = null) = navigate(A
 
 /**
  * Account, opened from the avatar on Home. [onSignIn] starts sign-in for a person who skipped it and
- * [onDeleteAccount] opens the delete flow (M6-06). [viewModelProvider] null uses Hilt (navigation tests run
+ * [onDeleteFinish] runs after the account and its data are deleted, with the toast to show (M6-06); the app then
+ * returns to Welcome. [viewModelProvider] null uses Hilt (navigation tests run
  * without it).
  */
 fun NavGraphBuilder.accountScreen(
     onBack: () -> Unit = {},
     onSignIn: () -> Unit = {},
-    onDeleteAccount: () -> Unit = {},
+    onDeleteFinish: (message: String) -> Unit = {},
     viewModelProvider: (@Composable () -> AccountViewModel)? = null,
 ) {
     composable<Account> {
         AccountRoute(
             onBack = onBack,
             onSignIn = onSignIn,
-            onDeleteAccount = onDeleteAccount,
+            onDeleteFinish = onDeleteFinish,
             viewModel = viewModelProvider?.invoke() ?: hiltViewModel(),
         )
     }

@@ -6,6 +6,10 @@ import { logger } from "firebase-functions/v2";
  */
 export type LogFields = { fn: string; outcome: string; code?: string; frames?: string[] };
 
+export function logInfo(message: string, fields: LogFields): void {
+  logger.info(message, fields);
+}
+
 export function logWarn(message: string, fields: LogFields): void {
   logger.warn(message, fields);
 }
