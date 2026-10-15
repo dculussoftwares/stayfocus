@@ -66,4 +66,5 @@
     <string name="perms_disclosure_privacy">Privacy policy</string>
     <string name="perms_disclosure_agree">Agree and open Settings</string>
     <string name="perms_disclosure_no">No thanks</string>
+    <string name="perms_disclosure_save_failed">Could not save your choice. Try again.</string>
 </resources>
