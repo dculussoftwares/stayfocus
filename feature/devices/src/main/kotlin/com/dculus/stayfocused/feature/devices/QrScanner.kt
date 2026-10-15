@@ -7,18 +7,29 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.android.gms.common.moduleinstall.ModuleInstallStatusUpdate
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
@@ -79,7 +90,9 @@ internal fun QrScannerPreview(
         remember(context) {
             PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
         }
+    var ready by remember { mutableStateOf(false) }
     DisposableEffect(lifecycleOwner, previewView) {
+        var disposed = false
         val executor: ExecutorService = Executors.newSingleThreadExecutor()
         val scanner =
             BarcodeScanning.getClient(
@@ -88,11 +101,12 @@ internal fun QrScannerPreview(
                     .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
                     .build(),
             )
-        requestModule(context, scanner)
+        ensureModule(context, scanner, onReady = {
+            if (!disposed) ready = true
+        }, onFailed = { if (!disposed) currentOnUnavailable() })
         val analyzer = QrAnalyzer(scanner) { currentOnCodes(it) }
         val providerFuture = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
-        var disposed = false
         providerFuture.addListener(
             {
                 if (disposed) return@addListener
@@ -132,18 +146,66 @@ internal fun QrScannerPreview(
             scanner.close()
         }
     }
-    AndroidView(factory = { previewView }, modifier = modifier)
+    Box(modifier, contentAlignment = Alignment.Center) {
+        AndroidView(factory = { previewView }, modifier = Modifier.fillMaxSize())
+        if (!ready) {
+            Text(
+                stringResource(R.string.link_scan_preparing),
+                style = StayFocusedTheme.type.bodyS,
+                color = StayFocusedTheme.colors.cameraPrompt,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
 }
 
-/** Asks Play services to fetch the unbundled QR model now, so a first scan does not silently find nothing. */
-private fun requestModule(
+/**
+ * Makes sure Play services has the unbundled QR model: [onReady] when it is (already, or after the download),
+ * [onFailed] when it cannot be had. The install request does not wait, so progress is tracked with a listener.
+ */
+private fun ensureModule(
     context: Context,
     scanner: BarcodeScanner,
+    onReady: () -> Unit,
+    onFailed: () -> Unit,
 ) {
-    ModuleInstall
-        .getClient(context)
-        .installModules(ModuleInstallRequest.newBuilder().addApi(scanner).build())
-        .addOnFailureListener { Timber.w(it, "Could not request the barcode model") }
+    val client = ModuleInstall.getClient(context)
+    val mainExecutor = ContextCompat.getMainExecutor(context)
+    client
+        .areModulesAvailable(scanner)
+        .addOnSuccessListener { response ->
+            if (response.areModulesAvailable()) {
+                onReady()
+            } else {
+                val listener =
+                    InstallStatusListener { update ->
+                        when (update.installState) {
+                            ModuleInstallStatusUpdate.InstallState.STATE_COMPLETED -> onReady()
+
+                            ModuleInstallStatusUpdate.InstallState.STATE_FAILED,
+                            ModuleInstallStatusUpdate.InstallState.STATE_CANCELED,
+                            -> onFailed()
+
+                            else -> Unit
+                        }
+                    }
+                client
+                    .installModules(
+                        ModuleInstallRequest
+                            .newBuilder()
+                            .addApi(scanner)
+                            .setListener(listener, mainExecutor)
+                            .build(),
+                    ).addOnSuccessListener { if (it.areModulesAlreadyInstalled()) onReady() }
+                    .addOnFailureListener {
+                        Timber.w(it, "Could not request the barcode model")
+                        onFailed()
+                    }
+            }
+        }.addOnFailureListener {
+            Timber.w(it, "Could not check the barcode model")
+            onFailed()
+        }
 }
 
 internal fun Context.hasCameraPermission(): Boolean =

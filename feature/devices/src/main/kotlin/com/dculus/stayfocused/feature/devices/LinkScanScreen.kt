@@ -133,8 +133,7 @@ internal class ScanHandler(
     private val now: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private var done = false
-    private var lastInvalid: String? = null
-    private var lastInvalidAt = 0L
+    private val lastInvalidAt = mutableMapOf<String, Long>()
 
     /** The strings decoded from one frame: a valid link wins over other codes in view. */
     fun onCodes(raws: List<String>) {
@@ -150,9 +149,9 @@ internal class ScanHandler(
 
     private fun reportInvalid(raw: String) {
         val at = now()
-        if (raw == lastInvalid && at - lastInvalidAt < INVALID_CODE_COOLDOWN_MS) return
-        lastInvalid = raw
-        lastInvalidAt = at
+        lastInvalidAt.values.removeAll { at - it >= INVALID_CODE_COOLDOWN_MS }
+        if (lastInvalidAt.containsKey(raw)) return
+        lastInvalidAt[raw] = at
         onInvalid()
     }
 }

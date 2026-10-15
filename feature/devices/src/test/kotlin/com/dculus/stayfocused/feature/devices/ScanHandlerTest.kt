@@ -48,4 +48,12 @@ class ScanHandlerTest {
         assertEquals(1, tokens.size)
         assertEquals(0, invalid)
     }
+
+    @Test
+    fun alternatingInvalidCodesStayRateLimitedEach() {
+        handler.onCodes(listOf("a"))
+        handler.onCodes(listOf("b"))
+        handler.onCodes(listOf("a"))
+        assertEquals(2, invalid)
+    }
 }

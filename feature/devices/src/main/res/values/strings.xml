@@ -11,6 +11,7 @@
     <string name="link_signin_cta">Sign in</string>
     <string name="link_scan_prompt">Point at the QR code on your child\'s phone</string>
     <string name="link_scan_invalid">That isn\'t a Stay Focused code. Scan the QR code on your child\'s phone.</string>
+    <string name="link_scan_preparing">Getting the scanner ready…</string>
     <string name="link_camera_title">Allow the camera</string>
     <string name="link_camera_rationale">Stay Focused uses the camera only to read the QR code on your child\'s phone. Nothing is recorded or saved.</string>
     <string name="link_camera_allow">Allow camera</string>
