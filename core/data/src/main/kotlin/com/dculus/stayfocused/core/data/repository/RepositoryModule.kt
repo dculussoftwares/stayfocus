@@ -40,6 +40,9 @@ internal abstract class RepositoryModule {
     abstract fun accountProfile(impl: NoAccountProfileRepository): AccountProfileRepository
 
     @Binds
+    abstract fun localDataWiper(impl: RoomDataStoreWiper): LocalDataWiper
+
+    @Binds
     abstract fun settings(impl: DataStoreSettingsRepository): SettingsRepository
 
     companion object {

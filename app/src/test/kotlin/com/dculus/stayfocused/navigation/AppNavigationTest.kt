@@ -46,6 +46,7 @@ import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.sync.AiReporter
 import com.dculus.stayfocused.core.sync.BlockDescriber
+import com.dculus.stayfocused.core.sync.FakeAccountDeletionRepository
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
@@ -147,8 +148,14 @@ class AppNavigationTest {
     private val permissionsViewModel =
         PermissionsViewModel(fakePermissions, FakeSettingsRepository(), Clock.systemUTC())
     private val linkAddViewModel = LinkAddViewModel(FakeAuthRepository())
+    private val accountAuth = FakeAuthRepository()
     private val accountViewModel =
-        AccountViewModel(FakeAuthRepository(), fakePermissions, EngineHealthMonitor(Clock.systemUTC()))
+        AccountViewModel(
+            accountAuth,
+            fakePermissions,
+            EngineHealthMonitor(Clock.systemUTC()),
+            FakeAccountDeletionRepository(accountAuth) {},
+        )
     private val homeViewModel =
         HomeViewModel(
             FakeBreakRepository(),
@@ -363,6 +370,19 @@ class AppNavigationTest {
         composeRule.onNodeWithText("Continue for now").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
+        assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Account::class) })
+    }
+
+    @Test
+    fun deletingTheAccountShowsTheToastAndReturnsToWelcome() {
+        kotlinx.coroutines.runBlocking { accountAuth.signInWithEmail("alex@example.com", "secret1") }
+        launch()
+        composeRule.onNodeWithContentDescription("Account").performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("account_delete").performScrollTo().performClick()
+        composeRule.onNodeWithTag("account_delete_confirm").performClick()
+        composeRule.waitUntil(5_000) { currentIs(Welcome::class) }
+        composeRule.onNodeWithText("Account and all data deleted.").assertIsDisplayed()
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Account::class) })
     }
 

@@ -25,6 +25,7 @@ import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.LinkScan
 import com.dculus.stayfocused.core.navigation.MainGraph
+import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.ui.components.SfTabBar
 import com.dculus.stayfocused.core.ui.components.SfTabItem
 import com.dculus.stayfocused.core.ui.components.SfToastHost
@@ -201,7 +202,11 @@ private fun AppNavHost(
             accountScreen(
                 onBack = { navController.popBackStack() },
                 onSignIn = { navController.navigateToSignIn() },
-                // Account deletion arrives with M6-06.
+                onDeleteFinish = { message ->
+                    showToast(message)
+                    // Everything is gone: back to Welcome with no old screens underneath.
+                    navController.navigate(OnboardingGraph) { popUpTo(navController.graph.id) { inclusive = true } }
+                },
                 viewModelProvider = accountViewModel,
             )
             linkAddScreen(

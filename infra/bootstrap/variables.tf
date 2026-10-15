@@ -86,5 +86,7 @@ variable "deploy_iam_grantable_roles" {
     "roles/logging.logWriter",
     "roles/datastore.user",
     "roles/cloudbuild.builds.builder",
+    # M6-06: deleteAccount deletes the caller's Firebase Auth user.
+    "roles/firebaseauth.admin",
   ]
 }

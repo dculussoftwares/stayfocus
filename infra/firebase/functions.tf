@@ -24,6 +24,11 @@ locals {
       kind  = "callable"
       roles = ["roles/datastore.user"] # rate-limit counters in Firestore
     }
+    # Deletes the signed-in parent's data and Auth user (M6-06).
+    deleteAccount = {
+      kind  = "callable"
+      roles = ["roles/datastore.user", "roles/firebaseauth.admin"] # Firestore deletes, Auth user deletion
+    }
   }
 
   function_runtime_roles = {

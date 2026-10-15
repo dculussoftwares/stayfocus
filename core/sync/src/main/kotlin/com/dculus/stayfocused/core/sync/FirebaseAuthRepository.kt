@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Email/password and Google accounts on Firebase Auth. The SDK keeps the session on disk, so [currentUser] emits the
  * signed-in user again after a restart. The profile `users/{uid}` is created in the background if it does not exist.
  */
+@Suppress("TooManyFunctions")
 internal class FirebaseAuthRepository(
     private val auth: FirebaseAuth,
     private val firestore: FirebaseFirestore,
@@ -37,7 +38,14 @@ internal class FirebaseAuthRepository(
 
     // Lives as long as the app (this repository is a singleton created at app start): every signed-in user,
     // including a session restored after a restart, gets a profile if its earlier write never completed.
-    private val profileListener = FirebaseAuth.AuthStateListener { it.currentUser?.let(::ensureProfileInBackground) }
+    private val profileListener =
+        FirebaseAuth.AuthStateListener { state ->
+            val user = state.currentUser
+            // A sign-out ends a pause (account deletion); a new session repairs its profile again.
+            if (user == null) repairPaused = false else ensureProfileInBackground(user)
+        }
+
+    @Volatile private var repairPaused = false
 
     init {
         auth.addAuthStateListener(profileListener)
@@ -47,6 +55,23 @@ internal class FirebaseAuthRepository(
     internal fun close() {
         auth.removeAuthStateListener(profileListener)
         scope.cancel()
+    }
+
+    /**
+     * Stops creating the profile and waits for a write in progress, so a deleted account's `users/{uid}` is not
+     * recreated behind the deletion. Lasts until the user signs out.
+     */
+    internal suspend fun pauseProfileRepair() {
+        repairPaused = true
+        val running = profileJobs.values.toList()
+        running.forEach { it.cancel() }
+        running.forEach { it.join() }
+    }
+
+    /** Lets the profile repair run again after a deletion attempt that did not go through. */
+    internal fun resumeProfileRepair() {
+        repairPaused = false
+        auth.currentUser?.let(::ensureProfileInBackground)
     }
 
     override val currentUser: Flow<AuthUser?> =
@@ -139,7 +164,7 @@ internal class FirebaseAuthRepository(
      */
     private fun ensureProfileInBackground(user: FirebaseUser) {
         profileJobs.compute(user.uid) { _, running ->
-            if (running?.isActive == true) {
+            if (repairPaused || running?.isActive == true) {
                 running
             } else {
                 scope.launch { createProfileWithRetry(user) }
