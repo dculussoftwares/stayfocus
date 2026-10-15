@@ -41,6 +41,8 @@ class WizardScreenTest {
                 settings,
                 FakeBlockRepository(),
                 TestClock(),
+                AiDraftHandoff(),
+                FakeAiReporter(),
             )
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {

@@ -476,3 +476,45 @@ describe('linkTokens', () => {
     await assertFails(deleteDoc(doc(childDb(), path)));
   });
 });
+
+describe('aiReports', () => {
+  const path = 'aiReports/r1';
+  const report = (over = {}) => ({
+    uid: PARENT,
+    sentence: 'Let me use Instagram for 10 minutes, then lock it for an hour',
+    draft: { type: 'CYCLE', apps: ['com.instagram.android'], use: 10, rest: 60, days: 127, note: 'Cycle' },
+    createdAt: serverTimestamp(),
+    ...over,
+  });
+
+  it('a signed-in user files a report under their own uid', async () => {
+    await assertSucceeds(setDoc(doc(parentDb(), path), report()));
+  });
+  it('an anonymous user can report too', async () => {
+    await assertSucceeds(setDoc(doc(childDb(), path), report({ uid: CHILD })));
+  });
+  it('rejects an unauthenticated report and a foreign uid', async () => {
+    await assertFails(setDoc(doc(anonDb(), path), report()));
+    await assertFails(setDoc(doc(parentDb(), path), report({ uid: OTHER_PARENT })));
+  });
+  it('rejects an empty or oversized sentence and extra fields', async () => {
+    await assertFails(setDoc(doc(parentDb(), path), report({ sentence: '' })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ sentence: 'x'.repeat(501) })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ extra: 1 })));
+  });
+  it('rejects a malformed draft', async () => {
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: 'text' })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'OTHER', apps: [], days: 1 } })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'LIMIT', apps: [], days: 1, mins: 0 } })));
+    await assertFails(setDoc(doc(parentDb(), path), report({ draft: { type: 'LIMIT', apps: [], days: 1, extra: 'x' } })));
+  });
+  it('rejects a back-dated timestamp', async () => {
+    await assertFails(setDoc(doc(parentDb(), path), report({ createdAt: Timestamp.fromMillis(0) })));
+  });
+  it('nobody reads, updates or deletes a report from the client', async () => {
+    await seed(async (db) => setDoc(doc(db, path), { ...report(), createdAt: Timestamp.now() }));
+    await assertFails(getDoc(doc(parentDb(), path)));
+    await assertFails(updateDoc(doc(parentDb(), path), { sentence: 'changed' }));
+    await assertFails(deleteDoc(doc(parentDb(), path)));
+  });
+});

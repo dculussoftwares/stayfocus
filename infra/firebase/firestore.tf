@@ -69,6 +69,12 @@ locals {
       query_scope = "COLLECTION"
       fields      = [["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
     }
+    # "Report a bad result" (M9-05): the maintainers review a user's reports newest first.
+    ai_reports_uid_created = {
+      collection  = "aiReports"
+      query_scope = "COLLECTION"
+      fields      = [["uid", "ASCENDING"], ["createdAt", "DESCENDING"]]
+    }
     commands_status_created = {
       collection  = "commands"
       query_scope = "COLLECTION"

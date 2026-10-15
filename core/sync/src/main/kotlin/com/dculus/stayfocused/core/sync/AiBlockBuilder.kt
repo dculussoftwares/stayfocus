@@ -12,6 +12,16 @@ import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/** Turns a sentence into a block draft; the seam the feature modules (and their tests) use. */
+interface BlockDescriber {
+    /** Never throws (other than cancellation). The draft has `fromAi = true`. */
+    suspend fun build(
+        sentence: String,
+        installed: List<AppInfo>,
+        target: BlockTarget = BlockTarget.ThisPhone,
+    ): BlockDraft
+}
+
 /**
  * "Describe it" block builder: Gemini first, then the on-device [LocalBlockParser] when the cloud model is not
  * available (Firebase not configured, offline, timeout, malformed output, any error). No account is required.
@@ -22,16 +32,15 @@ class AiBlockBuilder
         private val model: AiModel,
         private val isConfigured: () -> Boolean,
         private val timeoutMs: Long,
-    ) {
+    ) : BlockDescriber {
         @Inject
         internal constructor(model: AiModel, availability: FirebaseAvailability) :
             this(model, { availability.isConfigured }, AiPrompt.TIMEOUT_MS)
 
-        /** Never throws (other than cancellation). The draft has `fromAi = true`. */
-        suspend fun build(
+        override suspend fun build(
             sentence: String,
             installed: List<AppInfo>,
-            target: BlockTarget = BlockTarget.ThisPhone,
+            target: BlockTarget,
         ): BlockDraft {
             val result = if (isConfigured()) fromModel(sentence) else null
             return if (result != null) {

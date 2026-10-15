@@ -18,6 +18,8 @@ import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.fallbackAppLabel
+import com.dculus.stayfocused.core.sync.AiReport
+import com.dculus.stayfocused.core.sync.AiReporter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -69,6 +71,10 @@ data class WizardUiState(
     val saving: Boolean = false,
     /** True when an existing block is being edited: the CTA reads "Save changes" and delete is offered. */
     val editing: Boolean = false,
+    /** The sentence the AI draft came from; what "Report a bad result" sends together with the draft. */
+    val aiSentence: String = "",
+    /** True while a report is being sent. */
+    val reporting: Boolean = false,
 ) {
     val selectedCount: Int get() = draft.apps.size
 
@@ -112,6 +118,12 @@ sealed interface WizardEvent {
     /** Deleting the block failed; the wizard stays open. */
     data object DeleteFailed : WizardEvent
 
+    /** "Report a bad result" was sent. */
+    data object ReportSent : WizardEvent
+
+    /** The report could not be sent. */
+    data object ReportFailed : WizardEvent
+
     /** The block being edited was deleted: go to the Block tab with [deviceId] (null = this phone) selected. */
     data class Deleted(
         val deviceId: String?,
@@ -134,11 +146,14 @@ class WizardViewModel
         settings: SettingsRepository,
         private val blocks: BlockRepository,
         private val clock: Clock,
+        private val handoff: AiDraftHandoff,
+        private val reporter: AiReporter,
     ) : ViewModel() {
         private val initialTarget: BlockTarget =
             savedStateHandle.get<String>(ARG_TARGET)?.let { BlockTarget.Device(it) } ?: BlockTarget.ThisPhone
         private val target = MutableStateFlow(initialTarget)
-        private val template: BlockTemplate? = BlockTemplate.fromId(savedStateHandle.get<String>(ARG_PREFILL))
+        private val rawPrefill: String? = savedStateHandle.get<String>(ARG_PREFILL)
+        private val template: BlockTemplate? = BlockTemplate.fromId(rawPrefill)
         private val editId: String? = savedStateHandle.get<String>(ARG_BLOCK_ID)
         private var original: Block? = null
 
@@ -170,7 +185,21 @@ class WizardViewModel
                         )
                     }
                 } else {
-                    mutableState.update { applyPrefill(it, first) }
+                    val ai = if (rawPrefill == AI_PREFILL) handoff.take() else null
+                    mutableState.update { s ->
+                        if (ai != null) {
+                            // The AI draft opens straight on the rules step; it only turns on after "Turn on block".
+                            s.copy(
+                                ready = true,
+                                apps = first,
+                                draft = ai.draft.copy(fromAi = true),
+                                step = WIZARD_STEP_RULES,
+                                aiSentence = ai.sentence,
+                            )
+                        } else {
+                            applyPrefill(s, first)
+                        }
+                    }
                 }
                 target.flatMapLatest { targetApps.apps(it) }.collect { apps ->
                     // An app that disappears (uninstalled) must not stay selected.
@@ -365,6 +394,22 @@ class WizardViewModel
         /** Entry point for the AI flow (M9-05): shows [draft] on the rules step under the "AI DRAFT" banner. */
         internal fun openAiDraft(draft: BlockDraft) =
             mutableState.update { it.copy(draft = draft.copy(fromAi = true), step = WIZARD_STEP_RULES) }
+
+        /** "Report a bad result" confirmed: sends the sentence and the draft as it is now shown. */
+        fun reportBadResult() {
+            val s = mutableState.value
+            if (s.reporting || !s.draft.fromAi) return
+            mutableState.update { it.copy(reporting = true) }
+            viewModelScope.launch {
+                val ok =
+                    try {
+                        reporter.report(AiReport(s.aiSentence, s.draft))
+                    } finally {
+                        mutableState.update { it.copy(reporting = false) }
+                    }
+                eventChannel.send(if (ok) WizardEvent.ReportSent else WizardEvent.ReportFailed)
+            }
+        }
 
         /** The AI draft banner's "Change": back to the type step as a manual block. */
         fun changeType() =

@@ -13,6 +13,7 @@ android {
 
 dependencies {
     implementation(project(":core:usage"))
+    implementation(project(":core:sync"))
     implementation(libs.kotlinx.coroutines.android)
 
     testImplementation(project(":core:testing"))

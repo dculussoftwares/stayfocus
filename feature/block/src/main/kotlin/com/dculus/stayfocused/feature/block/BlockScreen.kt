@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.ui.components.MonoLabel
+import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.components.SfToggle
 import com.dculus.stayfocused.core.ui.components.TypeChip
@@ -49,6 +50,8 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 fun blockRowTag(id: String): String = "block_row_$id"
+
+const val AI_CREATE_TAG = "block_ai_create"
 
 private val AiExamples =
     listOf(R.string.block_ai_example_1, R.string.block_ai_example_2, R.string.block_ai_example_3)
@@ -59,6 +62,7 @@ data class BlockActions(
     val onNewBlock: () -> Unit = {},
     val onToggleAi: () -> Unit = {},
     val onAiText: (String) -> Unit = {},
+    val onAiSubmit: () -> Unit = {},
     val onSelectTab: (BlockTab) -> Unit = {},
     val onSetEnabled: (id: String, enabled: Boolean) -> Unit = { _, _ -> },
     val onEdit: (id: String) -> Unit = {},
@@ -104,7 +108,7 @@ fun BlockScreen(
             }
         }
         if (state.aiOpen) {
-            item { AiPanel(targetName, state.aiText, actions.onAiText) }
+            item { AiPanel(targetName, state.aiText, state.aiBusy, actions.onAiText, actions.onAiSubmit) }
         }
         item {
             SegmentedTabs(
@@ -266,12 +270,14 @@ private fun AiButton(
     }
 }
 
-/** The describe panel; submitting is wired by M9-05, so it is only reachable once the AI flag is on. */
+/** The describe panel (only reachable once the AI flag is on): sentence, example chips and the CTA. */
 @Composable
 private fun AiPanel(
     targetName: String,
     text: String,
+    busy: Boolean,
     onText: (String) -> Unit,
+    onSubmit: () -> Unit,
 ) {
     val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(24.dp)
@@ -332,6 +338,13 @@ private fun AiPanel(
                 )
             }
         }
+        PrimaryButton(
+            text = stringResource(R.string.block_ai_create),
+            onClick = onSubmit,
+            loading = busy,
+            loadingLabel = stringResource(R.string.block_ai_reading),
+            modifier = Modifier.fillMaxWidth().testTag(AI_CREATE_TAG),
+        )
     }
 }
 

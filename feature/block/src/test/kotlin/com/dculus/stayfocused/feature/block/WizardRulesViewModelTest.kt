@@ -51,6 +51,8 @@ class WizardRulesViewModelTest {
         FakeSettingsRepository(),
         if (failingSave) FailingBlocks() else blocks,
         clock,
+        AiDraftHandoff(),
+        FakeAiReporter(),
     )
 
     private fun WizardViewModel.toRules(type: BlockType) {

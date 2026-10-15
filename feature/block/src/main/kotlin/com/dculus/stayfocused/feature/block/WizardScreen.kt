@@ -63,6 +63,7 @@ import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.durationLabel
 import com.dculus.stayfocused.core.model.formatMinutes
+import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.ui.components.DayChips
 import com.dculus.stayfocused.core.ui.components.DialPresets
 import com.dculus.stayfocused.core.ui.components.MonoLabel
@@ -85,6 +86,10 @@ const val WIZARD_RANGE_CUSTOM_TAG = "wizard_range_custom"
 const val WIZARD_DELETE_TAG = "wizard_delete"
 const val WIZARD_DELETE_CONFIRM_TAG = "wizard_delete_confirm"
 const val WIZARD_DELETE_KEEP_TAG = "wizard_delete_keep"
+const val WIZARD_REPORT_TAG = "wizard_report"
+const val WIZARD_REPORT_CONFIRM_TAG = "wizard_report_confirm"
+const val WIZARD_REPORT_SENTENCE_TAG = "wizard_report_sentence"
+const val WIZARD_REPORT_DRAFT_TAG = "wizard_report_draft"
 
 fun wizardRangeTag(range: String): String = "wizard_range_$range"
 
@@ -109,6 +114,7 @@ data class WizardActions(
     val onToggleDay: (DayOfWeek) -> Unit = {},
     val onChangeType: () -> Unit = {},
     val onDelete: () -> Unit = {},
+    val onReport: () -> Unit = {},
 )
 
 private val WizardTypes = BlockType.entries
@@ -162,6 +168,7 @@ fun WizardScreen(
     val c = StayFocusedTheme.colors
     val spacing = StayFocusedTheme.spacing
     var confirmDelete by remember { mutableStateOf(false) }
+    var confirmReport by remember { mutableStateOf(false) }
     Column(
         modifier =
             modifier
@@ -178,7 +185,7 @@ fun WizardScreen(
                 when (state.step) {
                     WIZARD_STEP_TYPE -> TypeStep(state.draft.type, state.aiAvailable, actions)
                     WIZARD_STEP_APPS -> AppsStep(state, actions.onToggleApp)
-                    else -> RulesStep(state, actions)
+                    else -> RulesStep(state, actions, onReport = { confirmReport = true })
                 }
             }
         }
@@ -202,6 +209,71 @@ fun WizardScreen(
                 }
             },
             onKeep = { confirmDelete = false },
+        )
+    }
+    SfBottomSheet(visible = confirmReport, onDismiss = { confirmReport = false }) {
+        ReportSheetContent(
+            report = AiReport(state.aiSentence, state.draft),
+            sending = state.reporting,
+            onSend = {
+                // A second tap while the sheet slides out must not send twice.
+                if (confirmReport) {
+                    confirmReport = false
+                    actions.onReport()
+                }
+            },
+            onCancel = { confirmReport = false },
+        )
+    }
+}
+
+/** Confirm sheet of "Report a bad result": shows exactly what is sent (the sentence and the draft fields). */
+@Composable
+private fun ColumnScope.ReportSheetContent(
+    report: AiReport,
+    sending: Boolean,
+    onSend: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val c = StayFocusedTheme.colors
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(stringResource(R.string.block_report_title), style = StayFocusedTheme.type.display, color = c.text)
+        Text(stringResource(R.string.block_report_body), style = StayFocusedTheme.type.body, color = c.secondary)
+        MonoLabel(stringResource(R.string.block_report_sentence_label))
+        Text(
+            report.sentence,
+            style = StayFocusedTheme.type.body,
+            color = c.text,
+            modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
+        )
+        MonoLabel(stringResource(R.string.block_report_draft_label))
+        Text(
+            report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
+            style = StayFocusedTheme.type.bodyS,
+            color = c.text,
+            modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
+        )
+        PrimaryButton(
+            text = stringResource(R.string.block_report_send),
+            onClick = onSend,
+            enabled = !sending,
+            modifier = Modifier.fillMaxWidth().testTag(WIZARD_REPORT_CONFIRM_TAG),
+        )
+        Text(
+            stringResource(R.string.block_report_cancel),
+            style = StayFocusedTheme.type.title,
+            color = c.text,
+            textAlign = TextAlign.Center,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        role = Role.Button,
+                        onClick = onCancel,
+                    ).padding(vertical = 12.dp),
         )
     }
 }
@@ -552,6 +624,7 @@ private val RangePresets =
 private fun RulesStep(
     state: WizardUiState,
     actions: WizardActions,
+    onReport: () -> Unit,
 ) {
     val c = StayFocusedTheme.colors
     val draft = state.draft
@@ -564,7 +637,7 @@ private fun RulesStep(
             style = StayFocusedTheme.type.displayL,
             color = c.text,
         )
-        if (draft.fromAi) AiDraftBanner(draft, actions.onChangeType)
+        if (draft.fromAi) AiDraftBanner(draft, actions.onChangeType, onReport)
         when (draft.type) {
             BlockType.LIMIT -> {
                 SegmentedTabs(
@@ -621,6 +694,7 @@ private fun RulesStep(
 private fun AiDraftBanner(
     draft: BlockDraft,
     onChange: () -> Unit,
+    onReport: () -> Unit,
 ) {
     val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(18.dp)
@@ -659,6 +733,16 @@ private fun AiDraftBanner(
             draft.aiNote.ifBlank { stringResource(R.string.block_wizard_ai_note_default) },
             style = StayFocusedTheme.type.bodyS,
             color = c.secondary,
+        )
+        Text(
+            stringResource(R.string.block_report_action),
+            style = StayFocusedTheme.type.bodyS,
+            color = c.secondary,
+            modifier =
+                Modifier
+                    .testTag(WIZARD_REPORT_TAG)
+                    .clickable(role = Role.Button, onClick = onReport)
+                    .padding(vertical = 8.dp),
         )
     }
 }
