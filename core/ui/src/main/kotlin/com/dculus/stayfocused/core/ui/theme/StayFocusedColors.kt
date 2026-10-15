@@ -27,6 +27,9 @@ data class StayFocusedColors(
     val alert: Color = Color(0xFFFF5A47),
     val alertText: Color = Color(0xFFFF7A66),
     val warning: Color = Color(0xFFFFB547),
+    /** Full-screen camera surface (QR scanner) and the prompt text over it. */
+    val camera: Color = Color(0xFF000000),
+    val cameraPrompt: Color = Color(0xFFC9CDC0),
     val appTints: List<Color> =
         listOf(
             Color(0xFFFF9A8B),

@@ -16,6 +16,8 @@
     <string name="link_camera_allow">Allow camera</string>
     <string name="link_camera_denied_title">Camera is off</string>
     <string name="link_camera_denied_body">To scan the code, turn the camera on for Stay Focused in Settings.</string>
+    <string name="link_camera_unavailable_title">Camera not available</string>
+    <string name="link_camera_unavailable_body">Stay Focused can\'t open the camera. Close other apps that use it, then come back.</string>
     <string name="link_camera_settings">Open Settings</string>
     <string name="link_confirm_title">Confirm link</string>
     <string name="remote_device_title">Remote device</string>

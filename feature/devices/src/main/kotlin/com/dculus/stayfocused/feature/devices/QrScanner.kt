@@ -17,6 +17,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.android.gms.common.moduleinstall.ModuleInstall
+import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
+import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -25,55 +28,68 @@ import timber.log.Timber
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/** Feeds camera frames to ML Kit's QR detector and reports each decoded string to [onCode] on the main thread. */
+/**
+ * Feeds camera frames to ML Kit's QR detector and reports the decoded strings of each frame to [onCodes] on the
+ * main thread. Results that arrive after [close] are dropped.
+ */
 private class QrAnalyzer(
-    private val onCode: (String) -> Unit,
+    private val scanner: BarcodeScanner,
+    private val onCodes: (List<String>) -> Unit,
 ) : ImageAnalysis.Analyzer {
-    private val scanner =
-        BarcodeScanning.getClient(
-            BarcodeScannerOptions
-                .Builder()
-                .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
-                .build(),
-        )
+    @Volatile private var closed = false
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     override fun analyze(imageProxy: ImageProxy) {
         val mediaImage = imageProxy.image
-        if (mediaImage == null) {
+        if (closed || mediaImage == null) {
             imageProxy.close()
             return
         }
         val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
         scanner
             .process(image)
-            .addOnSuccessListener { codes -> codes.firstNotNullOfOrNull { it.rawValue }?.let(onCode) }
-            .addOnFailureListener { Timber.w(it, "QR detection failed") }
+            .addOnSuccessListener { codes ->
+                val values = codes.mapNotNull { it.rawValue }
+                if (!closed && values.isNotEmpty()) onCodes(values)
+            }.addOnFailureListener { Timber.w(it, "QR detection failed") }
             .addOnCompleteListener { imageProxy.close() }
     }
 
-    fun close() = scanner.close()
+    fun close() {
+        closed = true
+    }
 }
 
 /**
- * The live back-camera preview with QR analysis. Binds to the lifecycle while composed; [onCode] receives every
- * decoded QR string (callers de-duplicate). Needs the CAMERA permission already granted.
+ * The live back-camera preview with QR analysis. Binds to the lifecycle while composed; [onCodes] receives the
+ * decoded QR strings of each frame (callers de-duplicate) and [onUnavailable] is called once when the camera can't
+ * be started. Needs the CAMERA permission already granted.
  */
 @Composable
 internal fun QrScannerPreview(
-    onCode: (String) -> Unit,
+    onCodes: (List<String>) -> Unit,
+    onUnavailable: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val currentOnCode by rememberUpdatedState(onCode)
+    val currentOnCodes by rememberUpdatedState(onCodes)
+    val currentOnUnavailable by rememberUpdatedState(onUnavailable)
     val previewView =
         remember(context) {
             PreviewView(context).apply { scaleType = PreviewView.ScaleType.FILL_CENTER }
         }
     DisposableEffect(lifecycleOwner, previewView) {
         val executor: ExecutorService = Executors.newSingleThreadExecutor()
-        val analyzer = QrAnalyzer { currentOnCode(it) }
+        val scanner =
+            BarcodeScanning.getClient(
+                BarcodeScannerOptions
+                    .Builder()
+                    .setBarcodeFormats(Barcode.FORMAT_QR_CODE)
+                    .build(),
+            )
+        requestModule(context, scanner)
+        val analyzer = QrAnalyzer(scanner) { currentOnCodes(it) }
         val providerFuture = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
         var disposed = false
@@ -83,6 +99,7 @@ internal fun QrScannerPreview(
                 try {
                     val cameraProvider = providerFuture.get()
                     provider = cameraProvider
+                    check(cameraProvider.hasCamera(CameraSelector.DEFAULT_BACK_CAMERA)) { "No back camera" }
                     val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
                     val analysis =
                         ImageAnalysis
@@ -100,20 +117,33 @@ internal fun QrScannerPreview(
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
-                    // No back camera, camera in use, or the provider failed: the screen just shows no preview.
+                    // No back camera, camera in use, or the provider failed: tell the screen.
                     Timber.w(e, "Could not start the camera")
+                    currentOnUnavailable()
                 }
             },
             ContextCompat.getMainExecutor(context),
         )
         onDispose {
             disposed = true
+            analyzer.close()
             provider?.unbindAll()
             executor.shutdown()
-            analyzer.close()
+            scanner.close()
         }
     }
     AndroidView(factory = { previewView }, modifier = modifier)
+}
+
+/** Asks Play services to fetch the unbundled QR model now, so a first scan does not silently find nothing. */
+private fun requestModule(
+    context: Context,
+    scanner: BarcodeScanner,
+) {
+    ModuleInstall
+        .getClient(context)
+        .installModules(ModuleInstallRequest.newBuilder().addApi(scanner).build())
+        .addOnFailureListener { Timber.w(it, "Could not request the barcode model") }
 }
 
 internal fun Context.hasCameraPermission(): Boolean =

@@ -12,33 +12,40 @@ class ScanHandlerTest {
 
     @Test
     fun deliversTheTokenOnceEvenIfTheCodeStaysInView() {
-        handler.onCode(valid)
-        handler.onCode(valid)
+        handler.onCodes(listOf(valid))
+        handler.onCodes(listOf(valid))
         assertEquals(listOf("abcdefghijklmnopqrstuv"), tokens)
         assertEquals(0, invalid)
     }
 
     @Test
     fun invalidCodeToastsOnceThenAgainAfterTheCooldown() {
-        handler.onCode("hello")
-        handler.onCode("hello")
+        handler.onCodes(listOf("hello"))
+        handler.onCodes(listOf("hello"))
         assertEquals(1, invalid)
         time += INVALID_CODE_COOLDOWN_MS
-        handler.onCode("hello")
+        handler.onCodes(listOf("hello"))
         assertEquals(2, invalid)
     }
 
     @Test
     fun aDifferentInvalidCodeToastsImmediately() {
-        handler.onCode("one")
-        handler.onCode("two")
+        handler.onCodes(listOf("one"))
+        handler.onCodes(listOf("two"))
         assertEquals(2, invalid)
     }
 
     @Test
     fun aValidCodeStillWorksAfterAnInvalidOne() {
-        handler.onCode("nope")
-        handler.onCode(valid)
+        handler.onCodes(listOf("nope"))
+        handler.onCodes(listOf(valid))
         assertEquals(1, tokens.size)
+    }
+
+    @Test
+    fun aValidCodeBesideAnotherCodeIsStillFound() {
+        handler.onCodes(listOf("https://example.com", valid))
+        assertEquals(1, tokens.size)
+        assertEquals(0, invalid)
     }
 }

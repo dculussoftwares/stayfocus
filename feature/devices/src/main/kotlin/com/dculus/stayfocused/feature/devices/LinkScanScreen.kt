@@ -6,6 +6,7 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -13,10 +14,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,10 +35,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -53,9 +59,6 @@ internal const val LINK_SCAN_SETTINGS_TAG = "link_scan_settings"
 /** How long the same invalid code is ignored after its toast, so a code held in view does not spam. */
 internal const val INVALID_CODE_COOLDOWN_MS = 3_000L
 
-private val CameraBlack = Color.Black
-private val PromptText = Color(0xFFC9CDC0)
-
 /** What the scan screen can show, from the camera permission. */
 internal enum class CameraAccess {
     /** Not asked yet: show the rationale first. */
@@ -64,6 +67,9 @@ internal enum class CameraAccess {
 
     /** The person said no (or turned it off). Scanning cannot work until they allow it in Settings. */
     Denied,
+
+    /** Permission is on but the camera can't be started (none, or in use by another app). */
+    Unavailable,
 }
 
 @Composable
@@ -112,7 +118,8 @@ internal fun LinkScanRoute(
         onBack = onBack,
         onAllow = { launcher.launch(android.Manifest.permission.CAMERA) },
         onOpenSettings = { context.openAppSettings() },
-        onCode = handler::onCode,
+        onCodes = handler::onCodes,
+        onCameraUnavailable = { access = CameraAccess.Unavailable },
     )
 }
 
@@ -123,20 +130,21 @@ internal fun LinkScanRoute(
 internal class ScanHandler(
     private val onToken: (String) -> Unit,
     private val onInvalid: () -> Unit,
-    private val now: () -> Long = System::currentTimeMillis,
+    private val now: () -> Long = SystemClock::elapsedRealtime,
 ) {
     private var done = false
     private var lastInvalid: String? = null
     private var lastInvalidAt = 0L
 
-    fun onCode(raw: String) {
+    /** The strings decoded from one frame: a valid link wins over other codes in view. */
+    fun onCodes(raws: List<String>) {
         if (done) return
-        val token = LinkCodeParser.parseToken(raw)
+        val token = raws.firstNotNullOfOrNull(LinkCodeParser::parseToken)
         if (token != null) {
             done = true
             onToken(token)
         } else {
-            reportInvalid(raw)
+            raws.firstOrNull()?.let(::reportInvalid)
         }
     }
 
@@ -155,13 +163,22 @@ internal fun LinkScanScreen(
     onBack: () -> Unit,
     onAllow: () -> Unit,
     onOpenSettings: () -> Unit,
-    onCode: (String) -> Unit,
+    onCodes: (List<String>) -> Unit,
+    onCameraUnavailable: () -> Unit,
 ) {
+    val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
+    val density = LocalDensity.current
+    val statusBar = WindowInsets.statusBars.getTop(density).toFloat()
+    val navBar = WindowInsets.navigationBars.getBottom(density).toFloat()
     Column(
         Modifier
             .fillMaxSize()
-            .background(CameraBlack)
+            // The host pads for the system bars; paint them black too so the whole screen is the camera surface.
+            .drawBehind {
+                drawRect(colors.camera, Offset(0f, -statusBar), Size(size.width, statusBar))
+                drawRect(colors.camera, Offset(0f, size.height), Size(size.width, navBar))
+            }.background(colors.camera)
             .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 20.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
@@ -173,11 +190,11 @@ internal fun LinkScanScreen(
         ) {
             when (access) {
                 CameraAccess.Granted -> {
-                    Viewfinder(onCode)
+                    Viewfinder(onCodes, onCameraUnavailable)
                     Text(
                         stringResource(R.string.link_scan_prompt),
                         style = type.bodyL,
-                        color = PromptText,
+                        color = colors.cameraPrompt,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 24.dp),
                     )
@@ -190,6 +207,16 @@ internal fun LinkScanScreen(
                         cta = stringResource(R.string.link_camera_allow),
                         ctaTag = LINK_SCAN_ALLOW_TAG,
                         onCta = onAllow,
+                    )
+                }
+
+                CameraAccess.Unavailable -> {
+                    PermissionMessage(
+                        title = stringResource(R.string.link_camera_unavailable_title),
+                        body = stringResource(R.string.link_camera_unavailable_body),
+                        cta = null,
+                        ctaTag = "",
+                        onCta = {},
                     )
                 }
 
@@ -211,7 +238,7 @@ internal fun LinkScanScreen(
 private fun PermissionMessage(
     title: String,
     body: String,
-    cta: String,
+    cta: String?,
     ctaTag: String,
     onCta: () -> Unit,
 ) {
@@ -224,13 +251,18 @@ private fun PermissionMessage(
     ) {
         Text(title, style = type.displayM, color = colors.text, textAlign = TextAlign.Center)
         Text(body, style = type.body, color = colors.secondary, textAlign = TextAlign.Center)
-        PrimaryButton(text = cta, onClick = onCta, modifier = Modifier.fillMaxWidth().testTag(ctaTag))
+        if (cta != null) {
+            PrimaryButton(text = cta, onClick = onCta, modifier = Modifier.fillMaxWidth().testTag(ctaTag))
+        }
     }
 }
 
 /** The 250 dp camera window with lime corner brackets. */
 @Composable
-private fun Viewfinder(onCode: (String) -> Unit) {
+private fun Viewfinder(
+    onCodes: (List<String>) -> Unit,
+    onUnavailable: () -> Unit,
+) {
     val accent = StayFocusedTheme.colors.accent
     val shape = RoundedCornerShape(10.dp)
     Box(
@@ -267,7 +299,8 @@ private fun Viewfinder(onCode: (String) -> Unit) {
             },
     ) {
         QrScannerPreview(
-            onCode = onCode,
+            onCodes = onCodes,
+            onUnavailable = onUnavailable,
             modifier = Modifier.fillMaxSize().padding(22.dp).clip(shape),
         )
     }
