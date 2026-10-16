@@ -11,6 +11,7 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import com.dculus.stayfocused.kids.MainActivity
 import com.dculus.stayfocused.kids.R
@@ -46,8 +47,8 @@ class MonitoringService : Service() {
                 0
             },
         )
-        if (!shouldMonitor(parent)) {
-            // Not linked (e.g. just unlinked): nothing to show, so take the notification down again.
+        if (!shouldMonitor(parent, NotificationManagerCompat.from(this).areNotificationsEnabled())) {
+            // Not linked, or notifications are off (the notice would be invisible): stop rather than run unseen.
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
             return START_NOT_STICKY

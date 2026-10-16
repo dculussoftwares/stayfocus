@@ -49,5 +49,11 @@ internal abstract class ParentLinkModule {
     abstract fun bind(impl: SharedPreferencesParentLinkStore): ParentLinkStore
 }
 
-/** Monitoring runs exactly while a parent is linked; nothing is ever monitored silently. */
-internal fun shouldMonitor(parentName: String?): Boolean = !parentName.isNullOrBlank()
+/**
+ * Monitoring runs exactly while a parent is linked AND the user can see the "Managed by" notification (Android 13+
+ * lets them turn notifications off); nothing is ever monitored silently.
+ */
+internal fun shouldMonitor(
+    parentName: String?,
+    notificationsEnabled: Boolean = true,
+): Boolean = !parentName.isNullOrBlank() && notificationsEnabled

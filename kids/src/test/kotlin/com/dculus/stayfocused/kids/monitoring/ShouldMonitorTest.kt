@@ -11,4 +11,9 @@ class ShouldMonitorTest {
         assertFalse(shouldMonitor(null))
         assertFalse(shouldMonitor("  "))
     }
+
+    @Test
+    fun doesNotMonitorWhileTheNoticeCannotBeSeen() {
+        assertFalse(shouldMonitor("Alex", notificationsEnabled = false))
+    }
 }
