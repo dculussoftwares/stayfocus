@@ -8,6 +8,7 @@ import com.dculus.stayfocused.core.sync.FakeChildStatusRepository
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageStatsDataSource
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -33,6 +34,7 @@ class ChildReporterTest {
     private val snapshots = MutableStateFlow(status(battery = 80))
     private val apps = MutableStateFlow(listOf(AppInfo("a.b", "Alpha")))
     private var signedIn = true
+    private var usageGranted = true
 
     private fun status(
         battery: Int,
@@ -61,6 +63,12 @@ class ChildReporterTest {
                     override val snapshots: Flow<ChildStatus> = this@ChildReporterTest.snapshots
                 },
             usage = usage,
+            usageAccess =
+                object : UsageAccess {
+                    override fun isGranted() = usageGranted
+
+                    override fun settingsIntent() = android.content.Intent()
+                },
             installedApps =
                 object : InstalledAppsRepository {
                     override fun observeLaunchableApps() = apps
@@ -169,6 +177,19 @@ class ChildReporterTest {
             usage.apps = listOf(AppUsageStat("a.b", 9 * 60_000L, opens = 4, firstAfterUnlock = 1))
             advance(15 * 60_000L)
             assertEquals(listOf("2026-03-03", "2026-03-04", "2026-03-04"), repo.usages.map { it.date })
+            job.cancel()
+        }
+
+    @Test
+    fun yesterdayStaysPendingUntilUsageAccessIsGranted() =
+        runTest {
+            usageGranted = false
+            val job = launch { reporter().reportUsage(target) }
+            runCurrent()
+            assertTrue(repo.usages.isEmpty())
+            usageGranted = true
+            advance(15 * 60_000L)
+            assertEquals(listOf("2026-03-03", "2026-03-04"), repo.usages.map { it.date })
             job.cancel()
         }
 

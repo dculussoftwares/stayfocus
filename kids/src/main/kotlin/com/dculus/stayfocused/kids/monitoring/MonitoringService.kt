@@ -18,12 +18,14 @@ import com.dculus.stayfocused.kids.MainActivity
 import com.dculus.stayfocused.kids.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -85,9 +87,12 @@ class MonitoringService : Service() {
                 previous
             } else {
                 runningTarget = target
-                scope.launch {
-                    // Let the previous run finish its "offline" goodbye first, so it cannot land after our "online".
-                    previous?.cancelAndJoin()
+                // Stop the old run right now, even if an intermediate replacement never gets to run.
+                previous?.cancel()
+                // ATOMIC: the body runs even if a later restart cancels this job before it starts, so the chain of
+                // joins keeps every goodbye ("offline") ahead of the next run's first "online".
+                scope.launch(start = CoroutineStart.ATOMIC) {
+                    withContext(NonCancellable) { previous?.join() }
                     reporter.run(target)
                 }
             }

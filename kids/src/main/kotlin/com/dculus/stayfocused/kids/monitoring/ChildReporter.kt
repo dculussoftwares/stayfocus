@@ -8,6 +8,7 @@ import com.dculus.stayfocused.core.sync.UsageAppEntry
 import com.dculus.stayfocused.core.sync.UsageSummary
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
+import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.core.usage.UsageStatsDataSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
@@ -98,6 +99,7 @@ class ChildReporter
         private val deviceAuth: DeviceAuth,
         private val source: StatusSource,
         private val usage: UsageStatsDataSource,
+        private val usageAccess: UsageAccess,
         private val installedApps: InstalledAppsRepository,
         private val clock: Clock,
     ) {
@@ -153,6 +155,8 @@ class ChildReporter
             labels: Map<String, String>,
             uploaded: MutableMap<LocalDate, UsageSummary>,
         ): Boolean {
+            // An empty result without usage access is "unknown", not an empty day: stay pending until it is granted.
+            if (!usageAccess.isGranted()) return false
             val stats = usage.dayUsage(date)
             val summary = stats.toSummary { labels[it] ?: it }
             // No usage access yet, a day without use, or nothing new: nothing to write.
