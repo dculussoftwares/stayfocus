@@ -66,11 +66,12 @@ class MonitoringService : Service() {
         /** False when the user turned notifications off, or blocked this channel, so the notice would be invisible. */
         internal fun noticeVisible(context: Context): Boolean {
             val manager = NotificationManagerCompat.from(context)
-            if (!manager.areNotificationsEnabled()) return false
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
-            ensureChannel(context)
-            val importance = manager.getNotificationChannel(CHANNEL_ID)?.importance
-            return importance != NotificationManager.IMPORTANCE_NONE
+            var visible = manager.areNotificationsEnabled()
+            if (visible && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                ensureChannel(context)
+                visible = manager.getNotificationChannel(CHANNEL_ID)?.importance != NotificationManager.IMPORTANCE_NONE
+            }
+            return visible
         }
 
         internal fun ensureChannel(context: Context) {
