@@ -237,6 +237,9 @@ describe("pairing handshake", () => {
         code: first.code,
         deviceId: first.deviceId,
       });
+      // A device removed since is not reported as linked.
+      await db.collection("users").doc(parent).collection("devices").doc(first.deviceId).delete();
+      expect(await reason(claim(asParent(parent, { token })))).toBe("invalid");
       // Anyone else still gets "used".
       expect(await reason(claim(asParent(`p-${randomUUID()}`, { token })))).toBe("used");
     });

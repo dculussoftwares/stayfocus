@@ -79,6 +79,9 @@ class KidsConsentViewModel
 
         private var loading: Job? = null
 
+        /** Set when the deadline passed; a failed answer after that is "expired", not a connection problem. */
+        private var pastDeadline = false
+
         init {
             retryConsent()
         }
@@ -120,6 +123,7 @@ class KidsConsentViewModel
         private suspend fun expireAt(expiresAtMillis: Long) {
             if (expiresAtMillis <= 0) return
             delay((expiresAtMillis - clock.millis()).coerceAtLeast(0) + EXPIRY_GRACE_MILLIS)
+            pastDeadline = true
             _state.update { if (it.working || it.outcome != null) it else it.copy(error = ConsentError.Expired) }
         }
 
@@ -143,7 +147,12 @@ class KidsConsentViewModel
                     }
 
                     is ApproveOutcome.Failed -> {
-                        _state.update { it.copy(working = false, error = result.reason.toConsentError()) }
+                        _state.update {
+                            it.copy(
+                                working = false,
+                                error = result.reason.toConsentError().afterDeadline(),
+                            )
+                        }
                     }
                 }
             }
@@ -162,7 +171,7 @@ class KidsConsentViewModel
             _state.update { it.copy(working = true, error = null) }
             viewModelScope.launch {
                 val result = handshake.answer(token, approve = false)
-                val error = (result as? ApproveOutcome.Failed)?.reason?.toConsentError()
+                val error = (result as? ApproveOutcome.Failed)?.reason?.toConsentError()?.afterDeadline()
                 _state.update {
                     when (error) {
                         null, ConsentError.Expired -> it.copy(working = false, outcome = ConsentOutcome.ShowNewCode)
@@ -171,6 +180,9 @@ class KidsConsentViewModel
                 }
             }
         }
+
+        private fun ConsentError.afterDeadline(): ConsentError =
+            if (pastDeadline && this != ConsentError.Expired) ConsentError.Expired else this
 
         /** The code is no good: leave for a new QR code. */
         fun showNewCode() {

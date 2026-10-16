@@ -80,6 +80,9 @@ class LinkConfirmViewModel
         private val edits = MutableSharedFlow<String>(extraBufferCapacity = EDIT_BUFFER)
         private var session: Job? = null
         private var left = false
+
+        /** True while this phone holds a claim that the child has not answered yet. */
+        private var owned = false
         private var savedName: String? = null
 
         init {
@@ -100,10 +103,11 @@ class LinkConfirmViewModel
          */
         fun cancel() {
             when (mutableState.value) {
-                is LinkConfirmState.Waiting -> withdraw()
-
                 // The claim is still on its way and may commit after the screen is gone: withdraw it once it has.
                 LinkConfirmState.Claiming -> left = true
+
+                // Also after a watch failure or a timeout: the server still holds a claim this phone made.
+                is LinkConfirmState.Waiting, is LinkConfirmState.Failed -> if (owned) withdraw()
 
                 else -> Unit
             }
@@ -132,10 +136,18 @@ class LinkConfirmViewModel
                                 }
 
                                 else -> {
+                                    owned = true
                                     _name.value = link.model.take(MAX_NAME_LENGTH)
                                     savedName = _name.value
                                     mutableState.value = LinkConfirmState.Waiting(link.code)
-                                    mutableState.value = watch(link)
+                                    val ending = watch(link)
+                                    // Linked or declined: the claim is over; a failed watch leaves it open.
+                                    if (ending is LinkConfirmState.Linked ||
+                                        ending == LinkConfirmState.Declined
+                                    ) {
+                                        owned = false
+                                    }
+                                    mutableState.value = ending
                                 }
                             }
                         }

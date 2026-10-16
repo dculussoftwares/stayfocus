@@ -98,6 +98,33 @@ class LinkConfirmViewModelTest {
         }
 
     @Test
+    fun leavingAfterTheWaitTimedOutStillWithdrawsTheClaim() =
+        runTest(dispatcher) {
+            val handshake = handshake()
+            val vm = viewModel(handshake)
+            runCurrent()
+            advanceTimeBy(64_000)
+            runCurrent()
+            assertEquals(LinkConfirmState.Failed(LinkFailure.Expired), vm.state.value)
+            vm.cancel()
+            runCurrent()
+            assertEquals(listOf(TOKEN), handshake.withdrawn)
+        }
+
+    @Test
+    fun leavingAfterTheChildAllowedWithdrawsNothing() =
+        runTest(dispatcher) {
+            val handshake = handshake()
+            val vm = viewModel(handshake)
+            runCurrent()
+            handshake.pushAnswer(LinkAnswer.Linked)
+            runCurrent()
+            vm.cancel()
+            runCurrent()
+            assertEquals(emptyList(), handshake.withdrawn)
+        }
+
+    @Test
     fun leavingAfterAFailedClaimWithdrawsNothing() =
         runTest(dispatcher) {
             val handshake = FakeLinkHandshakeRepository().apply { claimResult = ClaimOutcome.Failed(LinkFailure.Used) }

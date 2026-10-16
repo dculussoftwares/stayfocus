@@ -7,6 +7,7 @@ import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
 import com.dculus.stayfocused.core.sync.LinkFailure
 import com.dculus.stayfocused.kids.monitoring.MonitoringControl
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -169,6 +170,28 @@ class KidsConsentViewModelTest {
             runCurrent()
             assertEquals(ConsentOutcome.Linked, vm.state.value.outcome)
             assertNull(vm.state.value.error)
+        }
+
+    @Test
+    fun anAnswerThatFailsAfterTheDeadlineIsReportedAsExpired() =
+        runTest(dispatcher) {
+            handshake.pushConsent(ConsentInfo("482913", "Asha", expiresAtMillis = 60_000))
+            val gate = CompletableDeferred<Unit>()
+            handshake.answerGate = gate
+            handshake.answerResult = ApproveOutcome.Failed(LinkFailure.Network)
+            val vm = viewModel()
+            runCurrent()
+            vm.allow("your parent")
+            advanceTimeBy(80_000)
+            runCurrent()
+            // Still in flight: the timer left the screen alone.
+            assertEquals(true, vm.state.value.working)
+            assertNull(vm.state.value.error)
+
+            gate.complete(Unit)
+            runCurrent()
+            assertEquals(ConsentError.Expired, vm.state.value.error)
+            assertEquals(false, vm.state.value.working)
         }
 
     @Test

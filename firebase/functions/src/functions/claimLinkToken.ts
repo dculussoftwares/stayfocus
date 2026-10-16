@@ -51,7 +51,10 @@ export async function claimToken(
     if (!snap.exists) throw linkFailure("invalid");
     const data = snap.data() as LinkTokenData;
     if (!cancel && data.status === "used" && data.claimedBy === uid && data.code && data.deviceId) {
-      // The child allowed it while this phone was away (app restarted): report it as linked instead of failing.
+      // The child allowed it while this phone was away (app restarted): report it as linked instead of failing, unless
+      // the device has been removed since (account deletion).
+      const device = parentRef.collection("devices").doc(data.deviceId);
+      if (!(await tx.get(device)).exists) throw linkFailure("invalid");
       return { ...result(data, data.code, data.deviceId), linked: true as const };
     }
     if (isExpired(data, at)) throw linkFailure("expired");

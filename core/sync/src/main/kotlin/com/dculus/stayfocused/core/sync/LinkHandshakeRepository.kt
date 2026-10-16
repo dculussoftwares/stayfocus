@@ -7,6 +7,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.functions.HttpsCallableOptions
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -309,6 +310,9 @@ class FakeLinkHandshakeRepository : LinkHandshakeRepository {
         ClaimOutcome.Claimed(ClaimedLink("482913", "Pixel 7", "device-1", Long.MAX_VALUE))
     var answerResult: ApproveOutcome = ApproveOutcome.Linked("parent-1", "device-1", "Asha")
 
+    /** When set, `answer` waits for it before returning (an answer still in flight). */
+    var answerGate: CompletableDeferred<Unit>? = null
+
     /** Every `claim` call as (token, deviceName), oldest first. */
     val claims = mutableListOf<Pair<String, String?>>()
 
@@ -342,6 +346,7 @@ class FakeLinkHandshakeRepository : LinkHandshakeRepository {
         approve: Boolean,
     ): ApproveOutcome {
         answers += token to approve
+        answerGate?.await()
         return answerResult
     }
 
