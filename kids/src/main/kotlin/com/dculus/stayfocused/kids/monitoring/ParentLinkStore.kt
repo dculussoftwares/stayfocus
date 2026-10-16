@@ -17,6 +17,10 @@ import javax.inject.Singleton
  */
 interface ParentLinkStore {
     var parentName: String?
+
+    /** The parent's account id and this phone's device id under it (`users/{parentUid}/devices/{deviceId}`). */
+    var parentUid: String?
+    var deviceId: String?
 }
 
 @Singleton
@@ -28,17 +32,31 @@ internal class SharedPreferencesParentLinkStore
         private val prefs: SharedPreferences = context.getSharedPreferences(FILE, Context.MODE_PRIVATE)
 
         override var parentName: String?
-            get() = prefs.getString(KEY_PARENT_NAME, null)?.takeIf { it.isNotBlank() }
-            set(value) {
-                prefs
-                    .edit()
-                    .apply { if (value.isNullOrBlank()) remove(KEY_PARENT_NAME) else putString(KEY_PARENT_NAME, value) }
-                    .apply()
-            }
+            get() = read(KEY_PARENT_NAME)
+            set(value) = write(KEY_PARENT_NAME, value)
+
+        override var parentUid: String?
+            get() = read(KEY_PARENT_UID)
+            set(value) = write(KEY_PARENT_UID, value)
+
+        override var deviceId: String?
+            get() = read(KEY_DEVICE_ID)
+            set(value) = write(KEY_DEVICE_ID, value)
+
+        private fun read(key: String): String? = prefs.getString(key, null)?.takeIf { it.isNotBlank() }
+
+        private fun write(
+            key: String,
+            value: String?,
+        ) {
+            prefs.edit().apply { if (value.isNullOrBlank()) remove(key) else putString(key, value) }.apply()
+        }
 
         private companion object {
             const val FILE = "kids_link"
             const val KEY_PARENT_NAME = "parent_name"
+            const val KEY_PARENT_UID = "parent_uid"
+            const val KEY_DEVICE_ID = "device_id"
         }
     }
 
@@ -47,6 +65,9 @@ internal class SharedPreferencesParentLinkStore
 internal abstract class ParentLinkModule {
     @Binds
     abstract fun bind(impl: SharedPreferencesParentLinkStore): ParentLinkStore
+
+    @Binds
+    abstract fun bindControl(impl: MonitoringLauncher): MonitoringControl
 }
 
 /**

@@ -16,9 +16,26 @@
     <string name="kids_link_qr_description">QR code for the parent to scan</string>
     <string name="kids_link_failed">Could not get a code. Check the connection and try again.</string>
     <string name="kids_link_retry">Try again</string>
-    <string name="kids_consent_title">Consent</string>
+    <!-- Consent. Copy is from the prototype; the last four strings are new (error states). -->
+    <string name="kids_consent_heading">Let %1$s manage this phone?</string>
+    <string name="kids_consent_match">Match this code on %1$s\'s phone</string>
+    <string name="kids_consent_can_do">%1$s will be able to</string>
+    <string-array name="kids_consent_list">
+        <item>See screen time and the app that’s open</item>
+        <item>See battery and online status</item>
+        <item>Lock and unlock apps</item>
+        <item>Start focus sessions</item>
+        <item>Answer your requests for more time</item>
+    </string-array>
+    <string name="kids_consent_note">A notification always shows while this phone is managed. You can unlink anytime, and %1$s will be told.</string>
+    <string name="kids_consent_allow">Allow and link</string>
+    <string name="kids_consent_cancel">Cancel</string>
+    <string name="kids_parent_fallback">your parent</string>
+    <string name="kids_consent_expired">This code ran out or was already used. Show a new QR code to your parent.</string>
+    <string name="kids_consent_new_code">Show a new code</string>
+    <string name="kids_consent_network">Could not reach the server. Check the connection and try again.</string>
+    <string name="kids_consent_failed">Something went wrong. Try again.</string>
     <string name="kids_home_title">Home</string>
-    <string name="kids_next">Next</string>
     <!-- Persistent monitoring notification (Play stalkerware policy). -->
     <string name="kids_managed_by">Managed by %1$s\'s phone</string>
     <string name="kids_monitoring_channel">Managed by parent</string>

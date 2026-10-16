@@ -1,0 +1,89 @@
+import { FieldValue, Timestamp, type Firestore } from "firebase-admin/firestore";
+import { HttpsError } from "firebase-functions/v2/https";
+import { z } from "zod";
+import { logInfo } from "../lib/log";
+import { isExpired, LINK_TOKENS, linkFailure, tokenSchema, type LinkTokenData } from "../lib/linkToken";
+import { secureCallable } from "../lib/secureCallable";
+
+export type ApproveResult =
+  | { linked: true; parentUid: string; deviceId: string; parentName: string }
+  | { linked: false };
+
+/**
+ * The child answers the consent screen, in one transaction. Only the token's `childUid` may answer, and only for a
+ * token the parent has claimed and that has not expired. Approving creates `users/{parent}/devices/{deviceId}` with
+ * every status field the rules expect and marks the token `used`; declining marks it `declined`. Either way the token
+ * cannot be answered twice.
+ */
+export async function answerLink(
+  db: Firestore,
+  childUid: string,
+  token: string,
+  approve: boolean,
+  now?: Date,
+): Promise<ApproveResult> {
+  const ref = db.collection(LINK_TOKENS).doc(token);
+
+  return db.runTransaction(async (tx) => {
+    // Read again on every attempt: a retried transaction must not judge expiry by the time it first started.
+    const at = now ?? new Date();
+    const snap = await tx.get(ref);
+    if (!snap.exists) throw linkFailure("invalid");
+    const data = snap.data() as LinkTokenData;
+    if (data.childUid !== childUid) throw new HttpsError("permission-denied", "You are not allowed to do this.");
+    if (data.status === "used" && approve && data.claimedBy && data.deviceId) {
+      // The device was created but the answer never reached the child: the same child may ask again and gets the
+      // same result. Nothing is created twice. A device removed meanwhile (account deletion) is not reported as linked.
+      const device = db.collection("users").doc(data.claimedBy).collection("devices").doc(data.deviceId);
+      if (!(await tx.get(device)).exists) throw linkFailure("invalid");
+      return linked(data, data.claimedBy, data.deviceId);
+    }
+    if (data.status === "open") throw linkFailure("not_claimed");
+    if (data.status !== "claimed" || !data.claimedBy || !data.deviceId) throw linkFailure("used");
+    if (isExpired(data, at)) throw linkFailure("expired");
+
+    if (!approve) {
+      tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(at) });
+      return { linked: false as const };
+    }
+
+    // Deleting an account deletes the tokens it claimed, so a deleted parent fails above as "invalid".
+    const parentRef = db.collection("users").doc(data.claimedBy);
+    tx.create(parentRef.collection("devices").doc(data.deviceId), {
+      name: data.deviceName ?? data.model,
+      model: data.model,
+      linkedAt: FieldValue.serverTimestamp(),
+      childUid,
+      // The status fields the child's update rule needs to find present (docs/IMPLEMENTATION_PLAN.md section 7).
+      online: false,
+      charging: false,
+      battery: null,
+      currentApp: null,
+      lastSeen: null,
+      focusEndsAt: null,
+    });
+    tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(at) });
+    return linked(data, data.claimedBy, data.deviceId);
+  });
+}
+
+function linked(data: LinkTokenData, parentUid: string, deviceId: string): ApproveResult {
+  return { linked: true, parentUid, deviceId, parentName: data.parentName ?? "" };
+}
+
+/** The callable's configuration, exported so tests exercise the real checks without the Functions framework. */
+export const approveLinkConfig = {
+  name: "approveLink",
+  input: z.strictObject({ token: tokenSchema, approve: z.boolean() }),
+  // The Kids app signs in anonymously. A parent account must not be able to consent to a token it minted itself.
+  authorize: ({ anonymous }: { anonymous: boolean }) => anonymous,
+  rateLimit: { max: 20, windowSeconds: 3600 },
+  consumeAppCheckToken: true,
+  handler: async ({ uid, db, data }: { uid: string; db: Firestore; data: { token: string; approve: boolean } }) => {
+    const answer = await answerLink(db, uid, data.token, data.approve);
+    logInfo("link answered", { fn: "approveLink", outcome: answer.linked ? "linked" : "declined" });
+    return answer;
+  },
+};
+
+export const approveLink = secureCallable(approveLinkConfig);

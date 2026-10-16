@@ -77,7 +77,9 @@ data object KidsPermissions
 data object KidsLink
 
 @Serializable
-data object KidsConsent
+data class KidsConsent(
+    val token: String,
+)
 
 @Serializable
 data object KidsHome

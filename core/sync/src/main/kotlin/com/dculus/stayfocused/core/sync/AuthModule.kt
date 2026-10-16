@@ -57,6 +57,19 @@ internal object AuthModule {
             NoChildStatusRepository
         }
 
+    /** The pairing handshake (`claimLinkToken`, `approveLink`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun linkHandshake(availability: FirebaseAvailability): LinkHandshakeRepository =
+        if (availability.isConfigured) {
+            FirebaseLinkHandshakeRepository(
+                FirebaseFirestore.getInstance(),
+                FirebaseFunctions.getInstance(FUNCTIONS_REGION),
+            )
+        } else {
+            NoLinkHandshakeRepository
+        }
+
     @Provides
     @Singleton
     fun accountDeletion(

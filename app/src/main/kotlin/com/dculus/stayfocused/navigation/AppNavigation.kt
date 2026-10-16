@@ -23,6 +23,7 @@ import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
+import com.dculus.stayfocused.core.navigation.LinkAdd
 import com.dculus.stayfocused.core.navigation.LinkScan
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
@@ -47,6 +48,7 @@ import com.dculus.stayfocused.feature.block.navigateToBlockWizard
 import com.dculus.stayfocused.feature.block.openBlockInAiMode
 import com.dculus.stayfocused.feature.block.requestBlockAiMode
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
+import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
 import com.dculus.stayfocused.feature.devices.devicesScreen
 import com.dculus.stayfocused.feature.devices.linkAddScreen
 import com.dculus.stayfocused.feature.devices.linkConfirmScreen
@@ -80,6 +82,7 @@ fun StayFocusedNavigation(
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
     accountViewModel: (@Composable () -> AccountViewModel)? = null,
     linkAddViewModel: (@Composable () -> LinkAddViewModel)? = null,
+    linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
@@ -108,6 +111,7 @@ fun StayFocusedNavigation(
                 permissionsViewModel,
                 accountViewModel,
                 linkAddViewModel,
+                linkConfirmViewModel,
                 toast::show,
             )
             SfToastHost(toast, bottomPadding = 24.dp)
@@ -136,6 +140,7 @@ private fun AppNavHost(
     permissionsViewModel: (@Composable () -> PermissionsViewModel)?,
     accountViewModel: (@Composable () -> AccountViewModel)?,
     linkAddViewModel: (@Composable () -> LinkAddViewModel)?,
+    linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)?,
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -226,7 +231,18 @@ private fun AppNavHost(
                 },
                 onMessage = showToast,
             )
-            linkConfirmScreen()
+            linkConfirmScreen(
+                onBack = { navController.popBackStack() },
+                onLinked = { deviceId, message ->
+                    showToast(message)
+                    // The handshake is over: Back from the new phone returns to Devices, not to the link steps.
+                    navController.navigateToRemoteDevice(
+                        deviceId,
+                        navOptions { popUpTo<LinkAdd> { inclusive = true } },
+                    )
+                },
+                viewModelProvider = linkConfirmViewModel,
+            )
             remoteDeviceScreen()
         }
     }
