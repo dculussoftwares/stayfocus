@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Link, Consent and Home are placeholders
+ * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Consent and Home are placeholders
  * until their own stories; they exist now so the route chain and the start logic are in place.
  */
 @Composable
@@ -83,10 +83,13 @@ fun KidsNavigation(
                 )
             }
             composable<KidsLink> {
-                val next = stringResource(R.string.kids_next)
-                NavPlaceholderScreen(
-                    title = stringResource(R.string.kids_link_title),
-                    actions = listOf(PlaceholderAction(next) { navController.navigate(KidsConsent) }),
+                KidsLinkRoute(
+                    onClaim = {
+                        navController.navigate(
+                            KidsConsent,
+                            navOptions { popUpTo<KidsLink> { inclusive = true } },
+                        )
+                    },
                 )
             }
             composable<KidsConsent> {

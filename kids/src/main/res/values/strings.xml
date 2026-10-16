@@ -10,7 +10,12 @@
     <!-- Shown in Android\'s Accessibility settings; overrides the phone app\'s text from :core:blocking. -->
     <string name="foreground_service_description">Stay Focused Kids sees which app is on your screen so it can block the apps your parent chose. It never reads messages, passwords or typing. Nothing is sold, and it is shared only with the parent you link.</string>
     <!-- Placeholder screens until the Link (QR), Consent and Home stories land. -->
-    <string name="kids_link_title">Link</string>
+    <string name="kids_link_heading">Link to a\nparent\'s phone</string>
+    <string name="kids_link_body">On the parent\'s phone: Devices → Add device → Scan. No account needed here.</string>
+    <string name="kids_link_waiting">Waiting for scan · %1$s</string>
+    <string name="kids_link_qr_description">QR code for the parent to scan</string>
+    <string name="kids_link_failed">Could not get a code. Check the connection and try again.</string>
+    <string name="kids_link_retry">Try again</string>
     <string name="kids_consent_title">Consent</string>
     <string name="kids_home_title">Home</string>
     <string name="kids_next">Next</string>

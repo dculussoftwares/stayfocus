@@ -8,6 +8,7 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Provider
 import javax.inject.Singleton
 
@@ -32,6 +33,19 @@ internal object AuthModule {
     @Singleton
     fun deviceAuth(availability: FirebaseAvailability): DeviceAuth =
         if (availability.isConfigured) FirebaseDeviceAuth(FirebaseAuth.getInstance()) else NoDeviceAuth
+
+    /** The Kids phone's link tokens (`linkTokens/{token}`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun linkTokens(
+        availability: FirebaseAvailability,
+        clock: Clock,
+    ): LinkTokenRepository =
+        if (availability.isConfigured) {
+            FirebaseLinkTokenRepository(FirebaseFirestore.getInstance(), clock)
+        } else {
+            NoLinkTokenRepository
+        }
 
     @Provides
     @Singleton

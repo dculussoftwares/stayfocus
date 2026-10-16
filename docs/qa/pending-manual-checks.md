@@ -109,3 +109,8 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M7-08 Kids monitoring service and notification
 - Check: with a parent name stored (the link flow, M7-07, will set it and call `MonitoringLauncher.sync()`): (1) "Managed by {parent}'s phone" shows with the shield icon; (2) swiping it away (Android 14+) brings it back within a few seconds; (3) after a reboot it reappears without opening the app, on Android 14 and on Android 15+; (4) the merged `:app` manifest has no monitoring service or `isMonitoringTool` flag.
 - How: a physical device or emulator on API 34 and 35+; `adb reboot`, then `adb shell dumpsys notification | grep -i "managed by"`. Also confirm Play Console accepts the `isMonitoringTool` meta-data declaration when the Kids app is first uploaded (Play help vs. Android docs differ: meta-data `child_monitoring` vs. attribute `parental_control`).
+
+## M7-05 Kids: QR with one-time token
+
+- Check: on a real Kids phone with Firebase configured, the Link screen shows the QR and "WAITING FOR SCAN · 4:5x" counting down; a stock camera app reads it as the text `stayfocused://link?t=...`; the M7-06 scanner opens "Confirm link"; after 5 minutes unscanned a new QR appears (new token); airplane mode shows "Could not get a code..." with "Try again".
+- How: dev build with `google-services.json`, second phone or the stock camera app. Note: the Kids app does not register the `stayfocused://` scheme, so the camera app only shows the text.

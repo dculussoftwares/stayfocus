@@ -1,0 +1,188 @@
+package com.dculus.stayfocused.kids
+
+import androidx.lifecycle.viewModelScope
+import com.dculus.stayfocused.core.sync.DeviceAuth
+import com.dculus.stayfocused.core.sync.FakeLinkTokenRepository
+import com.dculus.stayfocused.core.sync.LinkTokenRepository
+import com.dculus.stayfocused.core.sync.LinkTokenStatus
+import com.dculus.stayfocused.core.sync.LinkTokens
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class KidsLinkViewModelTest {
+    private class FakeAuth(
+        private val result: String? = "child-uid",
+    ) : DeviceAuth {
+        override val uid: Flow<String?> = MutableStateFlow(result)
+
+        override suspend fun ensureSignedIn(): String? = result
+    }
+
+    private val dispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setUp() = Dispatchers.setMain(dispatcher)
+
+    @After
+    fun tearDown() = Dispatchers.resetMain()
+
+    /**
+     * The view model keeps renewing tokens forever; runTest would wait for that at the end of the test (it runs
+     * the scheduler until idle), so every test stops it.
+     */
+    private fun KidsLinkViewModel.stop() = viewModelScope.cancel()
+
+    private fun TestScope.clock() =
+        object : Clock() {
+            override fun getZone() = ZoneOffset.UTC
+
+            override fun withZone(zone: java.time.ZoneId) = this
+
+            override fun instant(): Instant = Instant.ofEpochMilli(testScheduler.currentTime + START)
+        }
+
+    private fun TestScope.viewModel(
+        repository: FakeLinkTokenRepository,
+        auth: DeviceAuth = FakeAuth(),
+    ) = KidsLinkViewModel(repository, auth, clock())
+
+    @Test
+    fun showsTheQrAndCountsDown() =
+        runTest(dispatcher) {
+            val repository = FakeLinkTokenRepository(clock())
+            val vm = viewModel(repository)
+            runCurrent()
+            val waiting = assertIs<KidsLinkState.Waiting>(vm.state.value)
+            assertEquals(LinkTokens.uri(repository.created.single().token), waiting.uri)
+            assertEquals("4:55", waiting.remaining)
+            advanceTimeBy(3_001)
+            assertEquals("4:52", assertIs<KidsLinkState.Waiting>(vm.state.value).remaining)
+            vm.stop()
+        }
+
+    @Test
+    fun expiryPublishesANewToken() =
+        runTest(dispatcher) {
+            val repository = FakeLinkTokenRepository(clock())
+            val vm = viewModel(repository)
+            runCurrent()
+            val first = repository.created.single()
+            advanceTimeBy(LinkTokens.TTL_MILLIS)
+            runCurrent()
+            assertEquals(2, repository.created.size)
+            assertNotEquals(first.token, repository.created.last().token)
+            assertEquals(
+                LinkTokens.uri(repository.created.last().token),
+                assertIs<KidsLinkState.Waiting>(vm.state.value).uri,
+            )
+            vm.stop()
+        }
+
+    @Test
+    fun claimingTheTokenMovesToConsent() =
+        runTest(dispatcher) {
+            val repository = FakeLinkTokenRepository(clock())
+            val vm = viewModel(repository)
+            runCurrent()
+            repository.claim(repository.created.single().token)
+            runCurrent()
+            assertEquals(KidsLinkState.Claimed, vm.state.value)
+            vm.stop()
+        }
+
+    @Test
+    fun failureOffersARetryThatWorks() =
+        runTest(dispatcher) {
+            val repository = FakeLinkTokenRepository(clock()).apply { failCreate = true }
+            val vm = viewModel(repository)
+            runCurrent()
+            assertEquals(KidsLinkState.Failed, vm.state.value)
+            repository.failCreate = false
+            vm.retry()
+            runCurrent()
+            assertIs<KidsLinkState.Waiting>(vm.state.value)
+            vm.stop()
+        }
+
+    @Test
+    fun noIdentityIsAFailureToo() =
+        runTest(dispatcher) {
+            val vm = viewModel(FakeLinkTokenRepository(clock()), FakeAuth(result = null))
+            runCurrent()
+            assertEquals(KidsLinkState.Failed, vm.state.value)
+            vm.stop()
+        }
+
+    /** Delegates to a fake but shapes what `observe` emits. */
+    private class ShapedRepository(
+        inner: FakeLinkTokenRepository,
+        private val observeBlock: (calls: Int) -> Flow<LinkTokenStatus>,
+    ) : LinkTokenRepository by inner {
+        private var calls = 0
+
+        override fun observe(token: String): Flow<LinkTokenStatus> = observeBlock(calls++)
+    }
+
+    @Test
+    fun aClaimThatArrivesRightAfterTheDeadlineIsStillHonoured() =
+        runTest(dispatcher) {
+            val backing = FakeLinkTokenRepository(clock())
+            val repository =
+                ShapedRepository(backing) { call ->
+                    flow {
+                        emit(LinkTokenStatus.OPEN)
+                        // The second look (after the deadline) learns the claim a moment later.
+                        if (call > 0) {
+                            delay(500)
+                            emit(LinkTokenStatus.CLAIMED)
+                        } else {
+                            awaitCancellation()
+                        }
+                    }
+                }
+            val vm = KidsLinkViewModel(repository, FakeAuth(), clock())
+            advanceTimeBy(LinkTokens.TTL_MILLIS + 1_000)
+            runCurrent()
+            assertEquals(KidsLinkState.Claimed, vm.state.value)
+            // The late claim belongs to the first token: no replacement was published.
+            assertEquals(1, backing.created.size)
+            vm.stop()
+        }
+
+    @Test
+    fun aFailedListenerOffersARetry() =
+        runTest(dispatcher) {
+            val repository = ShapedRepository(FakeLinkTokenRepository(clock())) { flow { error("permission denied") } }
+            val vm = KidsLinkViewModel(repository, FakeAuth(), clock())
+            runCurrent()
+            assertEquals(KidsLinkState.Failed, vm.state.value)
+            vm.stop()
+        }
+
+    private companion object {
+        const val START = 1_700_000_000_000L
+    }
+}
