@@ -14,4 +14,9 @@
     <string name="kids_consent_title">Consent</string>
     <string name="kids_home_title">Home</string>
     <string name="kids_next">Next</string>
+    <!-- Persistent monitoring notification (Play stalkerware policy). -->
+    <string name="kids_managed_by">Managed by %1$s\'s phone</string>
+    <string name="kids_monitoring_channel">Managed by parent</string>
+    <string name="kids_monitoring_channel_description">Always shown while this phone is linked to a parent.</string>
+    <string name="kids_monitoring_use_case">Shows a persistent notification and shares screen time with the parent this phone is linked to, until the child or parent unlinks it. Runs only while linked.</string>
 </resources>
