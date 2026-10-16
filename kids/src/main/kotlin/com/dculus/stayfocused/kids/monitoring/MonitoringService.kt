@@ -13,6 +13,7 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
+import com.dculus.stayfocused.core.sync.DeviceTarget
 import com.dculus.stayfocused.kids.MainActivity
 import com.dculus.stayfocused.kids.R
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -41,6 +43,7 @@ class MonitoringService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var reporting: Job? = null
+    private var runningTarget: DeviceTarget? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -70,10 +73,23 @@ class MonitoringService : Service() {
             return START_NOT_STICKY
         }
         // (Re)start the reports: the service is started again after linking, when the target becomes known.
-        reporting?.cancel()
+        val previous = reporting
+        val target = targetStore.target
         reporting =
-            targetStore.target?.let { target ->
-                scope.launch { reporter.run(target) }
+            if (target == null) {
+                previous?.cancel()
+                runningTarget = null
+                null
+            } else if (target == runningTarget && previous?.isActive == true) {
+                // Started again only to repost the notification: keep the running reports.
+                previous
+            } else {
+                runningTarget = target
+                scope.launch {
+                    // Let the previous run finish its "offline" goodbye first, so it cannot land after our "online".
+                    previous?.cancelAndJoin()
+                    reporter.run(target)
+                }
             }
         return START_STICKY
     }

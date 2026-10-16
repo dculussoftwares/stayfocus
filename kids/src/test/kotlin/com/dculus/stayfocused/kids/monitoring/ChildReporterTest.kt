@@ -126,31 +126,62 @@ class ChildReporterTest {
         }
 
     @Test
-    fun reportsNothingWithoutASignIn() =
+    fun constantAppSwitchingDoesNotStarveTheHeartbeat() =
         runTest {
-            signedIn = false
-            val job = launch { reporter().run(target) }
-            advance(60 * 60_000L)
-            assertTrue(repo.statuses.isEmpty() && repo.usages.isEmpty() && repo.appSyncs.isEmpty())
+            val job = launch { reporter().reportStatus(target) }
+            advance(5_000)
+            repo.statuses.clear()
+            // An app switch every 2 s for 3 minutes: never quiet for 5 s.
+            repeat(90) { i ->
+                snapshots.value = status(70, app = "App$i")
+                advance(2_000)
+            }
+            assertTrue(repo.statuses.isNotEmpty())
+            assertTrue(repo.statuses.size <= 2)
             job.cancel()
         }
 
     @Test
-    fun usageIsUploadedOnlyWhenItChanges() =
+    fun keepsTryingToSignInInsteadOfGivingUp() =
+        runTest {
+            signedIn = false
+            val job = launch { reporter().run(target) }
+            advance(10 * 60_000L)
+            assertTrue(repo.statuses.isEmpty() && repo.usages.isEmpty() && repo.appSyncs.isEmpty())
+            signedIn = true
+            advance(60_000 + 5_000)
+            assertTrue(repo.statuses.isNotEmpty())
+            job.cancel()
+        }
+
+    @Test
+    fun usageClosesYesterdayThenTodayAndOnlyRewritesChanges() =
         runTest {
             val job = launch { reporter().reportUsage(target) }
             runCurrent()
-            assertEquals(1, repo.usages.size)
-            val summary = repo.usages.single()
-            assertEquals("2026-03-04", summary.date)
-            assertEquals(5, summary.totalMins)
-            assertEquals("Alpha", summary.apps.single().label)
-            assertEquals(3, summary.apps.single().opens)
-            advance(15 * 60_000L)
-            assertEquals(1, repo.usages.size)
-            usage.apps = listOf(AppUsageStat("a.b", 9 * 60_000L, opens = 4, firstAfterUnlock = 1))
+            assertEquals(listOf("2026-03-03", "2026-03-04"), repo.usages.map { it.date })
+            val today = repo.usages.last()
+            assertEquals(5, today.totalMins)
+            assertEquals("Alpha", today.apps.single().label)
+            assertEquals(3, today.apps.single().opens)
             advance(15 * 60_000L)
             assertEquals(2, repo.usages.size)
+            usage.apps = listOf(AppUsageStat("a.b", 9 * 60_000L, opens = 4, firstAfterUnlock = 1))
+            advance(15 * 60_000L)
+            assertEquals(listOf("2026-03-03", "2026-03-04", "2026-03-04"), repo.usages.map { it.date })
+            job.cancel()
+        }
+
+    @Test
+    fun aFailedYesterdayUploadIsRetriedOnTheNextTick() =
+        runTest {
+            repo.failing = true
+            val job = launch { reporter().reportUsage(target) }
+            runCurrent()
+            assertTrue(repo.usages.isEmpty())
+            repo.failing = false
+            advance(15 * 60_000L)
+            assertEquals(listOf("2026-03-03", "2026-03-04"), repo.usages.map { it.date })
             job.cancel()
         }
 

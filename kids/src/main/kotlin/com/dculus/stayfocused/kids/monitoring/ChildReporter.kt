@@ -10,17 +10,20 @@ import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageStatsDataSource
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -46,25 +49,36 @@ internal object ReportCadence {
 }
 
 /**
- * The writes of the device doc: every change (debounced), plus a repeat of the last state when nothing was written for
- * a heartbeat, so a quiet phone costs one write per 90 s and the parent can tell it is still alive.
+ * The writes of the device doc: every change once it has been quiet for [debounceMillis], plus a repeat of the last
+ * state when nothing was written for [heartbeatMillis], so a quiet phone costs one write per 90 s and the parent can
+ * tell it is still alive. The heartbeat runs apart from the debounce, so constant app switching cannot starve it.
  */
-@OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+@OptIn(FlowPreview::class)
 internal fun statusWrites(
     snapshots: Flow<ChildStatus>,
     debounceMillis: Long = ReportCadence.CHANGE_DEBOUNCE_MILLIS,
     heartbeatMillis: Long = ReportCadence.HEARTBEAT_MILLIS,
 ): Flow<ChildStatus> =
-    snapshots
-        .distinctUntilChanged()
-        .debounce(debounceMillis)
-        .transformLatest { status ->
-            emit(status)
-            while (true) {
-                delay(heartbeatMillis)
-                emit(status)
+    channelFlow {
+        val latest = MutableStateFlow<ChildStatus?>(null)
+        val written = Channel<Unit>(Channel.CONFLATED)
+        launch { snapshots.collect { latest.value = it } }
+        launch {
+            latest.filterNotNull().distinctUntilChanged().debounce(debounceMillis).collect {
+                send(it)
+                written.trySend(Unit)
             }
         }
+        launch {
+            latest.filterNotNull().first()
+            while (true) {
+                // A write restarts the wait; silence for a whole heartbeat repeats the current state.
+                if (withTimeoutOrNull(heartbeatMillis) { written.receive() } == null) {
+                    latest.value?.let { send(it) }
+                }
+            }
+        }
+    }.conflate()
 
 internal fun DayUsageStats.toSummary(labelOf: (String) -> String): UsageSummary =
     UsageSummary(
@@ -96,7 +110,7 @@ class ChildReporter
             }
 
         internal suspend fun reportStatus(target: DeviceTarget) {
-            if (!signedIn()) return
+            awaitSignIn()
             var last: ChildStatus? = null
             try {
                 statusWrites(source.snapshots).collect { status ->
@@ -116,31 +130,45 @@ class ChildReporter
         }
 
         internal suspend fun reportUsage(target: DeviceTarget) {
-            if (!signedIn()) return
-            var uploaded: UsageSummary? = null
-            var lastDate: LocalDate? = null
+            awaitSignIn()
+            val uploaded = mutableMapOf<LocalDate, UsageSummary>()
+            // The day for which "yesterday" was last closed with its final numbers. Starts empty, so a restart (or a
+            // failed upload) closes yesterday again on the next tick instead of leaving it stale.
+            var yesterdayClosedFor: LocalDate? = null
             while (true) {
                 val today = clock.instant().atZone(ZoneId.systemDefault()).toLocalDate()
-                // After midnight, close the previous day with its final numbers first.
-                val dates = listOfNotNull(lastDate?.takeIf { it != today }, today)
-                for (date in dates) {
-                    val stats = usage.dayUsage(date)
-                    val labels = installedApps.observeLaunchableApps().first().associate { it.pkg to it.label }
-                    val summary = stats.toSummary { labels[it] ?: it }
-                    // Nothing to say (no usage access yet, or a day without use) or nothing new: no write.
-                    val worthWriting = stats.apps.isNotEmpty() && summary != uploaded
-                    if (worthWriting && attempt("usage") { repository.writeUsage(target, summary) }) {
-                        uploaded = summary
-                    }
+                val labels = installedApps.observeLaunchableApps().first().associate { it.pkg to it.label }
+                if (yesterdayClosedFor != today && upload(target, today.minusDays(1), labels, uploaded)) {
+                    yesterdayClosedFor = today
                 }
-                lastDate = today
+                upload(target, today, labels, uploaded)
                 delay(ReportCadence.USAGE_MILLIS)
             }
         }
 
+        /** True when [date] is now up to date remotely (also when there is nothing to say about it). */
+        private suspend fun upload(
+            target: DeviceTarget,
+            date: LocalDate,
+            labels: Map<String, String>,
+            uploaded: MutableMap<LocalDate, UsageSummary>,
+        ): Boolean {
+            val stats = usage.dayUsage(date)
+            val summary = stats.toSummary { labels[it] ?: it }
+            // No usage access yet, a day without use, or nothing new: nothing to write.
+            return stats.apps.isEmpty() ||
+                uploaded[date] == summary ||
+                attempt("usage") { repository.writeUsage(target, summary) }.also { ok ->
+                    if (ok) {
+                        uploaded[date] =
+                            summary
+                    }
+                }
+        }
+
         @OptIn(FlowPreview::class)
         internal suspend fun reportApps(target: DeviceTarget) {
-            if (!signedIn()) return
+            awaitSignIn()
             installedApps
                 .observeLaunchableApps()
                 .map { apps -> apps.associate { it.pkg to it.label } }
@@ -152,8 +180,13 @@ class ChildReporter
                 }
         }
 
-        private suspend fun signedIn(): Boolean =
-            (deviceAuth.ensureSignedIn() != null).also { if (!it) Timber.w("Not reporting: no anonymous sign-in") }
+        /** Waits for the anonymous identity; sign-in fails while offline, so keep trying instead of giving up. */
+        private suspend fun awaitSignIn() {
+            while (deviceAuth.ensureSignedIn() == null) {
+                Timber.w("Not reporting yet: no anonymous sign-in")
+                delay(ReportCadence.RETRY_MILLIS)
+            }
+        }
 
         @Suppress("TooGenericExceptionCaught")
         private suspend fun attempt(

@@ -15,10 +15,12 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -108,16 +110,17 @@ internal class AndroidStatusSource
                     currentApp = pkg?.let(::labelOf),
                     online = true,
                 )
-            }
+            }.flowOn(Dispatchers.IO)
 
-        private fun labelOf(pkg: String): String =
+        /** The app's label; null when it cannot be resolved, so a package name never reaches the parent. */
+        private fun labelOf(pkg: String): String? =
             try {
                 val pm = context.packageManager
                 pm.getApplicationInfo(pkg, 0).loadLabel(pm).toString()
             } catch (
                 @Suppress("SwallowedException") e: android.content.pm.PackageManager.NameNotFoundException,
             ) {
-                pkg
+                null
             }
 
         private fun Intent.toBattery(): Battery {
