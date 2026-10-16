@@ -5,11 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dculus.stayfocused.core.ui.components.LedDot
 import com.dculus.stayfocused.core.ui.components.MonoLabel
@@ -52,7 +50,7 @@ internal fun KidsLinkScreen(
 ) {
     val colors = StayFocusedTheme.colors
     Column(
-        modifier.fillMaxSize().padding(horizontal = 22.dp, vertical = 24.dp),
+        modifier.fillMaxSize().padding(StayFocusedTheme.spacing.gap22),
         verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap22),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8)) {
@@ -86,7 +84,7 @@ internal fun KidsLinkScreen(
             }
 
             KidsLinkState.Loading, KidsLinkState.Claimed -> {
-                Spacer(Modifier.size(1.dp))
+                Unit
             }
         }
     }
@@ -109,10 +107,10 @@ private fun QrCard(
         filterQuality = FilterQuality.None,
         modifier =
             modifier
-                .size(QR_SIZE)
-                .background(colors.text, RoundedCornerShape(QR_CORNER)),
+                .fillMaxWidth(QR_WIDTH_FRACTION)
+                .aspectRatio(1f)
+                .background(colors.text, StayFocusedTheme.shapes.hero),
     )
 }
 
-private val QR_SIZE = 280.dp
-private val QR_CORNER = 26.dp
+private const val QR_WIDTH_FRACTION = 0.8f

@@ -8,6 +8,7 @@ import com.dculus.stayfocused.core.sync.LinkTokenRepository
 import com.dculus.stayfocused.core.sync.LinkTokenStatus
 import com.dculus.stayfocused.core.sync.LinkTokens
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -21,6 +22,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
+import timber.log.Timber
 import java.time.Clock
 import javax.inject.Inject
 
@@ -86,7 +89,17 @@ class KidsLinkViewModel
         private suspend fun runCycle(): Boolean {
             while (true) {
                 val session = publish() ?: return false
-                if (watch(session)) return true
+                try {
+                    if (watch(session)) return true
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
+                    // The token listener failed (denied, lost): the claim cannot be seen, so offer a retry.
+                    Timber.w(e, "Watching the link token failed")
+                    return false
+                }
                 // Expired unclaimed: loop and publish a new one.
             }
         }
@@ -123,12 +136,20 @@ class KidsLinkViewModel
                                 )
                         }
                     }.first { (it is Outcome.Tick && it.millisLeft <= 0) || it is Outcome.Claimed }
-            val claimed = last is Outcome.Claimed
+            // A phone that slept past the deadline may wake with the expiry tick before the claim snapshot: the parent
+            // can only claim in time (the function checks), so a claim that shows up shortly after is still valid.
+            val claimed = last is Outcome.Claimed || wasClaimedJustAfterExpiry(session)
             if (claimed) _state.value = KidsLinkState.Claimed
             return claimed
         }
 
+        private suspend fun wasClaimedJustAfterExpiry(session: LinkSession): Boolean =
+            withTimeoutOrNull(LATE_CLAIM_GRACE_MILLIS) {
+                tokens.observe(session.token).first { it == LinkTokenStatus.CLAIMED }
+            } != null
+
         private companion object {
             const val TICK_MILLIS = 1000L
+            const val LATE_CLAIM_GRACE_MILLIS = 2000L
         }
     }

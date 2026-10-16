@@ -6,12 +6,14 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import timber.log.Timber
 import java.time.Clock
 
@@ -30,7 +32,7 @@ interface LinkTokenRepository {
     /** Writes a fresh token owned by [childUid]. Null when it could not be written (offline, no Firebase). */
     suspend fun create(childUid: String): LinkSession?
 
-    /** The token's status as it changes. */
+    /** The token's status as it changes. The flow fails when the listener is denied or lost. */
     fun observe(token: String): Flow<LinkTokenStatus>
 }
 
@@ -48,20 +50,26 @@ internal class FirebaseLinkTokenRepository(
                 expiresAtMillis = clock.millis() + LinkTokens.TTL_MILLIS - LinkTokens.CLOCK_SKEW_MARGIN_MILLIS,
             )
         return try {
-            firestore
-                .collection(COLLECTION)
-                .document(session.token)
-                .set(
-                    mapOf(
-                        "childUid" to childUid,
-                        "model" to model.ifBlank { "Android" }.take(MAX_MODEL_LENGTH),
-                        "createdAt" to FieldValue.serverTimestamp(),
-                        "expiresAt" to Timestamp(session.expiresAtMillis / MILLIS, 0),
-                        "code" to session.code,
-                        "status" to "open",
-                    ),
-                ).await()
+            // Offline, Firestore queues the write and never completes the task: give up so the screen can offer a retry.
+            withTimeout(PUBLISH_TIMEOUT_MILLIS) {
+                firestore
+                    .collection(COLLECTION)
+                    .document(session.token)
+                    .set(
+                        mapOf(
+                            "childUid" to childUid,
+                            "model" to model.ifBlank { "Android" }.take(MAX_MODEL_LENGTH),
+                            "createdAt" to FieldValue.serverTimestamp(),
+                            "expiresAt" to Timestamp(session.expiresAtMillis / MILLIS, 0),
+                            "code" to session.code,
+                            "status" to "open",
+                        ),
+                    ).await()
+            }
             session
+        } catch (e: TimeoutCancellationException) {
+            Timber.w(e, "Publishing the link token timed out")
+            null
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Timber.w(e, "Could not publish the link token")
@@ -74,7 +82,9 @@ internal class FirebaseLinkTokenRepository(
             val registration =
                 firestore.collection(COLLECTION).document(token).addSnapshotListener { snapshot, error ->
                     if (error != null) {
+                        // A failed listener gets no more events; end the flow so the screen can offer a retry.
                         Timber.w(error, "Watching the link token failed")
+                        close(error)
                     } else if (snapshot != null) {
                         trySend(snapshot.toStatus())
                     }
@@ -91,6 +101,7 @@ internal class FirebaseLinkTokenRepository(
         const val COLLECTION = "linkTokens"
         const val MAX_MODEL_LENGTH = 100
         const val MILLIS = 1000L
+        const val PUBLISH_TIMEOUT_MILLIS = 10_000L
     }
 }
 
