@@ -56,11 +56,11 @@ fun KidsConsentRoute(
     }
     val fallbackName = stringResource(R.string.kids_parent_fallback)
     // System Back says no to the parent, like the Cancel button.
-    BackHandler(onBack = viewModel::cancel)
+    BackHandler(onBack = { viewModel.cancel(fallbackName) })
     KidsConsentScreen(
         state = state,
         onAllow = { viewModel.allow(fallbackName) },
-        onCancel = viewModel::cancel,
+        onCancel = { viewModel.cancel(fallbackName) },
         onShowNewCode = viewModel::showNewCode,
         onRetry = viewModel::retryConsent,
         modifier = modifier,

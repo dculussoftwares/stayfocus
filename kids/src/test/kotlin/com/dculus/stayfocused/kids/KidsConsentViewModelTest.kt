@@ -117,13 +117,35 @@ class KidsConsentViewModelTest {
             val vm = viewModel()
             runCurrent()
 
-            vm.cancel()
+            vm.cancel("your parent")
             runCurrent()
 
             assertEquals(listOf(TOKEN to false), handshake.answers)
             assertEquals(ConsentOutcome.ShowNewCode, vm.state.value.outcome)
             assertNull(store.parentName)
             assertEquals(0, control.syncs)
+        }
+
+    @Test
+    fun cancellingAfterALostApprovalReplyFinishesTheLinkInstead() =
+        runTest(dispatcher) {
+            handshake.pushConsent(ConsentInfo("482913", "Asha"))
+            handshake.answerResult = ApproveOutcome.Failed(LinkFailure.Network)
+            val vm = viewModel()
+            runCurrent()
+            vm.allow("your parent")
+            runCurrent()
+            assertEquals(ConsentError.Network, vm.state.value.error)
+
+            // The server did approve: declining is refused as "used", and the retry returns the existing link.
+            val linked = ApproveOutcome.Linked("parent-1", "device-9", "Asha")
+            handshake.answerResults = ArrayDeque(listOf(ApproveOutcome.Failed(LinkFailure.Used), linked))
+            vm.cancel("your parent")
+            runCurrent()
+
+            assertEquals(ConsentOutcome.Linked, vm.state.value.outcome)
+            assertEquals("device-9", store.deviceId)
+            assertEquals(1, control.syncs)
         }
 
     @Test
@@ -151,7 +173,7 @@ class KidsConsentViewModelTest {
             handshake.answerResult = ApproveOutcome.Failed(LinkFailure.Network)
             val vm = viewModel()
             runCurrent()
-            vm.cancel()
+            vm.cancel("your parent")
             runCurrent()
             assertNull(vm.state.value.outcome)
             assertEquals(ConsentError.Network, vm.state.value.error)

@@ -310,6 +310,9 @@ class FakeLinkHandshakeRepository : LinkHandshakeRepository {
         ClaimOutcome.Claimed(ClaimedLink("482913", "Pixel 7", "device-1", Long.MAX_VALUE))
     var answerResult: ApproveOutcome = ApproveOutcome.Linked("parent-1", "device-1", "Asha")
 
+    /** When not empty, `answer` returns these in order instead of [answerResult]. */
+    var answerResults: ArrayDeque<ApproveOutcome> = ArrayDeque()
+
     /** When set, `answer` waits for it before returning (an answer still in flight). */
     var answerGate: CompletableDeferred<Unit>? = null
 
@@ -347,7 +350,7 @@ class FakeLinkHandshakeRepository : LinkHandshakeRepository {
     ): ApproveOutcome {
         answers += token to approve
         answerGate?.await()
-        return answerResult
+        return answerResults.removeFirstOrNull() ?: answerResult
     }
 
     /** Simulates the child answering, as the parent's listener would see it. */

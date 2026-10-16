@@ -131,7 +131,11 @@ class KidsConsentViewModel
         fun allow(fallbackName: String) {
             if (_state.value.working || _state.value.code == null) return
             _state.update { it.copy(working = true, error = null) }
-            viewModelScope.launch {
+            viewModelScope.launch { approve(fallbackName) }
+        }
+
+        private suspend fun approve(fallbackName: String) {
+            run {
                 when (val result = handshake.answer(token, approve = true)) {
                     is ApproveOutcome.Linked -> {
                         // Parent name last: the monitoring service treats a non-blank name as "linked".
@@ -162,7 +166,7 @@ class KidsConsentViewModel
          * "Cancel" (and system Back): tells the parent no, then shows a new code. When the decline cannot get through
          * the screen stays, so the child is never left believing a still-open claim was cancelled.
          */
-        fun cancel() {
+        fun cancel(fallbackName: String) {
             if (_state.value.working) return
             if (_state.value.code == null) {
                 showNewCode()
@@ -171,6 +175,11 @@ class KidsConsentViewModel
             _state.update { it.copy(working = true, error = null) }
             viewModelScope.launch {
                 val result = handshake.answer(token, approve = false)
+                if (result is ApproveOutcome.Failed && result.reason == LinkFailure.Used) {
+                    // "Used" means an earlier Allow did commit and only its reply was lost: finish that link instead.
+                    approve(fallbackName)
+                    return@launch
+                }
                 val error = (result as? ApproveOutcome.Failed)?.reason?.toConsentError()?.afterDeadline()
                 _state.update {
                     when (error) {
