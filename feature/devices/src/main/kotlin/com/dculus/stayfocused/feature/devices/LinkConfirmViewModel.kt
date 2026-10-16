@@ -1,0 +1,153 @@
+package com.dculus.stayfocused.feature.devices
+
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.dculus.stayfocused.core.sync.ClaimOutcome
+import com.dculus.stayfocused.core.sync.ClaimedLink
+import com.dculus.stayfocused.core.sync.LinkAnswer
+import com.dculus.stayfocused.core.sync.LinkFailure
+import com.dculus.stayfocused.core.sync.LinkHandshakeRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.time.Clock
+import javax.inject.Inject
+
+/** Where the parent's Confirm link screen is. */
+internal sealed interface LinkConfirmState {
+    /** Claiming the scanned token. */
+    data object Claiming : LinkConfirmState
+
+    /** The code is up on both phones; waiting for the child to tap Allow. */
+    data class Waiting(
+        val code: String,
+    ) : LinkConfirmState
+
+    /** The child allowed it: [deviceId] is the new phone under this account. */
+    data class Linked(
+        val deviceId: String,
+    ) : LinkConfirmState
+
+    /** The child tapped Cancel. */
+    data object Declined : LinkConfirmState
+
+    /** The claim or the wait did not work out; [LinkFailure.Expired] also covers a child who never answered. */
+    data class Failed(
+        val reason: LinkFailure,
+    ) : LinkConfirmState
+}
+
+/**
+ * Claims the scanned token (`claimLinkToken`), shows the code, lets the parent name the phone, and waits for the
+ * child's answer on the token document.
+ */
+@HiltViewModel
+class LinkConfirmViewModel
+    @Inject
+    constructor(
+        savedState: SavedStateHandle,
+        private val handshake: LinkHandshakeRepository,
+        private val clock: Clock,
+    ) : ViewModel() {
+        private val token: String = savedState.get<String>("token").orEmpty()
+        private val mutableState = MutableStateFlow<LinkConfirmState>(LinkConfirmState.Claiming)
+        internal val state: StateFlow<LinkConfirmState> = mutableState.asStateFlow()
+
+        private val _name = MutableStateFlow("")
+
+        /** The editable device name; starts as the child's phone model. */
+        val name: StateFlow<String> = _name.asStateFlow()
+
+        private val edits = MutableSharedFlow<String>(extraBufferCapacity = EDIT_BUFFER)
+        private var session: Job? = null
+
+        init {
+            start()
+        }
+
+        fun retry() = start()
+
+        fun onNameChange(value: String) {
+            val limited = value.take(MAX_NAME_LENGTH)
+            _name.value = limited
+            edits.tryEmit(limited)
+        }
+
+        private fun start() {
+            session?.cancel()
+            mutableState.value = LinkConfirmState.Claiming
+            session =
+                viewModelScope.launch {
+                    when (val outcome = handshake.claim(token, deviceName = null)) {
+                        is ClaimOutcome.Claimed -> {
+                            _name.value = outcome.link.model.take(MAX_NAME_LENGTH)
+                            mutableState.value = LinkConfirmState.Waiting(outcome.link.code)
+                            mutableState.value = watch(outcome.link)
+                        }
+
+                        is ClaimOutcome.Failed -> {
+                            mutableState.value = LinkConfirmState.Failed(outcome.reason)
+                        }
+                    }
+                }
+        }
+
+        /** Runs until the child answers, the token runs out or the token can no longer be watched. */
+        @OptIn(FlowPreview::class)
+        private suspend fun watch(link: ClaimedLink): LinkConfirmState =
+            coroutineScope {
+                // The name is saved a moment after the last keystroke; the code stays the same.
+                val rename =
+                    launch {
+                        edits.debounce(RENAME_DEBOUNCE_MS).collect { value ->
+                            if (value.isNotBlank()) handshake.claim(token, value.trim())
+                        }
+                    }
+                val ending: Flow<LinkConfirmState?> =
+                    merge(
+                        handshake
+                            .observeAnswer(token)
+                            .map { answer ->
+                                when (answer) {
+                                    LinkAnswer.Linked -> LinkConfirmState.Linked(link.deviceId)
+                                    LinkAnswer.Declined -> LinkConfirmState.Declined
+                                    LinkAnswer.Pending -> null
+                                }
+                            }.catch { e ->
+                                if (e is CancellationException) throw e
+                                Timber.w(e, "Watching the claimed link token failed")
+                                emit(LinkConfirmState.Failed(LinkFailure.Other))
+                            },
+                        flow {
+                            delay((link.expiresAtMillis - clock.millis()).coerceAtLeast(0))
+                            emit(LinkConfirmState.Failed(LinkFailure.Expired))
+                        },
+                    )
+                val result = ending.first { it != null } ?: LinkConfirmState.Failed(LinkFailure.Other)
+                rename.cancel()
+                result
+            }
+
+        private companion object {
+            const val MAX_NAME_LENGTH = 60
+            const val RENAME_DEBOUNCE_MS = 400L
+            const val EDIT_BUFFER = 8
+        }
+    }

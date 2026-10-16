@@ -20,7 +20,23 @@
     <string name="link_camera_unavailable_title">Camera not available</string>
     <string name="link_camera_unavailable_body">Stay Focused can\'t open the camera. Close other apps that use it, then come back.</string>
     <string name="link_camera_settings">Open Settings</string>
-    <string name="link_confirm_title">Confirm link</string>
+    <string name="link_confirm_title">Do the codes match?</string>
+    <string name="link_confirm_code_label">Same 6 digits on their phone</string>
+    <string name="link_confirm_name_label">Name this phone</string>
+    <string name="link_confirm_note">Linking finishes when your child taps Allow. They can unlink anytime, and you\'ll be told if they do.</string>
+    <string name="link_confirm_waiting">Waiting for your child to tap Allow</string>
+    <string name="link_confirm_linked_toast">Phone linked</string>
+    <string name="link_confirm_declined_title">Not linked</string>
+    <string name="link_confirm_declined_body">Your child chose not to link this phone. Nothing was changed.</string>
+    <string name="link_confirm_expired_title">That code ran out</string>
+    <string name="link_confirm_expired_body">Ask your child to show a new QR code on their phone, then scan it again.</string>
+    <string name="link_confirm_used_title">That code was already used</string>
+    <string name="link_confirm_used_body">Ask your child to show a new QR code on their phone, then scan it again.</string>
+    <string name="link_confirm_network_title">No connection</string>
+    <string name="link_confirm_network_body">Stay Focused could not reach the server. Check your connection and try again.</string>
+    <string name="link_confirm_other_title">Could not link</string>
+    <string name="link_confirm_other_body">Something went wrong. Try again, or ask your child to show a new QR code.</string>
+    <string name="link_confirm_retry">Try again</string>
     <string name="remote_device_title">Remote device</string>
     <!-- Placeholder navigation; removed when the real screens land. -->
     <string name="devices_placeholder_link">Link a phone</string>

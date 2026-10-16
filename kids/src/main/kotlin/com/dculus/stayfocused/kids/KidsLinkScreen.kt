@@ -32,14 +32,14 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 /** Kids: Link. Shows the QR with the one-time token and moves on once the parent has scanned it. */
 @Composable
 fun KidsLinkRoute(
-    onClaim: () -> Unit,
+    onClaim: (token: String) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: KidsLinkViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
     val currentOnClaim by rememberUpdatedState(onClaim)
     LaunchedEffect(state) {
-        if (state == KidsLinkState.Claimed) currentOnClaim()
+        (state as? KidsLinkState.Claimed)?.let { currentOnClaim(it.token) }
     }
     KidsLinkScreen(state = state, onRetry = viewModel::retry, modifier = modifier)
 }
@@ -85,7 +85,7 @@ internal fun KidsLinkScreen(
                 OutlineButton(text = stringResource(R.string.kids_link_retry), onClick = onRetry)
             }
 
-            KidsLinkState.Loading, KidsLinkState.Claimed -> {
+            KidsLinkState.Loading, is KidsLinkState.Claimed -> {
                 Unit
             }
         }

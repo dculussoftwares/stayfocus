@@ -29,6 +29,15 @@ locals {
       kind  = "callable"
       roles = ["roles/datastore.user", "roles/firebaseauth.admin"] # Firestore deletes, Auth user deletion
     }
+    # Pairing handshake (M7-07): claimLinkToken (parent) and approveLink (child) write across the two accounts.
+    claimLinkToken = {
+      kind  = "callable"
+      roles = ["roles/datastore.user"] # link token transaction, rate-limit counters
+    }
+    approveLink = {
+      kind  = "callable"
+      roles = ["roles/datastore.user"] # creates the device document in the parent's tree
+    }
   }
 
   function_runtime_roles = {

@@ -41,8 +41,10 @@ sealed interface KidsLinkState {
     /** No token could be published (offline); the screen offers a retry. */
     data object Failed : KidsLinkState
 
-    /** The parent scanned the code: move on to Consent. */
-    data object Claimed : KidsLinkState
+    /** The parent scanned the code of [token]: move on to Consent. */
+    data class Claimed(
+        val token: String,
+    ) : KidsLinkState
 }
 
 private sealed interface Outcome {
@@ -145,7 +147,7 @@ class KidsLinkViewModel
             // A phone that slept past the deadline may wake with the expiry tick before the claim snapshot: the parent
             // can only claim in time (the function checks), so a claim that shows up shortly after is still valid.
             val claimed = last is Outcome.Claimed || wasClaimedJustAfterExpiry(session)
-            if (claimed) _state.value = KidsLinkState.Claimed
+            if (claimed) _state.value = KidsLinkState.Claimed(session.token)
             return claimed
         }
 

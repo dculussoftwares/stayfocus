@@ -57,8 +57,18 @@ fun NavGraphBuilder.linkScanScreen(
     composable<LinkScan> { LinkScanRoute(onBack, onScan, onMessage) }
 }
 
-fun NavGraphBuilder.linkConfirmScreen() {
-    composable<LinkConfirm> { LinkConfirmRoute() }
+/**
+ * Confirm link. [onLinked] gets the new phone's id and the "Phone linked" toast text once the child has allowed it;
+ * the caller shows the toast and opens the remote device.
+ */
+fun NavGraphBuilder.linkConfirmScreen(
+    onBack: () -> Unit,
+    onLinked: (deviceId: String, message: String) -> Unit,
+    viewModelProvider: (@Composable () -> LinkConfirmViewModel)? = null,
+) {
+    composable<LinkConfirm> {
+        LinkConfirmRoute(onBack, onLinked, viewModelProvider?.invoke() ?: hiltViewModel())
+    }
 }
 
 /** A linked child phone, shown with the tab bar. */

@@ -7,14 +7,19 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import javax.inject.Inject
 
-/** Starts or stops [MonitoringService] to match the link state; call it after (un)linking and on app start. */
+/** Starts or stops monitoring to match the link state; call it after (un)linking and on app start. */
+interface MonitoringControl {
+    fun sync()
+}
+
+/** Starts or stops [MonitoringService] to match the link state. */
 class MonitoringLauncher
     @Inject
     internal constructor(
         @ApplicationContext private val context: Context,
         private val linkStore: ParentLinkStore,
-    ) {
-        fun sync() {
+    ) : MonitoringControl {
+        override fun sync() {
             val intent = Intent(context, MonitoringService::class.java)
             if (shouldMonitor(
                     linkStore.parentName,
