@@ -16,6 +16,12 @@ import androidx.core.app.ServiceCompat
 import com.dculus.stayfocused.kids.MainActivity
 import com.dculus.stayfocused.kids.R
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
@@ -26,6 +32,15 @@ import javax.inject.Inject
 class MonitoringService : Service() {
     @Inject
     internal lateinit var linkStore: ParentLinkStore
+
+    @Inject
+    internal lateinit var targetStore: ReportTargetStore
+
+    @Inject
+    internal lateinit var reporter: ChildReporter
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var reporting: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,9 +66,22 @@ class MonitoringService : Service() {
             // Not linked, or notifications are off (the notice would be invisible): stop rather than run unseen.
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
+            reporting?.cancel()
             return START_NOT_STICKY
         }
+        // (Re)start the reports: the service is started again after linking, when the target becomes known.
+        reporting?.cancel()
+        reporting =
+            targetStore.target?.let { target ->
+                scope.launch { reporter.run(target) }
+            }
         return START_STICKY
+    }
+
+    override fun onDestroy() {
+        // Cancelling lets the status reporter say "offline" on its way out.
+        scope.cancel()
+        super.onDestroy()
     }
 
     companion object {
