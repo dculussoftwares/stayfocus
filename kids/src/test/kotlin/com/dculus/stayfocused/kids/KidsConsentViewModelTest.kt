@@ -173,7 +173,7 @@ class KidsConsentViewModelTest {
         }
 
     @Test
-    fun anAnswerThatFailsAfterTheDeadlineIsReportedAsExpired() =
+    fun aLostReplyAfterTheDeadlineCanStillBeRecoveredByAskingAgain() =
         runTest(dispatcher) {
             handshake.pushConsent(ConsentInfo("482913", "Asha", expiresAtMillis = 60_000))
             val gate = CompletableDeferred<Unit>()
@@ -188,10 +188,18 @@ class KidsConsentViewModelTest {
             assertEquals(true, vm.state.value.working)
             assertNull(vm.state.value.error)
 
+            // The reply was lost: the server may have approved in time, so the same token can be tried again and the
+            // server (which answers an approved token with the same link) decides.
             gate.complete(Unit)
             runCurrent()
-            assertEquals(ConsentError.Expired, vm.state.value.error)
+            assertEquals(ConsentError.Network, vm.state.value.error)
             assertEquals(false, vm.state.value.working)
+
+            handshake.answerGate = null
+            handshake.answerResult = ApproveOutcome.Linked("parent-1", "device-9", "Asha")
+            vm.allow("your parent")
+            runCurrent()
+            assertEquals(ConsentOutcome.Linked, vm.state.value.outcome)
         }
 
     @Test

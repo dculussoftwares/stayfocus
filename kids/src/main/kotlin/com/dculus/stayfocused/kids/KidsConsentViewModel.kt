@@ -150,7 +150,7 @@ class KidsConsentViewModel
                         _state.update {
                             it.copy(
                                 working = false,
-                                error = result.reason.toConsentError().afterDeadline(),
+                                error = result.reason.toConsentError(),
                             )
                         }
                     }
