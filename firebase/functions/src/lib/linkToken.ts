@@ -26,6 +26,8 @@ export interface LinkTokenData {
   deviceId?: string;
   deviceName?: string;
   parentName?: string;
+  /** The child that completed approval, retained so a lost response can be retried safely. */
+  answeredBy?: string;
 }
 
 export function isExpired(token: LinkTokenData, now: Date): boolean {

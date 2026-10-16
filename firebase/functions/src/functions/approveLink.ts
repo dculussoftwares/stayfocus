@@ -29,6 +29,16 @@ export async function answerLink(
     if (!snap.exists) throw linkFailure("invalid");
     const data = snap.data() as LinkTokenData;
     if (data.childUid !== childUid) throw new HttpsError("permission-denied", "You are not allowed to do this.");
+    // The device and token are committed atomically before the callable response is sent. If that response is lost,
+    // let the same child safely recover the result instead of attempting a second create.
+    if (data.status === "used" && approve && data.answeredBy === childUid && data.claimedBy && data.deviceId) {
+      return {
+        linked: true as const,
+        parentUid: data.claimedBy,
+        deviceId: data.deviceId,
+        parentName: data.parentName ?? "",
+      };
+    }
     if (data.status === "open") throw linkFailure("not_claimed");
     if (data.status !== "claimed" || !data.claimedBy || !data.deviceId) throw linkFailure("used");
     if (isExpired(data, now)) throw linkFailure("expired");
@@ -55,7 +65,7 @@ export async function answerLink(
       lastSeen: null,
       focusEndsAt: null,
     });
-    tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(now) });
+    tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(now), answeredBy: childUid });
     return {
       linked: true as const,
       parentUid: data.claimedBy,

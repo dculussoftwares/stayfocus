@@ -110,6 +110,18 @@ describe("pairing handshake", () => {
     expect((await tokenDoc(token)).status).toBe("used");
   });
 
+  it("returns the committed link when the child retries after losing the approval response", async () => {
+    const { parent, child, token } = await scene();
+    const { deviceId } = (await claim(asParent(parent, { token }))) as { deviceId: string };
+
+    const first = await approve(asChild(child, { token, approve: true }));
+    expect(first).toMatchObject({ linked: true, parentUid: parent, deviceId });
+
+    // The first response may not reach Kids after the transaction commits. A retry must reconcile the local link.
+    expect(await approve(asChild(child, { token, approve: true }))).toEqual(first);
+    expect((await db.collection("users").doc(parent).collection("devices").get()).size).toBe(1);
+  });
+
   it("uses the child's model as the name unless the parent renames it (also after claiming)", async () => {
     const { parent, child, token } = await scene();
     const first = (await claim(asParent(parent, { token }))) as { code: string; deviceId: string };
@@ -149,12 +161,13 @@ describe("pairing handshake", () => {
       expect(await reason(claim(asParent(`p-${randomUUID()}`, { token })))).toBe("used");
     });
 
-    it("a used token cannot be approved twice (one device only)", async () => {
+    it("a used token cannot be answered differently (one device only)", async () => {
       const { parent, child, token } = await scene();
       await claim(asParent(parent, { token }));
       await approve(asChild(child, { token, approve: true }));
 
-      expect(await reason(approve(asChild(child, { token, approve: true })))).toBe("used");
+      // Repeating approval is idempotent, but changing the answer is still a replay.
+      expect(await reason(approve(asChild(child, { token, approve: false })))).toBe("used");
       expect((await db.collection("users").doc(parent).collection("devices").get()).size).toBe(1);
     });
 
