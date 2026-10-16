@@ -140,12 +140,13 @@ describe("pairing handshake", () => {
   });
 
   describe("replay", () => {
-    it("a used token cannot be claimed again, by the same parent or another", async () => {
+    it("a used token cannot be claimed again by another parent", async () => {
       const { parent, child, token } = await scene();
       await claim(asParent(parent, { token }));
       await approve(asChild(child, { token, approve: true }));
 
-      expect(await reason(claim(asParent(parent, { token })))).toBe("used");
+      // The same parent is only told the link happened (no new code, nothing re-claimed); anyone else is refused.
+      expect(await claim(asParent(parent, { token }))).toMatchObject({ linked: true });
       expect(await reason(claim(asParent(`p-${randomUUID()}`, { token })))).toBe("used");
     });
 
@@ -216,6 +217,28 @@ describe("pairing handshake", () => {
     it("the Kids sign-in cannot claim", async () => {
       const { child, token } = await scene();
       expect(await code(claim(asChild(child, { token })))).toBe("permission-denied");
+    });
+
+    it("a recovered approval is refused when the device was removed meanwhile", async () => {
+      const { parent, child, token } = await scene();
+      const { deviceId } = (await claim(asParent(parent, { token }))) as { deviceId: string };
+      await approve(asChild(child, { token, approve: true }));
+      await db.collection("users").doc(parent).collection("devices").doc(deviceId).delete();
+      expect(await reason(approve(asChild(child, { token, approve: true })))).toBe("invalid");
+    });
+
+    it("the parent who was away learns the link already happened", async () => {
+      const { parent, child, token } = await scene();
+      const first = (await claim(asParent(parent, { token }))) as { code: string; deviceId: string };
+      await approve(asChild(child, { token, approve: true }));
+
+      expect(await claim(asParent(parent, { token }))).toMatchObject({
+        linked: true,
+        code: first.code,
+        deviceId: first.deviceId,
+      });
+      // Anyone else still gets "used".
+      expect(await reason(claim(asParent(`p-${randomUUID()}`, { token })))).toBe("used");
     });
 
     it("a deleted parent account (its claimed token is deleted) cannot be linked to", async () => {

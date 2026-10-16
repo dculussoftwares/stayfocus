@@ -144,6 +144,49 @@ class KidsConsentViewModelTest {
         }
 
     @Test
+    fun aFailedDeclineKeepsTheScreenSoTheChildIsNotLeftBelievingItWasCancelled() =
+        runTest(dispatcher) {
+            handshake.pushConsent(ConsentInfo("482913", "Asha"))
+            handshake.answerResult = ApproveOutcome.Failed(LinkFailure.Network)
+            val vm = viewModel()
+            runCurrent()
+            vm.cancel()
+            runCurrent()
+            assertNull(vm.state.value.outcome)
+            assertEquals(ConsentError.Network, vm.state.value.error)
+            assertEquals(false, vm.state.value.working)
+        }
+
+    @Test
+    fun theExpiryTimerNeverInterruptsAnApprovalInFlight() =
+        runTest(dispatcher) {
+            handshake.pushConsent(ConsentInfo("482913", "Asha", expiresAtMillis = 60_000))
+            handshake.answerResult = ApproveOutcome.Linked("parent-1", "device-9", "Asha")
+            val vm = viewModel()
+            runCurrent()
+            vm.allow("your parent")
+            advanceTimeBy(80_000)
+            runCurrent()
+            assertEquals(ConsentOutcome.Linked, vm.state.value.outcome)
+            assertNull(vm.state.value.error)
+        }
+
+    @Test
+    fun retryingKeepsWatchingTheSameTokenAfterATimeout() =
+        runTest(dispatcher) {
+            val vm = viewModel()
+            advanceTimeBy(16_000)
+            runCurrent()
+            assertEquals(ConsentError.Network, vm.state.value.error)
+
+            vm.retryConsent()
+            handshake.pushConsent(ConsentInfo("482913", "Asha"))
+            runCurrent()
+            assertEquals("482913", vm.state.value.code)
+            assertNull(vm.state.value.error)
+        }
+
+    @Test
     fun noConnectionKeepsTheScreenSoTheChildCanTryAgain() =
         runTest(dispatcher) {
             handshake.pushConsent(ConsentInfo("482913", "Asha"))
@@ -169,7 +212,7 @@ class KidsConsentViewModelTest {
             val vm = viewModel()
             runCurrent()
             assertNull(vm.state.value.error)
-            advanceTimeBy(60_001)
+            advanceTimeBy(71_000)
             runCurrent()
             assertEquals(ConsentError.Expired, vm.state.value.error)
         }

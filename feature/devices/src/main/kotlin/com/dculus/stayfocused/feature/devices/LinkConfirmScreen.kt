@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.feature.devices
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -48,14 +49,17 @@ internal fun LinkConfirmRoute(
     LaunchedEffect(state) {
         (state as? LinkConfirmState.Linked)?.let { currentOnLinked(it.deviceId, toast) }
     }
+    val leave = {
+        viewModel.cancel()
+        onBack()
+    }
+    // The system Back gesture withdraws the claim just like the on-screen button.
+    BackHandler(onBack = leave)
     LinkConfirmScreen(
         state = state,
         name = name,
         onNameChange = viewModel::onNameChange,
-        onBack = {
-            viewModel.cancel()
-            onBack()
-        },
+        onBack = leave,
         onRetry = viewModel::retry,
     )
 }

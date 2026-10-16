@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.kids
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,11 +55,14 @@ fun KidsConsentRoute(
         }
     }
     val fallbackName = stringResource(R.string.kids_parent_fallback)
+    // System Back says no to the parent, like the Cancel button.
+    BackHandler(onBack = viewModel::cancel)
     KidsConsentScreen(
         state = state,
         onAllow = { viewModel.allow(fallbackName) },
         onCancel = viewModel::cancel,
         onShowNewCode = viewModel::showNewCode,
+        onRetry = viewModel::retryConsent,
         modifier = modifier,
     )
 }
@@ -70,6 +74,7 @@ internal fun KidsConsentScreen(
     onCancel: () -> Unit,
     onShowNewCode: () -> Unit,
     modifier: Modifier = Modifier,
+    onRetry: () -> Unit = {},
 ) {
     val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
@@ -107,6 +112,13 @@ internal fun KidsConsentScreen(
                 modifier = Modifier.testTag(KIDS_CONSENT_ERROR_TAG),
             )
         }
+        if (state.code == null && state.error != null && state.error != ConsentError.Expired) {
+            PrimaryButton(
+                text = stringResource(R.string.kids_link_retry),
+                onClick = onRetry,
+                modifier = Modifier.fillMaxWidth().testTag(KIDS_CONSENT_RETRY_TAG),
+            )
+        }
         if (state.error == ConsentError.Expired || (state.code == null && state.error != null)) {
             PrimaryButton(
                 text = stringResource(R.string.kids_consent_new_code),
@@ -132,6 +144,7 @@ internal fun KidsConsentScreen(
 }
 
 internal const val KIDS_CONSENT_ERROR_TAG = "kids_consent_error"
+internal const val KIDS_CONSENT_RETRY_TAG = "kids_consent_retry"
 
 private fun ConsentError.messageRes(): Int =
     when (this) {

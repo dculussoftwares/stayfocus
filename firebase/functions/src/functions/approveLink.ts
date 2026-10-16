@@ -20,26 +20,30 @@ export async function answerLink(
   childUid: string,
   token: string,
   approve: boolean,
-  now: Date = new Date(),
+  now?: Date,
 ): Promise<ApproveResult> {
   const ref = db.collection(LINK_TOKENS).doc(token);
 
   return db.runTransaction(async (tx) => {
+    // Read again on every attempt: a retried transaction must not judge expiry by the time it first started.
+    const at = now ?? new Date();
     const snap = await tx.get(ref);
     if (!snap.exists) throw linkFailure("invalid");
     const data = snap.data() as LinkTokenData;
     if (data.childUid !== childUid) throw new HttpsError("permission-denied", "You are not allowed to do this.");
     if (data.status === "used" && approve && data.claimedBy && data.deviceId) {
       // The device was created but the answer never reached the child: the same child may ask again and gets the
-      // same result. Nothing is created twice.
+      // same result. Nothing is created twice. A device removed meanwhile (account deletion) is not reported as linked.
+      const device = db.collection("users").doc(data.claimedBy).collection("devices").doc(data.deviceId);
+      if (!(await tx.get(device)).exists) throw linkFailure("invalid");
       return linked(data, data.claimedBy, data.deviceId);
     }
     if (data.status === "open") throw linkFailure("not_claimed");
     if (data.status !== "claimed" || !data.claimedBy || !data.deviceId) throw linkFailure("used");
-    if (isExpired(data, now)) throw linkFailure("expired");
+    if (isExpired(data, at)) throw linkFailure("expired");
 
     if (!approve) {
-      tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(now) });
+      tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(at) });
       return { linked: false as const };
     }
 
@@ -58,7 +62,7 @@ export async function answerLink(
       lastSeen: null,
       focusEndsAt: null,
     });
-    tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(now) });
+    tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(at) });
     return linked(data, data.claimedBy, data.deviceId);
   });
 }

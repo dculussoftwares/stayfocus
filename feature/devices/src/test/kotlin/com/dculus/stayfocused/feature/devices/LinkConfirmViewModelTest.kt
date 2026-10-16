@@ -138,10 +138,49 @@ class LinkConfirmViewModelTest {
             vm.onNameChange("A")
             advanceTimeBy(100)
             vm.onNameChange("Aarav's phone")
-            advanceTimeBy(500)
+            advanceTimeBy(900)
             runCurrent()
             assertEquals("Aarav's phone", vm.name.value)
             assertEquals(listOf<Pair<String, String?>>(TOKEN to null, TOKEN to "Aarav's phone"), handshake.claims)
+        }
+
+    @Test
+    fun leavingBeforeTheClaimComesBackWithdrawsItAsSoonAsItDoes() =
+        runTest(dispatcher) {
+            val handshake = handshake()
+            val vm = viewModel(handshake)
+            vm.cancel()
+            runCurrent()
+            assertEquals(listOf(TOKEN), handshake.withdrawn)
+            assertEquals(LinkConfirmState.Claiming, vm.state.value)
+        }
+
+    @Test
+    fun aLinkThatAlreadyHappenedOpensTheDevice() =
+        runTest(dispatcher) {
+            val handshake =
+                FakeLinkHandshakeRepository().apply {
+                    claimResult =
+                        ClaimOutcome.Claimed(link.copy(alreadyLinked = true))
+                }
+            val vm = viewModel(handshake)
+            runCurrent()
+            assertEquals(LinkConfirmState.Linked("dev-1"), vm.state.value)
+        }
+
+    @Test
+    fun theSameNameIsNotSavedTwice() =
+        runTest(dispatcher) {
+            val handshake = handshake()
+            val vm = viewModel(handshake)
+            runCurrent()
+            vm.onNameChange("Kitchen")
+            advanceTimeBy(900)
+            runCurrent()
+            vm.onNameChange("Kitchen ")
+            advanceTimeBy(900)
+            runCurrent()
+            assertEquals(2, handshake.claims.size)
         }
 
     @Test
@@ -151,7 +190,7 @@ class LinkConfirmViewModelTest {
             val vm = viewModel(handshake)
             runCurrent()
             vm.onNameChange("   ")
-            advanceTimeBy(500)
+            advanceTimeBy(900)
             runCurrent()
             assertEquals(1, handshake.claims.size)
         }

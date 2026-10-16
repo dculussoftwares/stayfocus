@@ -79,6 +79,8 @@ class LinkConfirmViewModel
 
         private val edits = MutableSharedFlow<String>(extraBufferCapacity = EDIT_BUFFER)
         private var session: Job? = null
+        private var left = false
+        private var savedName: String? = null
 
         init {
             start()
@@ -97,7 +99,17 @@ class LinkConfirmViewModel
          * child's later "Allow" is refused. Runs to the end even though the screen is going away.
          */
         fun cancel() {
-            if (mutableState.value !is LinkConfirmState.Waiting) return
+            when (mutableState.value) {
+                is LinkConfirmState.Waiting -> withdraw()
+
+                // The claim is still on its way and may commit after the screen is gone: withdraw it once it has.
+                LinkConfirmState.Claiming -> left = true
+
+                else -> Unit
+            }
+        }
+
+        private fun withdraw() {
             viewModelScope.launch { withContext(NonCancellable) { handshake.cancel(token) } }
         }
 
@@ -108,9 +120,24 @@ class LinkConfirmViewModel
                 viewModelScope.launch {
                     when (val outcome = handshake.claim(token, deviceName = null)) {
                         is ClaimOutcome.Claimed -> {
-                            _name.value = outcome.link.model.take(MAX_NAME_LENGTH)
-                            mutableState.value = LinkConfirmState.Waiting(outcome.link.code)
-                            mutableState.value = watch(outcome.link)
+                            val link = outcome.link
+                            when {
+                                link.alreadyLinked -> {
+                                    mutableState.value = LinkConfirmState.Linked(link.deviceId)
+                                }
+
+                                left -> {
+                                    // The parent left before the claim came back: nobody is looking at this code.
+                                    withdraw()
+                                }
+
+                                else -> {
+                                    _name.value = link.model.take(MAX_NAME_LENGTH)
+                                    savedName = _name.value
+                                    mutableState.value = LinkConfirmState.Waiting(link.code)
+                                    mutableState.value = watch(link)
+                                }
+                            }
                         }
 
                         is ClaimOutcome.Failed -> {
@@ -128,7 +155,11 @@ class LinkConfirmViewModel
                 val rename =
                     launch {
                         edits.debounce(RENAME_DEBOUNCE_MS).collect { value ->
-                            if (value.isNotBlank()) handshake.claim(token, value.trim())
+                            val trimmed = value.trim()
+                            // One call per distinct name: every call uses a rate-limit slot and an App Check token.
+                            if (trimmed.isNotEmpty() && trimmed != savedName) {
+                                if (handshake.claim(token, trimmed) is ClaimOutcome.Claimed) savedName = trimmed
+                            }
                         }
                     }
                 val ending: Flow<LinkConfirmState?> =
@@ -159,7 +190,7 @@ class LinkConfirmViewModel
 
         private companion object {
             const val MAX_NAME_LENGTH = 60
-            const val RENAME_DEBOUNCE_MS = 400L
+            const val RENAME_DEBOUNCE_MS = 800L
             const val EDIT_BUFFER = 8
             const val EXPIRY_GRACE_MS = 3_000L
         }

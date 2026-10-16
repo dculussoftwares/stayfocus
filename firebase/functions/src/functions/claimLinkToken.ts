@@ -23,6 +23,8 @@ export interface ClaimResult {
   deviceId: string;
   /** Epoch milliseconds; the child's consent must arrive before this. */
   expiresAtMillis: number;
+  /** True when the child had already allowed this link (the parent app was away): open the device. */
+  linked?: true;
 }
 
 /**
@@ -35,7 +37,7 @@ export async function claimToken(
   uid: string,
   token: string,
   deviceName: string | undefined,
-  now: Date = new Date(),
+  now?: Date,
   cancel = false,
 ): Promise<ClaimResult | { cancelled: true }> {
   const ref = db.collection(LINK_TOKENS).doc(token);
@@ -43,15 +45,21 @@ export async function claimToken(
   const name = deviceName?.trim() || undefined;
 
   return db.runTransaction(async (tx) => {
+    // Read again on every attempt: a retried transaction must not judge expiry by the time it first started.
+    const at = now ?? new Date();
     const [snap, parentSnap] = await Promise.all([tx.get(ref), tx.get(parentRef)]);
     if (!snap.exists) throw linkFailure("invalid");
     const data = snap.data() as LinkTokenData;
-    if (isExpired(data, now)) throw linkFailure("expired");
+    if (!cancel && data.status === "used" && data.claimedBy === uid && data.code && data.deviceId) {
+      // The child allowed it while this phone was away (app restarted): report it as linked instead of failing.
+      return { ...result(data, data.code, data.deviceId), linked: true as const };
+    }
+    if (isExpired(data, at)) throw linkFailure("expired");
 
     if (cancel) {
       // The parent says the codes do not match (or leaves): the child can no longer approve this token.
       if (data.status === "claimed" && data.claimedBy === uid) {
-        tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(now) });
+        tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(at) });
         return { cancelled: true as const };
       }
       throw linkFailure("used");
@@ -68,7 +76,7 @@ export async function claimToken(
     tx.update(ref, {
       status: "claimed",
       claimedBy: uid,
-      claimedAt: Timestamp.fromDate(now),
+      claimedAt: Timestamp.fromDate(at),
       code,
       deviceId,
       deviceName: name ?? data.model,

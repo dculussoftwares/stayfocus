@@ -88,5 +88,7 @@ variable "deploy_iam_grantable_roles" {
     "roles/cloudbuild.builds.builder",
     # M6-06: deleteAccount deletes the caller's Firebase Auth user.
     "roles/firebaseauth.admin",
+    # M7-07: claimLinkToken and approveLink consume App Check tokens (replay protection).
+    "roles/firebaseappcheck.tokenVerifier",
   ]
 }

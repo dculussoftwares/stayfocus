@@ -10,6 +10,7 @@ import com.dculus.stayfocused.kids.monitoring.MonitoringControl
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -67,14 +68,26 @@ class KidsConsentViewModel
         private companion object {
             /** The parent's claim reaches this phone within moments; past this the connection is the problem. */
             const val CLAIM_WAIT_MILLIS = 15_000L
+
+            /** This phone's clock may run a little fast; the server alone decides whether an answer is too late. */
+            const val EXPIRY_GRACE_MILLIS = 10_000L
         }
 
         private val token: String = savedState.get<String>("token").orEmpty()
         private val _state = MutableStateFlow(KidsConsentUiState())
         val state: StateFlow<KidsConsentUiState> = _state.asStateFlow()
 
+        private var loading: Job? = null
+
         init {
-            viewModelScope.launch { loadConsent() }
+            retryConsent()
+        }
+
+        /** (Re)starts watching this token for the parent's claim; the token is kept while it is still valid. */
+        fun retryConsent() {
+            loading?.cancel()
+            _state.update { it.copy(error = null) }
+            loading = viewModelScope.launch { loadConsent() }
         }
 
         @Suppress("TooGenericExceptionCaught")
@@ -100,11 +113,14 @@ class KidsConsentViewModel
             }
         }
 
-        /** After the token's deadline the server refuses an answer: say so instead of leaving "Allow" on screen. */
+        /**
+         * After the token's deadline the server refuses an answer: say so instead of leaving "Allow" on screen. Never
+         * while an answer is on its way (its own result says what happened) and not before a small grace.
+         */
         private suspend fun expireAt(expiresAtMillis: Long) {
             if (expiresAtMillis <= 0) return
-            delay((expiresAtMillis - clock.millis()).coerceAtLeast(0))
-            if (_state.value.outcome == null) _state.update { it.copy(working = false, error = ConsentError.Expired) }
+            delay((expiresAtMillis - clock.millis()).coerceAtLeast(0) + EXPIRY_GRACE_MILLIS)
+            _state.update { if (it.working || it.outcome != null) it else it.copy(error = ConsentError.Expired) }
         }
 
         /** "Allow and link". [fallbackName] is how the parent is called when their profile has no name. */
@@ -133,13 +149,26 @@ class KidsConsentViewModel
             }
         }
 
-        /** "Cancel": tells the parent no, then shows a new code. Leaves even when the call cannot get through. */
+        /**
+         * "Cancel" (and system Back): tells the parent no, then shows a new code. When the decline cannot get through
+         * the screen stays, so the child is never left believing a still-open claim was cancelled.
+         */
         fun cancel() {
             if (_state.value.working) return
+            if (_state.value.code == null) {
+                showNewCode()
+                return
+            }
             _state.update { it.copy(working = true, error = null) }
             viewModelScope.launch {
-                handshake.answer(token, approve = false)
-                _state.update { it.copy(working = false, outcome = ConsentOutcome.ShowNewCode) }
+                val result = handshake.answer(token, approve = false)
+                val error = (result as? ApproveOutcome.Failed)?.reason?.toConsentError()
+                _state.update {
+                    when (error) {
+                        null, ConsentError.Expired -> it.copy(working = false, outcome = ConsentOutcome.ShowNewCode)
+                        else -> it.copy(working = false, error = error)
+                    }
+                }
             }
         }
 

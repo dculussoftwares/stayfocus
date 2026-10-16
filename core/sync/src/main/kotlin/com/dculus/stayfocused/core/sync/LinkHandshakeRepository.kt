@@ -24,6 +24,8 @@ data class ClaimedLink(
     val model: String,
     val deviceId: String,
     val expiresAtMillis: Long,
+    /** True when the child had already allowed this link before this phone asked (the app was away). */
+    val alreadyLinked: Boolean = false,
 )
 
 /** Why a handshake call did not go through, in terms the screens have words for. */
@@ -216,7 +218,7 @@ internal fun Map<*, *>.toClaimedLink(): ClaimedLink? {
     val deviceId = this["deviceId"] as? String
     val expires = (this["expiresAtMillis"] as? Number)?.toLong()
     if (code == null || deviceId == null || expires == null) return null
-    return ClaimedLink(code, this["model"] as? String ?: "", deviceId, expires)
+    return ClaimedLink(code, this["model"] as? String ?: "", deviceId, expires, this["linked"] == true)
 }
 
 internal fun Map<*, *>.toApproveOutcome(): ApproveOutcome? =
