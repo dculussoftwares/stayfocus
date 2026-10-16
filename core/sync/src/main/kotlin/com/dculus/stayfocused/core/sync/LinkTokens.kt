@@ -20,7 +20,7 @@ object LinkTokens {
 
     private val tokenPattern = Regex("^[A-Za-z0-9_-]{22}$")
 
-    /** The expiry stored for a token made at [nowMillis]: whole seconds (Firestore keeps seconds here), skew margin off. */
+    /** The stored expiry for a token made at [nowMillis]: whole seconds, with the clock-skew margin taken off. */
     fun expiryFor(nowMillis: Long): Long =
         (nowMillis + TTL_MILLIS - CLOCK_SKEW_MARGIN_MILLIS) / MILLIS_PER_SECOND * MILLIS_PER_SECOND
 
