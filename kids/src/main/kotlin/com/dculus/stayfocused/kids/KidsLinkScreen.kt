@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,7 +52,7 @@ internal fun KidsLinkScreen(
 ) {
     val colors = StayFocusedTheme.colors
     Column(
-        modifier.fillMaxSize().padding(StayFocusedTheme.spacing.gap22),
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(StayFocusedTheme.spacing.gap22),
         verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap22),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8)) {

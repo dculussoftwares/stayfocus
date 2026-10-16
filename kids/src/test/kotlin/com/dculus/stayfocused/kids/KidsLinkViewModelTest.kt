@@ -136,8 +136,9 @@ class KidsLinkViewModelTest {
     @Test
     fun aClaimThatArrivesRightAfterTheDeadlineIsStillHonoured() =
         runTest(dispatcher) {
+            val backing = FakeLinkTokenRepository(clock())
             val repository =
-                ShapedRepository(FakeLinkTokenRepository(clock())) { call ->
+                ShapedRepository(backing) { call ->
                     flow {
                         emit(LinkTokenStatus.OPEN)
                         // The second look (after the deadline) learns the claim a moment later.
@@ -153,6 +154,8 @@ class KidsLinkViewModelTest {
             advanceTimeBy(LinkTokens.TTL_MILLIS + 1_000)
             runCurrent()
             assertEquals(KidsLinkState.Claimed, vm.state.value)
+            // The late claim belongs to the first token: no replacement was published.
+            assertEquals(1, backing.created.size)
         }
 
     @Test

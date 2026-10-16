@@ -85,24 +85,30 @@ class KidsLinkViewModel
             retries.trySend(Unit)
         }
 
-        /** Shows tokens until one is claimed (true) or none could be published (false). */
+        /** Shows tokens until one is claimed (true) or none could be published or watched (false). */
         private suspend fun runCycle(): Boolean {
-            while (true) {
-                val session = publish() ?: return false
-                try {
-                    if (watch(session)) return true
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (
-                    @Suppress("TooGenericExceptionCaught") e: Exception,
-                ) {
-                    // The token listener failed (denied, lost): the claim cannot be seen, so offer a retry.
-                    Timber.w(e, "Watching the link token failed")
-                    return false
-                }
-                // Expired unclaimed: loop and publish a new one.
-            }
+            var result: Boolean?
+            do {
+                val session = publish()
+                // Expired unclaimed (null): publish a new one.
+                result = if (session == null) false else watchSafely(session)
+            } while (result == null)
+            return result
         }
+
+        /** Claimed (true), failed to watch (false) or expired unclaimed (null). */
+        private suspend fun watchSafely(session: LinkSession): Boolean? =
+            try {
+                if (watch(session)) true else null
+            } catch (e: CancellationException) {
+                throw e
+            } catch (
+                @Suppress("TooGenericExceptionCaught") e: Exception,
+            ) {
+                // The token listener failed (denied, lost): the claim cannot be seen, so offer a retry.
+                Timber.w(e, "Watching the link token failed")
+                false
+            }
 
         private suspend fun publish(): LinkSession? {
             val uid = deviceAuth.ensureSignedIn() ?: return null

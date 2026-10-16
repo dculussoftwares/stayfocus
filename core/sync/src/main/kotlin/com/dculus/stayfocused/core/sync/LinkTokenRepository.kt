@@ -47,10 +47,10 @@ internal class FirebaseLinkTokenRepository(
             LinkSession(
                 token = LinkTokens.newToken(),
                 code = LinkTokens.newCode(),
-                expiresAtMillis = clock.millis() + LinkTokens.TTL_MILLIS - LinkTokens.CLOCK_SKEW_MARGIN_MILLIS,
+                expiresAtMillis = LinkTokens.expiryFor(clock.millis()),
             )
         return try {
-            // Offline, Firestore queues the write and never completes the task: give up so the screen can offer a retry.
+            // Offline, Firestore queues the write and never completes: give up so the screen can offer a retry.
             withTimeout(PUBLISH_TIMEOUT_MILLIS) {
                 firestore
                     .collection(COLLECTION)
@@ -130,7 +130,7 @@ class FakeLinkTokenRepository(
             LinkSession(
                 LinkTokens.newToken(),
                 LinkTokens.newCode(),
-                clock.millis() + LinkTokens.TTL_MILLIS - LinkTokens.CLOCK_SKEW_MARGIN_MILLIS,
+                LinkTokens.expiryFor(clock.millis()),
             )
         created += session
         statuses[session.token] = MutableStateFlow(LinkTokenStatus.OPEN)
