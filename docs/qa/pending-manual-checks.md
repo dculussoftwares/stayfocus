@@ -114,3 +114,8 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 
 - Check: on a real Kids phone with Firebase configured, the Link screen shows the QR and "WAITING FOR SCAN · 4:5x" counting down; a stock camera app reads it as the text `stayfocused://link?t=...`; the M7-06 scanner opens "Confirm link"; after 5 minutes unscanned a new QR appears (new token); airplane mode shows "Could not get a code..." with "Try again".
 - How: dev build with `google-services.json`, second phone or the stock camera app. Note: the Kids app does not register the `stayfocused://` scheme, so the camera app only shows the text.
+
+## M8-02 Child status reporter
+
+- Check: with a linked Kids phone (the link flow, M7-07, must store the parent uid and device id via `ReportTargetStore`): (1) `users/{uid}/devices/{id}` shows battery, charging, currentApp (a label), `online: true` and a fresh `lastSeen` about every 90 s, and sooner (about 5 s) after switching app or plugging in; (2) `usage/{today}` appears and refreshes at most every 15 min; (3) `apps` lists the launchable apps and follows an install or uninstall within seconds; (4) stopping the service writes `online: false`; (5) the Firestore usage graph shows about 1 status write per 90 s at steady state; (6) battery cost over 2 h: `adb shell dumpsys batterystats --reset`, use the phone normally for 2 h, then `adb shell dumpsys batterystats com.dculus.stayfocused.kids` (or Battery Historian) and note the percentage in the PR/issue.
+- How: dev build with `google-services.json` on a physical device.

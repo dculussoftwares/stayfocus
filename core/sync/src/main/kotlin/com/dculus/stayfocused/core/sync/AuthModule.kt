@@ -47,6 +47,16 @@ internal object AuthModule {
             NoLinkTokenRepository
         }
 
+    /** The Kids phone's status, usage and app-list writes; none without Firebase. */
+    @Provides
+    @Singleton
+    fun childStatus(availability: FirebaseAvailability): ChildStatusRepository =
+        if (availability.isConfigured) {
+            FirebaseChildStatusRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoChildStatusRepository
+        }
+
     @Provides
     @Singleton
     fun accountDeletion(

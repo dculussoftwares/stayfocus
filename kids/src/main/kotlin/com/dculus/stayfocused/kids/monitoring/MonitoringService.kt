@@ -13,9 +13,19 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
+import com.dculus.stayfocused.core.sync.DeviceTarget
 import com.dculus.stayfocused.kids.MainActivity
 import com.dculus.stayfocused.kids.R
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 /**
@@ -26,6 +36,16 @@ import javax.inject.Inject
 class MonitoringService : Service() {
     @Inject
     internal lateinit var linkStore: ParentLinkStore
+
+    @Inject
+    internal lateinit var targetStore: ReportTargetStore
+
+    @Inject
+    internal lateinit var reporter: ChildReporter
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var reporting: Job? = null
+    private var runningTarget: DeviceTarget? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -51,9 +71,38 @@ class MonitoringService : Service() {
             // Not linked, or notifications are off (the notice would be invisible): stop rather than run unseen.
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
+            reporting?.cancel()
             return START_NOT_STICKY
         }
+        // (Re)start the reports: the service is started again after linking, when the target becomes known.
+        val previous = reporting
+        val target = targetStore.target
+        reporting =
+            if (target == null) {
+                previous?.cancel()
+                runningTarget = null
+                null
+            } else if (target == runningTarget && previous?.isActive == true) {
+                // Started again only to repost the notification: keep the running reports.
+                previous
+            } else {
+                runningTarget = target
+                // Stop the old run right now, even if an intermediate replacement never gets to run.
+                previous?.cancel()
+                // ATOMIC: the body runs even if a later restart cancels this job before it starts, so the chain of
+                // joins keeps every goodbye ("offline") ahead of the next run's first "online".
+                scope.launch(start = CoroutineStart.ATOMIC) {
+                    withContext(NonCancellable) { previous?.join() }
+                    reporter.run(target)
+                }
+            }
         return START_STICKY
+    }
+
+    override fun onDestroy() {
+        // Cancelling lets the status reporter say "offline" on its way out.
+        scope.cancel()
+        super.onDestroy()
     }
 
     companion object {
