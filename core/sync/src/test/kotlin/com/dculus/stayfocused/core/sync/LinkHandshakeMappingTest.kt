@@ -15,6 +15,16 @@ class LinkHandshakeMappingTest {
     }
 
     @Test
+    fun theServersReasonMapsToAFailure() {
+        assertEquals(LinkFailure.Invalid, reasonToFailure("invalid"))
+        assertEquals(LinkFailure.Expired, reasonToFailure("expired"))
+        assertEquals(LinkFailure.Used, reasonToFailure("used"))
+        assertEquals(LinkFailure.NotClaimed, reasonToFailure("not_claimed"))
+        assertNull(reasonToFailure("something-new"))
+        assertNull(reasonToFailure(null))
+    }
+
+    @Test
     fun anythingElseIsOther() {
         assertEquals(LinkFailure.Other, IllegalStateException("x").toLinkFailure())
     }

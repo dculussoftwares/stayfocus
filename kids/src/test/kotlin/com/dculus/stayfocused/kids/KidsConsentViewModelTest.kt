@@ -10,6 +10,7 @@ import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -17,6 +18,9 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneOffset
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
@@ -40,6 +44,7 @@ class KidsConsentViewModelTest {
     private val handshake = FakeLinkHandshakeRepository()
     private val store = MemoryStore()
     private val control = CountingControl()
+    private val clock = Clock.fixed(Instant.ofEpochMilli(0), ZoneOffset.UTC)
 
     @Before
     fun setUp() = Dispatchers.setMain(dispatcher)
@@ -47,7 +52,8 @@ class KidsConsentViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = KidsConsentViewModel(SavedStateHandle(mapOf("token" to TOKEN)), handshake, store, control)
+    private fun viewModel() =
+        KidsConsentViewModel(SavedStateHandle(mapOf("token" to TOKEN)), handshake, store, control, clock)
 
     @Test
     fun showsTheServersCodeAndTheParentsNameOnceTheClaimIsSeen() =
@@ -154,6 +160,28 @@ class KidsConsentViewModelTest {
             runCurrent()
             assertEquals(ConsentOutcome.Linked, vm.state.value.outcome)
             assertNull(vm.state.value.error)
+        }
+
+    @Test
+    fun allowingIsWithdrawnWhenTheTokenRunsOut() =
+        runTest(dispatcher) {
+            handshake.pushConsent(ConsentInfo("482913", "Asha", expiresAtMillis = 60_000))
+            val vm = viewModel()
+            runCurrent()
+            assertNull(vm.state.value.error)
+            advanceTimeBy(60_001)
+            runCurrent()
+            assertEquals(ConsentError.Expired, vm.state.value.error)
+        }
+
+    @Test
+    fun noClaimWithinTheWaitIsAConnectionProblemNotAnExpiredCode() =
+        runTest(dispatcher) {
+            val vm = viewModel()
+            advanceTimeBy(16_000)
+            runCurrent()
+            assertEquals(ConsentError.Network, vm.state.value.error)
+            assertNull(vm.state.value.code)
         }
 
     @Test

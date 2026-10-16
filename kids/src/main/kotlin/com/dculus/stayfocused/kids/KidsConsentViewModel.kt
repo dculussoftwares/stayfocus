@@ -10,13 +10,16 @@ import com.dculus.stayfocused.kids.monitoring.MonitoringControl
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
+import java.time.Clock
 import javax.inject.Inject
 
 /** What went wrong on the Consent screen. */
@@ -59,7 +62,13 @@ class KidsConsentViewModel
         private val handshake: LinkHandshakeRepository,
         private val linkStore: ParentLinkStore,
         private val launcher: MonitoringControl,
+        private val clock: Clock,
     ) : ViewModel() {
+        private companion object {
+            /** The parent's claim reaches this phone within moments; past this the connection is the problem. */
+            const val CLAIM_WAIT_MILLIS = 15_000L
+        }
+
         private val token: String = savedState.get<String>("token").orEmpty()
         private val _state = MutableStateFlow(KidsConsentUiState())
         val state: StateFlow<KidsConsentUiState> = _state.asStateFlow()
@@ -71,15 +80,31 @@ class KidsConsentViewModel
         @Suppress("TooGenericExceptionCaught")
         private suspend fun loadConsent() {
             try {
-                val info = handshake.observeConsent(token).first()
+                val info = withTimeoutOrNull(CLAIM_WAIT_MILLIS) { handshake.observeConsent(token).first() }
+                if (info == null) {
+                    _state.update { it.copy(error = ConsentError.Network) }
+                    return
+                }
                 _state.update { it.copy(code = info.code, parentName = info.parentName.ifBlank { null }) }
+                expireAt(info.expiresAtMillis)
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: Exception) {
-                // The token cannot be read (gone, denied): nothing to consent to.
-                Timber.w(e, "Watching the claimed link token failed")
+            } catch (e: NoSuchElementException) {
+                // No claim to show (no Firebase in this build): nothing to consent to.
+                Timber.w(e, "No claimed link token to show")
                 _state.update { it.copy(error = ConsentError.Expired) }
+            } catch (e: Exception) {
+                // The listener died (connection lost, denied): the claim may still be valid, so a new code is offered.
+                Timber.w(e, "Watching the claimed link token failed")
+                _state.update { it.copy(error = ConsentError.Network) }
             }
+        }
+
+        /** After the token's deadline the server refuses an answer: say so instead of leaving "Allow" on screen. */
+        private suspend fun expireAt(expiresAtMillis: Long) {
+            if (expiresAtMillis <= 0) return
+            delay((expiresAtMillis - clock.millis()).coerceAtLeast(0))
+            if (_state.value.outcome == null) _state.update { it.copy(working = false, error = ConsentError.Expired) }
         }
 
         /** "Allow and link". [fallbackName] is how the parent is called when their profile has no name. */

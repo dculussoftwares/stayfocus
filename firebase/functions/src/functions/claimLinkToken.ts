@@ -36,7 +36,8 @@ export async function claimToken(
   token: string,
   deviceName: string | undefined,
   now: Date = new Date(),
-): Promise<ClaimResult> {
+  cancel = false,
+): Promise<ClaimResult | { cancelled: true }> {
   const ref = db.collection(LINK_TOKENS).doc(token);
   const parentRef = db.collection("users").doc(uid);
   const name = deviceName?.trim() || undefined;
@@ -47,6 +48,14 @@ export async function claimToken(
     const data = snap.data() as LinkTokenData;
     if (isExpired(data, now)) throw linkFailure("expired");
 
+    if (cancel) {
+      // The parent says the codes do not match (or leaves): the child can no longer approve this token.
+      if (data.status === "claimed" && data.claimedBy === uid) {
+        tx.update(ref, { status: "declined", answeredAt: Timestamp.fromDate(now) });
+        return { cancelled: true as const };
+      }
+      throw linkFailure("used");
+    }
     if (data.status === "claimed" && data.claimedBy === uid && data.code && data.deviceId) {
       if (name !== undefined) tx.update(ref, { deviceName: name });
       return result(data, data.code, data.deviceId);
@@ -82,14 +91,17 @@ function firstName(displayName: unknown): string {
 /** The callable's configuration, exported so tests exercise the real checks without the Functions framework. */
 export const claimLinkTokenConfig = {
   name: "claimLinkToken",
-  input: z.strictObject({ token: tokenSchema, deviceName: z.string().trim().min(1).max(MAX_NAME).optional() }),
+  input: z.strictObject({ token: tokenSchema,
+    deviceName: z.string().trim().min(1).max(MAX_NAME).optional(),
+    cancel: z.literal(true).optional(),
+  }),
   // Parents only: the Kids app signs in anonymously.
   authorize: ({ anonymous }: { anonymous: boolean }) => !anonymous,
   rateLimit: { max: 30, windowSeconds: 3600 },
   // One-shot: each call needs a fresh App Check token, so a captured request cannot be replayed.
   consumeAppCheckToken: true,
-  handler: async ({ uid, db, data }: { uid: string; db: Firestore; data: { token: string; deviceName?: string } }) => {
-    const claimed = await claimToken(db, uid, data.token, data.deviceName);
+  handler: async ({ uid, db, data }: { uid: string; db: Firestore; data: { token: string; deviceName?: string; cancel?: true } }) => {
+    const claimed = await claimToken(db, uid, data.token, data.deviceName, new Date(), data.cancel === true);
     logInfo("link token claimed", { fn: "claimLinkToken", outcome: "ok" });
     return claimed;
   },

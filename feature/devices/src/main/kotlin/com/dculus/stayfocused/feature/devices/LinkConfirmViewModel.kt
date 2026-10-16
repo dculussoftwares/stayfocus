@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.time.Clock
 import javax.inject.Inject
@@ -90,6 +92,15 @@ class LinkConfirmViewModel
             edits.tryEmit(limited)
         }
 
+        /**
+         * Withdraws the claim when the parent leaves while waiting (codes do not match, or changed their mind), so the
+         * child's later "Allow" is refused. Runs to the end even though the screen is going away.
+         */
+        fun cancel() {
+            if (mutableState.value !is LinkConfirmState.Waiting) return
+            viewModelScope.launch { withContext(NonCancellable) { handshake.cancel(token) } }
+        }
+
         private fun start() {
             session?.cancel()
             mutableState.value = LinkConfirmState.Claiming
@@ -136,7 +147,8 @@ class LinkConfirmViewModel
                                 emit(LinkConfirmState.Failed(LinkFailure.Other))
                             },
                         flow {
-                            delay((link.expiresAtMillis - clock.millis()).coerceAtLeast(0))
+                            // A little past the deadline, so an approval that committed just in time still wins.
+                            delay((link.expiresAtMillis - clock.millis()).coerceAtLeast(0) + EXPIRY_GRACE_MS)
                             emit(LinkConfirmState.Failed(LinkFailure.Expired))
                         },
                     )
@@ -149,5 +161,6 @@ class LinkConfirmViewModel
             const val MAX_NAME_LENGTH = 60
             const val RENAME_DEBOUNCE_MS = 400L
             const val EDIT_BUFFER = 8
+            const val EXPIRY_GRACE_MS = 3_000L
         }
     }

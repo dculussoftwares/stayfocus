@@ -58,6 +58,8 @@ enum class LinkAnswer { Pending, Linked, Declined }
 data class ConsentInfo(
     val code: String,
     val parentName: String,
+    /** Epoch milliseconds after which the server refuses an answer; 0 when unknown. */
+    val expiresAtMillis: Long = 0,
 )
 
 sealed interface ApproveOutcome {
@@ -84,6 +86,9 @@ interface LinkHandshakeRepository {
         token: String,
         deviceName: String?,
     ): ClaimOutcome
+
+    /** Parent: withdraws the claim (codes do not match, or the parent left) so the child can no longer allow it. */
+    suspend fun cancel(token: String)
 
     /** Parent: the child's answer to a claimed token. The flow fails when the listener is denied or lost. */
     fun observeAnswer(token: String): Flow<LinkAnswer>
@@ -130,6 +135,18 @@ internal class FirebaseLinkHandshakeRepository(
             ClaimOutcome.Failed(e.toLinkFailure())
         }
 
+    @Suppress("TooGenericExceptionCaught")
+    override suspend fun cancel(token: String) {
+        try {
+            callable(CLAIM_LINK_FUNCTION).call(mapOf("token" to token, "cancel" to true)).await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Best effort: the token still dies on its own within 5 minutes.
+            Timber.w(e, "Withdrawing the link claim failed")
+        }
+    }
+
     override fun observeAnswer(token: String): Flow<LinkAnswer> =
         snapshots(token).map { snapshot ->
             when (snapshot.getString("status")) {
@@ -148,7 +165,13 @@ internal class FirebaseLinkHandshakeRepository(
                     } else if (snapshot != null && snapshot.getString("status") == "claimed") {
                         val code = snapshot.getString("code")
                         if (code != null) {
-                            trySend(ConsentInfo(code, snapshot.getString("parentName").orEmpty()))
+                            trySend(
+                                ConsentInfo(
+                                    code,
+                                    snapshot.getString("parentName").orEmpty(),
+                                    snapshot.getTimestamp("expiresAt")?.toDate()?.time ?: 0L,
+                                ),
+                            )
                         }
                     }
                 }
@@ -232,12 +255,16 @@ internal fun Throwable.toLinkFailure(): LinkFailure =
     }
 
 private fun FirebaseFunctionsException.toFunctionsFailure(): LinkFailure =
-    when ((details as? Map<*, *>)?.get("reason") as? String) {
+    reasonToFailure((details as? Map<*, *>)?.get("reason") as? String) ?: toTransportFailure()
+
+/** The server's `reason` detail (see linkToken.ts in the functions source) as a failure; null when unknown. */
+internal fun reasonToFailure(reason: String?): LinkFailure? =
+    when (reason) {
         "invalid" -> LinkFailure.Invalid
         "expired" -> LinkFailure.Expired
         "used" -> LinkFailure.Used
         "not_claimed" -> LinkFailure.NotClaimed
-        else -> toTransportFailure()
+        else -> null
     }
 
 private fun FirebaseFunctionsException.toTransportFailure(): LinkFailure =
@@ -261,6 +288,8 @@ internal object NoLinkHandshakeRepository : LinkHandshakeRepository {
         token: String,
         deviceName: String?,
     ): ClaimOutcome = ClaimOutcome.Failed(LinkFailure.Other)
+
+    override suspend fun cancel(token: String) = Unit
 
     override fun observeAnswer(token: String): Flow<LinkAnswer> = emptyFlow()
 
@@ -293,6 +322,13 @@ class FakeLinkHandshakeRepository : LinkHandshakeRepository {
     ): ClaimOutcome {
         claims += token to deviceName
         return claimResult
+    }
+
+    /** Every token the parent withdrew, oldest first. */
+    val withdrawn = mutableListOf<String>()
+
+    override suspend fun cancel(token: String) {
+        withdrawn += token
     }
 
     override fun observeAnswer(token: String): Flow<LinkAnswer> = parentAnswers

@@ -52,7 +52,10 @@ internal fun LinkConfirmRoute(
         state = state,
         name = name,
         onNameChange = viewModel::onNameChange,
-        onBack = onBack,
+        onBack = {
+            viewModel.cancel()
+            onBack()
+        },
         onRetry = viewModel::retry,
     )
 }

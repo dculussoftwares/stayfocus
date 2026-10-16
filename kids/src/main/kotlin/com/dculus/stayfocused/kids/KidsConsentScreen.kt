@@ -107,7 +107,7 @@ internal fun KidsConsentScreen(
                 modifier = Modifier.testTag(KIDS_CONSENT_ERROR_TAG),
             )
         }
-        if (state.error == ConsentError.Expired) {
+        if (state.error == ConsentError.Expired || (state.code == null && state.error != null)) {
             PrimaryButton(
                 text = stringResource(R.string.kids_consent_new_code),
                 onClick = onShowNewCode,

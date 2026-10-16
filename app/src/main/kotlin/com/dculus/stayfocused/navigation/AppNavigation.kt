@@ -23,7 +23,7 @@ import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
-import com.dculus.stayfocused.core.navigation.LinkConfirm
+import com.dculus.stayfocused.core.navigation.LinkAdd
 import com.dculus.stayfocused.core.navigation.LinkScan
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
@@ -235,10 +235,10 @@ private fun AppNavHost(
                 onBack = { navController.popBackStack() },
                 onLinked = { deviceId, message ->
                     showToast(message)
-                    // The handshake is over: Back from the new phone returns to Devices, not to Confirm link.
+                    // The handshake is over: Back from the new phone returns to Devices, not to the link steps.
                     navController.navigateToRemoteDevice(
                         deviceId,
-                        navOptions { popUpTo<LinkConfirm> { inclusive = true } },
+                        navOptions { popUpTo<LinkAdd> { inclusive = true } },
                     )
                 },
                 viewModelProvider = linkConfirmViewModel,

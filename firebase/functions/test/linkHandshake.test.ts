@@ -149,13 +149,16 @@ describe("pairing handshake", () => {
       expect(await reason(claim(asParent(`p-${randomUUID()}`, { token })))).toBe("used");
     });
 
-    it("a used token cannot be approved twice (one device only)", async () => {
+    it("approving a used token again returns the same link and creates no second device", async () => {
       const { parent, child, token } = await scene();
       await claim(asParent(parent, { token }));
-      await approve(asChild(child, { token, approve: true }));
+      const first = await approve(asChild(child, { token, approve: true }));
 
-      expect(await reason(approve(asChild(child, { token, approve: true })))).toBe("used");
+      // The child never got the answer and asks again.
+      expect(await approve(asChild(child, { token, approve: true }))).toEqual(first);
       expect((await db.collection("users").doc(parent).collection("devices").get()).size).toBe(1);
+      // Declining a token that is already used is refused.
+      expect(await reason(approve(asChild(child, { token, approve: false })))).toBe("used");
     });
 
     it("refuses a request whose App Check token was already consumed", async () => {
@@ -215,11 +218,37 @@ describe("pairing handshake", () => {
       expect(await code(claim(asChild(child, { token })))).toBe("permission-denied");
     });
 
-    it("refuses a parent whose account vanished before consent", async () => {
+    it("a deleted parent account (its claimed token is deleted) cannot be linked to", async () => {
       const { parent, child, token } = await scene();
       await claim(asParent(parent, { token }));
-      await db.collection("users").doc(parent).delete();
+      await db.collection("linkTokens").doc(token).delete();
       expect(await reason(approve(asChild(child, { token, approve: true })))).toBe("invalid");
+    });
+
+    it("a parent account cannot approve its own token", async () => {
+      const { parent, token } = await scene();
+      await db.collection("linkTokens").doc(token).update({ childUid: parent });
+      await claim(asParent(parent, { token }));
+      expect(await code(approve(asParent(parent, { token, approve: true })))).toBe("permission-denied");
+    });
+  });
+
+  describe("the parent cancels", () => {
+    it("blocks the child's later Allow", async () => {
+      const { parent, child, token } = await scene();
+      const { deviceId } = (await claim(asParent(parent, { token }))) as { deviceId: string };
+      expect(await claim(asParent(parent, { token, cancel: true }))).toEqual({ cancelled: true });
+
+      expect((await tokenDoc(token)).status).toBe("declined");
+      expect(await reason(approve(asChild(child, { token, approve: true })))).toBe("used");
+      expect((await db.collection("users").doc(parent).collection("devices").doc(deviceId).get()).exists).toBe(false);
+    });
+
+    it("only the claiming parent can cancel", async () => {
+      const { parent, token } = await scene();
+      await claim(asParent(parent, { token }));
+      expect(await reason(claim(asParent(`p-${randomUUID()}`, { token, cancel: true })))).toBe("used");
+      expect((await tokenDoc(token)).status).toBe("claimed");
     });
   });
 
@@ -262,7 +291,7 @@ describe("pairing handshake", () => {
     const seen = new Set<string>();
     for (let i = 0; i < 40; i++) {
       const { parent, token } = await scene();
-      seen.add((await claimToken(db, parent, token, undefined)).code);
+      seen.add(((await claimToken(db, parent, token, undefined)) as { code: string }).code);
     }
     for (const c of seen) expect(c).toMatch(/^\d{6}$/);
     expect(seen.size).toBeGreaterThan(30);

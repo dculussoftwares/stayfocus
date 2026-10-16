@@ -81,9 +81,31 @@ class LinkConfirmViewModelTest {
             advanceTimeBy(59_000)
             runCurrent()
             assertEquals(LinkConfirmState.Waiting("482913"), vm.state.value)
-            advanceTimeBy(1_001)
+            advanceTimeBy(4_001)
             runCurrent()
             assertEquals(LinkConfirmState.Failed(LinkFailure.Expired), vm.state.value)
+        }
+
+    @Test
+    fun leavingWhileWaitingWithdrawsTheClaim() =
+        runTest(dispatcher) {
+            val handshake = handshake()
+            val vm = viewModel(handshake)
+            runCurrent()
+            vm.cancel()
+            runCurrent()
+            assertEquals(listOf(TOKEN), handshake.withdrawn)
+        }
+
+    @Test
+    fun leavingAfterAFailedClaimWithdrawsNothing() =
+        runTest(dispatcher) {
+            val handshake = FakeLinkHandshakeRepository().apply { claimResult = ClaimOutcome.Failed(LinkFailure.Used) }
+            val vm = viewModel(handshake)
+            runCurrent()
+            vm.cancel()
+            runCurrent()
+            assertEquals(emptyList(), handshake.withdrawn)
         }
 
     @Test

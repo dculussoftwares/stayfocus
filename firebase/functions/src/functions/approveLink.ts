@@ -29,6 +29,11 @@ export async function answerLink(
     if (!snap.exists) throw linkFailure("invalid");
     const data = snap.data() as LinkTokenData;
     if (data.childUid !== childUid) throw new HttpsError("permission-denied", "You are not allowed to do this.");
+    if (data.status === "used" && approve && data.claimedBy && data.deviceId) {
+      // The device was created but the answer never reached the child: the same child may ask again and gets the
+      // same result. Nothing is created twice.
+      return linked(data, data.claimedBy, data.deviceId);
+    }
     if (data.status === "open") throw linkFailure("not_claimed");
     if (data.status !== "claimed" || !data.claimedBy || !data.deviceId) throw linkFailure("used");
     if (isExpired(data, now)) throw linkFailure("expired");
@@ -38,10 +43,8 @@ export async function answerLink(
       return { linked: false as const };
     }
 
+    // Deleting an account deletes the tokens it claimed, so a deleted parent fails above as "invalid".
     const parentRef = db.collection("users").doc(data.claimedBy);
-    // The parent deleted their account while the child was reading: do not create a device in a deleted tree.
-    if (!(await tx.get(parentRef)).exists) throw linkFailure("invalid");
-
     tx.create(parentRef.collection("devices").doc(data.deviceId), {
       name: data.deviceName ?? data.model,
       model: data.model,
@@ -56,19 +59,20 @@ export async function answerLink(
       focusEndsAt: null,
     });
     tx.update(ref, { status: "used", answeredAt: Timestamp.fromDate(now) });
-    return {
-      linked: true as const,
-      parentUid: data.claimedBy,
-      deviceId: data.deviceId,
-      parentName: data.parentName ?? "",
-    };
+    return linked(data, data.claimedBy, data.deviceId);
   });
+}
+
+function linked(data: LinkTokenData, parentUid: string, deviceId: string): ApproveResult {
+  return { linked: true, parentUid, deviceId, parentName: data.parentName ?? "" };
 }
 
 /** The callable's configuration, exported so tests exercise the real checks without the Functions framework. */
 export const approveLinkConfig = {
   name: "approveLink",
   input: z.strictObject({ token: tokenSchema, approve: z.boolean() }),
+  // The Kids app signs in anonymously. A parent account must not be able to consent to a token it minted itself.
+  authorize: ({ anonymous }: { anonymous: boolean }) => anonymous,
   rateLimit: { max: 20, windowSeconds: 3600 },
   consumeAppCheckToken: true,
   handler: async ({ uid, db, data }: { uid: string; db: Firestore; data: { token: string; approve: boolean } }) => {
