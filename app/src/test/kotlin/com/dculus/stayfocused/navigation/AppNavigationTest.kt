@@ -48,6 +48,7 @@ import com.dculus.stayfocused.core.sync.AiReporter
 import com.dculus.stayfocused.core.sync.BlockDescriber
 import com.dculus.stayfocused.core.sync.FakeAccountDeletionRepository
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
+import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
@@ -71,6 +72,7 @@ import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
+import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import com.dculus.stayfocused.feature.onboarding.SignInViewModel
@@ -148,6 +150,12 @@ class AppNavigationTest {
     private val permissionsViewModel =
         PermissionsViewModel(fakePermissions, FakeSettingsRepository(), Clock.systemUTC())
     private val linkAddViewModel = LinkAddViewModel(FakeAuthRepository())
+    private val linkConfirmViewModel =
+        LinkConfirmViewModel(
+            SavedStateHandle(mapOf("token" to "token")),
+            FakeLinkHandshakeRepository(),
+            Clock.systemUTC(),
+        )
     private val accountAuth = FakeAuthRepository()
     private val accountViewModel =
         AccountViewModel(
@@ -203,6 +211,7 @@ class AppNavigationTest {
                     permissionsViewModel = { permissionsViewModel },
                     accountViewModel = { accountViewModel },
                     linkAddViewModel = { linkAddViewModel },
+                    linkConfirmViewModel = { linkConfirmViewModel },
                 )
             }
         }
