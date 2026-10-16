@@ -47,7 +47,7 @@ class MonitoringService : Service() {
                 0
             },
         )
-        if (!shouldMonitor(parent, NotificationManagerCompat.from(this).areNotificationsEnabled())) {
+        if (!shouldMonitor(parent, noticeVisible(this))) {
             // Not linked, or notifications are off (the notice would be invisible): stop rather than run unseen.
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             stopSelf()
@@ -62,6 +62,16 @@ class MonitoringService : Service() {
 
         /** Sent by the notification's delete intent: Android 14+ lets the user swipe it away, so post it again. */
         const val ACTION_REPOST = "com.dculus.stayfocused.kids.action.REPOST_MONITORING"
+
+        /** False when the user turned notifications off, or blocked this channel, so the notice would be invisible. */
+        internal fun noticeVisible(context: Context): Boolean {
+            val manager = NotificationManagerCompat.from(context)
+            if (!manager.areNotificationsEnabled()) return false
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return true
+            ensureChannel(context)
+            val importance = manager.getNotificationChannel(CHANNEL_ID)?.importance
+            return importance != NotificationManager.IMPORTANCE_NONE
+        }
 
         internal fun ensureChannel(context: Context) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return

@@ -2,7 +2,6 @@ package com.dculus.stayfocused.kids.monitoring
 
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
@@ -19,7 +18,7 @@ class MonitoringLauncher
             val intent = Intent(context, MonitoringService::class.java)
             if (shouldMonitor(
                     linkStore.parentName,
-                    NotificationManagerCompat.from(context).areNotificationsEnabled(),
+                    MonitoringService.noticeVisible(context),
                 )
             ) {
                 try {
