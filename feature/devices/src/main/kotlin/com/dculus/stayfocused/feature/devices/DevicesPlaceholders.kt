@@ -26,11 +26,6 @@ internal fun DevicesRoute(
 }
 
 @Composable
-internal fun LinkConfirmRoute() {
-    NavPlaceholderScreen(title = stringResource(R.string.link_confirm_title))
-}
-
-@Composable
 internal fun RemoteDeviceRoute() {
     NavPlaceholderScreen(title = stringResource(R.string.remote_device_title))
 }

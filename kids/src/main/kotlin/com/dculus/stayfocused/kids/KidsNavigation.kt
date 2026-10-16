@@ -31,7 +31,6 @@ import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.ui.components.BatteryGuidance
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
-import com.dculus.stayfocused.core.ui.components.PlaceholderAction
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
@@ -42,8 +41,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Consent and Home are placeholders
- * until their own stories; they exist now so the route chain and the start logic are in place.
+ * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Home is a placeholder until its own story.
  */
 @Composable
 fun KidsNavigation(
@@ -84,19 +82,23 @@ fun KidsNavigation(
             }
             composable<KidsLink> {
                 KidsLinkRoute(
-                    onClaim = {
+                    onClaim = { token ->
                         navController.navigate(
-                            KidsConsent,
+                            KidsConsent(token),
                             navOptions { popUpTo<KidsLink> { inclusive = true } },
                         )
                     },
                 )
             }
             composable<KidsConsent> {
-                val next = stringResource(R.string.kids_next)
-                NavPlaceholderScreen(
-                    title = stringResource(R.string.kids_consent_title),
-                    actions = listOf(PlaceholderAction(next) { navController.navigate(KidsHome) }),
+                KidsConsentRoute(
+                    onLink = {
+                        navController.navigate(KidsHome, navOptions { popUpTo<KidsConsent> { inclusive = true } })
+                    },
+                    // Declined, or the code ran out: a fresh QR code, with no Consent screen left underneath.
+                    onShowNewCode = {
+                        navController.navigate(KidsLink, navOptions { popUpTo<KidsConsent> { inclusive = true } })
+                    },
                 )
             }
             composable<KidsHome> {

@@ -286,9 +286,11 @@ service cloud.firestore {
 
     // ---------- link tokens (device pairing) ----------
 
-    // The child creates a short-lived token; claiming and approval go through Functions (admin SDK).
+    // The child creates a short-lived token; claiming and approval go through Functions (admin SDK). The child watches
+    // its token, and the parent who claimed it watches the answer (claimed -> used | declined).
     match /linkTokens/{token} {
-      allow read: if signedIn() && resource.data.childUid == request.auth.uid;
+      allow read: if signedIn()
+        && (resource.data.childUid == request.auth.uid || resource.data.get('claimedBy', null) == request.auth.uid);
       allow create: if signedIn()
         && token.size() >= 16 && token.size() <= 128
         && request.resource.data.keys().hasOnly(['childUid', 'model', 'createdAt', 'expiresAt', 'code', 'status'])

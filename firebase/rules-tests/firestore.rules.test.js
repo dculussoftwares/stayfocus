@@ -475,6 +475,12 @@ describe('linkTokens', () => {
     await assertFails(updateDoc(doc(parentDb(), path), { claimedBy: PARENT }));
     await assertFails(deleteDoc(doc(childDb(), path)));
   });
+  it('the parent who claimed the token can read it, nobody else', async () => {
+    await seed(async (db) => setDoc(doc(db, path), { ...tokenDoc(), createdAt: Timestamp.now(), status: 'claimed', claimedBy: PARENT }));
+    await assertSucceeds(getDoc(doc(parentDb(), path)));
+    await assertFails(getDoc(doc(parentDb(OTHER_PARENT), path)));
+    await assertFails(updateDoc(doc(parentDb(), path), { status: 'used' }));
+  });
 });
 
 describe('aiReports', () => {

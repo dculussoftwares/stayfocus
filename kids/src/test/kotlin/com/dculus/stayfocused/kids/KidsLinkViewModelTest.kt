@@ -107,9 +107,10 @@ class KidsLinkViewModelTest {
             val repository = FakeLinkTokenRepository(clock())
             val vm = viewModel(repository)
             runCurrent()
-            repository.claim(repository.created.single().token)
+            val token = repository.created.single().token
+            repository.claim(token)
             runCurrent()
-            assertEquals(KidsLinkState.Claimed, vm.state.value)
+            assertEquals(KidsLinkState.Claimed(token), vm.state.value)
             vm.stop()
         }
 
@@ -166,7 +167,7 @@ class KidsLinkViewModelTest {
             val vm = KidsLinkViewModel(repository, FakeAuth(), clock())
             advanceTimeBy(LinkTokens.TTL_MILLIS + 1_000)
             runCurrent()
-            assertEquals(KidsLinkState.Claimed, vm.state.value)
+            assertEquals(KidsLinkState.Claimed(backing.created.single().token), vm.state.value)
             // The late claim belongs to the first token: no replacement was published.
             assertEquals(1, backing.created.size)
             vm.stop()

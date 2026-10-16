@@ -196,7 +196,7 @@ users/{uid}/devices/{id}/usage/{yyyy-MM-dd}   { totalMins, apps: [{pkg, label, m
 users/{uid}/devices/{id}/apps/{pkg}           { label }               child's launchable apps
 rateLimits/{uid_action}              Functions only, no client access
 linkTokens/{token}                   { childUid, model, createdAt, expiresAt (<= now + 5 min), code (6 digits), status: open, claimedBy? }
-                                     claimedBy and later statuses (claimed|used|declined) are set by Functions only
+                                     claimedBy, code (server-chosen), deviceId, deviceName, parentName and later statuses (claimed|used|declined) are set by Functions only
 ```
 
 ### Security rules (`firebase/firestore.rules`, tested in `firebase/rules-tests`)
@@ -214,7 +214,7 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 | `alerts` | read; update only `dismissed` | read; create (`kind` from the list, `dismissed: false`) |
 | `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps) |
 | `apps/{pkg}` | read | read; write `label` (<= 100), delete |
-| `linkTokens/{token}` | none | create with `childUid == auth.uid`, `expiresAt` in (now, now + 5 min], no `claimedBy`; read own; no update/delete |
+| `linkTokens/{token}` | none | create with `childUid == auth.uid`, `expiresAt` in (now, now + 5 min], no `claimedBy`; read own (the child) or claimed (the parent); no update/delete |
 | `rateLimits/**`, anything else | none | none |
 
 Every client timestamp (`createdAt`, `decidedAt`, `ackAt`, `lastSeen`) must equal the server time (Block `createdAt`/`startedAt` and `focusEndsAt` are plain timestamps). The list contents of `usage.apps` and
