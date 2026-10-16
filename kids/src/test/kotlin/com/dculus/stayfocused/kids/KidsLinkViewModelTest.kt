@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.kids
 
+import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.sync.DeviceAuth
 import com.dculus.stayfocused.core.sync.FakeLinkTokenRepository
 import com.dculus.stayfocused.core.sync.LinkTokenRepository
@@ -8,6 +9,7 @@ import com.dculus.stayfocused.core.sync.LinkTokens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,6 +49,12 @@ class KidsLinkViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
+    /**
+     * The view model keeps renewing tokens forever; runTest would wait for that at the end of the test (it runs
+     * the scheduler until idle), so every test stops it.
+     */
+    private fun KidsLinkViewModel.stop() = viewModelScope.cancel()
+
     private fun TestScope.clock() =
         object : Clock() {
             override fun getZone() = ZoneOffset.UTC
@@ -72,6 +80,7 @@ class KidsLinkViewModelTest {
             assertEquals("4:55", waiting.remaining)
             advanceTimeBy(3_001)
             assertEquals("4:52", assertIs<KidsLinkState.Waiting>(vm.state.value).remaining)
+            vm.stop()
         }
 
     @Test
@@ -89,6 +98,7 @@ class KidsLinkViewModelTest {
                 LinkTokens.uri(repository.created.last().token),
                 assertIs<KidsLinkState.Waiting>(vm.state.value).uri,
             )
+            vm.stop()
         }
 
     @Test
@@ -100,6 +110,7 @@ class KidsLinkViewModelTest {
             repository.claim(repository.created.single().token)
             runCurrent()
             assertEquals(KidsLinkState.Claimed, vm.state.value)
+            vm.stop()
         }
 
     @Test
@@ -113,6 +124,7 @@ class KidsLinkViewModelTest {
             vm.retry()
             runCurrent()
             assertIs<KidsLinkState.Waiting>(vm.state.value)
+            vm.stop()
         }
 
     @Test
@@ -121,6 +133,7 @@ class KidsLinkViewModelTest {
             val vm = viewModel(FakeLinkTokenRepository(clock()), FakeAuth(result = null))
             runCurrent()
             assertEquals(KidsLinkState.Failed, vm.state.value)
+            vm.stop()
         }
 
     /** Delegates to a fake but shapes what `observe` emits. */
@@ -156,6 +169,7 @@ class KidsLinkViewModelTest {
             assertEquals(KidsLinkState.Claimed, vm.state.value)
             // The late claim belongs to the first token: no replacement was published.
             assertEquals(1, backing.created.size)
+            vm.stop()
         }
 
     @Test
@@ -165,6 +179,7 @@ class KidsLinkViewModelTest {
             val vm = KidsLinkViewModel(repository, FakeAuth(), clock())
             runCurrent()
             assertEquals(KidsLinkState.Failed, vm.state.value)
+            vm.stop()
         }
 
     private companion object {
