@@ -32,8 +32,14 @@ class LinkedDevicesMappingTest {
         assertTrue(isOnline(now.minusSeconds(180), now))
         assertFalse(isOnline(now.minusSeconds(181), now))
         assertFalse(isOnline(null, now))
-        assertTrue(isOnline(now.plusSeconds(10), now), "small clock skew is tolerated")
+        assertTrue(isOnline(now.plusSeconds(120), now), "a parent clock that runs behind is tolerated")
         assertFalse(isOnline(now.plusSeconds(3600), now), "a far-future timestamp is not online")
+    }
+
+    @Test
+    fun aGoodbyeWriteTakesAFreshPhoneOffline() {
+        val device = raw(mapOf("online" to false, "lastSeen" to ts(now.minusSeconds(5)))).toLinkedDevice(now)
+        assertFalse(device.online)
     }
 
     @Test

@@ -51,11 +51,14 @@ private const val RETRY_MAX_MS = 30_000L
 private const val RETRY_PERMANENT_MS = 60_000L
 private const val MAX_BACKOFF_SHIFT = 5
 
-/** A child's server timestamp can be a little ahead of this phone's clock; more than this is not believed. */
-private val CLOCK_SKEW: Duration = Duration.ofSeconds(30)
+/**
+ * `lastSeen` is Firestore server time and this phone's clock is not synced to it, so a timestamp slightly ahead of
+ * the clock is believed; one further ahead than the online window itself (a malformed value) is not.
+ */
+private val CLOCK_SKEW: Duration = ONLINE_WINDOW
 private const val MAX_PERCENT = 100
 
-/** Online = reported within the last 3 minutes. The child's `online` flag is ignored: a killed app can't clear it. */
+/** Online = reported within the last 3 minutes (see [CLOCK_SKEW] for the future side). */
 internal fun isOnline(
     lastSeen: Instant?,
     now: Instant,
@@ -86,7 +89,8 @@ internal fun RawDevice.toLinkedDevice(now: Instant): LinkedDevice {
         model = (data["model"] as? String).orEmpty(),
         battery = data["battery"].toIntOrNull()?.coerceIn(0, MAX_PERCENT),
         currentApp = (data["currentApp"] as? String)?.takeIf { it.isNotBlank() },
-        online = isOnline(lastSeen, now),
+        // The child writes online = false when it stops monitoring; a killed app cannot, so lastSeen decides the rest.
+        online = data["online"] != false && isOnline(lastSeen, now),
         lastSeen = lastSeen,
         alerts = alerts,
         requests = requests,
@@ -319,9 +323,15 @@ internal class FirebaseLinkedDevicesRepository(
             ticks()
                 .map { LocalDate.now(clock).toString() }
                 .distinctUntilChanged()
-                .flatMapLatest { date -> device.collection("usage").document(date).snapshots() }
-                .map { it.getLong("totalMins")?.toInt() }
-                .orDefault(null, "usage")
+                .flatMapLatest { date ->
+                    // The default is per date: yesterday's total is cleared at midnight, not kept until the new read.
+                    device
+                        .collection("usage")
+                        .document(date)
+                        .snapshots()
+                        .map { it.getLong("totalMins")?.toInt() }
+                        .orDefault(null, "usage")
+                }
         return combine(alerts, requests, today) { a, r, t -> DeviceExtras(a, r, t) }
     }
 }
