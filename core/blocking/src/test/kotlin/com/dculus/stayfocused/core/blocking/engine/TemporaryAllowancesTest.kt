@@ -76,6 +76,15 @@ class TemporaryAllowancesTest {
             assertTrue(store.observe().first().none { it.pkg == "past" })
         }
 
+    @Test fun clearDropsEveryGrant() =
+        runTest {
+            val store = store()
+            store.grant("a", at(15))
+            store.clear()
+            assertTrue(store.observe().first().isEmpty())
+            assertTrue(store().observe().first().isEmpty())
+        }
+
     @Test fun unreadableStorageStartsOver() =
         runTest {
             prefs.edit().putString("allowances", "not json").commit()

@@ -24,6 +24,9 @@ interface TemporaryAllowances : TemporaryAllowanceSource {
         pkg: String,
         until: Instant,
     )
+
+    /** Drops every grant (the parent who approved them is gone). */
+    fun clear()
 }
 
 /**
@@ -64,6 +67,12 @@ class SharedPreferencesTemporaryAllowances internal constructor(
             }
         save(next)
         state.value = next
+    }
+
+    @Synchronized
+    override fun clear() {
+        save(emptyList())
+        state.value = emptyList()
     }
 
     private fun load(): List<TemporaryAllowance> {

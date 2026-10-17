@@ -172,6 +172,7 @@ class KidsBlockScreenExtras
                         requests.create(target, appLabel(context, pkg), mins) {
                             Timber.w("The request for more time was refused")
                             created?.let(pending::forget)
+                            stage = AskStage.None
                         }
                     created = id
                     if (id.isNotBlank()) pending.remember(id, pkg)

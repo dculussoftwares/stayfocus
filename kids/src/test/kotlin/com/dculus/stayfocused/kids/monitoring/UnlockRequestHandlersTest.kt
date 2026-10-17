@@ -26,6 +26,10 @@ private class FakeAllowances : TemporaryAllowances {
 
     override fun observe(): Flow<List<TemporaryAllowance>> = state
 
+    override fun clear() {
+        state.value = emptyList()
+    }
+
     override fun grant(
         pkg: String,
         until: Instant,

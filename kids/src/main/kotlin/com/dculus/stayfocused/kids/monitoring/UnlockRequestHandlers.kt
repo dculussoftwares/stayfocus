@@ -33,6 +33,9 @@ interface PendingRequestStore {
     fun packageOf(reqId: String): String?
 
     fun forget(reqId: String)
+
+    /** Forgets every request (the parent they were made to is gone). */
+    fun clear()
 }
 
 @Singleton
@@ -54,6 +57,9 @@ internal class SharedPreferencesPendingRequestStore
 
         @Synchronized
         override fun forget(reqId: String) = save(load().filter { it.first != reqId })
+
+        @Synchronized
+        override fun clear() = save(emptyList())
 
         private fun save(entries: List<Pair<String, String>>) {
             val json = JSONArray()
@@ -94,6 +100,8 @@ class FakePendingRequestStore : PendingRequestStore {
     override fun forget(reqId: String) {
         map.remove(reqId)
     }
+
+    override fun clear() = map.clear()
 }
 
 /**

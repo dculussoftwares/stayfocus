@@ -56,12 +56,20 @@ internal class FirebasePushTokenRepository(
             try {
                 val token = messaging.token.await()
                 tokens(uid).document(token).delete().await()
-                messaging.deleteToken().await()
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Timber.w(e, "Removing the push token failed")
+                Timber.w(e, "Removing the push token document failed")
             }
+        }
+        // Even when the document is still there (offline, timed out): a deleted token is refused by FCM, and
+        // notifyParent then removes the stale document, so a signed-out phone stops receiving pushes.
+        try {
+            messaging.deleteToken().await()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Timber.w(e, "Deleting the push token failed")
         }
     }
 }

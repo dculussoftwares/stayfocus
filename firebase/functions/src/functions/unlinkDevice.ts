@@ -1,6 +1,6 @@
 import type { DocumentReference, Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
-import { logInfo } from "../lib/log";
+import { logInfo, logWarn } from "../lib/log";
 import { cleanLabel, defaultNotifyDeps, pushToParent } from "../lib/notify";
 import { secureCallable } from "../lib/secureCallable";
 
@@ -67,7 +67,14 @@ export async function removeDevice(
   // A write that was in flight when the document went (the child reports every 90 s) can leave a stray subcollection
   // document; the rules refuse further writes once the device document is gone, so a second pass leaves nothing.
   await removeSubcollections(db, ref);
-  if (deleted && who === "child") await notify(parentUid, deviceId, deviceName);
+  if (deleted && who === "child") {
+    try {
+      await notify(parentUid, deviceId, deviceName);
+    } catch {
+      // The device is gone; a push that could not be sent must not turn that into an error for the caller.
+      logWarn("unlink notification failed", { fn: "unlinkDevice", outcome: "notify-failed" });
+    }
+  }
   return { ok: true, removed: deleted };
 }
 
