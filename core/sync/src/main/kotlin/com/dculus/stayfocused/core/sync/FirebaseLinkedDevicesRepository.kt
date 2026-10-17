@@ -48,6 +48,7 @@ private const val TICK_MILLIS = 30_000L
 private const val STOP_TIMEOUT_MS = 5_000L
 private const val RETRY_BASE_MS = 1_000L
 private const val RETRY_MAX_MS = 30_000L
+private const val RETRY_PERMANENT_MS = 60_000L
 private const val MAX_BACKOFF_SHIFT = 5
 
 /** A child's server timestamp can be a little ahead of this phone's clock; more than this is not believed. */
@@ -228,9 +229,10 @@ internal class FirebaseLinkedDevicesRepository(
         }
 
     /**
-     * Firestore ends a snapshot flow on its first error, so a listener is re-created with backoff instead. Before each
-     * retry [fallback] (if any) is emitted so a stale value is not kept. A permanent error (denied, bad query) is not
-     * retried: [fallback] is emitted once and the flow ends instead of failing the whole stream.
+     * Firestore ends a snapshot flow on its first error, so a listener is re-created instead: with backoff for a
+     * transient error, and only once a minute for a permanent one (denied, bad query) so access that comes back is
+     * noticed without hammering the server. Before a retry [fallback] is emitted (when [emitOnRetry], or always for a
+     * permanent error) so a stale value is not kept.
      */
     private fun <T> Flow<T>.retrying(
         what: String,
@@ -239,14 +241,17 @@ internal class FirebaseLinkedDevicesRepository(
     ): Flow<T> =
         retryWhen { cause, attempt ->
             Timber.w(cause, "Linked device %s listener stopped", what)
-            if (emitOnRetry || cause.isPermanent()) emit(fallback)
-            if (cause.isPermanent()) {
-                false
-            } else {
-                delay(minOf(RETRY_BASE_MS shl minOf(attempt.toInt(), MAX_BACKOFF_SHIFT), RETRY_MAX_MS))
-                true
-            }
-        }.catch { if (!it.isPermanent()) throw it }
+            val permanent = cause.isPermanent()
+            if (emitOnRetry || permanent) emit(fallback)
+            delay(
+                if (permanent) {
+                    RETRY_PERMANENT_MS
+                } else {
+                    minOf(RETRY_BASE_MS shl minOf(attempt.toInt(), MAX_BACKOFF_SHIFT), RETRY_MAX_MS)
+                },
+            )
+            true
+        }
 
     private fun observe(uid: String): Flow<List<LinkedDevice>> =
         flow {
