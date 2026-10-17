@@ -47,6 +47,7 @@ import com.dculus.stayfocused.feature.block.navigateToBlockEditor
 import com.dculus.stayfocused.feature.block.navigateToBlockWizard
 import com.dculus.stayfocused.feature.block.openBlockInAiMode
 import com.dculus.stayfocused.feature.block.requestBlockAiMode
+import com.dculus.stayfocused.feature.devices.DevicesViewModel
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
 import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
 import com.dculus.stayfocused.feature.devices.devicesScreen
@@ -83,6 +84,7 @@ fun StayFocusedNavigation(
     accountViewModel: (@Composable () -> AccountViewModel)? = null,
     linkAddViewModel: (@Composable () -> LinkAddViewModel)? = null,
     linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)? = null,
+    devicesViewModel: (@Composable () -> DevicesViewModel)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
@@ -112,6 +114,7 @@ fun StayFocusedNavigation(
                 accountViewModel,
                 linkAddViewModel,
                 linkConfirmViewModel,
+                devicesViewModel,
                 toast::show,
             )
             SfToastHost(toast, bottomPadding = 24.dp)
@@ -141,6 +144,7 @@ private fun AppNavHost(
     accountViewModel: (@Composable () -> AccountViewModel)?,
     linkAddViewModel: (@Composable () -> LinkAddViewModel)?,
     linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)?,
+    devicesViewModel: (@Composable () -> DevicesViewModel)?,
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -202,6 +206,7 @@ private fun AppNavHost(
             devicesScreen(
                 onLinkPhone = { navController.navigateToLinkAdd() },
                 onOpenDevice = { navController.navigateToRemoteDevice(it) },
+                viewModelProvider = devicesViewModel,
             )
             insightsScreen(insightsContent)
             accountScreen(

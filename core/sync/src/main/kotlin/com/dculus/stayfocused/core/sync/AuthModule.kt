@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.sync
 
+import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
 import com.dculus.stayfocused.core.data.repository.LocalDataWiper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -8,6 +9,9 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import java.time.Clock
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -102,6 +106,25 @@ internal object AuthModule {
             FirebaseDeviceUnlinkRepository(FirebaseFunctions.getInstance(FUNCTIONS_REGION))
         } else {
             NoDeviceUnlinkRepository
+        }
+
+    /** The parent's linked phones (`users/{uid}/devices`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun linkedDevices(
+        availability: FirebaseAvailability,
+        auth: Provider<AuthRepository>,
+        clock: Clock,
+    ): LinkedDevicesRepository =
+        if (availability.isConfigured) {
+            FirebaseLinkedDevicesRepository(
+                FirebaseFirestore.getInstance(),
+                auth.get(),
+                clock,
+                CoroutineScope(SupervisorJob() + Dispatchers.Default),
+            )
+        } else {
+            NoLinkedDevicesRepository
         }
 
     @Provides

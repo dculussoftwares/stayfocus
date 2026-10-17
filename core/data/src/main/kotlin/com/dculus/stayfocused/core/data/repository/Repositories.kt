@@ -76,7 +76,7 @@ interface SettingsRepository {
 }
 
 interface LinkedDevicesRepository {
-    /** Child phones linked to this one, oldest link first. Empty until device linking ships (M7). */
+    /** Child phones linked to this one, oldest link first. From `:core:sync`; empty without an account or Firebase. */
     fun observeAll(): Flow<List<LinkedDevice>>
 }
 
