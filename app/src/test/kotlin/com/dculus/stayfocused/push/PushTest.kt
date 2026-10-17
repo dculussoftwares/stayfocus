@@ -87,7 +87,7 @@ class RequestAnswererTest {
         }
 
     @Test
-    fun givesUpWhenTheServerDoesNotAnswerInTime() =
+    fun treatsNoAnswerInTimeAsHandedOverBecauseFirestoreKeepsTheWrite() =
         runTest {
             auth.signInWithEmail("p@example.com", "pw")
             val never = CompletableDeferred<Unit>()
@@ -99,6 +99,6 @@ class RequestAnswererTest {
                         minutes: Int,
                     ) = never.await()
                 }
-            assertFalse(RequestAnswerer(auth, hanging).answer(answer, timeoutMillis = 1_000))
+            assertTrue(RequestAnswerer(auth, hanging).answer(answer, timeoutMillis = 1_000))
         }
 }

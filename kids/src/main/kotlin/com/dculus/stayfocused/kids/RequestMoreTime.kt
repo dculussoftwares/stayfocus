@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,7 +70,7 @@ internal fun AskForMoreTime(
     val colors = StayFocusedTheme.colors
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (stage) {
@@ -90,7 +89,10 @@ internal fun AskForMoreTime(
                     color = colors.secondary,
                     textAlign = TextAlign.Center,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     REQUEST_MINUTES_OPTIONS.forEach { mins ->
                         Surface(
                             modifier =
@@ -99,7 +101,7 @@ internal fun AskForMoreTime(
                                     .height(60.dp)
                                     .testTag(ASK_OPTION_TAG_PREFIX + mins)
                                     .clickable(role = Role.Button) { onPick(mins) },
-                            shape = RoundedCornerShape(16.dp),
+                            shape = StayFocusedTheme.shapes.button,
                             color = colors.panel,
                             border = BorderStroke(1.dp, colors.hairline14),
                         ) {
@@ -119,7 +121,7 @@ internal fun AskForMoreTime(
             AskStage.Sent -> {
                 Column(
                     modifier = Modifier.testTag(ASK_SENT_TAG),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(

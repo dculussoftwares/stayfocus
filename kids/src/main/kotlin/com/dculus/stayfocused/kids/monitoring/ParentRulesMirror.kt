@@ -109,6 +109,10 @@ class ParentRulesMirror
             for (id in local.keys - wanted.keys) blocks.delete(id)
         }
 
+        /** Runs [action] under the link lock, and only while no parent is linked (a new link keeps its own data). */
+        internal suspend fun whileUnlinked(action: suspend () -> Unit) =
+            lock.withLock { if (links.parentUid == null) action() }
+
         /** The parent link ended: stop enforcing everything the parent set. */
         suspend fun clear() =
             lock.withLock {
@@ -157,8 +161,10 @@ internal class ParentRulesCleaner
                 try {
                     mirror.clear()
                     // Approvals and open requests belong to the parent that is gone: a new parent starts clean.
-                    allowances.clear()
-                    requests.clear()
+                    mirror.whileUnlinked {
+                        allowances.clear()
+                        requests.clear()
+                    }
                     prefs.edit().putBoolean(KEY_OWED, false).apply()
                 } catch (e: CancellationException) {
                     throw e

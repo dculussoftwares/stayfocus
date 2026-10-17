@@ -26,8 +26,9 @@ internal class RequestAnswerer
         private val decisions: RequestDecisionRepository,
     ) {
         /**
-         * Answers [answer] as the signed-in parent. Returns true once the server has it; false when nobody is
-         * signed in, the server refused it or did not answer within [timeoutMillis] (offline: Firestore keeps it).
+         * Answers [answer] as the signed-in parent. Returns true once the decision is handed over: the server has it,
+         * or [timeoutMillis] passed without an answer (offline: Firestore keeps it). False if nobody is signed in or
+         * the server refused it.
          */
         @Suppress("TooGenericExceptionCaught")
         suspend fun answer(
@@ -36,9 +37,12 @@ internal class RequestAnswerer
         ): Boolean {
             val uid = auth.currentUser.first()?.uid ?: return false
             return try {
+                // No answer in time means offline: Firestore keeps the batch and sends it later, so the notification
+                // is handled either way (a second tap could not decide again).
                 withTimeoutOrNull(timeoutMillis) {
                     decisions.decide(DeviceTarget(uid, answer.deviceId), answer.reqId, answer.minutes)
-                } != null
+                }
+                true
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

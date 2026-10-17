@@ -372,7 +372,7 @@ class RemoteDeviceViewModel
                 } catch (e: Exception) {
                     Timber.w(e, "Answering the request was refused")
                     events.trySend(RemoteEvent.Failed(name))
-                } finally {
+                    // Only a failure frees the request for another try; after a success the card goes away.
                     deciding.remove(request.id)
                 }
             }
