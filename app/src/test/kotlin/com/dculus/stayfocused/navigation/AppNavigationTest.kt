@@ -54,6 +54,7 @@ import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
 import com.dculus.stayfocused.core.sync.FakeDeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
 import com.dculus.stayfocused.core.sync.FakeRemoteDeviceRepository
+import com.dculus.stayfocused.core.sync.FakeRequestDecisionRepository
 import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
@@ -173,6 +174,7 @@ class AppNavigationTest {
             FakeRemoteDeviceRepository(),
             CommandSender(FakeCommandRepository()),
             FakeDeviceUnlinkRepository(),
+            FakeRequestDecisionRepository(),
             FakeAuthRepository(),
             Clock.systemUTC(),
         )

@@ -5,6 +5,11 @@ import type { CallableRequest } from "firebase-functions/v2/https";
 import { removeDevice, unlinkDeviceConfig } from "../src/functions/unlinkDevice";
 import { secureHandler, type SecureDeps } from "../src/lib/secureCallable";
 
+// The callable uses the real push module; FCM must never be reached from a test.
+jest.mock("firebase-admin/messaging", () => ({
+  getMessaging: () => ({ sendEachForMulticast: () => Promise.resolve({ responses: [] }) }),
+}));
+
 if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
 const db = getFirestore();
 const deps: SecureDeps = { db: () => db, now: () => new Date() };

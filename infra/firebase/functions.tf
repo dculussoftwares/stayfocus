@@ -13,10 +13,13 @@ locals {
     "run.googleapis.com",
     "eventarc.googleapis.com",
     "artifactregistry.googleapis.com",
+    "fcm.googleapis.com", # Firebase Cloud Messaging API (push to the parent app, M8-05)
   ]
 
   # kind "callable": an HTTPS callable. Cloud Run's invoker is public because the Functions framework checks App Check and
-  # sign-in itself (see secureCallable). Event triggers (M8-05) get no public invoker and are added with their own kind.
+  # sign-in itself (see secureCallable).
+  # kind "firestore_created": an Eventarc trigger on a Firestore document path (`document`, with {wildcards}). It gets no
+  # public invoker: only its own service account may call it.
   # roles: project roles for the function's own runtime service account, on top of logging.
   functions = {
     # Sample that proves the pipeline. Remove it once a real function exists (see src/functions/ping.ts).
@@ -41,14 +44,26 @@ locals {
     # Unlinks a child's phone for the parent or the child (M7-09): recursive delete of the device subtree.
     unlinkDevice = {
       kind  = "callable"
-      roles = ["roles/datastore.user"] # Firestore reads and deletes, rate-limit counters
+      roles = ["roles/datastore.user", local.fcm_send_role] # Firestore reads and deletes, rate-limit counters, push to the parent
+    }
+    # Pushes a child's request for more time to the parent's phones (M8-05). Its own service account has Firestore
+    # access (device name, FCM tokens) and FCM send, nothing else.
+    notifyParent = {
+      kind     = "firestore_created"
+      document = "users/{uid}/devices/{deviceId}/requests/{reqId}"
+      roles    = ["roles/datastore.user", local.fcm_send_role]
     }
   }
+
+  # Sends FCM messages (cloudmessaging.messages.create) through the HTTP v1 API.
+  fcm_send_role = "roles/firebasecloudmessaging.admin"
+
+  event_functions = { for name, f in local.functions : name => f if f.kind == "firestore_created" }
 
   function_runtime_roles = {
     for pair in flatten([
       for name, f in local.functions : [
-        for role in distinct(concat(["roles/logging.logWriter"], f.roles)) : { key = "${name}/${role}", name = name, role = role }
+        for role in distinct(concat(["roles/logging.logWriter"], f.roles, f.kind == "callable" ? [] : ["roles/eventarc.eventReceiver"])) : { key = "${name}/${role}", name = name, role = role }
       ]
     ]) : pair.key => pair
   }
@@ -162,6 +177,28 @@ resource "google_cloudfunctions2_function" "function" {
     max_instance_request_concurrency = 1
   }
 
+  # Event-triggered functions: Firestore document created. Delivered by Eventarc as the function's own service account.
+  dynamic "event_trigger" {
+    for_each = each.value.kind == "firestore_created" ? [each.value] : []
+
+    content {
+      trigger_region        = var.firestore_location # must match the database's location
+      event_type            = "google.cloud.firestore.document.v1.created"
+      retry_policy          = "RETRY_POLICY_DO_NOT_RETRY"
+      service_account_email = google_service_account.function_runtime[each.key].email
+
+      event_filters {
+        attribute = "database"
+        value     = google_firestore_database.default.name
+      }
+      event_filters {
+        attribute = "document"
+        value     = event_trigger.value.document
+        operator  = "match-path-pattern"
+      }
+    }
+  }
+
   depends_on = [
     google_project_service.functions,
     google_project_iam_member.function_runtime,
@@ -179,6 +216,17 @@ resource "google_cloud_run_v2_service_iam_member" "callable_invoker" {
   name     = google_cloudfunctions2_function.function[each.key].service_config[0].service
   role     = "roles/run.invoker"
   member   = "allUsers"
+}
+
+# Event triggers: Eventarc calls the Cloud Run service as the function's own service account, and nobody else.
+resource "google_cloud_run_v2_service_iam_member" "event_invoker" {
+  for_each = local.event_functions
+
+  project  = var.project_id
+  location = var.region
+  name     = google_cloudfunctions2_function.function[each.key].service_config[0].service
+  role     = "roles/run.invoker"
+  member   = "serviceAccount:${google_service_account.function_runtime[each.key].email}"
 }
 
 # Rate-limit counters (rateLimits/{action}_{uid}) expire after two windows.

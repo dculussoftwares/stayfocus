@@ -17,6 +17,7 @@ import com.dculus.stayfocused.core.sync.DeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.RemoteBlock
 import com.dculus.stayfocused.core.sync.RemoteCommand
 import com.dculus.stayfocused.core.sync.RemoteDeviceRepository
+import com.dculus.stayfocused.core.sync.RequestDecisionRepository
 import com.dculus.stayfocused.core.sync.UnlinkResult
 import com.dculus.stayfocused.core.sync.UsageSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -44,6 +45,7 @@ import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 
 /** One app on the child's phone: today's use and whether the parent has it locked. */
@@ -121,6 +123,14 @@ internal sealed interface RemoteEvent {
         val device: String,
     ) : RemoteEvent
 
+    /** The parent allowed [label] (`15m`, `30m`, `1h`) more of [app]. */
+    data class RequestApproved(
+        val label: String,
+        val app: String,
+    ) : RemoteEvent
+
+    data object RequestDenied : RemoteEvent
+
     data class Unlinked(
         val device: String,
     ) : RemoteEvent
@@ -137,6 +147,7 @@ private const val RETRY_BASE_MS = 1_000L
 private const val RETRY_MAX_MS = 30_000L
 private const val MAX_BACKOFF_SHIFT = 5
 private const val DEFAULT_PERMISSION = "accessibility"
+private const val MINS_PER_HOUR = 60
 
 /** True when [usageDate] (`yyyy-MM-dd`, the child's local day) is [today] or the day before or after it. */
 internal fun isAroundToday(
@@ -149,6 +160,14 @@ internal fun isAroundToday(
             .between(day, LocalDate.parse(today)),
     ) <= 1
 }
+
+/** Prototype `dlabel`: 15 -> "15m", 60 -> "1h", 90 -> "1h30". */
+internal fun minutesLabel(mins: Int): String =
+    when {
+        mins < MINS_PER_HOUR -> "${mins}m"
+        mins % MINS_PER_HOUR == 0 -> "${mins / MINS_PER_HOUR}h"
+        else -> "${mins / MINS_PER_HOUR}h${mins % MINS_PER_HOUR}"
+    }
 
 /** Today's rows: the phone's apps plus anything it reported using, busiest first. */
 internal fun appRows(
@@ -183,12 +202,16 @@ class RemoteDeviceViewModel
         private val remote: RemoteDeviceRepository,
         private val sender: CommandSender,
         private val unlinker: DeviceUnlinkRepository,
+        private val decisions: RequestDecisionRepository,
         private val auth: AuthRepository,
         private val clock: Clock,
     ) : ViewModel() {
         private val deviceId: String = savedState.get<String>("deviceId").orEmpty()
         private val unlinking = MutableStateFlow(false)
         private val events = Channel<RemoteEvent>(Channel.BUFFERED)
+
+        /** Requests being answered, so a double tap sends one decision. */
+        private val deciding = ConcurrentHashMap.newKeySet<String>()
 
         /** Toast messages, each delivered once. */
         internal val messages: Flow<RemoteEvent> = events.receiveAsFlow()
@@ -315,6 +338,43 @@ class RemoteDeviceViewModel
             val name = deviceName()
             send(RemoteCommand.RemindPermission(alert.permission?.takeIf { it.isNotBlank() } ?: DEFAULT_PERMISSION)) {
                 events.trySend(RemoteEvent.Reminded(name))
+            }
+        }
+
+        /**
+         * Answers an unlock request: [mins] more minutes, or 0 for No. The toast shows at once (as in the prototype);
+         * the decision and the command for the phone go out in one write, which Firestore keeps while offline.
+         */
+        @Suppress("TooGenericExceptionCaught")
+        internal fun decide(
+            request: RemoteRequestCard,
+            mins: Int,
+        ) {
+            if (!deciding.add(request.id)) return
+            val name = deviceName()
+            viewModelScope.launch {
+                val target = target()
+                if (target == null) {
+                    deciding.remove(request.id)
+                    return@launch
+                }
+                events.trySend(
+                    if (mins > 0) {
+                        RemoteEvent.RequestApproved(minutesLabel(mins), request.app)
+                    } else {
+                        RemoteEvent.RequestDenied
+                    },
+                )
+                try {
+                    decisions.decide(target, request.id, mins)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.w(e, "Answering the request was refused")
+                    events.trySend(RemoteEvent.Failed(name))
+                    // Only a failure frees the request for another try; after a success the card goes away.
+                    deciding.remove(request.id)
+                }
             }
         }
 

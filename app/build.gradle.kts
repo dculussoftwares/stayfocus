@@ -32,6 +32,8 @@ dependencies {
 
     implementation(project(":core:navigation"))
 
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.activity.compose)

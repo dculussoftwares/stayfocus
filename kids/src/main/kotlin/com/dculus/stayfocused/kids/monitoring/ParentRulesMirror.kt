@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.kids.monitoring
 
 import android.content.Context
+import com.dculus.stayfocused.core.blocking.engine.TemporaryAllowances
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.LockedAppsRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
@@ -108,6 +109,10 @@ class ParentRulesMirror
             for (id in local.keys - wanted.keys) blocks.delete(id)
         }
 
+        /** Runs [action] under the link lock, and only while no parent is linked (a new link keeps its own data). */
+        internal suspend fun whileUnlinked(action: suspend () -> Unit) =
+            lock.withLock { if (links.parentUid == null) action() }
+
         /** The parent link ended: stop enforcing everything the parent set. */
         suspend fun clear() =
             lock.withLock {
@@ -132,6 +137,8 @@ internal class ParentRulesCleaner
     constructor(
         private val mirror: ParentRulesMirror,
         private val linkStore: ParentLinkStore,
+        private val allowances: TemporaryAllowances,
+        private val requests: PendingRequestStore,
         @ApplicationContext context: Context,
     ) : RulesCleaner {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -153,6 +160,11 @@ internal class ParentRulesCleaner
             scope.launch {
                 try {
                     mirror.clear()
+                    // Approvals and open requests belong to the parent that is gone: a new parent starts clean.
+                    mirror.whileUnlinked {
+                        allowances.clear()
+                        requests.clear()
+                    }
                     prefs.edit().putBoolean(KEY_OWED, false).apply()
                 } catch (e: CancellationException) {
                     throw e

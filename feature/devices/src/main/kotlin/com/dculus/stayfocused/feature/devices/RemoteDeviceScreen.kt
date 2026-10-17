@@ -135,6 +135,7 @@ internal fun RemoteDeviceRoute(
                 onBack = onBack,
                 onRemind = viewModel::remind,
                 onDismiss = viewModel::dismiss,
+                onDecide = viewModel::decide,
                 onStartFocus = viewModel::startFocus,
                 onStopFocus = viewModel::stopFocus,
                 onBlockEnabled = viewModel::setBlockEnabled,
@@ -153,6 +154,8 @@ private fun RemoteEvent.text(r: android.content.res.Resources): String =
         is RemoteEvent.Reminded -> r.getString(R.string.remote_toast_reminded, device)
         is RemoteEvent.Offline -> r.getString(R.string.remote_toast_offline, device)
         is RemoteEvent.Failed -> r.getString(R.string.remote_toast_failed, device)
+        is RemoteEvent.RequestApproved -> r.getString(R.string.remote_toast_approved, label, app)
+        RemoteEvent.RequestDenied -> r.getString(R.string.remote_toast_denied)
         is RemoteEvent.Unlinked -> r.getString(R.string.remote_toast_unlinked, device)
         is RemoteEvent.UnlinkFailed -> r.getString(R.string.remote_toast_unlink_failed, device)
     }

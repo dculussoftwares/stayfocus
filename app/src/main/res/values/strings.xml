@@ -5,4 +5,12 @@
     <string name="tab_block">BLOCK</string>
     <string name="tab_devices">DEVICES</string>
     <string name="tab_insights">INSIGHTS</string>
+    <!-- Push notifications from the child phones (M8-05). Copy of the question follows the Remote screen's amber card. -->
+    <string name="push_channel_name">Requests for more time</string>
+    <string name="push_request_title">%1$s</string>
+    <string name="push_request_text">%1$d more minutes of %2$s?</string>
+    <string name="push_request_approve">Approve %1$s</string>
+    <string name="push_request_deny">No</string>
+    <string name="push_unlinked_title">%1$s unlinked</string>
+    <string name="push_unlinked_text">This phone is no longer managed from your account.</string>
 </resources>
