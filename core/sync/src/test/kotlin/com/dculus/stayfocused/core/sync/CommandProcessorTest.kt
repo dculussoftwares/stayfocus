@@ -105,6 +105,16 @@ class CommandProcessorTest {
         }
 
     @Test
+    fun `a handled command redelivered after 24 hours is expired`() =
+        runTest {
+            val p = processor()
+            p.process(target, block("c1", ageMillis = 1_000))
+            p.process(target, block("c1", ageMillis = TimeUnit.HOURS.toMillis(25)))
+            assertEquals(1, handled.size)
+            assertEquals(listOf("c1" to CommandStatus.DONE, "c1" to CommandStatus.EXPIRED), repo.acks)
+        }
+
+    @Test
     fun `minutes outside 1 to 480 or fractional are rejected`() {
         for (bad in listOf(0, -5, 481, 1.5, Long.MAX_VALUE)) {
             assertNull(parseCommand("START_FOCUS", mapOf("mins" to bad)), "mins=$bad")
@@ -207,6 +217,22 @@ class CommandProcessorTest {
         runTest {
             repo.rejectSends = true
             val seen = CommandSender(repo).send(target, RemoteCommand.StartFocus(25)).toList()
+            assertEquals(listOf(DeliveryState.PENDING, DeliveryState.FAILED), seen)
+        }
+
+    @Test
+    fun `without Firebase a send ends as failed`() =
+        runTest {
+            val seen = CommandSender(NoCommandRepository).send(target, RemoteCommand.StopFocus).toList()
+            assertEquals(listOf(DeliveryState.PENDING, DeliveryState.FAILED), seen)
+        }
+
+    @Test
+    fun `a denied status listener still lets a rejected write end as failed`() =
+        runTest {
+            repo.failingStatus = true
+            repo.rejectSends = true
+            val seen = CommandSender(repo).send(target, RemoteCommand.StopFocus).toList()
             assertEquals(listOf(DeliveryState.PENDING, DeliveryState.FAILED), seen)
         }
 }

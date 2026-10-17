@@ -3,6 +3,7 @@ package com.dculus.stayfocused.core.sync
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 /** What the parent shows for a command it sent. */
@@ -72,6 +74,13 @@ class CommandSender
             val rejected = CompletableDeferred<Unit>()
             val id = repository.send(target, command) { rejected.complete(Unit) }
             val refused = flow { emit(rejected.await().let { CommandStatus.FAILED }) }
-            return deliveryStates(merge(repository.observeStatus(target, id), refused))
+            return deliveryStates(
+                merge(
+                    repository.observeStatus(target, id).catch {
+                        Timber.w(it, "Command status listener lost")
+                    },
+                    refused,
+                ),
+            )
         }
     }

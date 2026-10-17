@@ -17,7 +17,6 @@ import kotlinx.coroutines.delay
 import org.json.JSONArray
 import org.json.JSONException
 import timber.log.Timber
-import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -64,58 +63,48 @@ class CommandListener
     }
 
 /**
- * Remembers how each handled command ended across process restarts. An entry is kept for twice the 24 h command
- * lifetime and only then dropped: past that a redelivered command is expired before it could run, so forgetting it is
- * safe, whereas a count limit could forget a command whose acknowledgement never reached the server.
+ * Remembers how each handled command ended across process restarts, so a redelivered command (its acknowledgement was
+ * lost offline) is acknowledged again instead of run again. Entries are never dropped by time, because the phone's
+ * clock can be wrong or corrected; only the oldest go once [MAX_KEPT] is exceeded, far more than a parent sends in
+ * the 24 h a command can still run.
  */
 @Singleton
 internal class SharedPreferencesProcessedCommands
     @Inject
     constructor(
         @ApplicationContext context: Context,
-        private val clock: Clock,
     ) : ProcessedCommands {
         private val prefs = context.getSharedPreferences("kids_commands", Context.MODE_PRIVATE)
 
         @Synchronized
-        override fun statusOf(id: String): CommandStatus? = load().firstOrNull { it.id == id }?.status
+        override fun statusOf(id: String): CommandStatus? = load().firstOrNull { it.first == id }?.second
 
         @Synchronized
         override fun record(
             id: String,
             status: CommandStatus,
         ) {
-            val now = clock.millis()
-            val kept =
-                load().filter { it.id != id && now - it.atMillis <= KEEP_MILLIS } + Entry(id, status, now)
+            val kept = (load().filter { it.first != id } + (id to status)).takeLast(MAX_KEPT)
             val json = JSONArray()
-            kept.forEach { json.put(JSONArray().put(it.id).put(it.status.wire).put(it.atMillis)) }
+            kept.forEach { json.put(JSONArray().put(it.first).put(it.second.wire)) }
             prefs.edit().putString(KEY, json.toString()).apply()
         }
 
-        private fun load(): List<Entry> =
+        private fun load(): List<Pair<String, CommandStatus>> =
             try {
                 val json = JSONArray(prefs.getString(KEY, null) ?: "[]")
                 List(json.length()) { i ->
                     val row = json.getJSONArray(i)
-                    Entry(row.getString(0), CommandStatus.fromWire(row.getString(1)), row.getLong(2))
+                    row.getString(0) to CommandStatus.fromWire(row.getString(1))
                 }
-            } catch (
-                @Suppress("TooGenericExceptionCaught") e: JSONException,
-            ) {
+            } catch (e: JSONException) {
                 Timber.w(e, "Processed-command history unreadable; starting over")
                 emptyList()
             }
 
-        private data class Entry(
-            val id: String,
-            val status: CommandStatus,
-            val atMillis: Long,
-        )
-
         private companion object {
             const val KEY = "processed"
-            val KEEP_MILLIS = 2 * CommandProcessor.MAX_AGE_MILLIS
+            const val MAX_KEPT = 2000
         }
     }
 

@@ -90,7 +90,13 @@ class CommandProcessor
             target: DeviceTarget,
             command: PendingCommand,
         ) = lock.withLock {
-            val status = processed.statusOf(command.id) ?: decide(command).also { processed.record(command.id, it) }
+            val status =
+                if (isStale(command)) {
+                    // Too old to count, even if it ran once and only its acknowledgement was lost.
+                    CommandStatus.EXPIRED.also { processed.record(command.id, it) }
+                } else {
+                    processed.statusOf(command.id) ?: decide(command).also { processed.record(command.id, it) }
+                }
             try {
                 repository.acknowledge(target, command.id, status)
             } catch (e: CancellationException) {
@@ -101,10 +107,10 @@ class CommandProcessor
             }
         }
 
+        private fun isStale(command: PendingCommand): Boolean =
+            command.createdAtMillis?.let { clock.millis() - it > MAX_AGE_MILLIS } == true
+
         private suspend fun decide(command: PendingCommand): CommandStatus {
-            val created = command.createdAtMillis
-            // Age first: a stale command is expired whatever its content.
-            if (created != null && clock.millis() - created > MAX_AGE_MILLIS) return CommandStatus.EXPIRED
             val parsed = parseCommand(command.type, command.payload)
             return if (parsed == null) CommandStatus.FAILED else executor.execute(parsed)
         }

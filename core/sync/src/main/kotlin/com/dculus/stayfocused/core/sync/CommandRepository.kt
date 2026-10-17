@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 
@@ -156,7 +157,11 @@ internal object NoCommandRepository : CommandRepository {
         target: DeviceTarget,
         command: RemoteCommand,
         onRejected: () -> Unit,
-    ) = "offline"
+    ): String {
+        // Nothing can be delivered without Firebase: end the delivery as failed instead of pending forever.
+        onRejected()
+        return "offline"
+    }
 
     override fun observeStatus(
         target: DeviceTarget,
@@ -186,6 +191,9 @@ class FakeCommandRepository : CommandRepository {
     /** Set to make the next [send] report a server rejection. */
     var rejectSends = false
 
+    /** Set to make [observeStatus] fail (a denied listener). */
+    var failingStatus = false
+
     val sent = mutableListOf<PendingCommand>()
 
     override fun send(
@@ -195,6 +203,7 @@ class FakeCommandRepository : CommandRepository {
     ): String {
         val id = "cmd${counter++}"
         if (rejectSends) {
+            rejectSends = false
             onRejected()
             return id
         }
@@ -214,7 +223,8 @@ class FakeCommandRepository : CommandRepository {
     override fun observeStatus(
         target: DeviceTarget,
         id: String,
-    ): Flow<CommandStatus> = statuses.map { it[id] ?: CommandStatus.PENDING }
+    ): Flow<CommandStatus> =
+        if (failingStatus) flow { error("denied") } else statuses.map { it[id] ?: CommandStatus.PENDING }
 
     override fun observePending(target: DeviceTarget): Flow<List<PendingCommand>> = pending
 
