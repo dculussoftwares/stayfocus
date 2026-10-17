@@ -74,7 +74,17 @@ fun NavGraphBuilder.linkConfirmScreen(
     }
 }
 
-/** A linked child phone, shown with the tab bar. */
-fun NavGraphBuilder.remoteDeviceScreen() {
-    composable<RemoteDevice> { RemoteDeviceRoute() }
+/**
+ * A linked child phone, shown with the tab bar. [onNewBlock] opens the block wizard for that phone; [onMessage] shows a
+ * toast; [onBack] is called on Back, after an unlink and when the phone is no longer linked.
+ */
+fun NavGraphBuilder.remoteDeviceScreen(
+    onBack: () -> Unit,
+    onNewBlock: (deviceId: String) -> Unit,
+    onMessage: (String) -> Unit,
+    viewModelProvider: (@Composable () -> RemoteDeviceViewModel)? = null,
+) {
+    composable<RemoteDevice> {
+        RemoteDeviceRoute(onBack, onNewBlock, onMessage, viewModelProvider?.invoke() ?: hiltViewModel())
+    }
 }

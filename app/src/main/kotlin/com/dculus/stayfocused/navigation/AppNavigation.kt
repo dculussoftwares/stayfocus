@@ -50,6 +50,7 @@ import com.dculus.stayfocused.feature.block.requestBlockAiMode
 import com.dculus.stayfocused.feature.devices.DevicesViewModel
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
 import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
+import com.dculus.stayfocused.feature.devices.RemoteDeviceViewModel
 import com.dculus.stayfocused.feature.devices.devicesScreen
 import com.dculus.stayfocused.feature.devices.linkAddScreen
 import com.dculus.stayfocused.feature.devices.linkConfirmScreen
@@ -85,6 +86,7 @@ fun StayFocusedNavigation(
     linkAddViewModel: (@Composable () -> LinkAddViewModel)? = null,
     linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)? = null,
     devicesViewModel: (@Composable () -> DevicesViewModel)? = null,
+    remoteDeviceViewModel: (@Composable () -> RemoteDeviceViewModel)? = null,
 ) {
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
@@ -115,6 +117,7 @@ fun StayFocusedNavigation(
                 linkAddViewModel,
                 linkConfirmViewModel,
                 devicesViewModel,
+                remoteDeviceViewModel,
                 toast::show,
             )
             SfToastHost(toast, bottomPadding = 24.dp)
@@ -145,6 +148,7 @@ private fun AppNavHost(
     linkAddViewModel: (@Composable () -> LinkAddViewModel)?,
     linkConfirmViewModel: (@Composable () -> LinkConfirmViewModel)?,
     devicesViewModel: (@Composable () -> DevicesViewModel)?,
+    remoteDeviceViewModel: (@Composable () -> RemoteDeviceViewModel)?,
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
@@ -248,7 +252,12 @@ private fun AppNavHost(
                 },
                 viewModelProvider = linkConfirmViewModel,
             )
-            remoteDeviceScreen()
+            remoteDeviceScreen(
+                onBack = { navController.popBackStack() },
+                onNewBlock = { navController.navigateToBlockWizard(target = it) },
+                onMessage = showToast,
+                viewModelProvider = remoteDeviceViewModel,
+            )
         }
     }
 }
