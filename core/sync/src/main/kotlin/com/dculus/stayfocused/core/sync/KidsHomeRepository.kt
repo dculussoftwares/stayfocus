@@ -127,10 +127,16 @@ private fun DocumentSnapshot.toLinkState(): DeviceLinkState? =
 internal fun parseRule(
     id: String,
     data: Map<String, Any?>,
+): KidsRule? = if (data["enabled"] == true) parseRuleAnyState(id, data) else null
+
+/** Like [parseRule] but also reads a block that is switched off (the parent's list shows those too). */
+internal fun parseRuleAnyState(
+    id: String,
+    data: Map<String, Any?>,
 ): KidsRule? {
     val name = (data["name"] as? String)?.takeIf { it.isNotBlank() }
     val type = ruleType(data["type"])
-    if (data["enabled"] != true || name == null || type == null) return null
+    if (name == null || type == null) return null
     val range = data["range"] as? Map<*, *>
     val rule =
         KidsRule(

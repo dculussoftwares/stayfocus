@@ -98,6 +98,16 @@ internal object AuthModule {
             NoKidsHomeRepository
         }
 
+    /** The parent's Remote screen: a child phone's apps, usage, blocks and lock state; none without Firebase. */
+    @Provides
+    @Singleton
+    fun remoteDevice(availability: FirebaseAvailability): RemoteDeviceRepository =
+        if (availability.isConfigured) {
+            FirebaseRemoteDeviceRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoRemoteDeviceRepository
+        }
+
     /** `unlinkDevice`, for the Kids home and the parent's Remote screen; none without Firebase. */
     @Provides
     @Singleton

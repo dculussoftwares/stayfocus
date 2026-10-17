@@ -46,9 +46,13 @@ import com.dculus.stayfocused.core.navigation.Welcome
 import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.sync.AiReporter
 import com.dculus.stayfocused.core.sync.BlockDescriber
+import com.dculus.stayfocused.core.sync.CommandSender
 import com.dculus.stayfocused.core.sync.FakeAccountDeletionRepository
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
+import com.dculus.stayfocused.core.sync.FakeCommandRepository
+import com.dculus.stayfocused.core.sync.FakeDeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
+import com.dculus.stayfocused.core.sync.FakeRemoteDeviceRepository
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
@@ -74,6 +78,7 @@ import com.dculus.stayfocused.feature.block.WizardViewModel
 import com.dculus.stayfocused.feature.devices.DevicesViewModel
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
 import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
+import com.dculus.stayfocused.feature.devices.RemoteDeviceViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import com.dculus.stayfocused.feature.onboarding.SignInViewModel
@@ -158,6 +163,16 @@ class AppNavigationTest {
             Clock.systemUTC(),
         )
     private val devicesViewModel = DevicesViewModel(FakeLinkedDevicesRepository())
+    private val remoteDeviceViewModel =
+        RemoteDeviceViewModel(
+            SavedStateHandle(mapOf("deviceId" to "device")),
+            FakeLinkedDevicesRepository(),
+            FakeRemoteDeviceRepository(),
+            CommandSender(FakeCommandRepository()),
+            FakeDeviceUnlinkRepository(),
+            FakeAuthRepository(),
+            Clock.systemUTC(),
+        )
     private val accountAuth = FakeAuthRepository()
     private val accountViewModel =
         AccountViewModel(
@@ -215,6 +230,7 @@ class AppNavigationTest {
                     linkAddViewModel = { linkAddViewModel },
                     linkConfirmViewModel = { linkConfirmViewModel },
                     devicesViewModel = { devicesViewModel },
+                    remoteDeviceViewModel = { remoteDeviceViewModel },
                 )
             }
         }
