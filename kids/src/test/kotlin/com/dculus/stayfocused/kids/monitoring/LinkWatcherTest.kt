@@ -4,11 +4,13 @@ import com.dculus.stayfocused.core.sync.DeviceLinkState
 import com.dculus.stayfocused.core.sync.DeviceTarget
 import com.dculus.stayfocused.core.sync.FakeKidsHomeRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import java.io.IOException
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -40,7 +42,7 @@ class LinkWatcherTest {
     fun aSingleRefusedReadIsNotEnough() =
         runTest {
             // Refused once (say, a rejected App Check token), then the device is readable again.
-            home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable))
+            home.queueRun(DeviceLinkState.Unreadable)
             var gone = false
             val job =
                 launch {
@@ -58,7 +60,7 @@ class LinkWatcherTest {
     @Test
     fun readsThatKeepBeingRefusedCountAsGone() =
         runTest {
-            repeat(LinkWatcher.REFUSALS_TO_CONFIRM) { home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable)) }
+            repeat(LinkWatcher.REFUSALS_TO_CONFIRM) { home.queueRun(DeviceLinkState.Unreadable) }
             watcher.untilGone(target)
             assertEquals(LinkWatcher.REFUSALS_TO_CONFIRM, home.linkWatches)
         }
@@ -66,14 +68,28 @@ class LinkWatcherTest {
     @Test
     fun aLinkedReadInBetweenStartsTheCountOver() =
         runTest {
-            home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable))
-            home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable))
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
             // Linked and then refused again: the two earlier refusals no longer count.
-            home.linkRuns.addLast(listOf(DeviceLinkState.Linked, DeviceLinkState.Unreadable))
-            home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable))
-            home.linkRuns.addLast(listOf(DeviceLinkState.Unreadable))
+            home.queueRun(DeviceLinkState.Linked, DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
             watcher.untilGone(target)
             // 2 refusals, the linked run (resets, then 1 refusal), 2 more = confirmed on the 3rd consecutive one.
             assertEquals(5, home.linkWatches)
+        }
+
+    @Test
+    fun aFailedLookBetweenRefusalsBreaksTheRun() =
+        runTest {
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.linkFlows.addLast(flow { throw IOException("offline") })
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
+            home.queueRun(DeviceLinkState.Unreadable)
+            watcher.untilGone(target)
+            // Two refusals, a failure (count restarts), then three more in a row.
+            assertEquals(6, home.linkWatches)
         }
 }

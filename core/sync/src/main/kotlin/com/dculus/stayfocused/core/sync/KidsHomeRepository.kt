@@ -54,8 +54,8 @@ enum class KidsRuleType { Limit, Cycle, Schedule, Now }
 interface KidsHomeRepository {
     /**
      * Emits [DeviceLinkState.Gone] once the server confirms the device document is gone, and
-     * [DeviceLinkState.Unreadable] (then ends) when the server refuses the read. A stale cached copy never counts as
-     * gone. The flow fails on other errors; callers retry after a failure.
+     * [DeviceLinkState.Unreadable] (then ends) when the server refuses the read. Cached copies are ignored: only the
+     * server's answer counts, as Linked or as Gone. The flow fails on other errors; callers retry after a failure.
      */
     fun observeLink(target: DeviceTarget): Flow<DeviceLinkState>
 
@@ -110,11 +110,11 @@ internal class FirebaseKidsHomeRepository(
         }
 }
 
-/** A missing document counts only when it comes from the server; the cache says nothing about a document never seen. */
+/** Only the server decides: a cached copy proves nothing about a document that may since have been deleted. */
 private fun DocumentSnapshot.toLinkState(): DeviceLinkState? =
     when {
-        exists() -> DeviceLinkState.Linked
         metadata.isFromCache -> null
+        exists() -> DeviceLinkState.Linked
         else -> DeviceLinkState.Gone
     }
 
@@ -172,21 +172,25 @@ internal object NoKidsHomeRepository : KidsHomeRepository {
 }
 
 /**
- * In-memory repository for tests: the test pushes link states into [link] and the rules into [rules]. Each queued
- * entry of [linkRuns] is served to one `observeLink` call as a flow that ends (like a refused read); when none is
- * left, [link] is used.
+ * In-memory repository for tests: the test pushes link states into [link] and the rules into [rules]. Queued
+ * flows ([queueRun], [linkFlows]) are served to `observeLink` calls first, one each; when none is left, [link] is used.
  */
 class FakeKidsHomeRepository : KidsHomeRepository {
     val link = MutableSharedFlow<DeviceLinkState>(replay = 1)
-    val linkRuns = ArrayDeque<List<DeviceLinkState>>()
+    val linkFlows = ArrayDeque<Flow<DeviceLinkState>>()
     val rules = MutableStateFlow<List<KidsRule>>(emptyList())
 
     /** How many times the link was watched. */
     var linkWatches = 0
 
+    /** Queues one `observeLink` call that emits [states] and then ends. */
+    fun queueRun(vararg states: DeviceLinkState) {
+        linkFlows.addLast(flowOf(*states))
+    }
+
     override fun observeLink(target: DeviceTarget): Flow<DeviceLinkState> {
         linkWatches++
-        return linkRuns.removeFirstOrNull()?.let { flowOf(*it.toTypedArray()) } ?: link
+        return linkFlows.removeFirstOrNull() ?: link
     }
 
     override fun observeRules(target: DeviceTarget): Flow<List<KidsRule>> = rules

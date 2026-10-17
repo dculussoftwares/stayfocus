@@ -49,6 +49,8 @@ class LinkWatcher
                     throw e
                 } catch (e: Exception) {
                     Timber.w(e, "Watching the link failed; will retry")
+                    // The refusals must be consecutive: a failed look in between breaks the run.
+                    refusals = 0
                     delay(RETRY_MILLIS)
                     continue
                 }
