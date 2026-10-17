@@ -50,6 +50,7 @@ class WizardRulesViewModelTest {
         devices,
         FakeSettingsRepository(),
         if (failingSave) FailingBlocks() else blocks,
+        noDeviceBlocks(),
         clock,
         AiDraftHandoff(),
         FakeAiReporter(),

@@ -20,6 +20,7 @@ import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.fallbackAppLabel
 import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.sync.AiReporter
+import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -47,7 +48,7 @@ private const val ARG_TARGET = "target"
 private const val ARG_PREFILL = "prefill"
 private const val ARG_BLOCK_ID = "blockId"
 
-/** One "ON" pill. Child phones are shown but disabled until device linking lands (M8-03). */
+/** One "ON" pill: This phone or a linked child phone. */
 data class WizardTargetUi(
     val target: BlockTarget,
     val device: LinkedDevice?,
@@ -147,6 +148,7 @@ class WizardViewModel
         linkedDevices: LinkedDevicesRepository,
         settings: SettingsRepository,
         private val blocks: BlockRepository,
+        private val deviceBlocks: ParentDeviceBlocks,
         private val clock: Clock,
         private val handoff: AiDraftHandoff,
         private val reporter: AiReporter,
@@ -227,7 +229,7 @@ class WizardViewModel
                 linkedDevices.observeAll().collect { devices ->
                     val pills =
                         listOf(WizardTargetUi(BlockTarget.ThisPhone, null, enabled = true)) +
-                            devices.map { WizardTargetUi(BlockTarget.Device(it.id), it, enabled = false) }
+                            devices.map { WizardTargetUi(BlockTarget.Device(it.id), it, enabled = true) }
                     mutableState.update { it.copy(targets = pills) }
                 }
             }
@@ -325,6 +327,8 @@ class WizardViewModel
             mutableState.update { it.copy(saving = true) }
             viewModelScope.launch {
                 try {
+                    // The child phone enforces what is in Firestore; queued at once, sent when online.
+                    deviceId?.let { deviceBlocks.push(it, block) }
                     blocks.upsert(block)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
@@ -353,6 +357,7 @@ class WizardViewModel
             mutableState.update { it.copy(saving = true) }
             viewModelScope.launch {
                 try {
+                    (old.target as? BlockTarget.Device)?.let { deviceBlocks.remove(it.deviceId, old.id) }
                     blocks.delete(old.id)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,

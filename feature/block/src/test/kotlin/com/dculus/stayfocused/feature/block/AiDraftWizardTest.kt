@@ -41,6 +41,7 @@ class AiDraftWizardTest {
             FakeLinkedDevicesRepository(),
             FakeSettingsRepository(),
             blocks,
+            noDeviceBlocks(),
             TestClock(),
             handoff,
             reporter,

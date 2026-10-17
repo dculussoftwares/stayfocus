@@ -48,6 +48,9 @@ class MonitoringService : Service() {
     internal lateinit var commandListener: CommandListener
 
     @Inject
+    internal lateinit var parentRules: ParentRulesMirror
+
+    @Inject
     internal lateinit var linkWatcher: LinkWatcher
 
     @Inject
@@ -107,10 +110,13 @@ class MonitoringService : Service() {
                         // The parent may end the link while the app is closed: stop reporting and monitoring then.
                         launch {
                             linkWatcher.untilGone(target)
+                            // The parent's blocks, locks and focus end with the link.
+                            if (targetStore.target == target) withContext(NonCancellable) { parentRules.clear() }
                             linkReset.reset(target)
                         }
                         launch { reporter.run(target) }
                         launch { commandListener.run(target) }
+                        launch { parentRules.run(target) }
                     }
                 }
             }

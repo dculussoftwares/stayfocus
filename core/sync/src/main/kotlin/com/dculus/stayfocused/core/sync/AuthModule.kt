@@ -73,6 +73,16 @@ internal object AuthModule {
             NoCommandRepository
         }
 
+    /** Blocks, focus end and app list of a linked phone (`devices/{id}/blocks`, `apps`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun deviceBlocks(availability: FirebaseAvailability): DeviceBlocksRepository =
+        if (availability.isConfigured) {
+            FirebaseDeviceBlocksRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoDeviceBlocksRepository
+        }
+
     /** The pairing handshake (`claimLinkToken`, `approveLink`); none without Firebase. */
     @Provides
     @Singleton

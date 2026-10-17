@@ -14,14 +14,27 @@ import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.sync.AiReporter
 import com.dculus.stayfocused.core.sync.BlockDescriber
+import com.dculus.stayfocused.core.sync.FakeAuthRepository
+import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
+import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.time.LocalDate
+
+/** A parent account that is signed in, with the blocks it sends to child phones kept in [repository]. */
+fun noDeviceBlocks(repository: FakeDeviceBlocksRepository = FakeDeviceBlocksRepository()) =
+    ParentDeviceBlocks(
+        FakeAuthRepository().also {
+            runBlocking { it.signInWithEmail("parent@example.com", "pw") }
+        },
+        repository,
+    )
 
 fun pkg(id: String): String = KnownApps.packages.getValue(id)
 

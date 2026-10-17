@@ -53,6 +53,8 @@ import com.dculus.stayfocused.core.sync.FakeCommandRepository
 import com.dculus.stayfocused.core.sync.FakeDeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
 import com.dculus.stayfocused.core.sync.FakeRemoteDeviceRepository
+import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
+import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
@@ -149,6 +151,7 @@ class AppNavigationTest {
             idleUsage,
             describer,
             handoff,
+            ParentDeviceBlocks(FakeAuthRepository(), FakeDeviceBlocksRepository()),
         )
 
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
@@ -208,6 +211,7 @@ class AppNavigationTest {
             FakeLinkedDevicesRepository(),
             FakeSettingsRepository(),
             FakeBlockRepository(),
+            ParentDeviceBlocks(FakeAuthRepository(), FakeDeviceBlocksRepository()),
             Clock.systemUTC(),
             handoff,
             reporter,

@@ -5,6 +5,7 @@ import app.cash.turbine.test
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DaysOfWeek
+import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
@@ -47,6 +48,7 @@ class WizardViewModelTest {
     private val devices = FakeLinkedDevicesRepository()
     private val settings = FakeSettingsRepository()
     private val blocks = FakeBlockRepository()
+    private val deviceRepo = FakeDeviceBlocksRepository()
     private val clock = TestClock()
 
     private fun viewModel(
@@ -56,7 +58,17 @@ class WizardViewModelTest {
         val handle = SavedStateHandle()
         target?.let { handle["target"] = it }
         prefill?.let { handle["prefill"] = it }
-        return WizardViewModel(handle, apps, devices, settings, blocks, clock, AiDraftHandoff(), FakeAiReporter())
+        return WizardViewModel(
+            handle,
+            apps,
+            devices,
+            settings,
+            blocks,
+            noDeviceBlocks(deviceRepo),
+            clock,
+            AiDraftHandoff(),
+            FakeAiReporter(),
+        )
     }
 
     @Test
@@ -183,11 +195,11 @@ class WizardViewModelTest {
         }
 
     @Test
-    fun linkedDevicesAreListedButDisabled() {
+    fun linkedDevicesAreListedAndEnabled() {
         devices.devices.value = listOf(device())
         val targets = viewModel().state.value.targets
         assertEquals(listOf(BlockTarget.ThisPhone, BlockTarget.Device("d1")), targets.map { it.target })
-        assertEquals(listOf(true, false), targets.map { it.enabled })
+        assertEquals(listOf(true, true), targets.map { it.enabled })
     }
 
     @Test
@@ -218,6 +230,37 @@ class WizardViewModelTest {
     }
 
     @Test
+    fun savingForAChildPhoneSendsTheBlockToItAndKeepsTheLocalCopy() =
+        kotlinx.coroutines.test.runTest {
+            devices.devices.value = listOf(device())
+            val vm = viewModel(target = "d1")
+            vm.events.test {
+                vm.pickType(BlockType.NOW)
+                vm.next()
+                vm.next()
+                vm.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            val (target, sent) = deviceRepo.pushed.single()
+            assertEquals("d1", target.deviceId)
+            assertEquals(BlockTarget.Device("d1"), sent.target)
+            assertEquals(sent, blocks.get(sent.id))
+        }
+
+    @Test
+    fun savingForThisPhoneSendsNothing() =
+        kotlinx.coroutines.test.runTest {
+            val vm = viewModel()
+            vm.events.test {
+                vm.next()
+                vm.next()
+                vm.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            assertTrue(deviceRepo.pushed.isEmpty())
+        }
+
+    @Test
     fun aiShortcutFollowsTheAiSetting() =
         kotlinx.coroutines.test.runTest {
             val vm = viewModel()
@@ -240,6 +283,7 @@ class WizardViewModelTest {
                 devices,
                 settings,
                 blocks,
+                noDeviceBlocks(deviceRepo),
                 clock,
                 AiDraftHandoff(),
                 FakeAiReporter(),
@@ -259,7 +303,17 @@ class WizardViewModelTest {
             }
         val handle = SavedStateHandle(mapOf("target" to "d1", "prefill" to "social_limit"))
         val vm =
-            WizardViewModel(handle, perTarget, devices, settings, blocks, clock, AiDraftHandoff(), FakeAiReporter())
+            WizardViewModel(
+                handle,
+                perTarget,
+                devices,
+                settings,
+                blocks,
+                noDeviceBlocks(deviceRepo),
+                clock,
+                AiDraftHandoff(),
+                FakeAiReporter(),
+            )
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
         vm.pickType(BlockType.NOW)
         vm.selectTarget(BlockTarget.ThisPhone)

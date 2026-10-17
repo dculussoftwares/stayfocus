@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.feature.block
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.BlockRepository
@@ -13,6 +14,7 @@ import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
 import com.dculus.stayfocused.core.model.fallbackAppLabel
 import com.dculus.stayfocused.core.sync.BlockDescriber
+import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
@@ -125,6 +127,7 @@ class BlockViewModel
         usage: UsageRepository,
         private val describer: BlockDescriber,
         private val handoff: AiDraftHandoff,
+        private val deviceBlocks: ParentDeviceBlocks,
     ) : ViewModel() {
         private val local = MutableStateFlow(LocalState())
         private val lockMutex = Mutex()
@@ -209,7 +212,20 @@ class BlockViewModel
             id: String,
             enabled: Boolean,
         ) {
-            viewModelScope.launch { blocks.setEnabled(id, enabled) }
+            viewModelScope.launch {
+                val device = (blocks.get(id)?.target as? BlockTarget.Device)?.deviceId
+                if (device != null) {
+                    // The child phone enforces the Firestore copy: send the switch there first.
+                    val block = blocks.get(id) ?: return@launch
+                    try {
+                        deviceBlocks.push(device, block.copy(enabled = enabled))
+                    } catch (e: IllegalStateException) {
+                        Log.w(TAG, "Could not send the switch to the child phone", e)
+                        return@launch
+                    }
+                }
+                blocks.setEnabled(id, enabled)
+            }
         }
 
         /**
@@ -291,6 +307,7 @@ class BlockViewModel
         private fun Remote.activeIn(target: BlockTarget) = blocksByTarget[target].orEmpty().count { it.enabled }
 
         private companion object {
+            const val TAG = "BlockViewModel"
             const val STOP_TIMEOUT_MS = 5_000L
         }
     }
