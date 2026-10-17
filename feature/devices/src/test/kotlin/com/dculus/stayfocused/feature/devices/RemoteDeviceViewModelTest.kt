@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.sync.FakeCommandRepository
 import com.dculus.stayfocused.core.sync.FakeDeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.FakeRemoteDeviceRepository
+import com.dculus.stayfocused.core.sync.FakeRequestDecisionRepository
 import com.dculus.stayfocused.core.sync.UnlinkResult
 import com.dculus.stayfocused.core.sync.UsageAppEntry
 import com.dculus.stayfocused.core.sync.UsageSummary
@@ -36,6 +37,7 @@ class RemoteDeviceViewModelTest {
     private val remote = FakeRemoteDeviceRepository()
     private val commands = FakeCommandRepository()
     private val unlinker = FakeDeviceUnlinkRepository()
+    private val decisions = FakeRequestDecisionRepository()
     private val auth = FakeAuthRepository()
 
     @Before
@@ -55,6 +57,7 @@ class RemoteDeviceViewModelTest {
             remote,
             CommandSender(commands),
             unlinker,
+            decisions,
             auth,
             clock,
         )
@@ -216,6 +219,53 @@ class RemoteDeviceViewModelTest {
             assertEquals(listOf(card.id), remote.dismissed)
             assertEquals(listOf("b1" to false), remote.blockWrites)
         }
+
+    @Test
+    fun approvingARequestRecordsTheDecisionAndShowsTheToast() =
+        runTest {
+            devices.devices.value = listOf(device(id = "kid", requests = listOf(request())))
+            val viewModel = viewModel()
+            val card = viewModel.ready().requests.single()
+            viewModel.messages.test {
+                viewModel.decide(card, 30)
+                assertEquals(RemoteEvent.RequestApproved("30m", card.app), awaitItem())
+            }
+            assertEquals(listOf(card.id to 30), decisions.decisions)
+        }
+
+    @Test
+    fun denyingARequestRecordsNoAndShowsTheToast() =
+        runTest {
+            devices.devices.value = listOf(device(id = "kid", requests = listOf(request())))
+            val viewModel = viewModel()
+            val card = viewModel.ready().requests.single()
+            viewModel.messages.test {
+                viewModel.decide(card, 0)
+                assertEquals(RemoteEvent.RequestDenied, awaitItem())
+            }
+            assertEquals(listOf(card.id to 0), decisions.decisions)
+        }
+
+    @Test
+    fun aRefusedDecisionIsReported() =
+        runTest {
+            devices.devices.value = listOf(device(id = "kid", requests = listOf(request())))
+            decisions.failing = true
+            val viewModel = viewModel()
+            val card = viewModel.ready().requests.single()
+            viewModel.messages.test {
+                viewModel.decide(card, 15)
+                assertEquals(RemoteEvent.RequestApproved("15m", card.app), awaitItem())
+                assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
+            }
+        }
+
+    @Test
+    fun minutesAreLabelledLikeThePrototype() {
+        assertEquals("15m", minutesLabel(15))
+        assertEquals("1h", minutesLabel(60))
+        assertEquals("1h30", minutesLabel(90))
+    }
 
     @Test
     fun aRefusedWriteIsReported() =

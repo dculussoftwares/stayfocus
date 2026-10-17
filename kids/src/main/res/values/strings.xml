@@ -31,6 +31,11 @@
     <string name="kids_consent_allow">Allow and link</string>
     <string name="kids_consent_cancel">Cancel</string>
     <string name="kids_parent_fallback">your parent</string>
+    <!-- Block screen: ask for more time (prototype "Kids: Blocked overlay"). -->
+    <string name="kids_ask_button">Ask %1$s for more time</string>
+    <string name="kids_ask_how_much">HOW MUCH MORE?</string>
+    <string name="kids_ask_sent">Request sent to %1$s</string>
+    <string name="kids_ask_sent_hint">You\'ll get a notification when they answer.</string>
     <string name="kids_consent_expired">This code ran out or was already used. Show a new QR code to your parent.</string>
     <string name="kids_consent_new_code">Show a new code</string>
     <string name="kids_consent_network">Could not reach the server. Check the connection and try again.</string>

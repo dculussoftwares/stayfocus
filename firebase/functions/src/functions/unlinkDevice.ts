@@ -1,6 +1,7 @@
 import type { DocumentReference, Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
 import { logInfo } from "../lib/log";
+import { cleanLabel, defaultNotifyDeps, pushToParent } from "../lib/notify";
 import { secureCallable } from "../lib/secureCallable";
 
 /** Firestore auto ids are 20 letters and digits; the bounds are looser so the schema does not depend on that. */
@@ -17,12 +18,16 @@ export interface UnlinkResult {
   removed: boolean;
 }
 
-/** Tells the parent their child unlinked. Push delivery arrives with the shared notify module (M8-05); log only until then. */
-export type NotifyParent = (parentUid: string, deviceId: string) => Promise<void>;
+/** Tells the parent their child unlinked. [deviceName] is read before the device document is deleted. */
+export type NotifyParent = (parentUid: string, deviceId: string, deviceName?: string) => Promise<void>;
 
-export const logOnlyNotify: NotifyParent = () => {
-  logInfo("parent would be notified of an unlink", { fn: "unlinkDevice", outcome: "notify-pending" });
-  return Promise.resolve();
+/** The shared notify module (also used by notifyParent): a data push the parent app shows as "{device} unlinked". */
+export const pushNotify: NotifyParent = async (parentUid, deviceId, deviceName) => {
+  await pushToParent(defaultNotifyDeps, "unlinkDevice", parentUid, {
+    type: "unlinked",
+    deviceId,
+    device: cleanLabel(deviceName, "Your child's phone"),
+  });
 };
 
 /**
@@ -52,16 +57,17 @@ export async function removeDevice(
   who: UnlinkWho,
   parentUid: string,
   deviceId: string,
-  notify: NotifyParent = logOnlyNotify,
+  notify: NotifyParent = pushNotify,
 ): Promise<UnlinkResult> {
   const ref = db.collection("users").doc(parentUid).collection("devices").doc(deviceId);
+  const deviceName = who === "child" ? ((await ref.get()).get("name") as string | undefined) : undefined;
   await removeSubcollections(db, ref);
   // Only one of several overlapping calls deletes the document; that one reports the removal and tells the parent.
   const deleted = await deleteIfExists(ref);
   // A write that was in flight when the document went (the child reports every 90 s) can leave a stray subcollection
   // document; the rules refuse further writes once the device document is gone, so a second pass leaves nothing.
   await removeSubcollections(db, ref);
-  if (deleted && who === "child") await notify(parentUid, deviceId);
+  if (deleted && who === "child") await notify(parentUid, deviceId, deviceName);
   return { ok: true, removed: deleted };
 }
 

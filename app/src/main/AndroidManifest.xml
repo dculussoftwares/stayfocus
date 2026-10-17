@@ -30,6 +30,20 @@
                 android:resource="@xml/foreground_app_service" />
         </service>
 
+        <!-- Pushes from the notifyParent / unlinkDevice functions (M8-05). Not exported: only FCM binds the service. -->
+        <service
+            android:name=".push.PushService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- The Approve / No buttons of the request notification. Not exported: only our own PendingIntents reach it. -->
+        <receiver
+            android:name=".push.RequestActionReceiver"
+            android:exported="false" />
+
         <!-- WorkManager is initialised on demand by StayFocusedApp (Hilt worker factory). -->
         <provider
             android:name="androidx.startup.InitializationProvider"

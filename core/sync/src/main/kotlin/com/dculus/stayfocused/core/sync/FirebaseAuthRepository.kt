@@ -33,6 +33,8 @@ internal class FirebaseAuthRepository(
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val retryDelaysMs: List<Long> = PROFILE_RETRY_DELAYS_MS,
     private val tokenProvider: GoogleIdTokenProvider = CredentialManagerTokenProvider(),
+    /** Runs while the account can still write (the push token is removed here). Failures are logged, not raised. */
+    private val beforeSignOut: suspend (uid: String) -> Unit = {},
 ) : AuthRepository {
     private val profileJobs = ConcurrentHashMap<String, Job>()
 
@@ -143,7 +145,19 @@ internal class FirebaseAuthRepository(
             AuthResult.Failure(e.toAuthFailure())
         }
 
-    override suspend fun signOut() = auth.signOut()
+    @Suppress("TooGenericExceptionCaught")
+    override suspend fun signOut() {
+        auth.currentUser?.uid?.let { uid ->
+            try {
+                beforeSignOut(uid)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.w(e, "Clean-up before sign-out failed")
+            }
+        }
+        auth.signOut()
+    }
 
     @Suppress("TooGenericExceptionCaught")
     private suspend fun call(block: suspend () -> Unit): AuthResult =

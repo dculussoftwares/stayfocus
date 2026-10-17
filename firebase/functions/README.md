@@ -15,6 +15,9 @@ npm run build       # bundles src/functions/*.ts into dist/<name>/ (one deployab
 
 1. `src/functions/<name>.ts` exports a `secureCallable({...})` named `<name>`.
 2. Add `<name>` to `local.functions` in `infra/firebase/functions.tf` with the roles its service account needs.
+   Event-triggered functions (`notifyParent`, `kind = "firestore_created"`) export `onDocumentCreated(...)` instead and
+   list the document path in `functions.tf`; Terraform creates the Eventarc trigger and no public invoker. They send
+   push messages only through `src/lib/notify.ts`, which builds nothing from client text unsanitised.
 3. Test the checks it adds (`authorize`, input schema) next to `test/secureCallable.test.ts`.
 
 ## Deploying

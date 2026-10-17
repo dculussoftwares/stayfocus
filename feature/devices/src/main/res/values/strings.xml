@@ -75,6 +75,8 @@
     <string name="remote_toast_reminded">Reminder sent to %1$s</string>
     <string name="remote_toast_offline">%1$s is offline. It\'ll apply when it\'s back.</string>
     <string name="remote_toast_failed">Couldn\'t reach %1$s. Try again.</string>
+    <string name="remote_toast_approved">Approved %1$s of %2$s</string>
+    <string name="remote_toast_denied">Request denied</string>
     <string name="remote_toast_unlinked">%1$s unlinked</string>
     <string name="remote_toast_unlink_failed">Couldn\'t unlink %1$s. Check your connection and try again.</string>
     <string name="devices_link_action">+ Link</string>

@@ -14,11 +14,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOf
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Qualifier
-import javax.inject.Singleton
 
 @Qualifier
 @Retention(AnnotationRetention.BINARY)
@@ -69,6 +67,13 @@ internal abstract class EngineModule {
     @Binds
     abstract fun breakEnd(impl: AndroidBreakNotifier): BreakEndNotifier
 
+    /** Approved "more time" grants (M8-05); the Kids app gives them, the engine reads them. */
+    @Binds
+    abstract fun allowances(impl: SharedPreferencesTemporaryAllowances): TemporaryAllowances
+
+    @Binds
+    abstract fun allowanceSource(impl: TemporaryAllowances): TemporaryAllowanceSource
+
     @Binds
     abstract fun eventLog(impl: RoomBlockEventLog): BlockEventLog
 
@@ -79,10 +84,5 @@ internal abstract class EngineModule {
 
         @Provides
         fun monotonic(): MonotonicClock = MonotonicClock { SystemClock.elapsedRealtime() }
-
-        /** Nothing grants temporary allowances yet (unlock requests land in a later story). */
-        @Provides
-        @Singleton
-        fun allowances(): TemporaryAllowanceSource = TemporaryAllowanceSource { flowOf(emptyList()) }
     }
 }

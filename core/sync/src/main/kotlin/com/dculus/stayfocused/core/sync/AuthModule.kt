@@ -5,6 +5,7 @@ import com.dculus.stayfocused.core.data.repository.LocalDataWiper
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.messaging.FirebaseMessaging
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,9 +27,14 @@ internal object AuthModule {
     fun auth(
         availability: FirebaseAvailability,
         fake: Provider<FakeAuthRepository>,
+        pushTokens: Provider<PushTokenRepository>,
     ): AuthRepository =
         if (availability.isConfigured) {
-            FirebaseAuthRepository(FirebaseAuth.getInstance(), FirebaseFirestore.getInstance())
+            FirebaseAuthRepository(
+                FirebaseAuth.getInstance(),
+                FirebaseFirestore.getInstance(),
+                beforeSignOut = { uid -> pushTokens.get().unregister(uid) },
+            )
         } else {
             fake.get()
         }
@@ -117,6 +123,36 @@ internal object AuthModule {
             FirebaseRemoteDeviceRepository(FirebaseFirestore.getInstance())
         } else {
             NoRemoteDeviceRepository
+        }
+
+    /** The Kids phone's "ask for more time" requests (`devices/{id}/requests`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun unlockRequests(availability: FirebaseAvailability): UnlockRequestRepository =
+        if (availability.isConfigured) {
+            FirebaseUnlockRequestRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoUnlockRequestRepository
+        }
+
+    /** The parent's answer to a request: the decision and the command for the child; none without Firebase. */
+    @Provides
+    @Singleton
+    fun requestDecisions(availability: FirebaseAvailability): RequestDecisionRepository =
+        if (availability.isConfigured) {
+            FirebaseRequestDecisionRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoRequestDecisionRepository
+        }
+
+    /** The parent's FCM token (`users/{uid}/fcmTokens`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun pushTokens(availability: FirebaseAvailability): PushTokenRepository =
+        if (availability.isConfigured) {
+            FirebasePushTokenRepository(FirebaseFirestore.getInstance(), FirebaseMessaging.getInstance())
+        } else {
+            NoPushTokenRepository
         }
 
     /** `unlinkDevice`, for the Kids home and the parent's Remote screen; none without Firebase. */
