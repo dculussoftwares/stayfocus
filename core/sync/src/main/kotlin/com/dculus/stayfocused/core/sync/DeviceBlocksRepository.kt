@@ -4,8 +4,9 @@ import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.Block
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -61,6 +62,10 @@ interface DeviceBlocksRepository {
     )
 }
 
+/** Fields of a block document only some types use. */
+private val BLOCK_OPTIONAL_FIELDS =
+    setOf("limitMins", "period", "useMins", "restMins", "range", "durationMins", "startedAt")
+
 internal class FirebaseDeviceBlocksRepository(
     private val firestore: FirebaseFirestore,
 ) : DeviceBlocksRepository {
@@ -78,18 +83,22 @@ internal class FirebaseDeviceBlocksRepository(
         onRejected: () -> Unit,
     ) {
         val doc = device(target).collection("blocks").document(block.id)
-        val write =
-            if (preserveEnabled) {
-                // Only used for edits of a block the child already has: merging leaves its stored `enabled` alone.
-                doc.set(block.toWire() - "enabled", SetOptions.merge())
-            } else {
-                doc.set(block.toWire())
-            }
-        write
-            .addOnFailureListener {
-                Timber.w(it, "Saving block %s was rejected", block.id)
-                onRejected()
-            }
+        val rejected = { e: Exception ->
+            Timber.w(e, "Saving block %s was rejected", block.id)
+            onRejected()
+        }
+        if (!preserveEnabled) {
+            doc.set(block.toWire()).addOnFailureListener(rejected)
+            return
+        }
+        // An edit of a block the child already has: update everything but the stored `enabled`, and clear the fields
+        // the new type does not use. A block that is gone meanwhile is written in full instead.
+        val wire = block.toWire()
+        val update = (BLOCK_OPTIONAL_FIELDS - wire.keys).associateWith { FieldValue.delete() } + (wire - "enabled")
+        doc.update(update).addOnFailureListener { e ->
+            val missing = (e as? FirebaseFirestoreException)?.code == FirebaseFirestoreException.Code.NOT_FOUND
+            if (missing) doc.set(wire).addOnFailureListener(rejected) else rejected(e)
+        }
     }
 
     override fun remove(

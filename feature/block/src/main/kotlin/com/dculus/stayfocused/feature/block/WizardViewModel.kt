@@ -329,6 +329,7 @@ class WizardViewModel
                 try {
                     sendToChildPhones(block, old)
                     blocks.upsert(block)
+                    removeFromOldPhone(block, old)
                 } catch (
                     @Suppress("TooGenericExceptionCaught") e: Exception,
                 ) {
@@ -351,8 +352,7 @@ class WizardViewModel
 
         /**
          * The child phone enforces what is in Firestore; queued at once, sent when online. An edit keeps the stored
-         * on/off switch (the Remote screen may have flipped it), and a block moved to another phone (or to this
-         * one) is removed from the old phone so that it stops enforcing it.
+         * on/off switch (the Remote screen may have flipped it).
          */
         private suspend fun sendToChildPhones(
             block: Block,
@@ -362,7 +362,15 @@ class WizardViewModel
             if (deviceId != null) {
                 deviceBlocks.push(deviceId, block, preserveEnabled = old != null && old.target == block.target)
             }
+        }
+
+        /** Moved to another phone (or to this one): the old phone stops enforcing it, once the new copy is saved. */
+        private suspend fun removeFromOldPhone(
+            block: Block,
+            old: Block?,
+        ) {
             val oldDevice = (old?.target as? BlockTarget.Device)?.deviceId
+            val deviceId = (block.target as? BlockTarget.Device)?.deviceId
             if (old != null && oldDevice != null && oldDevice != deviceId) deviceBlocks.remove(oldDevice, old.id)
         }
 
