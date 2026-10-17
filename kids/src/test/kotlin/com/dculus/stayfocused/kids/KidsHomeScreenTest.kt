@@ -39,7 +39,7 @@ class KidsHomeScreenTest {
             rules =
                 listOf(
                     KidsRule("1", "Instagram", KidsRuleType.Limit, limitMins = 30),
-                    KidsRule("2", "Games", KidsRuleType.Schedule, start = "08:00", end = "15:00"),
+                    KidsRule("2", "Games", KidsRuleType.Schedule, start = "08:00", end = "15:00", days = 0b0011111),
                 ),
         )
 
@@ -53,7 +53,8 @@ class KidsHomeScreenTest {
         composeRule.onNodeWithText("RULES SET BY ASHA").assertIsDisplayed()
         composeRule.onNodeWithText("Instagram").assertIsDisplayed()
         composeRule.onNodeWithText("30 min a day").assertIsDisplayed()
-        composeRule.onNodeWithText("08:00–15:00").assertIsDisplayed()
+        composeRule.onNodeWithText("Mon–Fri · 08:00–15:00").assertIsDisplayed()
+        composeRule.onNodeWithText("↑ PERSISTENT NOTIFICATION · REQUIRED BY PLAY POLICY").assertIsDisplayed()
         composeRule.onNodeWithText("Unlink from Asha").assertIsDisplayed()
     }
 

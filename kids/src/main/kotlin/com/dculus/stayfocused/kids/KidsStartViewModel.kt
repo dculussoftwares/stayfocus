@@ -18,16 +18,19 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /**
- * First run goes through the permission setup; afterwards the app opens on Home while a parent is linked and on the QR
- * (Link) screen otherwise.
+ * A linked phone opens on Home. Otherwise first run goes through the permission setup and later runs open on the QR
+ * (Link) screen.
  */
 internal fun kidsStartRoute(
     setupComplete: Boolean,
     linked: Boolean = false,
 ): Any =
     when {
-        !setupComplete -> KidsPermissions
+        // A linked phone went through setup before it could link; reopening never sends it back to the QR.
         linked -> KidsHome
+
+        !setupComplete -> KidsPermissions
+
         else -> KidsLink
     }
 

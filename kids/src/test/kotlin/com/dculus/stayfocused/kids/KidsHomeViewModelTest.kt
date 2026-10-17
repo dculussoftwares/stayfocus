@@ -9,6 +9,8 @@ import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.sync.UnlinkResult
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.UsageStatsDataSource
+import com.dculus.stayfocused.kids.monitoring.LinkReset
+import com.dculus.stayfocused.kids.monitoring.LinkWatcher
 import com.dculus.stayfocused.kids.monitoring.MonitoringControl
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import kotlinx.coroutines.CompletableDeferred
@@ -65,7 +67,8 @@ class KidsHomeViewModelTest {
     @After
     fun tearDown() = Dispatchers.resetMain()
 
-    private fun viewModel() = KidsHomeViewModel(store, home, unlinker, FixedUsage(72), control, clock)
+    private fun viewModel() =
+        KidsHomeViewModel(store, home, LinkWatcher(home), unlinker, FixedUsage(72), LinkReset(store, control), clock)
 
     /** The view model refreshes forever; every test stops it so nothing is left running. */
     private fun KidsHomeViewModel.stop() = viewModelScope.cancel()

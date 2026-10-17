@@ -54,8 +54,9 @@ fun blockDetail(
     }
 }
 
+/** "Every day", "Mon–Fri", "Sat–Sun", "No days" or the short day names. */
 @Composable
-private fun daysLabel(days: DaysOfWeek): String =
+fun daysLabel(days: DaysOfWeek): String =
     when {
         days == DaysOfWeek.ALL -> {
             stringResource(R.string.sf_block_days_every_day)

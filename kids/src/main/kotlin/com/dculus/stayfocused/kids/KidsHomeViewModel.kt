@@ -2,14 +2,14 @@ package com.dculus.stayfocused.kids
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dculus.stayfocused.core.sync.DeviceLinkState
 import com.dculus.stayfocused.core.sync.DeviceTarget
 import com.dculus.stayfocused.core.sync.DeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.KidsHomeRepository
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.UnlinkResult
 import com.dculus.stayfocused.core.usage.UsageStatsDataSource
-import com.dculus.stayfocused.kids.monitoring.MonitoringControl
+import com.dculus.stayfocused.kids.monitoring.LinkReset
+import com.dculus.stayfocused.kids.monitoring.LinkWatcher
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -58,9 +58,10 @@ class KidsHomeViewModel
     constructor(
         private val linkStore: ParentLinkStore,
         private val home: KidsHomeRepository,
+        private val watcher: LinkWatcher,
         private val unlinkRepository: DeviceUnlinkRepository,
         private val usage: UsageStatsDataSource,
-        private val monitoring: MonitoringControl,
+        private val linkReset: LinkReset,
         private val clock: Clock,
     ) : ViewModel() {
         internal companion object {
@@ -82,16 +83,12 @@ class KidsHomeViewModel
                 // Not linked (anymore): nothing to show here.
                 finish(HomeOutcome.Reset)
             } else {
-                viewModelScope.launch { retrying("link") { watchLink(target) } }
+                viewModelScope.launch {
+                    watcher.untilGone(target)
+                    if (_state.value.working) goneWhileWorking = true else finish(HomeOutcome.Reset)
+                }
                 viewModelScope.launch { retrying("rules") { watchRules(target) } }
                 viewModelScope.launch { refreshToday() }
-            }
-        }
-
-        private suspend fun watchLink(target: DeviceTarget) {
-            home.observeLink(target).collect { link ->
-                if (link != DeviceLinkState.Gone) return@collect
-                if (_state.value.working) goneWhileWorking = true else finish(HomeOutcome.Reset)
             }
         }
 
@@ -189,10 +186,7 @@ class KidsHomeViewModel
         private fun finish(outcome: HomeOutcome) {
             if (finished) return
             finished = true
-            linkStore.parentName = null
-            linkStore.parentUid = null
-            linkStore.deviceId = null
-            monitoring.sync()
+            linkReset.reset()
             _state.update { it.copy(working = false, confirming = false, outcome = outcome) }
         }
     }

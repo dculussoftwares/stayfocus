@@ -1,7 +1,6 @@
 package com.dculus.stayfocused.core.sync
 
 import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.FirebaseFunctionsException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.tasks.await
@@ -61,23 +60,11 @@ internal class FirebaseDeviceUnlinkRepository(
 }
 
 /**
- * `permission-denied` for a device the caller named is also what a child gets once the device is gone (the parent
- * unlinked first, or deleted their account), so the phone can leave the linked state; everything else keeps it.
+ * A refusal is a failure: it can mean the device belongs to someone else or the identity is wrong, and neither is
+ * "unlinked". A device that is already gone is noticed by the Kids home through [KidsHomeRepository.observeLink].
  */
 internal fun Throwable.toUnlinkResult(): UnlinkResult =
-    when {
-        this is FirebaseFunctionsException && code == FirebaseFunctionsException.Code.PERMISSION_DENIED -> {
-            UnlinkResult.Unlinked
-        }
-
-        toLinkFailure() == LinkFailure.Network -> {
-            UnlinkResult.Network
-        }
-
-        else -> {
-            UnlinkResult.Failed
-        }
-    }
+    if (toLinkFailure() == LinkFailure.Network) UnlinkResult.Network else UnlinkResult.Failed
 
 /** Used when the build has no Firebase configuration: there is nothing to unlink from. */
 internal object NoDeviceUnlinkRepository : DeviceUnlinkRepository {

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.ui.components.GhostButton
@@ -32,6 +33,7 @@ import com.dculus.stayfocused.core.ui.components.MonoLabel
 import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
+import com.dculus.stayfocused.core.ui.components.daysLabel
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 internal const val KIDS_HOME_UNLINK_TAG = "kids_home_unlink"
@@ -77,11 +79,20 @@ internal fun KidsHomeScreen(
         modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 18.dp, vertical = StayFocusedTheme.spacing.gap8),
+            .padding(horizontal = StayFocusedTheme.spacing.screen, vertical = StayFocusedTheme.spacing.gap8),
         verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap16),
     ) {
         NoticePreview(parent)
-        Column(Modifier.padding(horizontal = 4.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            stringResource(R.string.kids_home_notice_caption).uppercase(),
+            style = type.labelS,
+            color = colors.tertiary,
+            modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
+        )
+        Column(
+            Modifier.padding(horizontal = StayFocusedTheme.spacing.gap6, vertical = StayFocusedTheme.spacing.gap6),
+            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
+        ) {
             MonoLabel(stringResource(R.string.kids_home_today))
             Text(
                 state.todayMins?.let { duration(it) } ?: "",
@@ -93,14 +104,14 @@ internal fun KidsHomeScreen(
         Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8)) {
             MonoLabel(
                 stringResource(R.string.kids_home_rules, parent),
-                modifier = Modifier.padding(start = 4.dp),
+                modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
             )
             if (state.rules.isEmpty()) {
                 Text(
                     stringResource(R.string.kids_home_no_rules, parent),
                     style = type.bodyS,
                     color = colors.secondary,
-                    modifier = Modifier.padding(start = 4.dp),
+                    modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
                 )
             }
             state.rules.forEach { RuleRow(it) }
@@ -154,15 +165,18 @@ private fun NoticePreview(parent: String) {
             .fillMaxWidth()
             .background(colors.track, StayFocusedTheme.shapes.card)
             .border(1.dp, colors.hairline06, StayFocusedTheme.shapes.card)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp),
+            .padding(horizontal = StayFocusedTheme.spacing.gap16, vertical = StayFocusedTheme.spacing.gap14),
+        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Box(
                 Modifier.size(18.dp).background(colors.accent, StayFocusedTheme.shapes.chip),
                 contentAlignment = Alignment.Center,
             ) {
-                Text("SF", style = type.labelS, color = colors.onAccent)
+                Text(stringResource(R.string.kids_home_notice_badge), style = type.labelS, color = colors.onAccent)
             }
             Text(stringResource(R.string.kids_home_notice_app), style = type.bodyS, color = colors.secondary)
         }
@@ -183,8 +197,8 @@ private fun RuleRow(rule: KidsRule) {
         Modifier
             .fillMaxWidth()
             .background(colors.panel, StayFocusedTheme.shapes.input)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
+            .padding(horizontal = StayFocusedTheme.spacing.gap16, vertical = StayFocusedTheme.spacing.gap14),
+        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
     ) {
         Text(rule.name, style = type.bodyL.copy(fontWeight = FontWeight.Bold), color = colors.text)
         Text(ruleSummary(rule), style = type.bodyS, color = colors.secondary)
@@ -206,7 +220,12 @@ private fun ruleSummary(rule: KidsRule): String =
         }
 
         KidsRuleType.Schedule -> {
-            stringResource(R.string.kids_rule_schedule, rule.start.orEmpty(), rule.end.orEmpty())
+            stringResource(
+                R.string.kids_rule_schedule,
+                daysLabel(DaysOfWeek(rule.days)),
+                rule.start.orEmpty(),
+                rule.end.orEmpty(),
+            )
         }
 
         KidsRuleType.Now -> {

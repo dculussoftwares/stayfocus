@@ -73,6 +73,12 @@ class KidsStartViewModelTest {
     }
 
     @Test
+    fun aLinkedPhoneNeverGoesBackToPermissionsOrTheQr() {
+        val linked = MemoryLinkStore(parentName = "Asha")
+        assertEquals(KidsHome, KidsStartViewModel(settings(false), FakeDeviceAuth(), linked).startRoute.value)
+    }
+
+    @Test
     fun completingSetupSavesTheFlagButKeepsTheStartRoute() {
         val repository = settings(false)
         val viewModel = KidsStartViewModel(repository, FakeDeviceAuth(), MemoryLinkStore())

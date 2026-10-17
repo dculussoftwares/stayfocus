@@ -47,6 +47,12 @@ class MonitoringService : Service() {
     @Inject
     internal lateinit var commandListener: CommandListener
 
+    @Inject
+    internal lateinit var linkWatcher: LinkWatcher
+
+    @Inject
+    internal lateinit var linkReset: LinkReset
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var reporting: Job? = null
     private var runningTarget: DeviceTarget? = null
@@ -98,6 +104,11 @@ class MonitoringService : Service() {
                 scope.launch(start = CoroutineStart.ATOMIC) {
                     withContext(NonCancellable) { previous?.join() }
                     coroutineScope {
+                        // The parent may end the link while the app is closed: stop reporting and monitoring then.
+                        launch {
+                            linkWatcher.untilGone(target)
+                            linkReset.reset()
+                        }
                         launch { reporter.run(target) }
                         launch { commandListener.run(target) }
                     }

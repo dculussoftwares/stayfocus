@@ -1,4 +1,4 @@
-import type { Firestore } from "firebase-admin/firestore";
+import type { DocumentReference, Firestore } from "firebase-admin/firestore";
 import { z } from "zod";
 import { logInfo } from "../lib/log";
 import { secureCallable } from "../lib/secureCallable";
@@ -40,8 +40,9 @@ export async function whoIsCaller(
 }
 
 /**
- * Deletes the device document and everything under it (blocks, usage, apps, requests, alerts) with
- * `recursiveDelete`. When the child unlinked, the parent is told afterwards. Safe to repeat.
+ * Deletes everything under the device (blocks, usage, apps, requests, alerts) with `recursiveDelete`, and the device
+ * document last. The document is what proves a caller's right to ask, so if a step fails halfway the document is still
+ * there and the same caller can simply retry. When the child unlinked, the parent is told afterwards. Safe to repeat.
  */
 export async function removeDevice(
   db: Firestore,
@@ -52,12 +53,19 @@ export async function removeDevice(
 ): Promise<UnlinkResult> {
   const ref = db.collection("users").doc(parentUid).collection("devices").doc(deviceId);
   const existed = (await ref.get()).exists;
-  await db.recursiveDelete(ref);
+  await removeSubcollections(db, ref);
+  await ref.delete();
   // A write that was in flight when the document went (the child reports every 90 s) can leave a stray subcollection
   // document; the rules refuse further writes once the device document is gone, so a second pass leaves nothing.
-  await db.recursiveDelete(ref);
+  await removeSubcollections(db, ref);
   if (existed && who === "child") await notify(parentUid, deviceId);
   return { ok: true, removed: existed };
+}
+
+async function removeSubcollections(db: Firestore, ref: DocumentReference): Promise<void> {
+  for (const collection of await ref.listCollections()) {
+    await db.recursiveDelete(collection);
+  }
 }
 
 interface UnlinkContext {

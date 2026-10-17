@@ -36,6 +36,19 @@ class KidsHomeMappingTest {
             )
         assertEquals("08:00", schedule?.start)
         assertEquals("15:00", schedule?.end)
+        assertEquals(KidsRule.ALL_DAYS, schedule?.days)
+        val weekdays =
+            parseRule(
+                "w",
+                mapOf(
+                    "enabled" to true,
+                    "type" to "SCHEDULE",
+                    "name" to "School",
+                    "days" to 31L,
+                    "range" to mapOf("start" to "08:00", "end" to "15:00"),
+                ),
+            )
+        assertEquals(31, weekdays?.days)
         val cycle =
             parseRule(
                 "c",
@@ -60,8 +73,17 @@ class KidsHomeMappingTest {
         assertNull(parseRule("d", mapOf("type" to "LIMIT", "name" to "x")))
     }
 
-    // FirebaseFunctionsException cannot be built outside the SDK, so the permission-denied case (a device that is gone)
-    // is covered by the emulator test of the function and the manual two-phone check.
+    @Test
+    fun blocksMissingTheirTypeFieldsAreLeftOut() {
+        val base = mapOf("enabled" to true, "name" to "x")
+        assertNull(parseRule("a", base + mapOf("type" to "LIMIT")))
+        assertNull(parseRule("b", base + mapOf("type" to "CYCLE", "useMins" to 10)))
+        assertNull(parseRule("c", base + mapOf("type" to "SCHEDULE", "range" to mapOf("start" to "08:00"))))
+        assertNull(parseRule("d", base + mapOf("type" to "NOW")))
+    }
+
+    // FirebaseFunctionsException cannot be built outside the SDK; the function's own refusals are covered by its
+    // emulator test (firebase/functions/test/unlinkDevice.test.ts).
     @Test
     fun connectionProblemsAreRetryableAndEverythingElseFails() {
         assertEquals(UnlinkResult.Network, IOException("down").toUnlinkResult())
