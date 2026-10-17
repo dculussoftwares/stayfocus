@@ -50,10 +50,10 @@ import com.dculus.stayfocused.core.sync.CommandSender
 import com.dculus.stayfocused.core.sync.FakeAccountDeletionRepository
 import com.dculus.stayfocused.core.sync.FakeAuthRepository
 import com.dculus.stayfocused.core.sync.FakeCommandRepository
+import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
 import com.dculus.stayfocused.core.sync.FakeDeviceUnlinkRepository
 import com.dculus.stayfocused.core.sync.FakeLinkHandshakeRepository
 import com.dculus.stayfocused.core.sync.FakeRemoteDeviceRepository
-import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
 import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository

@@ -18,6 +18,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions") // one provider per Firebase-backed repository
 internal object AuthModule {
     /** Firebase when the build has `google-services.json`; the in-memory fake otherwise (blocking works either way). */
     @Provides
