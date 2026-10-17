@@ -67,7 +67,7 @@ class ManifestAuditTest {
 
     @Test
     fun `another service cannot stand in for MonitoringService`() {
-        val other = kidsApplication.replace(".monitoring.MonitoringService", ".Other")
+        val other = kidsApplication.replace(".monitoring.MonitoringService", ".monitoring.FakeMonitoringService")
         val v = ManifestAudit.auditManifest(manifest(kidsPermissions, other), AppRole.KIDS)
         assertTrue(v.single().contains("MonitoringService"))
     }
