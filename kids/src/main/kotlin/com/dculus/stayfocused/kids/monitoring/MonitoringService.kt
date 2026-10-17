@@ -24,6 +24,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -42,6 +43,9 @@ class MonitoringService : Service() {
 
     @Inject
     internal lateinit var reporter: ChildReporter
+
+    @Inject
+    internal lateinit var commandListener: CommandListener
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var reporting: Job? = null
@@ -93,7 +97,10 @@ class MonitoringService : Service() {
                 // joins keeps every goodbye ("offline") ahead of the next run's first "online".
                 scope.launch(start = CoroutineStart.ATOMIC) {
                     withContext(NonCancellable) { previous?.join() }
-                    reporter.run(target)
+                    coroutineScope {
+                        launch { reporter.run(target) }
+                        launch { commandListener.run(target) }
+                    }
                 }
             }
         return START_STICKY
