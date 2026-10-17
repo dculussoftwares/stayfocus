@@ -74,12 +74,18 @@ class LinkWatcher
         }
     }
 
+/** Ends what the parent set on this phone: its blocks, app locks and focus session. */
+fun interface RulesCleaner {
+    fun clear()
+}
+
 /** Forgets the parent and stops monitoring. The name goes first: the service treats it as "linked". */
 class LinkReset
     @Inject
     internal constructor(
         private val linkStore: ParentLinkStore,
         private val monitoring: MonitoringControl,
+        private val rules: RulesCleaner,
     ) {
         /**
          * With a [target], only resets while the stored link is still that device: a watcher that finishes late must
@@ -92,6 +98,8 @@ class LinkReset
             linkStore.parentName = null
             linkStore.parentUid = null
             linkStore.deviceId = null
+            // Whoever ended the link (this phone, the parent, the service), the parent's rules end with it.
+            rules.clear()
             monitoring.sync()
         }
     }

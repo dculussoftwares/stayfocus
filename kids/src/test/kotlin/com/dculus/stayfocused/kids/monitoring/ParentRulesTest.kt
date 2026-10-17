@@ -155,6 +155,27 @@ class ParentRulesTest {
         }
 
     @Test
+    fun resettingTheLinkEndsTheParentsRules() {
+        val store =
+            object : ParentLinkStore {
+                override var parentName: String? = "Asha"
+                override var parentUid: String? = "parent-1"
+                override var deviceId: String? = "device-1"
+            }
+        var cleared = 0
+        val noControl =
+            object : MonitoringControl {
+                override fun sync() = Unit
+            }
+        LinkReset(store, noControl, RulesCleaner { cleared++ }).reset(target)
+        assertEquals(1, cleared)
+        assertNull(store.parentUid)
+        // A reset for a device that is no longer the linked one changes nothing.
+        LinkReset(store, noControl, RulesCleaner { cleared++ }).reset(DeviceTarget("other", "x"))
+        assertEquals(1, cleared)
+    }
+
+    @Test
     fun syncBlocksHandlerPullsTheBlocks() =
         runTest {
             remote.blocks.value = listOf(block("z"))

@@ -19,17 +19,26 @@ class ParentDeviceBlocks
         private val auth: AuthRepository,
         private val repository: DeviceBlocksRepository,
     ) {
-        /** Queues [block] for the child phone [deviceId]. Throws when no parent account is signed in. */
+        /**
+         * Queues [block] for the child phone [deviceId]; [onRejected] is called if the server refuses it later (for
+         * example because the phone was unlinked meanwhile). Throws when no parent account is signed in, or when the
+         * block covers more than [MAX_APPS] apps, so the save fails instead of never arriving.
+         */
         suspend fun push(
             deviceId: String,
             block: Block,
-        ) = repository.push(target(deviceId), block)
+            onRejected: () -> Unit = {},
+        ) {
+            require(block.apps.size <= MAX_APPS) { "A block can cover at most $MAX_APPS apps" }
+            repository.push(target(deviceId), block, onRejected)
+        }
 
         /** Queues the removal of [blockId] from the child phone [deviceId]. Throws when nobody is signed in. */
         suspend fun remove(
             deviceId: String,
             blockId: String,
-        ) = repository.remove(target(deviceId), blockId)
+            onRejected: () -> Unit = {},
+        ) = repository.remove(target(deviceId), blockId, onRejected)
 
         /** The launchable apps the child phone [deviceId] reported; empty until it has, or without an account. */
         fun observeApps(deviceId: String): Flow<List<AppInfo>> =

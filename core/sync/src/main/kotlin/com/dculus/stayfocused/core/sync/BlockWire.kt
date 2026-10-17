@@ -15,6 +15,10 @@ import java.util.Date
 
 private const val MAX_DAYS_MASK = 0x7F
 
+/** Limits of `firestore.rules` for a block document. */
+internal const val MAX_NAME = 100
+internal const val MAX_APPS = 300
+
 /**
  * The Firestore form of a [Block] (`devices/{id}/blocks/{blockId}`); the keys are exactly the ones `firestore.rules`
  * allows. Optional fields a block type does not use are left out.
@@ -23,7 +27,7 @@ internal fun Block.toWire(): Map<String, Any> =
     buildMap {
         put("id", id)
         put("type", type.name)
-        put("name", name)
+        put("name", name.take(MAX_NAME))
         put("apps", apps.sorted())
         limitMins?.let { put("limitMins", it) }
         period?.let { put("period", it.name) }

@@ -19,6 +19,7 @@ import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -219,7 +220,10 @@ class BlockViewModel
                     val block = blocks.get(id) ?: return@launch
                     try {
                         deviceBlocks.push(device, block.copy(enabled = enabled))
-                    } catch (e: IllegalStateException) {
+                    } catch (
+                        @Suppress("TooGenericExceptionCaught") e: Exception,
+                    ) {
+                        if (e is CancellationException) throw e
                         Log.w(TAG, "Could not send the switch to the child phone", e)
                         return@launch
                     }
