@@ -57,7 +57,8 @@ class BlockViewModelTest {
         )
 
     private fun TestScope.viewModel(): BlockViewModel {
-        val vm = BlockViewModel(blocks, devices, installed, settings, locked, usage, describer, handoff)
+        val vm =
+            BlockViewModel(blocks, devices, installed, settings, locked, usage, describer, handoff, noDeviceBlocks())
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect {} }
         return vm
     }

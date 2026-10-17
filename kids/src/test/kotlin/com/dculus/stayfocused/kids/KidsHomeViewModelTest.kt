@@ -68,7 +68,7 @@ class KidsHomeViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel() =
-        KidsHomeViewModel(store, home, LinkWatcher(home), unlinker, FixedUsage(72), LinkReset(store, control), clock)
+        KidsHomeViewModel(store, home, LinkWatcher(home), unlinker, FixedUsage(72), LinkReset(store, control) {}, clock)
 
     /** The view model refreshes forever; every test stops it so nothing is left running. */
     private fun KidsHomeViewModel.stop() = viewModelScope.cancel()

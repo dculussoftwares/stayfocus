@@ -53,6 +53,7 @@ class CreateBlockFlowTest {
                 FakeLinkedDevicesRepository(),
                 settings,
                 blocks,
+                noDeviceBlocks(),
                 TestClock(),
                 AiDraftHandoff(),
                 FakeAiReporter(),
@@ -72,6 +73,7 @@ class CreateBlockFlowTest {
                 FakeUsageRepository(),
                 FakeBlockDescriber(),
                 AiDraftHandoff(),
+                noDeviceBlocks(),
             )
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
@@ -172,6 +174,7 @@ class CreateBlockFlowTest {
                 FakeLinkedDevicesRepository(),
                 FakeSettingsRepository(),
                 blocks,
+                noDeviceBlocks(),
                 TestClock(),
                 AiDraftHandoff(),
                 FakeAiReporter(),

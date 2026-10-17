@@ -9,6 +9,7 @@ import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.sync.FakeDeviceBlocksRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
@@ -40,16 +41,19 @@ class WizardRulesViewModelTest {
     private val blocks = FakeBlockRepository()
     private val clock = TestClock()
     private val devices = FakeLinkedDevicesRepository()
+    private val deviceRepo = FakeDeviceBlocksRepository()
 
     private fun viewModel(
         handle: SavedStateHandle = SavedStateHandle(),
         failingSave: Boolean = false,
+        apps: List<TargetApp> = defaultApps(),
     ) = WizardViewModel(
         handle,
-        FakeTargetApps(defaultApps()),
+        FakeTargetApps(apps),
         devices,
         FakeSettingsRepository(),
         if (failingSave) FailingBlocks() else blocks,
+        noDeviceBlocks(deviceRepo),
         clock,
         AiDraftHandoff(),
         FakeAiReporter(),
@@ -246,6 +250,51 @@ class WizardRulesViewModelTest {
             }
             assertEquals(false, vm.state.value.saving)
             assertEquals(WIZARD_STEP_RULES, vm.state.value.step)
+        }
+
+    @Test
+    fun editingAChildBlockKeepsItsStoredSwitchAndMovingItRemovesTheOldCopy() =
+        runTest {
+            devices.devices.value = listOf(device("d1"), device("d2"))
+            blocks.upsert(limitBlock(id = "b2", target = BlockTarget.Device("d1")))
+            val stay = viewModel(SavedStateHandle(mapOf("blockId" to "b2", "target" to "d1")))
+            stay.events.test {
+                stay.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            assertEquals(listOf(true), deviceRepo.preservedEnabled)
+            assertTrue(deviceRepo.removed.isEmpty())
+
+            val move = viewModel(SavedStateHandle(mapOf("blockId" to "b2", "target" to "d1")))
+            move.selectTarget(BlockTarget.Device("d2"))
+            move.events.test {
+                move.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            assertEquals(listOf("d1"), deviceRepo.removed.map { it.first.deviceId })
+            assertEquals(
+                "d2",
+                deviceRepo.pushed
+                    .last()
+                    .first.deviceId,
+            )
+            assertEquals(listOf(true, false), deviceRepo.preservedEnabled)
+        }
+
+    @Test
+    fun aBlockTooLargeForTheChildPhoneFailsTheSaveAndSendsNothing() =
+        runTest {
+            devices.devices.value = listOf(device())
+            val many = (1..301).map { TargetApp("com.example.app$it", "App $it", 0) }
+            val vm = viewModel(SavedStateHandle(mapOf("target" to "d1")), apps = many)
+            many.forEach { vm.toggleApp(it.pkg) }
+            vm.toRules(BlockType.NOW)
+            vm.events.test {
+                vm.next()
+                assertEquals(WizardEvent.SaveFailed, awaitItem())
+            }
+            assertTrue(deviceRepo.pushed.isEmpty())
+            assertTrue(blocks.observeByTarget(BlockTarget.Device("d1")).first().isEmpty())
         }
 }
 

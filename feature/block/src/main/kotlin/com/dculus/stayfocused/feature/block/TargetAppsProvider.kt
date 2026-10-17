@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.feature.block
 
 import com.dculus.stayfocused.core.model.BlockTarget
+import com.dculus.stayfocused.core.sync.ParentDeviceBlocks
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageRepository
 import dagger.Binds
@@ -9,7 +10,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import java.text.Collator
 import javax.inject.Inject
 
@@ -27,13 +28,14 @@ interface TargetAppsProvider {
 
 /**
  * This phone: the launchable apps (M3-02 catalog) with today's usage, A to Z so tiles never move while
- * the usage refreshes. A child phone has no app list until device linking (M8-03) syncs one.
+ * the usage refreshes. A child phone: the apps it reported to Firestore.
  */
 class DefaultTargetAppsProvider
     @Inject
     constructor(
         private val installedApps: InstalledAppsRepository,
         private val usage: UsageRepository,
+        private val deviceBlocks: ParentDeviceBlocks,
     ) : TargetAppsProvider {
         override fun apps(target: BlockTarget): Flow<List<TargetApp>> =
             when (target) {
@@ -48,7 +50,11 @@ class DefaultTargetAppsProvider
                 }
 
                 is BlockTarget.Device -> {
-                    flowOf(emptyList())
+                    // The apps the child phone reported (`devices/{id}/apps`); its usage is not mirrored per app.
+                    val collator = Collator.getInstance()
+                    deviceBlocks.observeApps(target.deviceId).map { apps ->
+                        apps.map { TargetApp(it.pkg, it.label, 0) }.sortedWith(compareBy(collator) { it.label })
+                    }
                 }
             }
     }

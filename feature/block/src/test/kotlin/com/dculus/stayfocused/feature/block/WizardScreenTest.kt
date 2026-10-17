@@ -40,6 +40,7 @@ class WizardScreenTest {
                 FakeLinkedDevicesRepository(),
                 settings,
                 FakeBlockRepository(),
+                noDeviceBlocks(),
                 TestClock(),
                 AiDraftHandoff(),
                 FakeAiReporter(),

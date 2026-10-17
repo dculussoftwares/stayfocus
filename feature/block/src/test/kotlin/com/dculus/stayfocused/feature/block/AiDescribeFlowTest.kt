@@ -65,6 +65,7 @@ class AiDescribeFlowTest {
                 FakeUsageRepository(),
                 FakeBlockDescriber(),
                 handoff,
+                noDeviceBlocks(),
             )
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
@@ -80,6 +81,7 @@ class AiDescribeFlowTest {
                                         FakeLinkedDevicesRepository(),
                                         settings,
                                         blocks,
+                                        noDeviceBlocks(),
                                         TestClock(),
                                         handoff,
                                         reporter,

@@ -18,6 +18,7 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions") // one provider per Firebase-backed repository
 internal object AuthModule {
     /** Firebase when the build has `google-services.json`; the in-memory fake otherwise (blocking works either way). */
     @Provides
@@ -71,6 +72,16 @@ internal object AuthModule {
             )
         } else {
             NoCommandRepository
+        }
+
+    /** Blocks, focus end and app list of a linked phone (`devices/{id}/blocks`, `apps`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun deviceBlocks(availability: FirebaseAvailability): DeviceBlocksRepository =
+        if (availability.isConfigured) {
+            FirebaseDeviceBlocksRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoDeviceBlocksRepository
         }
 
     /** The pairing handshake (`claimLinkToken`, `approveLink`); none without Firebase. */
