@@ -1,11 +1,14 @@
 package com.dculus.stayfocused.core.sync
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -66,7 +69,9 @@ class CommandSender
             target: DeviceTarget,
             command: RemoteCommand,
         ): Flow<DeliveryState> {
-            val id = repository.send(target, command)
-            return deliveryStates(repository.observeStatus(target, id))
+            val rejected = CompletableDeferred<Unit>()
+            val id = repository.send(target, command) { rejected.complete(Unit) }
+            val refused = flow { emit(rejected.await().let { CommandStatus.FAILED }) }
+            return deliveryStates(merge(repository.observeStatus(target, id), refused))
         }
     }

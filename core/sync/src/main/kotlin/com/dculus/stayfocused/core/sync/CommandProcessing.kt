@@ -12,7 +12,10 @@ import javax.inject.Inject
 interface CommandHandler {
     val type: CommandType
 
-    /** Applies [command]; throws to report it as failed. */
+    /**
+     * Applies [command] idempotently. Delivery is at least once: the process can stop after the effect is applied but
+     * before the outcome is stored or acknowledged, so the same command may arrive again. Throws to report failure.
+     */
     suspend fun handle(command: RemoteCommand)
 }
 
@@ -100,12 +103,10 @@ class CommandProcessor
 
         private suspend fun decide(command: PendingCommand): CommandStatus {
             val created = command.createdAtMillis
+            // Age first: a stale command is expired whatever its content.
+            if (created != null && clock.millis() - created > MAX_AGE_MILLIS) return CommandStatus.EXPIRED
             val parsed = parseCommand(command.type, command.payload)
-            return when {
-                created != null && clock.millis() - created > MAX_AGE_MILLIS -> CommandStatus.EXPIRED
-                parsed == null -> CommandStatus.FAILED
-                else -> executor.execute(parsed)
-            }
+            return if (parsed == null) CommandStatus.FAILED else executor.execute(parsed)
         }
 
         companion object {

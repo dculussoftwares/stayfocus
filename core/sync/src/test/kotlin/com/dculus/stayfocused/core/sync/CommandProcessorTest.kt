@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.sync
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.advanceTimeBy
@@ -95,6 +96,25 @@ class CommandProcessorTest {
         }
 
     @Test
+    fun `a stale malformed command is expired, not failed`() =
+        runTest {
+            val old = TimeUnit.HOURS.toMillis(25)
+            processor().process(target, block("a", ageMillis = old, type = "WIPE"))
+            processor().process(target, block("b", ageMillis = old, payload = emptyMap()))
+            assertEquals(listOf("a", "b").map { it to CommandStatus.EXPIRED }, repo.acks)
+        }
+
+    @Test
+    fun `minutes outside 1 to 480 or fractional are rejected`() {
+        for (bad in listOf(0, -5, 481, 1.5, Long.MAX_VALUE)) {
+            assertNull(parseCommand("START_FOCUS", mapOf("mins" to bad)), "mins=$bad")
+            assertNull(parseCommand("APPROVE_REQUEST", mapOf("reqId" to "r", "mins" to bad)), "mins=$bad")
+        }
+        assertEquals(RemoteCommand.StartFocus(480), parseCommand("START_FOCUS", mapOf("mins" to 480L)))
+        assertEquals(RemoteCommand.StartFocus(1), parseCommand("START_FOCUS", mapOf("mins" to 1.0)))
+    }
+
+    @Test
     fun `a command just under 24 hours old still runs`() =
         runTest {
             processor().process(target, block("edge", ageMillis = TimeUnit.HOURS.toMillis(24)))
@@ -168,13 +188,25 @@ class CommandProcessorTest {
         }
 
     @Test
-    fun `sender writes a pending command and tracks it`() =
+    fun `sender writes a pending command and tracks it to done`() =
         runTest {
-            val states = CommandSender(repo).send(target, RemoteCommand.StartFocus(25))
-            val job = launch { states.toList() }
+            val seen = mutableListOf<DeliveryState>()
+            val job = launch { CommandSender(repo).send(target, RemoteCommand.StartFocus(25)).toList(seen) }
             runCurrent()
-            repo.acknowledge(target, "cmd0", CommandStatus.DONE)
+            val stored = repo.observePending(target).first().single()
+            assertEquals("START_FOCUS", stored.type)
+            assertEquals(mapOf<String, Any?>("mins" to 25), stored.payload)
+            repo.acknowledge(target, stored.id, CommandStatus.DONE)
             runCurrent()
             job.join()
+            assertEquals(listOf(DeliveryState.PENDING, DeliveryState.DONE), seen)
+        }
+
+    @Test
+    fun `a write the server rejects ends as failed, not pending forever`() =
+        runTest {
+            repo.rejectSends = true
+            val seen = CommandSender(repo).send(target, RemoteCommand.StartFocus(25)).toList()
+            assertEquals(listOf(DeliveryState.PENDING, DeliveryState.FAILED), seen)
         }
 }

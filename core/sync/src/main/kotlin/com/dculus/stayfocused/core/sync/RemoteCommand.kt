@@ -92,7 +92,7 @@ fun parseCommand(
     return when (kind) {
         CommandType.BLOCK_APP -> p.str("pkg")?.let { RemoteCommand.BlockApp(it) }
         CommandType.UNBLOCK_APP -> p.str("pkg")?.let { RemoteCommand.UnblockApp(it) }
-        CommandType.START_FOCUS -> p.int("mins")?.let { RemoteCommand.StartFocus(it) }
+        CommandType.START_FOCUS -> p.mins("mins")?.let { RemoteCommand.StartFocus(it) }
         CommandType.STOP_FOCUS -> RemoteCommand.StopFocus
         CommandType.APPROVE_REQUEST -> parseApprove(p)
         CommandType.DENY_REQUEST -> p.str("reqId")?.let { RemoteCommand.DenyRequest(it) }
@@ -101,16 +101,24 @@ fun parseCommand(
     }
 }
 
+private const val MIN_MINS = 1L
+private const val MAX_MINS = 480L
+
 private class PayloadReader(
     private val payload: Map<String, Any?>,
 ) {
     fun str(key: String) = (payload[key] as? String)?.takeIf { it.isNotBlank() }
 
-    fun int(key: String) = (payload[key] as? Number)?.toInt()
+    /** A whole number within the 1..480 bounds of `firestore.rules`, or null. */
+    fun mins(key: String): Int? {
+        val value = payload[key] as? Number ?: return null
+        val long = value.toLong()
+        return if (value.toDouble() == long.toDouble() && long in MIN_MINS..MAX_MINS) long.toInt() else null
+    }
 }
 
 private fun parseApprove(p: PayloadReader): RemoteCommand? {
     val reqId = p.str("reqId")
-    val mins = p.int("mins")
+    val mins = p.mins("mins")
     return if (reqId != null && mins != null) RemoteCommand.ApproveRequest(reqId, mins) else null
 }

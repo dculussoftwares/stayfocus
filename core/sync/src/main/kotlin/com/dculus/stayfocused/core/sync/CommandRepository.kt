@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 
 /** Where a command is in its life. Only the child moves it from [PENDING]. */
@@ -40,11 +39,13 @@ data class PendingCommand(
 interface CommandRepository {
     /**
      * Queues [command] and returns its id at once. Offline, Firestore keeps the write and sends it later, so this
-     * does not wait for the server; follow progress with [observeStatus].
+     * does not wait for the server; follow progress with [observeStatus]. [onRejected] is called if the server
+     * refuses the write (the rules, a payload out of bounds).
      */
     fun send(
         target: DeviceTarget,
         command: RemoteCommand,
+        onRejected: () -> Unit = {},
     ): String
 
     /** The status of one command as it changes; [CommandStatus.PENDING] until the child acknowledges it. */
@@ -56,7 +57,11 @@ interface CommandRepository {
     /** Every command still `pending`, on each change. The flow fails when the listener is denied or lost. */
     fun observePending(target: DeviceTarget): Flow<List<PendingCommand>>
 
-    /** Child only: sets the final [status] and `ackAt`. */
+    /**
+     * Child only: sets the final [status] and `ackAt`. It returns once the write is queued locally, not when the
+     * server has it: offline, Firestore keeps it and sends it later, and the local view already drops the command
+     * from [observePending], so a long outage never blocks the commands behind it.
+     */
     suspend fun acknowledge(
         target: DeviceTarget,
         id: String,
@@ -78,6 +83,7 @@ internal class FirebaseCommandRepository(
     override fun send(
         target: DeviceTarget,
         command: RemoteCommand,
+        onRejected: () -> Unit,
     ): String {
         val ref = commands(target).document()
         ref
@@ -88,7 +94,10 @@ internal class FirebaseCommandRepository(
                     "createdAt" to FieldValue.serverTimestamp(),
                     "status" to CommandStatus.PENDING.wire,
                 ),
-            ).addOnFailureListener { Timber.w(it, "Sending %s was rejected", command.type) }
+            ).addOnFailureListener {
+                Timber.w(it, "Sending %s was rejected", command.type)
+                onRejected()
+            }
         return ref.id
     }
 
@@ -127,7 +136,7 @@ internal class FirebaseCommandRepository(
         commands(target)
             .document(id)
             .update(mapOf("status" to status.wire, "ackAt" to FieldValue.serverTimestamp()))
-            .await()
+            .addOnFailureListener { Timber.w(it, "Acknowledging %s was rejected", id) }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -146,6 +155,7 @@ internal object NoCommandRepository : CommandRepository {
     override fun send(
         target: DeviceTarget,
         command: RemoteCommand,
+        onRejected: () -> Unit,
     ) = "offline"
 
     override fun observeStatus(
@@ -173,12 +183,25 @@ class FakeCommandRepository : CommandRepository {
     /** Set to make [acknowledge] throw (simulates offline). */
     var failingAck = false
 
+    /** Set to make the next [send] report a server rejection. */
+    var rejectSends = false
+
+    val sent = mutableListOf<PendingCommand>()
+
     override fun send(
         target: DeviceTarget,
         command: RemoteCommand,
+        onRejected: () -> Unit,
     ): String {
         val id = "cmd${counter++}"
-        add(PendingCommand(id, command.type.name, command.payload(), createdAtMillis = null))
+        if (rejectSends) {
+            onRejected()
+            return id
+        }
+        PendingCommand(id, command.type.name, command.payload(), createdAtMillis = null).also {
+            sent += it
+            add(it)
+        }
         return id
     }
 
