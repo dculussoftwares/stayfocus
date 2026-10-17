@@ -45,7 +45,13 @@ class ParentRulesTest {
 
             override suspend fun ensureSignedIn() = "child"
         }
-    private val mirror = ParentRulesMirror(remote, signedIn, blocks, locked, settings)
+    private val links =
+        object : ParentLinkStore {
+            override var parentName: String? = "Asha"
+            override var parentUid: String? = "parent-1"
+            override var deviceId: String? = "device-1"
+        }
+    private val mirror = ParentRulesMirror(remote, signedIn, blocks, locked, settings, links)
 
     private fun block(
         id: String,
@@ -118,17 +124,17 @@ class ParentRulesTest {
     @Test
     fun blockAndUnblockLockAndUnlockTheApp() =
         runTest {
-            BlockAppHandler(locked).handle(RemoteCommand.BlockApp("com.example.a"))
-            BlockAppHandler(locked).handle(RemoteCommand.BlockApp("com.example.a"))
+            BlockAppHandler(locked, mirror).handle(RemoteCommand.BlockApp("com.example.a"))
+            BlockAppHandler(locked, mirror).handle(RemoteCommand.BlockApp("com.example.a"))
             assertEquals(listOf("com.example.a"), locked.observeByTarget(BlockTarget.ThisPhone).first().map { it.pkg })
-            UnblockAppHandler(locked).handle(RemoteCommand.UnblockApp("com.example.a"))
+            UnblockAppHandler(locked, mirror).handle(RemoteCommand.UnblockApp("com.example.a"))
             assertTrue(locked.observeAll().first().isEmpty())
         }
 
     @Test
     fun startFocusSetsTheSessionAndMirrorsItsEnd() =
         runTest {
-            StartFocusHandler(settings, remote, targets, clock).handle(RemoteCommand.StartFocus(25))
+            StartFocusHandler(settings, remote, targets, clock, mirror).handle(RemoteCommand.StartFocus(25))
             val session = settings.settings.first().focusSession
             assertEquals(clock.instant(), session?.startedAt)
             assertEquals(clock.instant().plus(Duration.ofMinutes(25)), session?.endsAt)
@@ -138,8 +144,8 @@ class ParentRulesTest {
     @Test
     fun stopFocusClearsTheSessionAndTheMirror() =
         runTest {
-            StartFocusHandler(settings, remote, targets, clock).handle(RemoteCommand.StartFocus(25))
-            StopFocusHandler(settings, remote, targets).handle(RemoteCommand.StopFocus)
+            StartFocusHandler(settings, remote, targets, clock, mirror).handle(RemoteCommand.StartFocus(25))
+            StopFocusHandler(settings, remote, targets, mirror).handle(RemoteCommand.StopFocus)
             assertNull(settings.settings.first().focusSession)
             assertNull(remote.focusEnds.last())
         }
@@ -149,7 +155,7 @@ class ParentRulesTest {
         runTest {
             targets.target = null
             assertFailsWith<IllegalStateException> {
-                StartFocusHandler(settings, remote, targets, clock).handle(RemoteCommand.StartFocus(5))
+                StartFocusHandler(settings, remote, targets, clock, mirror).handle(RemoteCommand.StartFocus(5))
             }
             assertEquals(AppSettings(), settings.settings.first())
         }
@@ -174,6 +180,23 @@ class ParentRulesTest {
         LinkReset(store, noControl, RulesCleaner { cleared++ }).reset(DeviceTarget("other", "x"))
         assertEquals(1, cleared)
     }
+
+    @Test
+    fun nothingTheParentSendsAppliesAfterTheUnlink() =
+        runTest {
+            mirror.apply(listOf(block("a")))
+            links.parentUid = null
+            mirror.clear()
+            // A snapshot, a sync and commands that arrive late are all refused.
+            mirror.apply(listOf(block("late")))
+            remote.blocks.value = listOf(block("late"))
+            assertFailsWith<IllegalStateException> { mirror.syncNow(target) }
+            assertFailsWith<IllegalStateException> {
+                BlockAppHandler(locked, mirror).handle(RemoteCommand.BlockApp("com.example.a"))
+            }
+            assertTrue(local().isEmpty())
+            assertTrue(locked.observeAll().first().isEmpty())
+        }
 
     @Test
     fun syncBlocksHandlerPullsTheBlocks() =

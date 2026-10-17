@@ -26,12 +26,12 @@ class BlockAppHandler
     @Inject
     internal constructor(
         private val lockedApps: LockedAppsRepository,
+        private val mirror: ParentRulesMirror,
     ) : CommandHandler {
         override val type = CommandType.BLOCK_APP
 
-        override suspend fun handle(command: RemoteCommand) {
-            lockedApps.lock((command as RemoteCommand.BlockApp).pkg, BlockTarget.ThisPhone)
-        }
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked { lockedApps.lock((command as RemoteCommand.BlockApp).pkg, BlockTarget.ThisPhone) }
     }
 
 /** `UNBLOCK_APP`: removes the lock. */
@@ -39,12 +39,12 @@ class UnblockAppHandler
     @Inject
     internal constructor(
         private val lockedApps: LockedAppsRepository,
+        private val mirror: ParentRulesMirror,
     ) : CommandHandler {
         override val type = CommandType.UNBLOCK_APP
 
-        override suspend fun handle(command: RemoteCommand) {
-            lockedApps.unlock((command as RemoteCommand.UnblockApp).pkg, BlockTarget.ThisPhone)
-        }
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked { lockedApps.unlock((command as RemoteCommand.UnblockApp).pkg, BlockTarget.ThisPhone) }
     }
 
 /**
@@ -58,17 +58,19 @@ class StartFocusHandler
         private val remote: DeviceBlocksRepository,
         private val targets: ReportTargetStore,
         private val clock: Clock,
+        private val mirror: ParentRulesMirror,
     ) : CommandHandler {
         override val type = CommandType.START_FOCUS
 
-        override suspend fun handle(command: RemoteCommand) {
-            val mins = (command as RemoteCommand.StartFocus).mins
-            val target = targets.require()
-            val now = clock.instant().truncatedTo(ChronoUnit.MILLIS)
-            val session = FocusSession(now, now.plus(Duration.ofMinutes(mins.toLong())), mins)
-            settings.setFocusSession(session)
-            remote.setFocusEndsAt(target, session.endsAt)
-        }
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked {
+                val mins = (command as RemoteCommand.StartFocus).mins
+                val target = targets.require()
+                val now = clock.instant().truncatedTo(ChronoUnit.MILLIS)
+                val session = FocusSession(now, now.plus(Duration.ofMinutes(mins.toLong())), mins)
+                settings.setFocusSession(session)
+                remote.setFocusEndsAt(target, session.endsAt)
+            }
     }
 
 /** `STOP_FOCUS`: ends the session on the phone and on the device doc. */
@@ -78,14 +80,16 @@ class StopFocusHandler
         private val settings: SettingsRepository,
         private val remote: DeviceBlocksRepository,
         private val targets: ReportTargetStore,
+        private val mirror: ParentRulesMirror,
     ) : CommandHandler {
         override val type = CommandType.STOP_FOCUS
 
-        override suspend fun handle(command: RemoteCommand) {
-            val target = targets.require()
-            settings.setFocusSession(null)
-            remote.setFocusEndsAt(target, null)
-        }
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked {
+                val target = targets.require()
+                settings.setFocusSession(null)
+                remote.setFocusEndsAt(target, null)
+            }
     }
 
 /** `SYNC_BLOCKS`: fetches the blocks from the server now instead of waiting for the listener. */

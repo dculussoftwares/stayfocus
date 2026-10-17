@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.kids.monitoring
 
+import android.content.Context
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.LockedAppsRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
@@ -11,6 +12,7 @@ import com.dculus.stayfocused.core.sync.DeviceTarget
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -39,8 +41,12 @@ class ParentRulesMirror
         private val blocks: BlockRepository,
         private val lockedApps: LockedAppsRepository,
         private val settings: SettingsRepository,
+        private val links: ParentLinkStore,
     ) {
-        /** One application of rules at a time: a listener update and a `SYNC_BLOCKS` fetch never interleave. */
+        /**
+         * Everything that changes the parent's rules on this phone runs under this lock and only while linked, so
+         * an unlink ([clear]) is final: a late snapshot, sync or command cannot bring rules back.
+         */
         private val lock = Mutex()
 
         /** Runs until cancelled; re-attaches the Firestore listener after a pause when it is denied or lost. */
@@ -63,10 +69,24 @@ class ParentRulesMirror
         }
 
         /** Asks the server for the blocks right now (`SYNC_BLOCKS`). Throws when it cannot be reached. */
-        suspend fun syncNow(target: DeviceTarget) = apply(remote.fetchBlocks(target))
+        suspend fun syncNow(target: DeviceTarget) {
+            val rules = remote.fetchBlocks(target)
+            whileLinked { applyLocked(rules) }
+        }
+
+        /**
+         * Runs [action] exclusively and only while a parent is linked; throws otherwise, so a command that arrives
+         * after the unlink ends as failed instead of locking an app for nobody.
+         */
+        internal suspend fun <T> whileLinked(action: suspend () -> T): T =
+            lock.withLock {
+                check(links.parentUid != null) { "This phone is not linked" }
+                action()
+            }
 
         /** Makes the local blocks equal to [rules]: stores new and changed ones, drops the ones the parent removed. */
-        internal suspend fun apply(rules: List<Block>) = lock.withLock { applyLocked(rules) }
+        internal suspend fun apply(rules: List<Block>) =
+            lock.withLock { if (links.parentUid != null) applyLocked(rules) }
 
         private suspend fun applyLocked(rules: List<Block>) {
             val local = blocks.observeByTarget(BlockTarget.ThisPhone).first().associateBy { it.id }
@@ -100,20 +120,41 @@ internal class ParentRulesCleaner
     constructor(
         private val mirror: ParentRulesMirror,
         private val linkStore: ParentLinkStore,
+        @ApplicationContext context: Context,
     ) : RulesCleaner {
         private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+        private val prefs = context.getSharedPreferences("kids_rules_cleanup", Context.MODE_PRIVATE)
+
+        /** Marks the clean-up as owed (surviving a process death) and runs it. */
+        override fun clear() {
+            prefs.edit().putBoolean(KEY_OWED, true).commit()
+            run()
+        }
+
+        /** App start: finishes a clean-up the process died before completing. */
+        fun resume() {
+            if (prefs.getBoolean(KEY_OWED, false)) run()
+        }
 
         @Suppress("TooGenericExceptionCaught")
-        override fun clear() {
+        private fun run() {
             scope.launch {
                 try {
-                    if (linkStore.parentUid == null) mirror.clear()
+                    if (linkStore.parentUid == null) {
+                        mirror.clear()
+                    }
+                    // A new link keeps its own rules: nothing is owed any more either way.
+                    prefs.edit().putBoolean(KEY_OWED, false).apply()
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
-                    Timber.w(e, "Could not clear the parent's rules")
+                    Timber.w(e, "Could not clear the parent's rules; will retry at the next start")
                 }
             }
+        }
+
+        private companion object {
+            const val KEY_OWED = "owed"
         }
     }
 
