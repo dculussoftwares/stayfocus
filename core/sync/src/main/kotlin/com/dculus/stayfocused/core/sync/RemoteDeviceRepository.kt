@@ -1,7 +1,9 @@
 package com.dculus.stayfocused.core.sync
 
 import com.google.firebase.firestore.DocumentSnapshot
+import com.google.firebase.firestore.FieldPath
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,11 +51,11 @@ interface RemoteDeviceRepository {
     /** The child's launchable apps. The flow fails when the listener is denied or lost. */
     fun observeApps(target: DeviceTarget): Flow<List<DeviceApp>>
 
-    /** One day's usage (`yyyy-MM-dd`), or null when the phone has not reported that day. */
-    fun observeUsage(
-        target: DeviceTarget,
-        date: String,
-    ): Flow<UsageSummary?>
+    /**
+     * The newest usage day the phone reported, or null when it has reported none. The child names the day in its own
+     * time zone, so the caller decides whether that is "today" for the parent.
+     */
+    fun observeLatestUsage(target: DeviceTarget): Flow<UsageSummary?>
 
     /** Every block for this phone, on or off, by name. */
     fun observeBlocks(target: DeviceTarget): Flow<List<RemoteBlock>>
@@ -102,15 +104,20 @@ internal class FirebaseRemoteDeviceRepository(
             awaitClose { registration.remove() }
         }
 
-    override fun observeUsage(
-        target: DeviceTarget,
-        date: String,
-    ): Flow<UsageSummary?> =
+    override fun observeLatestUsage(target: DeviceTarget): Flow<UsageSummary?> =
         callbackFlow {
             val registration =
-                device(target).collection("usage").document(date).addSnapshotListener { snapshot, error ->
-                    if (error != null) close(error) else trySend(snapshot?.toUsage(date))
-                }
+                device(target)
+                    .collection("usage")
+                    .orderBy(FieldPath.documentId(), Query.Direction.DESCENDING)
+                    .limit(1)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                        } else if (snapshot != null) {
+                            trySend(snapshot.documents.firstOrNull()?.toUsage())
+                        }
+                    }
             awaitClose { registration.remove() }
         }
 
@@ -193,8 +200,7 @@ private fun DocumentSnapshot.toLockEvent(): LockEvent? {
 }
 
 /** A usage document read defensively: the rules only bound the size of `apps`, not what is in it. */
-private fun DocumentSnapshot.toUsage(date: String): UsageSummary? {
-    if (!exists()) return null
+private fun DocumentSnapshot.toUsage(): UsageSummary {
     val apps =
         (get("apps") as? List<*>).orEmpty().mapNotNull { entry ->
             val m = entry as? Map<*, *> ?: return@mapNotNull null
@@ -206,17 +212,14 @@ private fun DocumentSnapshot.toUsage(date: String): UsageSummary? {
                 opens = (m["opens"] as? Number)?.toInt() ?: 0,
             )
         }
-    return UsageSummary(date, getLong("totalMins")?.toInt() ?: 0, apps)
+    return UsageSummary(id, getLong("totalMins")?.toInt() ?: 0, apps)
 }
 
 /** Used when the build has no Firebase configuration: no phone is linked, so there is nothing to read or change. */
 internal object NoRemoteDeviceRepository : RemoteDeviceRepository {
     override fun observeApps(target: DeviceTarget): Flow<List<DeviceApp>> = flowOf(emptyList())
 
-    override fun observeUsage(
-        target: DeviceTarget,
-        date: String,
-    ): Flow<UsageSummary?> = flowOf(null)
+    override fun observeLatestUsage(target: DeviceTarget): Flow<UsageSummary?> = flowOf(null)
 
     override fun observeBlocks(target: DeviceTarget): Flow<List<RemoteBlock>> = flowOf(emptyList())
 
@@ -249,10 +252,7 @@ class FakeRemoteDeviceRepository : RemoteDeviceRepository {
 
     override fun observeApps(target: DeviceTarget): Flow<List<DeviceApp>> = apps
 
-    override fun observeUsage(
-        target: DeviceTarget,
-        date: String,
-    ): Flow<UsageSummary?> = usage
+    override fun observeLatestUsage(target: DeviceTarget): Flow<UsageSummary?> = usage
 
     override fun observeBlocks(target: DeviceTarget): Flow<List<RemoteBlock>> = blocks
 

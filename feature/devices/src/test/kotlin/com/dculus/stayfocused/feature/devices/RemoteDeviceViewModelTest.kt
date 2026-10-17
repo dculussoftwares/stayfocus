@@ -99,6 +99,23 @@ class RemoteDeviceViewModelTest {
         }
 
     @Test
+    fun theChildsNewestUsageDayCountsAsTodayWithinADayEitherWay() {
+        assertTrue(isAroundToday("2026-10-17", "2026-10-17"))
+        assertTrue(isAroundToday("2026-10-18", "2026-10-17"))
+        assertTrue(isAroundToday("2026-10-16", "2026-10-17"))
+        assertEquals(false, isAroundToday("2026-10-10", "2026-10-17"))
+        assertEquals(false, isAroundToday("garbage", "2026-10-17"))
+    }
+
+    @Test
+    fun usageFromAnOldDayIsNotShownAsToday() =
+        runTest {
+            remote.usage.value = UsageSummary("2026-10-01", 300, emptyList())
+            devices.devices.value = listOf(device(id = "kid").copy(todayMins = null))
+            assertEquals(null, viewModel().ready().todayMins)
+        }
+
+    @Test
     fun alertsShowLocalTimeAndRequestsShowTheirAge() =
         runTest {
             devices.devices.value =

@@ -106,16 +106,26 @@ internal fun RemoteDeviceRoute(
     val resources = LocalContext.current.resources
     val currentBack by rememberUpdatedState(onBack)
     val currentMessage by rememberUpdatedState(onMessage)
+    // Leaving happens once, whichever comes first: the unlink result or the phone vanishing from the list.
+    var left by remember { mutableStateOf(false) }
     LaunchedEffect(viewModel) {
         viewModel.messages.collect { event ->
             currentMessage(event.text(resources))
-            if (event is RemoteEvent.Unlinked) currentBack()
+            if (event is RemoteEvent.Unlinked && !left) {
+                left = true
+                currentBack()
+            }
         }
     }
     // The phone vanished while this screen was open (the child unlinked): there is nothing left to show.
     var wasReady by remember { mutableStateOf(false) }
     if (state is RemoteUiState.Ready) wasReady = true
-    LaunchedEffect(state, wasReady) { if (state is RemoteUiState.NotFound && wasReady) currentBack() }
+    LaunchedEffect(state, wasReady) {
+        if (state is RemoteUiState.NotFound && wasReady && !left) {
+            left = true
+            currentBack()
+        }
+    }
     val ready = state as? RemoteUiState.Ready
     RemoteDeviceScreen(
         state = state,

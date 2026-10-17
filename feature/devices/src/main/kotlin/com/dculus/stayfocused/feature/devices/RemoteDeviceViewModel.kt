@@ -27,7 +27,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
@@ -36,6 +35,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -133,7 +133,22 @@ internal sealed interface RemoteEvent {
 private val TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm")
 private const val STOP_TIMEOUT_MS = 5_000L
 private const val DATE_TICK_MS = 60_000L
+private const val RETRY_BASE_MS = 1_000L
+private const val RETRY_MAX_MS = 30_000L
+private const val MAX_BACKOFF_SHIFT = 5
 private const val DEFAULT_PERMISSION = "accessibility"
+
+/** True when [usageDate] (`yyyy-MM-dd`, the child's local day) is [today] or the day before or after it. */
+internal fun isAroundToday(
+    usageDate: String,
+    today: String,
+): Boolean {
+    val day = runCatching { LocalDate.parse(usageDate) }.getOrNull() ?: return false
+    return kotlin.math.abs(
+        java.time.temporal.ChronoUnit.DAYS
+            .between(day, LocalDate.parse(today)),
+    ) <= 1
+}
 
 /** Today's rows: the phone's apps plus anything it reported using, busiest first. */
 internal fun appRows(
@@ -194,13 +209,16 @@ class RemoteDeviceViewModel
                 }
             }.distinctUntilChanged()
 
+        /** Firestore ends a listener flow on its first error: show [default] and listen again, with backoff. */
         private fun <T> Flow<T>.orDefault(
             default: T,
             what: String,
         ): Flow<T> =
-            catch {
-                Timber.w(it, "Remote device %s listener stopped", what)
+            retryWhen { cause, attempt ->
+                Timber.w(cause, "Remote device %s listener stopped", what)
                 emit(default)
+                delay(minOf(RETRY_BASE_MS shl minOf(attempt.toInt(), MAX_BACKOFF_SHIFT), RETRY_MAX_MS))
+                true
             }
 
         private fun readyFlow(
@@ -214,10 +232,11 @@ class RemoteDeviceViewModel
                         list.firstOrNull { it.id == deviceId }
                     }.distinctUntilChanged()
             val apps = remote.observeApps(target).orDefault(emptyList(), "apps")
+            // The child names a usage day in its own time zone: its newest day counts as today within a day either way.
             val usage =
-                today()
-                    .flatMapLatest { remote.observeUsage(target, it) }
-                    .orDefault(null, "usage")
+                combine(today(), remote.observeLatestUsage(target).orDefault(null, "usage")) { date, latest ->
+                    latest?.takeIf { isAroundToday(it.date, date) }
+                }
             val blocks = remote.observeBlocks(target).orDefault(emptyList(), "blocks")
             val locked = remote.observeLocked(target).orDefault(emptySet(), "locks")
             val details = combine(apps, usage, locked) { a, u, l -> Triple(appRows(a, u, l), u?.totalMins, l) }
