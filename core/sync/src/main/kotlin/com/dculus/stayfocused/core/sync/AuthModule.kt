@@ -57,6 +57,18 @@ internal object AuthModule {
             NoChildStatusRepository
         }
 
+    /** Parent to child commands (`devices/{id}/commands`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun commands(availability: FirebaseAvailability): CommandRepository =
+        if (availability.isConfigured) {
+            FirebaseCommandRepository(
+                FirebaseFirestore.getInstance(),
+            )
+        } else {
+            NoCommandRepository
+        }
+
     /** The pairing handshake (`claimLinkToken`, `approveLink`); none without Firebase. */
     @Provides
     @Singleton
