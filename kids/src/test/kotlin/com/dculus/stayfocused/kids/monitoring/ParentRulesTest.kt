@@ -199,6 +199,20 @@ class ParentRulesTest {
         }
 
     @Test
+    fun rulesOfAnOldParentAreNotAppliedAfterRelinking() =
+        runTest {
+            val old = target
+            links.parentUid = "parent-2"
+            links.deviceId = "device-2"
+            remote.blocks.value = listOf(block("old"))
+            assertFailsWith<IllegalStateException> { mirror.syncNow(old) }
+            mirror.apply(listOf(block("old")), old)
+            assertTrue(local().isEmpty())
+            mirror.apply(listOf(block("new")), DeviceTarget("parent-2", "device-2"))
+            assertEquals(listOf(block("new")), local())
+        }
+
+    @Test
     fun syncBlocksHandlerPullsTheBlocks() =
         runTest {
             remote.blocks.value = listOf(block("z"))

@@ -58,7 +58,7 @@ class ParentRulesMirror
             }
             while (true) {
                 try {
-                    remote.observeBlocks(target).collect { apply(it) }
+                    remote.observeBlocks(target).collect { apply(it, target) }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
@@ -71,22 +71,32 @@ class ParentRulesMirror
         /** Asks the server for the blocks right now (`SYNC_BLOCKS`). Throws when it cannot be reached. */
         suspend fun syncNow(target: DeviceTarget) {
             val rules = remote.fetchBlocks(target)
-            whileLinked { applyLocked(rules) }
+            whileLinked(target) { applyLocked(rules) }
         }
 
         /**
          * Runs [action] exclusively and only while a parent is linked; throws otherwise, so a command that arrives
          * after the unlink ends as failed instead of locking an app for nobody.
          */
-        internal suspend fun <T> whileLinked(action: suspend () -> T): T =
+        internal suspend fun <T> whileLinked(
+            target: DeviceTarget? = null,
+            action: suspend () -> T,
+        ): T =
             lock.withLock {
-                check(links.parentUid != null) { "This phone is not linked" }
+                check(isLinked(target)) { "This phone is not linked" }
                 action()
             }
 
+        /** Linked at all, or, with a [target], still linked to exactly that device (not to one linked since). */
+        private fun isLinked(target: DeviceTarget?): Boolean =
+            links.parentUid != null &&
+                (target == null || (links.parentUid == target.parentUid && links.deviceId == target.deviceId))
+
         /** Makes the local blocks equal to [rules]: stores new and changed ones, drops the ones the parent removed. */
-        internal suspend fun apply(rules: List<Block>) =
-            lock.withLock { if (links.parentUid != null) applyLocked(rules) }
+        internal suspend fun apply(
+            rules: List<Block>,
+            target: DeviceTarget? = null,
+        ) = lock.withLock { if (isLinked(target)) applyLocked(rules) }
 
         private suspend fun applyLocked(rules: List<Block>) {
             val local = blocks.observeByTarget(BlockTarget.ThisPhone).first().associateBy { it.id }
