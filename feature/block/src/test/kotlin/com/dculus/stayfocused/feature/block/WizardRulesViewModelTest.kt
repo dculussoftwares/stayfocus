@@ -253,6 +253,35 @@ class WizardRulesViewModelTest {
         }
 
     @Test
+    fun editingAChildBlockKeepsItsStoredSwitchAndMovingItRemovesTheOldCopy() =
+        runTest {
+            devices.devices.value = listOf(device("d1"), device("d2"))
+            blocks.upsert(limitBlock(id = "b2", target = BlockTarget.Device("d1")))
+            val stay = viewModel(SavedStateHandle(mapOf("blockId" to "b2", "target" to "d1")))
+            stay.events.test {
+                stay.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            assertEquals(listOf(true), deviceRepo.preservedEnabled)
+            assertTrue(deviceRepo.removed.isEmpty())
+
+            val move = viewModel(SavedStateHandle(mapOf("blockId" to "b2", "target" to "d1")))
+            move.selectTarget(BlockTarget.Device("d2"))
+            move.events.test {
+                move.next()
+                assertTrue(awaitItem() is WizardEvent.Saved)
+            }
+            assertEquals(listOf("d1"), deviceRepo.removed.map { it.first.deviceId })
+            assertEquals(
+                "d2",
+                deviceRepo.pushed
+                    .last()
+                    .first.deviceId,
+            )
+            assertEquals(listOf(true, false), deviceRepo.preservedEnabled)
+        }
+
+    @Test
     fun aBlockTooLargeForTheChildPhoneFailsTheSaveAndSendsNothing() =
         runTest {
             devices.devices.value = listOf(device())

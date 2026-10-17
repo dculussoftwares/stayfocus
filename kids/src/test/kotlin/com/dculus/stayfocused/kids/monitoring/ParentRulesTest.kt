@@ -115,6 +115,7 @@ class ParentRulesTest {
             mirror.apply(listOf(block("a")))
             locked.lock("com.example.a", BlockTarget.ThisPhone)
             settings.setFocusSession(FocusSession(clock.instant(), clock.instant().plusSeconds(60), 1))
+            links.parentUid = null
             mirror.clear()
             assertTrue(local().isEmpty())
             assertTrue(locked.observeAll().first().isEmpty())
@@ -139,6 +140,33 @@ class ParentRulesTest {
             assertEquals(clock.instant(), session?.startedAt)
             assertEquals(clock.instant().plus(Duration.ofMinutes(25)), session?.endsAt)
             assertEquals(listOf<Instant?>(session?.endsAt), remote.focusEnds)
+        }
+
+    @Test
+    fun aMaximumFocusSessionIsMirroredWithinTheRulesEightHours() =
+        runTest {
+            StartFocusHandler(settings, remote, targets, clock, mirror).handle(RemoteCommand.StartFocus(480))
+            assertEquals(clock.instant().plus(Duration.ofMinutes(480 - 5)), remote.focusEnds.single())
+            // The phone itself still blocks for the full length.
+            assertEquals(
+                clock.instant().plus(Duration.ofMinutes(480)),
+                settings.settings
+                    .first()
+                    .focusSession
+                    ?.endsAt,
+            )
+        }
+
+    @Test
+    fun clearAfterRelinkingStillEndsTheOldParentsLocksAndFocusButKeepsNewBlocks() =
+        runTest {
+            locked.lock("com.example.a", BlockTarget.ThisPhone)
+            settings.setFocusSession(FocusSession(clock.instant(), clock.instant().plusSeconds(60), 1))
+            mirror.apply(listOf(block("new")))
+            mirror.clear()
+            assertEquals(listOf(block("new")), local())
+            assertTrue(locked.observeAll().first().isEmpty())
+            assertNull(settings.settings.first().focusSession)
         }
 
     @Test

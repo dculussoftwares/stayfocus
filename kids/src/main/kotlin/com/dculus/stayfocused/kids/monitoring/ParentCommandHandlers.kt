@@ -19,6 +19,8 @@ import java.time.Duration
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
+private val MAX_MIRRORED_FOCUS: Duration = Duration.ofHours(8).minusMinutes(5)
+
 private fun ReportTargetStore.require(): DeviceTarget = checkNotNull(target) { "This phone is not linked" }
 
 /** `BLOCK_APP`: locks the app until the parent unlocks it. Locking a locked app changes nothing. */
@@ -69,7 +71,9 @@ class StartFocusHandler
                 val now = clock.instant().truncatedTo(ChronoUnit.MILLIS)
                 val session = FocusSession(now, now.plus(Duration.ofMinutes(mins.toLong())), mins)
                 settings.setFocusSession(session)
-                remote.setFocusEndsAt(target, session.endsAt)
+                // `firestore.rules` refuse an end more than 8 h after the server's time, and this clock may run
+                // ahead: the parent's copy of a very long session ends a few minutes early rather than not at all.
+                remote.setFocusEndsAt(target, minOf(session.endsAt, now.plus(MAX_MIRRORED_FOCUS)))
             }
     }
 

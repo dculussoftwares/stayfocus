@@ -5,6 +5,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -23,10 +24,14 @@ import java.util.Date
  * focus end. Writes never wait for the server: offline, Firestore keeps them and sends them later.
  */
 interface DeviceBlocksRepository {
-    /** Parent: queues [block] under its id. [onRejected] is called if the server refuses it (the rules). */
+    /**
+     * Parent: queues [block] under its id. With [preserveEnabled] the stored on/off switch is left as it is (another
+     * screen may have flipped it since this copy was made). [onRejected] is called if the server refuses it.
+     */
     fun push(
         target: DeviceTarget,
         block: Block,
+        preserveEnabled: Boolean = false,
         onRejected: () -> Unit = {},
     )
 
@@ -69,12 +74,18 @@ internal class FirebaseDeviceBlocksRepository(
     override fun push(
         target: DeviceTarget,
         block: Block,
+        preserveEnabled: Boolean,
         onRejected: () -> Unit,
     ) {
-        device(target)
-            .collection("blocks")
-            .document(block.id)
-            .set(block.toWire())
+        val doc = device(target).collection("blocks").document(block.id)
+        val write =
+            if (preserveEnabled) {
+                // Only used for edits of a block the child already has: merging leaves its stored `enabled` alone.
+                doc.set(block.toWire() - "enabled", SetOptions.merge())
+            } else {
+                doc.set(block.toWire())
+            }
+        write
             .addOnFailureListener {
                 Timber.w(it, "Saving block %s was rejected", block.id)
                 onRejected()
@@ -156,6 +167,7 @@ internal object NoDeviceBlocksRepository : DeviceBlocksRepository {
     override fun push(
         target: DeviceTarget,
         block: Block,
+        preserveEnabled: Boolean,
         onRejected: () -> Unit,
     ) = onRejected()
 
@@ -188,12 +200,17 @@ class FakeDeviceBlocksRepository : DeviceBlocksRepository {
     /** Set to make [fetchBlocks] throw (offline). */
     var offline = false
 
+    /** Whether each push asked to keep the stored on/off switch. */
+    val preservedEnabled = mutableListOf<Boolean>()
+
     override fun push(
         target: DeviceTarget,
         block: Block,
+        preserveEnabled: Boolean,
         onRejected: () -> Unit,
     ) {
         pushed += target to block
+        preservedEnabled += preserveEnabled
     }
 
     override fun remove(

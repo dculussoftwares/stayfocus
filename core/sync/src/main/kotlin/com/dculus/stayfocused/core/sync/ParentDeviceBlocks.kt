@@ -20,17 +20,19 @@ class ParentDeviceBlocks
         private val repository: DeviceBlocksRepository,
     ) {
         /**
-         * Queues [block] for the child phone [deviceId]; [onRejected] is called if the server refuses it later (for
-         * example because the phone was unlinked meanwhile). Throws when no parent account is signed in, or when the
-         * block covers more than [MAX_APPS] apps, so the save fails instead of never arriving.
+         * Queues [block] for the child phone [deviceId]. With [preserveEnabled] the phone's stored on/off switch
+         * stays as it is (an edit must not undo a switch flipped elsewhere). [onRejected] is called if the server
+         * refuses it later (for example because the phone was unlinked meanwhile). Throws when no parent account is
+         * signed in, or when the block covers more than [MAX_APPS] apps, so the save fails instead of never arriving.
          */
         suspend fun push(
             deviceId: String,
             block: Block,
+            preserveEnabled: Boolean = false,
             onRejected: () -> Unit = {},
         ) {
             require(block.apps.size <= MAX_APPS) { "A block can cover at most $MAX_APPS apps" }
-            repository.push(target(deviceId), block, onRejected)
+            repository.push(target(deviceId), block, preserveEnabled, onRejected)
         }
 
         /** Queues the removal of [blockId] from the child phone [deviceId]. Throws when nobody is signed in. */

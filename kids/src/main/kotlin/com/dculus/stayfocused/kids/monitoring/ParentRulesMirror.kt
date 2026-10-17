@@ -111,7 +111,9 @@ class ParentRulesMirror
         /** The parent link ended: stop enforcing everything the parent set. */
         suspend fun clear() =
             lock.withLock {
-                applyLocked(emptyList())
+                // A phone linked again since keeps (or is about to receive) the new parent's blocks: only the old
+                // parent's locks and focus are still owed.
+                if (links.parentUid == null) applyLocked(emptyList())
                 lockedApps
                     .observeByTarget(BlockTarget.ThisPhone)
                     .first()
@@ -150,10 +152,7 @@ internal class ParentRulesCleaner
         private fun run() {
             scope.launch {
                 try {
-                    if (linkStore.parentUid == null) {
-                        mirror.clear()
-                    }
-                    // A new link keeps its own rules: nothing is owed any more either way.
+                    mirror.clear()
                     prefs.edit().putBoolean(KEY_OWED, false).apply()
                 } catch (e: CancellationException) {
                     throw e
