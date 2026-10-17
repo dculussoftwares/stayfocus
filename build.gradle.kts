@@ -1,5 +1,6 @@
 // Plugins are declared here (not applied) so every module shares one plugin classpath.
 plugins {
+    id("stayfocused.manifest-audit")
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.jvm) apply false
@@ -183,6 +184,7 @@ tasks.register("ciCheck") {
         "spotlessCheck",
         "detekt",
         checkFeatureIsolation,
+        "verifyManifests",
         lintAll,
         unitTests,
         "koverXmlReport",
