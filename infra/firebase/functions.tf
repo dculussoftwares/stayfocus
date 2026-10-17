@@ -38,6 +38,11 @@ locals {
       kind  = "callable"
       roles = ["roles/datastore.user", "roles/firebaseappcheck.tokenVerifier"] # creates the device document in the parent's tree, App Check token consumption
     }
+    # Unlinks a child's phone for the parent or the child (M7-09): recursive delete of the device subtree.
+    unlinkDevice = {
+      kind  = "callable"
+      roles = ["roles/datastore.user"] # Firestore reads and deletes, rate-limit counters
+    }
   }
 
   function_runtime_roles = {

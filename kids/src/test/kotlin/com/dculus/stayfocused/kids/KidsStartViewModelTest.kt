@@ -1,10 +1,12 @@
 package com.dculus.stayfocused.kids
 
 import com.dculus.stayfocused.core.model.AppSettings
+import com.dculus.stayfocused.core.navigation.KidsHome
 import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.sync.DeviceAuth
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
+import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -36,6 +38,13 @@ class KidsStartViewModelTest {
         }
     }
 
+    private class MemoryLinkStore(
+        override var parentName: String? = null,
+    ) : ParentLinkStore {
+        override var parentUid: String? = null
+        override var deviceId: String? = null
+    }
+
     @Before
     fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
 
@@ -46,18 +55,33 @@ class KidsStartViewModelTest {
 
     @Test
     fun freshInstallStartsOnPermissions() {
-        assertEquals(KidsPermissions, KidsStartViewModel(settings(false), FakeDeviceAuth()).startRoute.value)
+        assertEquals(
+            KidsPermissions,
+            KidsStartViewModel(settings(false), FakeDeviceAuth(), MemoryLinkStore()).startRoute.value,
+        )
     }
 
     @Test
     fun afterSetupTheAppOpensOnLink() {
-        assertEquals(KidsLink, KidsStartViewModel(settings(true), FakeDeviceAuth()).startRoute.value)
+        assertEquals(KidsLink, KidsStartViewModel(settings(true), FakeDeviceAuth(), MemoryLinkStore()).startRoute.value)
+    }
+
+    @Test
+    fun aLinkedPhoneOpensOnHome() {
+        val linked = MemoryLinkStore(parentName = "Asha")
+        assertEquals(KidsHome, KidsStartViewModel(settings(true), FakeDeviceAuth(), linked).startRoute.value)
+    }
+
+    @Test
+    fun aLinkedPhoneNeverGoesBackToPermissionsOrTheQr() {
+        val linked = MemoryLinkStore(parentName = "Asha")
+        assertEquals(KidsHome, KidsStartViewModel(settings(false), FakeDeviceAuth(), linked).startRoute.value)
     }
 
     @Test
     fun completingSetupSavesTheFlagButKeepsTheStartRoute() {
         val repository = settings(false)
-        val viewModel = KidsStartViewModel(repository, FakeDeviceAuth())
+        val viewModel = KidsStartViewModel(repository, FakeDeviceAuth(), MemoryLinkStore())
         runBlocking { viewModel.completeSetup() }
         assertEquals(true, runBlocking { repository.settings.first().onboardingComplete })
         assertEquals(KidsPermissions, viewModel.startRoute.value)
@@ -66,7 +90,7 @@ class KidsStartViewModelTest {
     @Test
     fun firstLaunchSignsInAnonymously() {
         val auth = FakeDeviceAuth()
-        KidsStartViewModel(settings(false), auth)
+        KidsStartViewModel(settings(false), auth, MemoryLinkStore())
         assertEquals(1, auth.signIns)
         assertEquals("anon-uid", runBlocking { auth.uid.first() })
     }
@@ -74,7 +98,7 @@ class KidsStartViewModelTest {
     @Test
     fun laterLaunchesReuseTheExistingIdentity() {
         val auth = FakeDeviceAuth(existing = "anon-uid")
-        KidsStartViewModel(settings(true), auth)
+        KidsStartViewModel(settings(true), auth, MemoryLinkStore())
         assertEquals(0, auth.signIns)
     }
 }

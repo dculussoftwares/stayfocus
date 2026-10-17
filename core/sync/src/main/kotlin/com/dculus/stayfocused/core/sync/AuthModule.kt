@@ -82,6 +82,28 @@ internal object AuthModule {
             NoLinkHandshakeRepository
         }
 
+    /** The Kids home's read-only view of the parent's tree (link state and rules); none without Firebase. */
+    @Provides
+    @Singleton
+    fun kidsHome(availability: FirebaseAvailability): KidsHomeRepository =
+        if (availability.isConfigured) {
+            FirebaseKidsHomeRepository(
+                FirebaseFirestore.getInstance(),
+            )
+        } else {
+            NoKidsHomeRepository
+        }
+
+    /** `unlinkDevice`, for the Kids home and the parent's Remote screen; none without Firebase. */
+    @Provides
+    @Singleton
+    fun deviceUnlink(availability: FirebaseAvailability): DeviceUnlinkRepository =
+        if (availability.isConfigured) {
+            FirebaseDeviceUnlinkRepository(FirebaseFunctions.getInstance(FUNCTIONS_REGION))
+        } else {
+            NoDeviceUnlinkRepository
+        }
+
     @Provides
     @Singleton
     fun accountDeletion(

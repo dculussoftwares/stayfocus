@@ -35,7 +35,30 @@
     <string name="kids_consent_new_code">Show a new code</string>
     <string name="kids_consent_network">Could not reach the server. Check the connection and try again.</string>
     <string name="kids_consent_failed">Something went wrong. Try again.</string>
-    <string name="kids_home_title">Home</string>
+    <!-- Home. The notice preview, "Today", the rules header and "Unlink from" are from the prototype; the rest is new. -->
+    <string name="kids_home_notice_app">Stay Focused Kids · now</string>
+    <string name="kids_home_notice_title">This phone is managed by %1$s</string>
+    <string name="kids_home_notice_body">Screen time and app use are shared with %1$s.</string>
+    <string name="kids_home_notice_badge">SF</string>
+    <string name="kids_home_notice_caption">↑ Persistent notification · required by Play policy</string>
+    <string name="kids_home_today">Today</string>
+    <string name="kids_home_rules">Rules set by %1$s</string>
+    <string name="kids_home_no_rules">%1$s has not set any rules yet.</string>
+    <string name="kids_home_unlink">Unlink from %1$s</string>
+    <string name="kids_duration_hm">%1$dh %2$dm</string>
+    <string name="kids_duration_m">%1$dm</string>
+    <string name="kids_rule_limit_daily">%1$d min a day</string>
+    <string name="kids_rule_limit_hourly">%1$d min an hour</string>
+    <string name="kids_rule_cycle">Use %1$d min · rest %2$d min</string>
+    <string name="kids_rule_schedule">%1$s · %2$s–%3$s</string>
+    <string name="kids_rule_now">Focus session · %1$d min</string>
+    <string name="kids_unlink_title">Unlink from %1$s?</string>
+    <string name="kids_unlink_body">%1$s will be told. Blocking and sharing screen time stop on this phone.</string>
+    <string name="kids_unlink_confirm">Unlink</string>
+    <string name="kids_unlink_keep">Stay linked</string>
+    <string name="kids_unlinked_toast">Unlinked. %1$s has been notified.</string>
+    <string name="kids_unlink_network">Could not reach the server. Check the connection and try again.</string>
+    <string name="kids_unlink_failed">Could not unlink. Try again.</string>
     <!-- Persistent monitoring notification (Play stalkerware policy). -->
     <string name="kids_managed_by">Managed by %1$s\'s phone</string>
     <string name="kids_monitoring_channel">Managed by parent</string>
