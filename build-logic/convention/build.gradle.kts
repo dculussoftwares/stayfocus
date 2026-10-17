@@ -54,6 +54,10 @@ gradlePlugin {
             id = "stayfocused.android.instrumented-test"
             implementationClass = "AndroidInstrumentedTestConventionPlugin"
         }
+        register("manifestAudit") {
+            id = "stayfocused.manifest-audit"
+            implementationClass = "ManifestAuditPlugin"
+        }
         register("jvmLibrary") {
             id = "stayfocused.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
