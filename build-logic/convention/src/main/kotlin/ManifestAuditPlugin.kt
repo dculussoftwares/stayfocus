@@ -1,6 +1,6 @@
 import com.android.build.api.artifact.SingleArtifact
-import com.android.build.api.dsl.ApplicationExtension
 import com.android.build.api.variant.AndroidComponentsExtension
+import com.android.build.api.variant.ApplicationVariant
 import org.gradle.api.DefaultTask
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -30,15 +30,9 @@ class ManifestAuditPlugin : Plugin<Project> {
         roles.forEach { (path, role) ->
             target.project(path).plugins.withId("com.android.application") {
                 val app = target.project(path)
-                val targetSdk =
-                    app.provider {
-                        app.extensions
-                            .getByType(ApplicationExtension::class.java)
-                            .defaultConfig.targetSdk
-                    }
                 val configs =
                     target.fileTree(target.projectDir) {
-                        include("**/src/main/res/xml/*.xml")
+                        include("**/src/*/res/xml*/*.xml")
                         exclude("**/build/**", "**/.gradle/**")
                     }
                 val components = app.extensions.getByType(AndroidComponentsExtension::class.java)
@@ -49,7 +43,7 @@ class ManifestAuditPlugin : Plugin<Project> {
                             group = "verification"
                             mergedManifest.set(variant.artifacts.get(SingleArtifact.MERGED_MANIFEST))
                             appRole.set(role.name)
-                            expectedTargetSdk.set(targetSdk.map { it ?: -1 })
+                            expectedTargetSdk.set((variant as ApplicationVariant).targetSdk.apiLevel)
                             accessibilityConfigs.from(configs)
                         }
                     aggregate.configure { dependsOn(task) }

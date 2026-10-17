@@ -23,6 +23,7 @@ object ManifestAudit {
 
     // Typed FGS permissions only: the bare FOREGROUND_SERVICE one is injected by Firebase/Play services libraries.
     private const val FGS_TYPED_PERMISSION_PREFIX = "android.permission.FOREGROUND_SERVICE_"
+    private const val MONITORING_SERVICE = "MonitoringService"
     private const val FGS_SPECIAL_USE = "android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
     private const val FGS_SUBTYPE_PROPERTY = "android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
 
@@ -38,11 +39,9 @@ object ManifestAudit {
         val application = root.children("application").firstOrNull()
         val services = application?.children("service").orEmpty()
         val fgsServices = services.filter { it.attr("foregroundServiceType") != null }
-        val monitoringFlag =
-            application
-                ?.children("meta-data")
-                ?.firstOrNull { it.attr("name") == "isMonitoringTool" }
-                ?.attr("value")
+        val monitoringElement =
+            application?.children("meta-data")?.firstOrNull { it.attr("name") == "isMonitoringTool" }
+        val monitoringFlag = monitoringElement?.attr("value")
 
         when (role) {
             AppRole.APP -> {
@@ -50,15 +49,22 @@ object ManifestAudit {
                 permissions
                     .filter { it.startsWith(FGS_TYPED_PERMISSION_PREFIX) }
                     .forEach { violations += ":app must not request $it" }
-                if (monitoringFlag != null) violations += ":app must not carry isMonitoringTool"
+                if (monitoringElement != null) violations += ":app must not carry isMonitoringTool"
             }
 
             AppRole.KIDS -> {
                 if (monitoringFlag != "child_monitoring") {
                     violations += ":kids must declare isMonitoringTool=child_monitoring"
                 }
-                val specialUse = fgsServices.filter { "specialUse" in it.attr("foregroundServiceType").orEmpty() }
-                if (specialUse.isEmpty()) violations += ":kids needs a foregroundServiceType=specialUse service"
+                val specialUse =
+                    fgsServices.filter {
+                        "specialUse" in it.attr("foregroundServiceType").orEmpty() &&
+                            it.attr("name")?.endsWith(MONITORING_SERVICE) == true
+                    }
+                if (specialUse.isEmpty()) {
+                    violations +=
+                        ":kids needs $MONITORING_SERVICE declared with foregroundServiceType=specialUse"
+                }
                 specialUse
                     .filter { service ->
                         service.children("property").none {

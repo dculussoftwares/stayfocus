@@ -16,7 +16,7 @@ class ManifestAuditTest {
     private val kidsApplication =
         """
         <meta-data android:name="isMonitoringTool" android:value="child_monitoring"/>
-        <service android:name=".S" android:foregroundServiceType="specialUse">
+        <service android:name=".monitoring.MonitoringService" android:foregroundServiceType="specialUse">
           <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="parental"/>
         </service>
         """.trimIndent()
@@ -57,10 +57,25 @@ class ManifestAuditTest {
     @Test
     fun `kids without the monitoring flag or the specialUse property fails`() {
         assertTrue(ManifestAudit.auditManifest(manifest(kidsPermissions), AppRole.KIDS).size >= 2)
-        val noProperty = """<service android:name=".S" android:foregroundServiceType="specialUse"/>"""
+        val noProperty =
+            """<service android:name=".monitoring.MonitoringService"
+                android:foregroundServiceType="specialUse"/>"""
         val flag = """<meta-data android:name="isMonitoringTool" android:value="child_monitoring"/>"""
         val v = ManifestAudit.auditManifest(manifest(kidsPermissions, flag + noProperty), AppRole.KIDS)
         assertTrue(v.single().contains("PROPERTY_SPECIAL_USE_FGS_SUBTYPE"))
+    }
+
+    @Test
+    fun `another service cannot stand in for MonitoringService`() {
+        val other = kidsApplication.replace(".monitoring.MonitoringService", ".Other")
+        val v = ManifestAudit.auditManifest(manifest(kidsPermissions, other), AppRole.KIDS)
+        assertTrue(v.single().contains("MonitoringService"))
+    }
+
+    @Test
+    fun `isMonitoringTool via resource is still rejected in app`() {
+        val app = """<meta-data android:name="isMonitoringTool" android:resource="@xml/x"/>"""
+        assertTrue(ManifestAudit.auditManifest(manifest(application = app), AppRole.APP).isNotEmpty())
     }
 
     @Test
