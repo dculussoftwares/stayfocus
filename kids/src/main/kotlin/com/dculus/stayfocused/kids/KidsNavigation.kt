@@ -17,8 +17,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -30,7 +32,8 @@ import com.dculus.stayfocused.core.navigation.KidsHome
 import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.ui.components.BatteryGuidance
-import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
+import com.dculus.stayfocused.core.ui.components.SfToastHost
+import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
@@ -41,7 +44,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 /**
- * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Home is a placeholder until its own story.
+ * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Unlinking (or being unlinked) returns to Link.
  */
 @Composable
 fun KidsNavigation(
@@ -54,6 +57,9 @@ fun KidsNavigation(
     val density = LocalDensity.current
     val enter = remember(density) { sfScreenEnter(density) }
     val exit = remember { sfScreenExit() }
+    val resources = LocalResources.current
+    val toastScope = rememberCoroutineScope()
+    val toast = remember { ToastController(toastScope) }
     Box(modifier.fillMaxSize().background(StayFocusedTheme.colors.background).safeDrawingPadding()) {
         NavHost(
             navController = navController,
@@ -102,9 +108,18 @@ fun KidsNavigation(
                 )
             }
             composable<KidsHome> {
-                NavPlaceholderScreen(title = stringResource(R.string.kids_home_title))
+                KidsHomeRoute(
+                    onDone = { outcome, parent ->
+                        // Unlinking by the child says so; a parent-side unlink just returns to the Link screen.
+                        if (outcome == HomeOutcome.Unlinked) {
+                            toast.show(resources.getString(R.string.kids_unlinked_toast, parent))
+                        }
+                        navController.navigate(KidsLink, navOptions { popUpTo<KidsHome> { inclusive = true } })
+                    },
+                )
             }
         }
+        SfToastHost(toast, bottomPadding = 24.dp)
     }
 }
 
