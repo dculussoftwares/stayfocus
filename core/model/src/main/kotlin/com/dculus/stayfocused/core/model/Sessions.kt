@@ -87,4 +87,6 @@ data class LinkedDevice(
     val alerts: List<TamperAlert>,
     val requests: List<UnlockRequest>,
     val focusEndsAt: Instant?,
+    /** Minutes of screen time the phone reported for today; null until it has reported any. */
+    val todayMins: Int? = null,
 )

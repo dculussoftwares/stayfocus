@@ -71,6 +71,7 @@ import com.dculus.stayfocused.feature.block.BlockViewModel
 import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
+import com.dculus.stayfocused.feature.devices.DevicesViewModel
 import com.dculus.stayfocused.feature.devices.LinkAddViewModel
 import com.dculus.stayfocused.feature.devices.LinkConfirmViewModel
 import com.dculus.stayfocused.feature.home.HomeViewModel
@@ -156,6 +157,7 @@ class AppNavigationTest {
             FakeLinkHandshakeRepository(),
             Clock.systemUTC(),
         )
+    private val devicesViewModel = DevicesViewModel(FakeLinkedDevicesRepository())
     private val accountAuth = FakeAuthRepository()
     private val accountViewModel =
         AccountViewModel(
@@ -212,6 +214,7 @@ class AppNavigationTest {
                     accountViewModel = { accountViewModel },
                     linkAddViewModel = { linkAddViewModel },
                     linkConfirmViewModel = { linkConfirmViewModel },
+                    devicesViewModel = { devicesViewModel },
                 )
             }
         }

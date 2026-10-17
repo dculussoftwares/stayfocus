@@ -32,8 +32,11 @@ fun NavController.navigateToRemoteDevice(
 fun NavGraphBuilder.devicesScreen(
     onLinkPhone: () -> Unit,
     onOpenDevice: (deviceId: String) -> Unit,
+    viewModelProvider: (@Composable () -> DevicesViewModel)? = null,
 ) {
-    composable<Devices> { DevicesRoute(onLinkPhone, onOpenDevice) }
+    composable<Devices> {
+        DevicesRoute(onLinkPhone, onOpenDevice, viewModelProvider?.invoke() ?: hiltViewModel())
+    }
 }
 
 /** "Link a child's phone": [onScan] opens the camera; [onSignIn] when the parent has no account yet. */

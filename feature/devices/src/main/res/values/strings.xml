@@ -38,7 +38,23 @@
     <string name="link_confirm_other_body">Something went wrong. Try again, or ask your child to show a new QR code.</string>
     <string name="link_confirm_retry">Try again</string>
     <string name="remote_device_title">Remote device</string>
-    <!-- Placeholder navigation; removed when the real screens land. -->
-    <string name="devices_placeholder_link">Link a phone</string>
-    <string name="devices_placeholder_open_device">Open remote device</string>
+    <string name="devices_link_action">+ Link</string>
+    <string name="devices_this_phone">THIS PHONE · %1$s · PARENT · %2$d LINKED</string>
+    <string name="devices_online">ONLINE</string>
+    <string name="devices_offline">OFFLINE</string>
+    <string name="devices_stat_today">TODAY</string>
+    <string name="devices_stat_battery">BATTERY</string>
+    <string name="devices_stat_using">USING</string>
+    <string name="devices_stat_none">—</string>
+    <string name="devices_alert_accessibility">Accessibility turned off</string>
+    <string name="devices_alert_permission">Permission turned off</string>
+    <string name="devices_alert_unlinked">Phone was unlinked</string>
+    <string name="devices_alert_offline">Offline for a while</string>
+    <plurals name="devices_requests_line">
+        <item quantity="one">%d request for more time</item>
+        <item quantity="other">%d requests for more time</item>
+    </plurals>
+    <string name="devices_empty_title">No linked phones</string>
+    <string name="devices_empty_body">Link your child\'s phone to see their usage and set limits from here.</string>
+    <string name="devices_empty_cta">Link a child\'s phone</string>
 </resources>
