@@ -74,18 +74,19 @@ class KidsHomeViewModel
 
         private var finished = false
 
-        /** The server confirmed the device is gone while an unlink call was still in flight. */
-        private var goneWhileWorking = false
+        private var target: DeviceTarget? = null
 
         init {
             val target = linkStore.parentUid?.let { parent -> linkStore.deviceId?.let { DeviceTarget(parent, it) } }
+            this.target = target
             if (target == null || linkStore.parentName == null) {
                 // Not linked (anymore): nothing to show here.
                 finish(HomeOutcome.Reset)
             } else {
                 viewModelScope.launch {
                     watcher.untilGone(target)
-                    if (_state.value.working) goneWhileWorking = true else finish(HomeOutcome.Reset)
+                    // Gone while the child's own unlink is on its way counts as that unlink; no need to wait for it.
+                    finish(if (_state.value.working) HomeOutcome.Unlinked else HomeOutcome.Reset)
                 }
                 viewModelScope.launch { retrying("rules") { watchRules(target) } }
                 viewModelScope.launch { refreshToday() }
@@ -148,7 +149,8 @@ class KidsHomeViewModel
             val parentUid = linkStore.parentUid
             val deviceId = linkStore.deviceId
             if (parentUid == null || deviceId == null) {
-                finish(HomeOutcome.Unlinked)
+                // Another part of the app already ended the link: leave quietly, there is nothing to unlink.
+                finish(HomeOutcome.Reset)
                 return
             }
             _state.update { it.copy(confirming = false, working = true, error = null) }
@@ -159,23 +161,11 @@ class KidsHomeViewModel
                     }
 
                     else -> {
-                        if (goneWhileWorking) {
-                            // The call failed on the way back, but the device is gone: the parent's side is done.
-                            finish(HomeOutcome.Unlinked)
-                        } else {
-                            _state.update {
-                                it.copy(
-                                    working = false,
-                                    error =
-                                        if (result ==
-                                            UnlinkResult.Network
-                                        ) {
-                                            UnlinkError.Network
-                                        } else {
-                                            UnlinkError.Other
-                                        },
-                                )
-                            }
+                        _state.update {
+                            it.copy(
+                                working = false,
+                                error = if (result == UnlinkResult.Network) UnlinkError.Network else UnlinkError.Other,
+                            )
                         }
                     }
                 }
@@ -186,7 +176,7 @@ class KidsHomeViewModel
         private fun finish(outcome: HomeOutcome) {
             if (finished) return
             finished = true
-            linkReset.reset()
+            linkReset.reset(target)
             _state.update { it.copy(working = false, confirming = false, outcome = outcome) }
         }
     }

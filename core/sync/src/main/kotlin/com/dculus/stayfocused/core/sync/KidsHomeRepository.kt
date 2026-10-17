@@ -3,6 +3,7 @@ package com.dculus.stayfocused.core.sync
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FirebaseFirestoreException
+import com.google.firebase.firestore.MetadataChanges
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -76,7 +77,8 @@ internal class FirebaseKidsHomeRepository(
     override fun observeLink(target: DeviceTarget): Flow<DeviceLinkState> =
         callbackFlow {
             val registration =
-                device(target).addSnapshotListener { snapshot, error ->
+                // Metadata changes too: the server's answer must arrive even when it equals the cached copy.
+                device(target).addSnapshotListener(MetadataChanges.INCLUDE) { snapshot, error ->
                     when {
                         error != null && error.code == FirebaseFirestoreException.Code.PERMISSION_DENIED -> {
                             trySend(DeviceLinkState.Unreadable)

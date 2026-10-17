@@ -6,6 +6,9 @@ import { secureCallable } from "../lib/secureCallable";
 /** Firestore auto ids are 20 letters and digits; the bounds are looser so the schema does not depend on that. */
 const idSchema = z.string().regex(/^[A-Za-z0-9_-]{1,128}$/);
 
+/** gRPC status code of a missing document. */
+const NOT_FOUND = 5;
+
 export type UnlinkWho = "parent" | "child";
 
 export interface UnlinkResult {
@@ -52,14 +55,25 @@ export async function removeDevice(
   notify: NotifyParent = logOnlyNotify,
 ): Promise<UnlinkResult> {
   const ref = db.collection("users").doc(parentUid).collection("devices").doc(deviceId);
-  const existed = (await ref.get()).exists;
   await removeSubcollections(db, ref);
-  await ref.delete();
+  // Only one of several overlapping calls deletes the document; that one reports the removal and tells the parent.
+  const deleted = await deleteIfExists(ref);
   // A write that was in flight when the document went (the child reports every 90 s) can leave a stray subcollection
   // document; the rules refuse further writes once the device document is gone, so a second pass leaves nothing.
   await removeSubcollections(db, ref);
-  if (existed && who === "child") await notify(parentUid, deviceId);
-  return { ok: true, removed: existed };
+  if (deleted && who === "child") await notify(parentUid, deviceId);
+  return { ok: true, removed: deleted };
+}
+
+/** Deletes the document if it is there; false when it was already gone (NOT_FOUND from the precondition). */
+async function deleteIfExists(ref: DocumentReference): Promise<boolean> {
+  try {
+    await ref.delete({ exists: true });
+    return true;
+  } catch (e) {
+    if ((e as { code?: number }).code === NOT_FOUND) return false;
+    throw e;
+  }
 }
 
 async function removeSubcollections(db: Firestore, ref: DocumentReference): Promise<void> {

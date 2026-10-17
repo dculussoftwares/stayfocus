@@ -146,4 +146,20 @@ describe("removeDevice", () => {
     await removeDevice(db, "child", t.parent, t.deviceId, notify);
     expect(told.length).toBe(1);
   });
+
+  it("notifies once when two child calls overlap", async () => {
+    const s = await scene();
+    const told: string[] = [];
+    const notify = (parentUid: string, deviceId: string) => {
+      told.push(`${parentUid}/${deviceId}`);
+      return Promise.resolve();
+    };
+    const results = await Promise.all([
+      removeDevice(db, "child", s.parent, s.deviceId, notify),
+      removeDevice(db, "child", s.parent, s.deviceId, notify),
+    ]);
+    expect(told.length).toBe(1);
+    expect(results.filter((r) => r.removed).length).toBe(1);
+    expect(await remaining(s)).toEqual([]);
+  });
 });

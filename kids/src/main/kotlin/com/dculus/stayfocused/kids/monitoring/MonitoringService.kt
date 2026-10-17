@@ -107,7 +107,7 @@ class MonitoringService : Service() {
                         // The parent may end the link while the app is closed: stop reporting and monitoring then.
                         launch {
                             linkWatcher.untilGone(target)
-                            linkReset.reset()
+                            linkReset.reset(target)
                         }
                         launch { reporter.run(target) }
                         launch { commandListener.run(target) }

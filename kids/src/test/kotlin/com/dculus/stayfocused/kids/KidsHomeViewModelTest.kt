@@ -159,22 +159,46 @@ class KidsHomeViewModelTest {
     }
 
     @Test
-    fun theDeviceVanishingWhileTheCallIsInFlightStillCountsAsUnlinked() {
-        val gate = CompletableDeferred<Unit>()
-        unlinker.gate = gate
-        unlinker.result = UnlinkResult.Network
+    fun theDeviceVanishingWhileTheCallIsInFlightFinishesWithoutWaitingForTheReply() {
+        unlinker.gate = CompletableDeferred()
         val vm = viewModel()
         run()
         vm.confirmUnlink()
         run()
-        // The server reports the device gone while the call is out; the call then fails on its way back.
+        assertNull(vm.state.value.outcome)
+        // The server reports the device gone while the call is out; the reply never needs to arrive.
         home.link.tryEmit(DeviceLinkState.Gone)
         run()
-        assertNull(vm.state.value.outcome)
-        gate.complete(Unit)
-        run()
         assertEquals(HomeOutcome.Unlinked, vm.state.value.outcome)
+        assertNull(store.parentName)
         assertEquals(1, control.syncs)
+        vm.stop()
+    }
+
+    @Test
+    fun aLinkClearedElsewhereBeforeConfirmingLeavesQuietly() {
+        val vm = viewModel()
+        run()
+        vm.askToUnlink()
+        store.parentUid = null
+        store.deviceId = null
+        vm.confirmUnlink()
+        assertEquals(HomeOutcome.Reset, vm.state.value.outcome)
+        assertEquals(emptyList<Pair<String, String?>>(), unlinker.calls)
+        vm.stop()
+    }
+
+    @Test
+    fun aLateResetDoesNotEraseANewLink() {
+        val vm = viewModel()
+        run()
+        // The phone relinked to another parent while this screen's watcher was finishing.
+        store.parentUid = "parent-2"
+        store.deviceId = "device-2"
+        home.link.tryEmit(DeviceLinkState.Gone)
+        run()
+        assertEquals("parent-2", store.parentUid)
+        assertEquals(0, control.syncs)
         vm.stop()
     }
 

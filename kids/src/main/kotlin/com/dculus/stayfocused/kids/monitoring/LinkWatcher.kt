@@ -81,7 +81,14 @@ class LinkReset
         private val linkStore: ParentLinkStore,
         private val monitoring: MonitoringControl,
     ) {
-        fun reset() {
+        /**
+         * With a [target], only resets while the stored link is still that device: a watcher that finishes late must
+         * not erase a link made since. Without one, resets whatever is stored.
+         */
+        fun reset(target: DeviceTarget? = null) {
+            if (target != null && (linkStore.parentUid != target.parentUid || linkStore.deviceId != target.deviceId)) {
+                return
+            }
             linkStore.parentName = null
             linkStore.parentUid = null
             linkStore.deviceId = null
