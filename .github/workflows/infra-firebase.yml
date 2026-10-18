@@ -83,8 +83,8 @@ jobs:
 
   plan:
     concurrency:
-      group: infra-firebase-dev
-      cancel-in-progress: false
+      group: infra-firebase-plan-dev-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     # Secrets are never exposed to PRs from forks.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_PLAN_SA_DEV != ''
     runs-on: ubuntu-latest
@@ -153,8 +153,8 @@ jobs:
 
   plan-prod:
     concurrency:
-      group: infra-firebase-prod
-      cancel-in-progress: false
+      group: infra-firebase-plan-prod-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     # Secrets are never exposed to PRs from forks.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_PROD != '' && vars.GCP_PLAN_SA_PROD != ''
     runs-on: ubuntu-latest
@@ -328,7 +328,7 @@ jobs:
           SHA256: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_PROD }}
         run: |
           for v in SHA1 SHA256; do
-            if ! printf '%s' "${!v}" | grep -qE '"app" *: *\["[^"]+"' || ! printf '%s' "${!v}" | grep -qE '"kids" *: *\["[^"]+"'; then
+            if ! printf '%s' "${!v}" | jq -e '((.app // []) | length > 0) and ((.kids // []) | length > 0)' > /dev/null 2>&1; then
               echo "::warning title=Prod fingerprints::$v fingerprints are missing for app or kids; set FIREBASE_${v}_FINGERPRINTS_PROD to the Play App Signing fingerprints before the first release (docs/INFRASTRUCTURE.md, M10-04)."
             fi
           done
