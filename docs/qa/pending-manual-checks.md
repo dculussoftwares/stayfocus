@@ -158,3 +158,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M8-06 Tamper alerts
 - Check: turning Accessibility off on a linked Kids phone shows "Accessibility turned off on {name}" on the parent's phone within 2 min (push and the red card on Remote); Remind posts a notification on the child that opens Accessibility settings; Dismiss clears the card; turning it off again after turning it on raises a new alert; a phone left off for 24 h shows "Offline for a while" and "Last seen ...".
 - How: needs a real Firebase dev project with `notifyParentAlert` deployed (infra-firebase apply on merge), a parent phone and a Kids phone linked. Turn off Accessibility on the Kids phone and time the push. The 24 h case can be checked by editing `lastSeen` of the device document in the emulator or console (read only otherwise).
+
+## M10-08 Device QA matrix
+- Check: the full Phase 1 regression in `docs/qa/phase1-matrix.md` run on Pixel (API 36), Samsung, Xiaomi (HyperOS), Oppo or Vivo and an API 26 device; every failure filed as an issue; no open blocker issues remain. The issue stays open until this is done.
+- How: follow "How to run" in `docs/qa/phase1-matrix.md` with a release-candidate build (`docs/RELEASING.md`) and a second phone for the Kids app; fill in the tables in a follow-up PR.
