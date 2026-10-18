@@ -152,7 +152,7 @@ class BlockScreenLauncher
         ) {
             BlockingLog.log("Launcher", "overlay shown for ${request.pkg}")
             overlay?.remove()
-            overlay =
+            val newOverlay =
                 AccessibilityOverlay(
                     svc,
                     request,
@@ -161,7 +161,10 @@ class BlockScreenLauncher
                     extras.orElse(null),
                     onRemoved = { overlay = null },
                     onFinished = { BlockScreenState.activeToken = 0L },
-                ).also { it.add() }
+                )
+            // Assign before attaching so a synchronous attachment failure can clear the reference.
+            overlay = newOverlay
+            newOverlay.add()
         }
 
         private fun appLabel(pkg: String): String? =
