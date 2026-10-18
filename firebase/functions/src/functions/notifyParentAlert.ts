@@ -1,6 +1,11 @@
+import { Timestamp } from "firebase-admin/firestore";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logWarn } from "../lib/log";
 import { cleanLabel, defaultNotifyDeps, pushToParent, type NotifyDeps, type SendResult } from "../lib/notify";
+
+/** A phone that raises more than this many alerts within the window stops producing pushes (a flood is not news). */
+const MAX_ALERTS_PER_WINDOW = 10;
+const WINDOW_MS = 10 * 60 * 1000;
 
 /** The permissions a child phone reports; anything else is shown as a generic "permission". */
 const KNOWN_PERMISSIONS = new Set(["accessibility", "usage", "overlay", "notifications"]);
@@ -32,6 +37,16 @@ export async function handleAlertCreated(deps: NotifyDeps, event: AlertEvent): P
   // The parent may have dismissed the alert (or the device was unlinked and its alerts deleted) before this ran.
   const current = await deviceRef.collection("alerts").doc(event.alertId).get();
   if (!current.exists || current.get("dismissed") !== false) return null;
+  // Rules let a linked child create alerts freely, so cap the pushes one phone can cause.
+  const recent = await deviceRef
+    .collection("alerts")
+    .where("createdAt", ">=", Timestamp.fromMillis(Date.now() - WINDOW_MS))
+    .limit(MAX_ALERTS_PER_WINDOW + 1)
+    .get();
+  if (recent.size > MAX_ALERTS_PER_WINDOW) {
+    logWarn("too many alerts from one phone; push skipped", { fn: "notifyParentAlert", outcome: "rate-limited" });
+    return null;
+  }
   const raw = typeof data.permission === "string" ? data.permission.toLowerCase() : "";
   return pushToParent(deps, "notifyParentAlert", event.parentUid, {
     type: "alert",

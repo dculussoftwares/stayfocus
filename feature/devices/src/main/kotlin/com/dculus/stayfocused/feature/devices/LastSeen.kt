@@ -66,13 +66,11 @@ private fun tickingNow(): Instant {
 
 /** "Last seen 3 h ago", or null when the phone has never reported. */
 @Composable
-internal fun lastSeenText(lastSeen: Instant?): String? {
-    val now = tickingNow()
-    return lastSeen?.let {
-        when (val ago = lastSeenAgo(it, now)) {
+internal fun lastSeenText(lastSeen: Instant?): String? =
+    lastSeen?.let {
+        when (val ago = lastSeenAgo(it, tickingNow())) {
             is LastSeen.Minutes -> pluralStringResource(R.plurals.devices_last_seen_minutes, ago.count, ago.count)
             is LastSeen.Hours -> pluralStringResource(R.plurals.devices_last_seen_hours, ago.count, ago.count)
             is LastSeen.Days -> pluralStringResource(R.plurals.devices_last_seen_days, ago.count, ago.count)
         }
     }
-}

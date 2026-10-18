@@ -75,6 +75,8 @@ internal class PushNotifier
                     builder
                         .setContentTitle(context.getString(alertTitle(message.permission), message.device))
                         .setContentText(context.getString(R.string.push_alert_text))
+                        // A duplicate delivery of the same alert updates its notification without sounding again.
+                        .setOnlyAlertOnce(true)
                         .setCategory(NotificationCompat.CATEGORY_STATUS)
                         .setPriority(NotificationCompat.PRIORITY_HIGH)
                 }

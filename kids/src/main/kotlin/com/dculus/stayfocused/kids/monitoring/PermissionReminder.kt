@@ -165,8 +165,13 @@ internal fun settingsIntent(
             Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
         }
 
-        else -> {
+        AlertPermission.ACCESSIBILITY -> {
             Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+        }
+
+        // An unknown name: this app's own settings page, never an unrelated screen.
+        else -> {
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))
         }
     }
 

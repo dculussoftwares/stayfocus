@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getApps, initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { handleAlertCreated } from "../src/functions/notifyParentAlert";
 import type { NotifyDeps } from "../src/lib/notify";
 import type { MulticastMessage } from "firebase-admin/messaging";
@@ -36,6 +36,8 @@ async function scene(name = "Maya's phone") {
   await user.collection("devices").doc(deviceId).collection("alerts").doc("a1").set(lost());
   return { parent, deviceId, alert: user.collection("devices").doc(deviceId).collection("alerts").doc("a1") };
 }
+
+const withTime = (over: Record<string, unknown> = {}) => ({ ...lost(over), createdAt: Timestamp.now() });
 
 const lost = (over: Record<string, unknown> = {}) => ({
   kind: "permission_lost",
@@ -84,6 +86,21 @@ describe("notifyParentAlert", () => {
     expect(await handleAlertCreated(deps, event)).toBeNull();
     await s.alert.delete();
     expect(await handleAlertCreated(deps, event)).toBeNull();
+    expect(sent).toHaveLength(0);
+  });
+
+  it("stops pushing when one phone floods the parent with alerts", async () => {
+    const s = await scene();
+    const { deps, sent } = fakeMessaging();
+    const alerts = s.alert.parent;
+    await Promise.all(Array.from({ length: 11 }, (_, i) => alerts.doc(`f${i}`).set(withTime())));
+    const result = await handleAlertCreated(deps, {
+      parentUid: s.parent,
+      deviceId: s.deviceId,
+      alertId: "f0",
+      data: lost(),
+    });
+    expect(result).toBeNull();
     expect(sent).toHaveLength(0);
   });
 
