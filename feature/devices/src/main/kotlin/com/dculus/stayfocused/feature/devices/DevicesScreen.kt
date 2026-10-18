@@ -47,7 +47,9 @@ import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TamperAlert
 import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.UnlockRequestStatus
+import com.dculus.stayfocused.core.model.badgeCount
 import com.dculus.stayfocused.core.model.formatMinutes
+import com.dculus.stayfocused.core.model.hasDerivedOfflineAlert
 import com.dculus.stayfocused.core.ui.components.LedDot
 import com.dculus.stayfocused.core.ui.components.WhiteButton
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -59,6 +61,7 @@ internal const val DEVICES_EMPTY_LINK_TAG = "devices_empty_link"
 internal const val DEVICES_THIS_PHONE_TAG = "devices_this_phone"
 internal const val DEVICES_BADGE_TAG = "devices_badge"
 internal const val DEVICES_ALERT_TAG = "devices_alert"
+internal const val DEVICES_LAST_SEEN_TAG = "devices_last_seen"
 
 internal fun deviceCardTag(id: String) = "device_card_$id"
 
@@ -193,13 +196,28 @@ internal fun DeviceCard(
                     )
                 }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                LedDot(color = if (device.online) c.accent else c.tertiary, pulse = device.online)
-                Text(
-                    stringResource(if (device.online) R.string.devices_online else R.string.devices_offline),
-                    style = StayFocusedTheme.type.label.copy(fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold),
-                    color = if (device.online) c.accent else c.tertiary,
-                )
+            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LedDot(color = if (device.online) c.accent else c.tertiary, pulse = device.online)
+                    Text(
+                        stringResource(if (device.online) R.string.devices_online else R.string.devices_offline),
+                        style = StayFocusedTheme.type.label.copy(fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold),
+                        color = if (device.online) c.accent else c.tertiary,
+                    )
+                }
+                if (!device.online) {
+                    lastSeenText(device.lastSeen)?.let {
+                        Text(
+                            it,
+                            style = StayFocusedTheme.type.label.copy(fontSize = 10.sp, fontWeight = FontWeight.Medium),
+                            color = c.secondary,
+                            modifier = Modifier.testTag(DEVICES_LAST_SEEN_TAG),
+                        )
+                    }
+                }
             }
         }
         StatGrid(device)
@@ -287,6 +305,7 @@ internal fun deviceAlertLine(device: LinkedDevice): String? {
         .map { alertText(it) }
         .distinct()
         .forEach { parts += it }
+    if (device.hasDerivedOfflineAlert) parts += stringResource(R.string.devices_alert_offline)
     val pending = device.requests.count { it.status == UnlockRequestStatus.PENDING }
     if (pending > 0) parts += pluralStringResource(R.plurals.devices_requests_line, pending, pending)
     return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")

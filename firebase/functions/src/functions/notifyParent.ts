@@ -52,7 +52,7 @@ export async function handleRequestCreated(deps: NotifyDeps, event: RequestEvent
 
 /**
  * Event trigger: a child created `users/{uid}/devices/{deviceId}/requests/{reqId}`. Deployed by Terraform with an
- * Eventarc trigger on the same path (infra/firebase/functions.tf). Alerts (M8-06) will add a second trigger.
+ * Eventarc trigger on the same path (infra/firebase/functions.tf). Lost-permission alerts have their own trigger, `notifyParentAlert`.
  */
 export const notifyParent = onDocumentCreated(
   { document: "users/{uid}/devices/{deviceId}/requests/{reqId}", region: "europe-west1" },

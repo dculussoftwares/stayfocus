@@ -64,6 +64,15 @@
     <string name="kids_unlinked_toast">Unlinked. %1$s has been notified.</string>
     <string name="kids_unlink_network">Could not reach the server. Check the connection and try again.</string>
     <string name="kids_unlink_failed">Could not unlink. Try again.</string>
+    <!-- Parent asked to turn a permission back on (M8-06). New copy; the body is the prototype\'s alert text. -->
+    <string name="kids_remind_channel">Reminders from your parent</string>
+    <string name="kids_remind_title">%1$s asked you to turn %2$s back on</string>
+    <string name="kids_remind_text">Blocking is paused on this phone until it\'s back on.</string>
+    <string name="kids_remind_accessibility">Accessibility</string>
+    <string name="kids_remind_usage">Usage access</string>
+    <string name="kids_remind_overlay">Display over other apps</string>
+    <string name="kids_remind_notifications">Notifications</string>
+    <string name="kids_remind_other">a permission</string>
     <!-- Persistent monitoring notification (Play stalkerware policy). -->
     <string name="kids_managed_by">Managed by %1$s\'s phone</string>
     <string name="kids_monitoring_channel">Managed by parent</string>

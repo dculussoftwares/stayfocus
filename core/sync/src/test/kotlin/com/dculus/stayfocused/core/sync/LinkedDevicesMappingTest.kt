@@ -8,6 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -34,6 +35,16 @@ class LinkedDevicesMappingTest {
         assertFalse(isOnline(null, now))
         assertTrue(isOnline(now.plusSeconds(120), now), "a parent clock that runs behind is tolerated")
         assertFalse(isOnline(now.plusSeconds(3600), now), "a far-future timestamp is not online")
+    }
+
+    @Test
+    fun aPhoneIsLongOfflineAfterADayWithoutAReport() {
+        assertFalse(isLongOffline(now.minus(Duration.ofHours(24)).plusSeconds(1), now))
+        assertTrue(isLongOffline(now.minus(Duration.ofHours(24)), now))
+        assertTrue(isLongOffline(now.minus(Duration.ofDays(9)), now))
+        assertFalse(isLongOffline(null, now), "a phone that never reported is not flagged")
+        assertTrue(raw(mapOf("lastSeen" to ts(now.minus(Duration.ofHours(30))))).toLinkedDevice(now).longOffline)
+        assertFalse(raw(mapOf("lastSeen" to ts(now.minusSeconds(30)))).toLinkedDevice(now).longOffline)
     }
 
     @Test

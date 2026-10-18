@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.LinkedDevice
-import com.dculus.stayfocused.core.model.UnlockRequestStatus
+import com.dculus.stayfocused.core.model.badgeCount
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.ui.components.IconTile
 import com.dculus.stayfocused.core.ui.components.LedBarChart
@@ -83,8 +83,7 @@ private fun DeviceRow(
 ) {
     val c = StayFocusedTheme.colors
     val shape = StayFocusedTheme.shapes.card
-    val badge =
-        device.alerts.count { !it.dismissed } + device.requests.count { it.status == UnlockRequestStatus.PENDING }
+    val badge = device.badgeCount()
     Row(
         Modifier
             .fillMaxWidth()

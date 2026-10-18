@@ -19,6 +19,14 @@ internal sealed interface PushMessage {
         val device: String,
     ) : PushMessage
 
+    /** A child phone lost a permission (`type = alert`); [permission] is one of [ALERT_PERMISSIONS] or `other`. */
+    data class PermissionLost(
+        override val deviceId: String,
+        val alertId: String,
+        val device: String,
+        val permission: String,
+    ) : PushMessage
+
     companion object {
         private val idPattern = Regex("^[A-Za-z0-9_-]{1,128}$")
         private const val MAX_TEXT = 100
@@ -32,8 +40,19 @@ internal sealed interface PushMessage {
                 deviceId == null || device == null -> null
                 data["type"] == "request" -> parseRequest(data, deviceId, device)
                 data["type"] == "unlinked" -> Unlinked(deviceId, device)
+                data["type"] == "alert" -> parseAlert(data, deviceId, device)
                 else -> null
             }
+        }
+
+        private fun parseAlert(
+            data: Map<String, String>,
+            deviceId: String,
+            device: String,
+        ): PushMessage? {
+            val alertId = data["alertId"]?.takeIf(idPattern::matches) ?: return null
+            val permission = data["permission"]?.takeIf { it in ALERT_PERMISSIONS } ?: "other"
+            return PermissionLost(deviceId, alertId, device, permission)
         }
 
         private fun parseRequest(
@@ -52,6 +71,9 @@ internal sealed interface PushMessage {
         }
     }
 }
+
+/** The permission names the `notifyParentAlert` function sends; anything else arrives as `other`. */
+internal val ALERT_PERMISSIONS: Set<String> = setOf("accessibility", "usage", "overlay", "notifications")
 
 /** The answers a notification offers; 0 minutes is No. */
 internal val NOTIFICATION_APPROVALS: List<Int> = listOf(15, 30, 60)

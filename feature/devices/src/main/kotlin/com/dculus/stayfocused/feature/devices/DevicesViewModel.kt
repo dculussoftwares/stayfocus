@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
 import com.dculus.stayfocused.core.model.LinkedDevice
-import com.dculus.stayfocused.core.model.UnlockRequestStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,10 +19,6 @@ internal sealed interface DevicesUiState {
         val devices: List<LinkedDevice>,
     ) : DevicesUiState
 }
-
-/** Undismissed alerts plus pending unlock requests: the number on the card. */
-internal fun LinkedDevice.badgeCount(): Int =
-    alerts.count { !it.dismissed } + requests.count { it.status == UnlockRequestStatus.PENDING }
 
 @HiltViewModel
 class DevicesViewModel

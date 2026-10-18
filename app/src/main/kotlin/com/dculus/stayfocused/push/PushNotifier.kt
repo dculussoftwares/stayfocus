@@ -69,6 +69,17 @@ internal class PushNotifier
                         .setContentText(context.getString(R.string.push_unlinked_text))
                         .setCategory(NotificationCompat.CATEGORY_STATUS)
                 }
+
+                is PushMessage.PermissionLost -> {
+                    id = notificationId("alert-${message.alertId}")
+                    builder
+                        .setContentTitle(context.getString(alertTitle(message.permission), message.device))
+                        .setContentText(context.getString(R.string.push_alert_text))
+                        // A duplicate delivery of the same alert updates its notification without sounding again.
+                        .setOnlyAlertOnce(true)
+                        .setCategory(NotificationCompat.CATEGORY_STATUS)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                }
             }
             NotificationManagerCompat.from(context).notify(id, builder.build())
         }
@@ -130,6 +141,16 @@ internal class PushNotifier
             private const val ID_BASE = 2000
             private const val ID_RANGE = 1_000_000
         }
+    }
+
+/** "Accessibility turned off on {name}" and its siblings. */
+internal fun alertTitle(permission: String): Int =
+    when (permission) {
+        "accessibility" -> R.string.push_alert_accessibility
+        "usage" -> R.string.push_alert_usage
+        "overlay" -> R.string.push_alert_overlay
+        "notifications" -> R.string.push_alert_notifications
+        else -> R.string.push_alert_other
     }
 
 /** Prototype `dlabel`: 15 -> "15m", 30 -> "30m", 60 -> "1h". */

@@ -53,6 +53,12 @@ locals {
       document = "users/{uid}/devices/{deviceId}/requests/{reqId}"
       roles    = ["roles/datastore.user", local.fcm_send_role]
     }
+    # Pushes a child's lost-permission alert to the parent's phones (M8-06). Same access as notifyParent.
+    notifyParentAlert = {
+      kind     = "firestore_created"
+      document = "users/{uid}/devices/{deviceId}/alerts/{alertId}"
+      roles    = ["roles/datastore.user", local.fcm_send_role]
+    }
   }
 
   # Sends FCM messages (cloudmessaging.messages.create) through the HTTP v1 API.

@@ -65,7 +65,7 @@ class RemoteDeviceScreenTest {
         blocks: List<RemoteBlock> = this.blocks,
         apps: List<RemoteAppRow> = this.apps,
     ) = RemoteUiState.Ready(
-        device = device(online = online).copy(focusEndsAt = focusEndsAt),
+        device = device(online = online).copy(focusEndsAt = focusEndsAt, lastSeen = now.minusSeconds(3 * 3600L)),
         alerts = alerts,
         requests = requests,
         blocks = blocks,
@@ -102,7 +102,7 @@ class RemoteDeviceScreenTest {
     @Test
     fun offlineHeaderHidesTheAppInUse() {
         show(ready(online = false))
-        composeRule.onNodeWithText("OFFLINE · 64%").assertIsDisplayed()
+        composeRule.onNodeWithText("OFFLINE · 64% · LAST SEEN 3 H AGO").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteOffline.png")
     }
 

@@ -8,6 +8,7 @@ import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TamperAlert
 import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.UnlockRequest
+import com.dculus.stayfocused.core.model.hasDerivedOfflineAlert
 import com.dculus.stayfocused.core.sync.AuthRepository
 import com.dculus.stayfocused.core.sync.CommandSender
 import com.dculus.stayfocused.core.sync.DeliveryState
@@ -147,6 +148,9 @@ private const val RETRY_BASE_MS = 1_000L
 private const val RETRY_MAX_MS = 30_000L
 private const val MAX_BACKOFF_SHIFT = 5
 private const val DEFAULT_PERMISSION = "accessibility"
+
+/** The id of the offline card that is derived from `lastSeen` and has no document behind it. */
+internal const val DERIVED_OFFLINE_ID = "derived-offline"
 private const val MINS_PER_HOUR = 60
 
 /** True when [usageDate] (`yyyy-MM-dd`, the child's local day) is [today] or the day before or after it. */
@@ -208,6 +212,9 @@ class RemoteDeviceViewModel
     ) : ViewModel() {
         private val deviceId: String = savedState.get<String>("deviceId").orEmpty()
         private val unlinking = MutableStateFlow(false)
+
+        /** The `lastSeen` of the long-offline stretch the parent dismissed here; a later one shows the card again. */
+        private val dismissedOffline = MutableStateFlow<Instant?>(null)
         private val events = Channel<RemoteEvent>(Channel.BUFFERED)
 
         /** Requests being answered, so a double tap sends one decision. */
@@ -263,7 +270,13 @@ class RemoteDeviceViewModel
             val blocks = remote.observeBlocks(target).orDefault(emptyList(), "blocks")
             val locked = remote.observeLocked(target).orDefault(emptySet(), "locks")
             val details = combine(apps, usage, locked) { a, u, l -> Triple(appRows(a, u, l), u?.totalMins, l) }
-            return combine(device, details, blocks, unlinking) { d, (rows, total, _), b, busy ->
+            return combine(
+                device,
+                details,
+                blocks,
+                unlinking,
+                dismissedOffline,
+            ) { d, (rows, total, _), b, busy, dismissed ->
                 if (d == null) {
                     RemoteUiState.NotFound
                 } else {
@@ -274,7 +287,8 @@ class RemoteDeviceViewModel
                             d.alerts
                                 .filter { !it.dismissed }
                                 .sortedByDescending { it.createdAt }
-                                .map { it.toCard() },
+                                .map { it.toCard() }
+                                .plus(derivedOfflineCard(d, dismissed)),
                         requests = d.requests.map { it.toCard(now) },
                         blocks = b,
                         apps = rows,
@@ -282,6 +296,26 @@ class RemoteDeviceViewModel
                         unlinking = busy,
                     )
                 }
+            }
+        }
+
+        /** The "Offline for a while" card, derived from `lastSeen`: no function writes it, so Dismiss is local. */
+        private fun derivedOfflineCard(
+            device: LinkedDevice,
+            dismissed: Instant?,
+        ): List<RemoteAlertCard> {
+            val seen = device.lastSeen
+            return if (device.hasDerivedOfflineAlert && seen != null && seen != dismissed) {
+                listOf(
+                    RemoteAlertCard(
+                        DERIVED_OFFLINE_ID,
+                        TamperKind.OFFLINE,
+                        null,
+                        TIME_FORMAT.format(seen.atZone(clock.zone)),
+                    ),
+                )
+            } else {
+                emptyList()
             }
         }
 
@@ -378,7 +412,13 @@ class RemoteDeviceViewModel
             }
         }
 
-        internal fun dismiss(alert: RemoteAlertCard) = write { remote.dismissAlert(it, alert.id) }
+        internal fun dismiss(alert: RemoteAlertCard) {
+            if (alert.id == DERIVED_OFFLINE_ID) {
+                dismissedOffline.value = ready?.device?.lastSeen
+            } else {
+                write { remote.dismissAlert(it, alert.id) }
+            }
+        }
 
         fun setBlockEnabled(
             blockId: String,

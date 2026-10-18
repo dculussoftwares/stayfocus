@@ -95,6 +95,19 @@
         <item quantity="one">%d request for more time</item>
         <item quantity="other">%d requests for more time</item>
     </plurals>
+    <!-- How long ago an offline phone last reported (M8-06). New copy. -->
+    <plurals name="devices_last_seen_minutes">
+        <item quantity="one">Last seen %d min ago</item>
+        <item quantity="other">Last seen %d min ago</item>
+    </plurals>
+    <plurals name="devices_last_seen_hours">
+        <item quantity="one">Last seen %d h ago</item>
+        <item quantity="other">Last seen %d h ago</item>
+    </plurals>
+    <plurals name="devices_last_seen_days">
+        <item quantity="one">Last seen %d day ago</item>
+        <item quantity="other">Last seen %d days ago</item>
+    </plurals>
     <string name="devices_empty_title">No linked phones</string>
     <string name="devices_empty_body">Link your child\'s phone to see their usage and set limits from here.</string>
     <string name="devices_empty_cta">Link a child\'s phone</string>

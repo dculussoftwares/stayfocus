@@ -391,6 +391,17 @@ describe('alerts', () => {
     await assertFails(setDoc(doc(childDb(), `${D}/alerts/al2`), alert({ dismissed: true })));
     await assertFails(setDoc(doc(childDb(), `${D}/alerts/al2`), alert({ permission: 'p'.repeat(51) })));
   });
+  it('a child cannot create alerts on another device', async () => {
+    await seedDevice();
+    const OTHER_D = `users/${OTHER_PARENT}/devices/dev2`;
+    await seed(async (db) => {
+      await setDoc(doc(db, OTHER_D), { name: 'Other phone', model: 'Pixel', linkedAt: Timestamp.now(), childUid: OTHER_CHILD });
+    });
+    await assertSucceeds(setDoc(doc(childDb(OTHER_CHILD), `${OTHER_D}/alerts/al2`), alert()));
+    await assertFails(setDoc(doc(childDb(OTHER_CHILD), `${D}/alerts/al2`), alert()));
+    await assertFails(setDoc(doc(childDb(CHILD), `${OTHER_D}/alerts/al3`), alert()));
+    await assertFails(setDoc(doc(parentDb(), `${D}/alerts/al2`), alert()));
+  });
   it('parent dismisses but cannot edit other fields', async () => {
     await seedDevice();
     await assertSucceeds(updateDoc(doc(parentDb(), `${D}/alerts/al1`), { dismissed: true }));

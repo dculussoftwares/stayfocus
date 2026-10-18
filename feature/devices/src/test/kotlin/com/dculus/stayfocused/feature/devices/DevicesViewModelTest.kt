@@ -6,6 +6,7 @@ import com.dculus.stayfocused.core.model.TamperAlert
 import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.UnlockRequest
 import com.dculus.stayfocused.core.model.UnlockRequestStatus
+import com.dculus.stayfocused.core.model.badgeCount
 import com.dculus.stayfocused.core.testing.FakeLinkedDevicesRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,5 +82,23 @@ class DevicesViewModelTest {
             )
         assertEquals(3, d.badgeCount())
         assertEquals(0, device().badgeCount())
+    }
+
+    @Test
+    fun aLongOfflinePhoneCountsOnceWhetherOrNotItHasAnOfflineAlertOfItsOwn() {
+        val long = device(online = false).copy(longOffline = true)
+        assertEquals(1, long.badgeCount())
+        assertEquals(1, long.copy(alerts = listOf(alert(TamperKind.OFFLINE, null))).badgeCount())
+        assertEquals(1, long.copy(alerts = listOf(alert(TamperKind.OFFLINE, null, dismissed = true))).badgeCount())
+    }
+
+    @Test
+    fun lastSeenUsesTheLargestWholeUnit() {
+        val now = Instant.parse("2026-10-17T10:00:00Z")
+        assertEquals(LastSeen.Minutes(1), lastSeenAgo(now, now))
+        assertEquals(LastSeen.Minutes(5), lastSeenAgo(now.minusSeconds(5 * 60L + 30), now))
+        assertEquals(LastSeen.Hours(3), lastSeenAgo(now.minusSeconds(3 * 3600L + 59), now))
+        assertEquals(LastSeen.Days(1), lastSeenAgo(now.minusSeconds(24 * 3600L), now))
+        assertEquals(LastSeen.Days(9), lastSeenAgo(now.minusSeconds(9 * 24 * 3600L + 5000), now))
     }
 }
