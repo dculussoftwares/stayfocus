@@ -68,7 +68,7 @@ Child on mobile data or Wi-Fi, screen on, then screen off for 2 min.
 | # | Scenario | Expected | Pixel | Samsung | Xiaomi | Oppo/Vivo | API 26 |
 |---|---|---|---|---|---|---|---|
 | 19 | Describe a rule, review AI DRAFT, accept | Draft shown for review, nothing saved before accept | - | - | - | - | - |
-| 20 | Offline and rate-limit behaviour | Friendly error, no crash | - | - | - | - | - |
+| 20 | Offline, timeout and rate-limit behaviour | No crash; the local parser fallback still produces a reviewable draft (AI DRAFT), and nothing is saved before accept | - | - | - | - | - |
 
 ## Failures
 
