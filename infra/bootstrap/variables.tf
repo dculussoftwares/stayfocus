@@ -1,10 +1,11 @@
 variable "environments" {
-  description = "Environments to create. Prod is added by M10-04."
+  description = "Environments to create (dev and prod, M10-04). Both come from the same resources; only the project id differs."
   type = map(object({
     project_id = string
   }))
   default = {
-    dev = { project_id = "stayfocus-dev" }
+    dev  = { project_id = "stayfocus-dev" }
+    prod = { project_id = "stayfocus-prod" }
   }
 }
 
@@ -58,6 +59,10 @@ variable "deploy_roles" {
     "roles/iam.serviceAccountUser",
     # M9-03: API keys (google_apikeys_key); quota overrides use serviceUsageAdmin above.
     "roles/serviceusage.apiKeysAdmin",
+    # M10-04: Cloud Monitoring alert policies and channels, and log-based metrics.
+    "roles/monitoring.alertPolicyEditor",
+    "roles/monitoring.notificationChannelEditor",
+    "roles/logging.configWriter",
   ]
 }
 
@@ -76,6 +81,9 @@ variable "plan_roles" {
     "roles/iam.securityReviewer",
     # M9-03: refresh API keys.
     "roles/serviceusage.apiKeysViewer",
+    # M10-04: refresh alert policies, channels and log-based metrics.
+    "roles/monitoring.viewer",
+    "roles/logging.viewer",
   ]
 }
 

@@ -89,9 +89,11 @@ jobs:
       - run: terraform validate
       - run: python3 -m py_compile ../../scripts/backlog/sync_project.py
       - id: plan
+        # -refresh=false: the read-only built-in token cannot read repo settings that need Administration
+        # (e.g. vulnerability alerts), and only the apply job may hold the App key. The plan shows config vs last-applied state.
         run: |
           set -o pipefail
-          terraform plan -input=false -no-color -lock=false | tee plan.txt
+          terraform plan -input=false -no-color -lock=false -refresh=false | tee plan.txt
       - name: Comment plan on PR
         if: always() && steps.plan.outcome != 'skipped'
         run: |
