@@ -203,7 +203,7 @@ PRs also post a separate "Firebase/GCP (prod) Terraform plan" comment.
    for plan). The billing account needs room for a second project. Copy the `prod` entry of the printed `projects` output into the variables below.
 2. Repository variables: `GCP_WIF_PROVIDER_PROD`, `GCP_DEPLOY_SA_PROD`, `GCP_PLAN_SA_PROD` (optional `GCP_PROJECT_ID_PROD`, default `stayfocus-prod`).
    Optional: `ALERT_EMAIL_DEV` / `ALERT_EMAIL_PROD`, `GOOGLE_OAUTH_WEB_CLIENT_ID_PROD` + secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET_PROD`,
-   `GEMINI_QUOTA_OVERRIDES_PROD`. Prod jobs are skipped until the three `_PROD` variables exist.
+   `GEMINI_QUOTA_OVERRIDES_PROD`. Prod jobs are skipped until the three `_PROD` variables exist. Do this only after the **backlog** apply has created the protected `prod` environment (it is part of the same merge); never deploy to prod while the environment has no reviewers. Forks set `GCP_PROJECT_ID_PROD` to their own unique id, otherwise the bootstrap manages dev only.
 3. Once the app exists in Play Console, set `FIREBASE_SHA1_FINGERPRINTS_PROD` / `FIREBASE_SHA256_FINGERPRINTS_PROD`
    (`{"app":["..."],"kids":["..."]}`) to the **Play App Signing** certificate fingerprints (Play Console, *App integrity*), not the upload key.
    Link Play Integrity to the prod apps there as well (see the App Check steps above).

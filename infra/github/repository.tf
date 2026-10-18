@@ -113,6 +113,9 @@ resource "github_repository_environment" "prod" {
   repository  = github_repository.this.name
   environment = "prod"
 
+  # The reviewer approval also applies to repository admins.
+  can_admins_bypass = false
+
   reviewers {
     users = [for u in data.github_user.prod_reviewer : u.id]
   }
