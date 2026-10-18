@@ -10,7 +10,8 @@ import javax.inject.Singleton
  * Turns raw window-state events into a stable [foreground] value.
  *
  * Ignored events: our own block screen, System UI (notification shade, recents overlay), keyboards,
- * windows that aren't activities (dialogs, popups) and consecutive duplicates (except the first event after the block screen was shown).
+ * windows that aren't activities (dialogs, popups) and consecutive duplicates (except the first event after
+ * the block screen was shown).
  */
 @Singleton
 class ForegroundAppTracker

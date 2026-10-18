@@ -28,6 +28,7 @@ import javax.inject.Singleton
  * Which path each API level uses is documented in `docs/blocking/block-screen-launch.md`.
  */
 @Singleton
+@Suppress("TooManyFunctions") // one small function per step of the launch
 class BlockScreenLauncher
     @Inject
     constructor(
