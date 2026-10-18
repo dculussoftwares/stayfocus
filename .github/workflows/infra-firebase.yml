@@ -2,7 +2,8 @@ name: infra-firebase
 
 # GCP/Firebase resources as code (infra/firebase, HCP Terraform state, Local execution mode).
 #  - PR: fmt, validate, plan (posted as a PR comment).
-#  - Merge to main / manual run: apply, gated by the GitHub environment `dev`.
+#  - Merge to main / manual run: apply to dev (environment `dev`), then to prod (environment `prod`, manual approval).
+#    Prod runs the same module with only variable differences (project, workspace, fingerprints, alert email).
 # Auth to GCP uses Workload Identity Federation (no service-account keys).
 # Repo variables: TF_CLOUD_ORGANIZATION, GCP_WIF_PROVIDER_DEV, GCP_DEPLOY_SA_DEV (apply, main branch only),
 # GCP_PLAN_SA_DEV (read-only, PR plans), GCP_PROJECT_ID_DEV (optional, default stayfocus-dev). Secret: TF_API_TOKEN. See docs/INFRASTRUCTURE.md ("Firebase/GCP").
@@ -26,9 +27,7 @@ on:
       - ".github/workflows/infra-firebase.yml"
   workflow_dispatch:
 
-concurrency:
-  group: infra-firebase-dev
-  cancel-in-progress: false
+# Per job (below): a prod apply waiting for approval must not block dev runs.
 
 permissions:
   contents: read
@@ -46,6 +45,7 @@ env:
   # App Check: debug tokens (JSON secret, e.g. {"app":{"ci":"<uuid>"},"kids":{}}) and the Firestore enforcement switch.
   TF_VAR_app_check_debug_tokens: ${{ secrets.APP_CHECK_DEBUG_TOKENS_DEV || '{}' }}
   TF_VAR_app_check_enforcement: ${{ vars.APP_CHECK_ENFORCEMENT_DEV || 'ENFORCED' }}
+  TF_VAR_alert_email: ${{ vars.ALERT_EMAIL_DEV }}
   # Gemini quota caps (JSON list, see docs/INFRASTRUCTURE.md "Firebase AI Logic"). Empty list = none.
   TF_VAR_gemini_quota_overrides: ${{ vars.GEMINI_QUOTA_OVERRIDES_DEV || '[]' }}
   TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_DEV || '{"app":[],"kids":[]}' }}
@@ -82,6 +82,9 @@ jobs:
       - run: terraform validate
 
   plan:
+    concurrency:
+      group: infra-firebase-plan-dev-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
     # Secrets are never exposed to PRs from forks.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_PLAN_SA_DEV != ''
     runs-on: ubuntu-latest
@@ -138,10 +141,102 @@ jobs:
             echo '```'
             echo "</details>"
           } > comment.md
-          gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md --edit-last \
-            || gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
+          # Update this environment's own plan comment (dev and prod each have one), or create it.
+          heading=$(head -n 1 comment.md)
+          id=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" --paginate \
+            --jq "[.[] | select(.user.type == \"Bot\" and (.body | startswith(\"$heading\")))] | last | .id // empty" | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
+          fi
+
+  plan-prod:
+    concurrency:
+      group: infra-firebase-plan-prod-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    # Secrets are never exposed to PRs from forks.
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_PROD != '' && vars.GCP_PLAN_SA_PROD != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_PROD || 'stayfocus-firebase-prod' }}
+      TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_PROD || 'stayfocus-prod' }}
+      TF_VAR_env: prod
+      # Prod: Play App Signing fingerprints, no debug tokens, enforcement always on.
+      TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_PROD || '{"app":[],"kids":[]}' }}
+      TF_VAR_sha256_fingerprints: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_PROD || '{"app":[],"kids":[]}' }}
+      TF_VAR_google_oauth_client_id: ${{ vars.GOOGLE_OAUTH_WEB_CLIENT_ID_PROD }}
+      TF_VAR_google_oauth_client_secret: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_SECRET_PROD }}
+      TF_VAR_app_check_debug_tokens: "{}"
+      TF_VAR_app_check_enforcement: ENFORCED
+      TF_VAR_gemini_quota_overrides: ${{ vars.GEMINI_QUOTA_OVERRIDES_PROD || '[]' }}
+      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL_PROD }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - name: Build the functions (one folder per function in firebase/functions/dist)
+        working-directory: firebase/functions
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER_PROD }}
+          service_account: ${{ vars.GCP_PLAN_SA_PROD }}
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          ENSURE_MODE: check
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
+      - run: terraform init -input=false
+      - id: plan
+        run: |
+          set -o pipefail
+          terraform plan -input=false -no-color -lock=false | tee plan.txt
+      - name: Comment plan on PR
+        if: always() && steps.plan.outcome != 'skipped'
+        run: |
+          {
+            echo "### Firebase/GCP (prod) Terraform plan"
+            echo
+            grep -E '^(Plan:|No changes\.|Error)' plan.txt || echo "Plan did not complete; see the job log."
+            echo
+            echo "<details><summary>Full plan</summary>"
+            echo
+            echo '```'
+            tail -c 60000 plan.txt
+            echo '```'
+            echo "</details>"
+          } > comment.md
+          # Update this environment's own plan comment (dev and prod each have one), or create it.
+          heading=$(head -n 1 comment.md)
+          id=$(gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" --paginate \
+            --jq "[.[] | select(.user.type == \"Bot\" and (.body | startswith(\"$heading\")))] | last | .id // empty" | tail -n 1)
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$id" -F body=@comment.md > /dev/null
+          else
+            gh pr comment "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}" --body-file comment.md
+          fi
 
   apply:
+    concurrency:
+      group: infra-firebase-dev
+      cancel-in-progress: false
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_DEPLOY_SA_DEV != ''
     runs-on: ubuntu-latest
     environment: dev
@@ -174,5 +269,68 @@ jobs:
         env:
           TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
         run: ../../scripts/infra/ensure_tfc_workspace.sh
+      - run: terraform init -input=false
+      - run: terraform apply -input=false -auto-approve
+
+  apply-prod:
+    concurrency:
+      group: infra-firebase-prod
+      cancel-in-progress: false
+    needs: apply
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_PROD != '' && vars.GCP_DEPLOY_SA_PROD != ''
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_PROD || 'stayfocus-firebase-prod' }}
+      TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_PROD || 'stayfocus-prod' }}
+      TF_VAR_env: prod
+      # Prod: Play App Signing fingerprints, no debug tokens, enforcement always on.
+      TF_VAR_sha1_fingerprints: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_PROD || '{"app":[],"kids":[]}' }}
+      TF_VAR_sha256_fingerprints: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_PROD || '{"app":[],"kids":[]}' }}
+      TF_VAR_google_oauth_client_id: ${{ vars.GOOGLE_OAUTH_WEB_CLIENT_ID_PROD }}
+      TF_VAR_google_oauth_client_secret: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_SECRET_PROD }}
+      TF_VAR_app_check_debug_tokens: "{}"
+      TF_VAR_app_check_enforcement: ENFORCED
+      TF_VAR_gemini_quota_overrides: ${{ vars.GEMINI_QUOTA_OVERRIDES_PROD || '[]' }}
+      TF_VAR_alert_email: ${{ vars.ALERT_EMAIL_PROD }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: firebase/functions/package-lock.json
+      - name: Build the functions (one folder per function in firebase/functions/dist)
+        working-directory: firebase/functions
+        run: |
+          npm ci --ignore-scripts
+          npm run build
+      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
+        with:
+          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER_PROD }}
+          service_account: ${{ vars.GCP_DEPLOY_SA_PROD }}
+      - name: Ensure HCP Terraform workspace
+        env:
+          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+        run: ../../scripts/infra/ensure_tfc_workspace.sh
+      - name: Warn when the Play App Signing fingerprints are missing
+        env:
+          SHA1: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_PROD }}
+          SHA256: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_PROD }}
+        run: |
+          for v in SHA1 SHA256; do
+            if ! printf '%s' "${!v}" | jq -e '((.app // []) | length > 0) and ((.kids // []) | length > 0)' > /dev/null 2>&1; then
+              echo "::warning title=Prod fingerprints::$v fingerprints are missing for app or kids; set FIREBASE_${v}_FINGERPRINTS_PROD to the Play App Signing fingerprints before the first release (docs/INFRASTRUCTURE.md, M10-04)."
+            fi
+          done
       - run: terraform init -input=false
       - run: terraform apply -input=false -auto-approve
