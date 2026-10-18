@@ -27,9 +27,7 @@ on:
       - ".github/workflows/infra-firebase.yml"
   workflow_dispatch:
 
-concurrency:
-  group: infra-firebase
-  cancel-in-progress: false
+# Per job (below): a prod apply waiting for approval must not block dev runs.
 
 permissions:
   contents: read
@@ -84,6 +82,9 @@ jobs:
       - run: terraform validate
 
   plan:
+    concurrency:
+      group: infra-firebase-dev
+      cancel-in-progress: false
     # Secrets are never exposed to PRs from forks.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_PLAN_SA_DEV != ''
     runs-on: ubuntu-latest
@@ -151,6 +152,9 @@ jobs:
           fi
 
   plan-prod:
+    concurrency:
+      group: infra-firebase-prod
+      cancel-in-progress: false
     # Secrets are never exposed to PRs from forks.
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_PROD != '' && vars.GCP_PLAN_SA_PROD != ''
     runs-on: ubuntu-latest
@@ -230,6 +234,9 @@ jobs:
           fi
 
   apply:
+    concurrency:
+      group: infra-firebase-dev
+      cancel-in-progress: false
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_DEV != '' && vars.GCP_DEPLOY_SA_DEV != ''
     runs-on: ubuntu-latest
     environment: dev
@@ -266,6 +273,9 @@ jobs:
       - run: terraform apply -input=false -auto-approve
 
   apply-prod:
+    concurrency:
+      group: infra-firebase-prod
+      cancel-in-progress: false
     needs: apply
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.TF_CLOUD_ORGANIZATION != '' && vars.GCP_WIF_PROVIDER_PROD != '' && vars.GCP_DEPLOY_SA_PROD != ''
     runs-on: ubuntu-latest
@@ -315,9 +325,12 @@ jobs:
       - name: Warn when the Play App Signing fingerprints are missing
         env:
           SHA1: ${{ vars.FIREBASE_SHA1_FINGERPRINTS_PROD }}
+          SHA256: ${{ vars.FIREBASE_SHA256_FINGERPRINTS_PROD }}
         run: |
-          if [ -z "$SHA1" ]; then
-            echo "::warning title=No prod fingerprints::FIREBASE_SHA1_FINGERPRINTS_PROD is not set; set the Play App Signing fingerprints before the first release (docs/INFRASTRUCTURE.md, M10-04)."
-          fi
+          for v in SHA1 SHA256; do
+            if ! printf '%s' "${!v}" | grep -qE '"app" *: *\["[^"]+"' || ! printf '%s' "${!v}" | grep -qE '"kids" *: *\["[^"]+"'; then
+              echo "::warning title=Prod fingerprints::$v fingerprints are missing for app or kids; set FIREBASE_${v}_FINGERPRINTS_PROD to the Play App Signing fingerprints before the first release (docs/INFRASTRUCTURE.md, M10-04)."
+            fi
+          done
       - run: terraform init -input=false
       - run: terraform apply -input=false -auto-approve
