@@ -23,6 +23,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
+import java.time.Instant
 import kotlin.test.assertEquals
 
 @RunWith(RobolectricTestRunner::class)
@@ -37,7 +38,10 @@ class DevicesScreenTest {
         onLink: () -> Unit = {},
         onOpen: (String) -> Unit = {},
     ) = composeRule.setContent {
-        CompositionLocalProvider(LocalInspectionMode provides true) {
+        CompositionLocalProvider(
+            LocalInspectionMode provides true,
+            LocalNow provides { Instant.EPOCH.plusSeconds(3 * 3600L) },
+        ) {
             StayFocusedTheme {
                 Box(Modifier.width(360.dp).height(780.dp).background(StayFocusedTheme.colors.background)) {
                     DevicesScreen(state, "Pixel 8", onLink, onOpen)
@@ -63,6 +67,7 @@ class DevicesScreenTest {
         show(DevicesUiState.Loaded(listOf(device(online = false))))
         composeRule.onNodeWithText("OFFLINE").assertIsDisplayed()
         composeRule.onNodeWithText("YouTube").assertDoesNotExist()
+        composeRule.onNodeWithText("Last seen 3 h ago").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesOffline.png")
     }
 
@@ -84,6 +89,13 @@ class DevicesScreenTest {
             .onNodeWithText("Accessibility turned off · Offline for a while · 1 request for more time")
             .assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesAlert.png")
+    }
+
+    @Test
+    fun aPhoneOfflineForADayAddsTheOfflineAlertLineAndOneToTheBadge() {
+        show(DevicesUiState.Loaded(listOf(device(online = false).copy(longOffline = true))))
+        composeRule.onNodeWithText("Offline for a while").assertIsDisplayed()
+        composeRule.onNodeWithText("1", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test

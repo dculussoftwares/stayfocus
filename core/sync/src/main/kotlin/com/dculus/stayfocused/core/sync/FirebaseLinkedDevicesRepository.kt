@@ -68,6 +68,15 @@ internal fun isOnline(
     return age <= ONLINE_WINDOW && age >= CLOCK_SKEW.negated()
 }
 
+/** A phone that has not reported for this long is flagged on the parent's side (no scheduled function). */
+internal val OFFLINE_ALERT_AFTER: Duration = Duration.ofHours(24)
+
+/** True once [lastSeen] is at least [OFFLINE_ALERT_AFTER] behind [now]. A phone that never reported is not flagged. */
+internal fun isLongOffline(
+    lastSeen: Instant?,
+    now: Instant,
+): Boolean = lastSeen != null && Duration.between(lastSeen, now) >= OFFLINE_ALERT_AFTER
+
 /** One device and its sub-collections as last read, before the clock is applied. */
 internal data class RawDevice(
     val id: String,
@@ -96,6 +105,7 @@ internal fun RawDevice.toLinkedDevice(now: Instant): LinkedDevice {
         requests = requests,
         focusEndsAt = data["focusEndsAt"].toInstant(),
         todayMins = todayMins,
+        longOffline = isLongOffline(lastSeen, now),
     )
 }
 

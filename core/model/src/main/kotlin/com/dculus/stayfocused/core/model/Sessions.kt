@@ -89,4 +89,19 @@ data class LinkedDevice(
     val focusEndsAt: Instant?,
     /** Minutes of screen time the phone reported for today; null until it has reported any. */
     val todayMins: Int? = null,
+    /**
+     * Not heard from for at least 24 h (derived from [lastSeen]; no function watches for it). Possibly switched off,
+     * out of battery or uninstalled: the parent sees "Offline for a while".
+     */
+    val longOffline: Boolean = false,
 )
+
+/** True when the phone is offline for 24 h and no `offline` alert of its own is open, so the parent-side one counts. */
+val LinkedDevice.hasDerivedOfflineAlert: Boolean
+    get() = longOffline && alerts.none { it.kind == TamperKind.OFFLINE && !it.dismissed }
+
+/** Undismissed alerts, the derived offline alert and pending unlock requests: the number on the phone's card. */
+fun LinkedDevice.badgeCount(): Int =
+    alerts.count { !it.dismissed } +
+        (if (hasDerivedOfflineAlert) 1 else 0) +
+        requests.count { it.status == UnlockRequestStatus.PENDING }

@@ -51,6 +51,9 @@ class MonitoringService : Service() {
     internal lateinit var parentRules: ParentRulesMirror
 
     @Inject
+    internal lateinit var permissionWatcher: PermissionWatcher
+
+    @Inject
     internal lateinit var linkWatcher: LinkWatcher
 
     @Inject
@@ -115,6 +118,7 @@ class MonitoringService : Service() {
                         launch { reporter.run(target) }
                         launch { commandListener.run(target) }
                         launch { parentRules.run(target) }
+                        launch { permissionWatcher.run(target) }
                     }
                 }
             }

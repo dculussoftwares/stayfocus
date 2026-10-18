@@ -35,6 +35,20 @@ class PushMessageTest {
     }
 
     @Test
+    fun parsesALostPermissionAndFoldsAnUnknownOneIntoOther() {
+        val data = mapOf("type" to "alert", "deviceId" to "dev1", "alertId" to "a1", "device" to "Aarav's phone")
+        assertEquals(
+            PushMessage.PermissionLost("dev1", "a1", "Aarav's phone", "accessibility"),
+            PushMessage.parse(data + ("permission" to "accessibility")),
+        )
+        assertEquals(
+            PushMessage.PermissionLost("dev1", "a1", "Aarav's phone", "other"),
+            PushMessage.parse(data + ("permission" to "call 555")),
+        )
+        assertNull(PushMessage.parse(data + ("alertId" to "../x")))
+    }
+
+    @Test
     fun ignoresMalformedMessages() {
         assertNull(PushMessage.parse(emptyMap()))
         assertNull(PushMessage.parse(request + ("type" to "other")))

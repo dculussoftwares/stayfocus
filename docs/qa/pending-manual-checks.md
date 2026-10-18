@@ -154,3 +154,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 
 - Check: a person (1) reviews `docs/play/listing/stay-focused.md` and `stay-focused-kids.md` against Google Play stalkerware and AI-Generated Content policies and ticks the checklist in `docs/play/listing/README.md`; (2) produces the icon, feature graphic and phone screenshots from real builds as listed there and commits them to `docs/play/listing/`; (3) checks the claims against the shipped build (remove anything not shipped, such as installed apps, battery level, "Report a bad result").
 - How: build both apps, take screenshots with `adb exec-out screencap -p`, design the feature graphics, then open a follow-up PR with the files. The issue stays open until this is done.
+
+## M8-06 Tamper alerts
+- Check: turning Accessibility off on a linked Kids phone shows "Accessibility turned off on {name}" on the parent's phone within 2 min (push and the red card on Remote); Remind posts a notification on the child that opens Accessibility settings; Dismiss clears the card; turning it off again after turning it on raises a new alert; a phone left off for 24 h shows "Offline for a while" and "Last seen ...".
+- How: needs a real Firebase dev project with `notifyParentAlert` deployed (infra-firebase apply on merge), a parent phone and a Kids phone linked. Turn off Accessibility on the Kids phone and time the push. The 24 h case can be checked by editing `lastSeen` of the device document in the emulator or console (read only otherwise).

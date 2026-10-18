@@ -6,11 +6,18 @@
     <string name="tab_devices">DEVICES</string>
     <string name="tab_insights">INSIGHTS</string>
     <!-- Push notifications from the child phones (M8-05). Copy of the question follows the Remote screen's amber card. -->
-    <string name="push_channel_name">Requests for more time</string>
+    <string name="push_channel_name">Requests and alerts</string>
     <string name="push_request_title">%1$s</string>
     <string name="push_request_text">%1$d more minutes of %2$s?</string>
     <string name="push_request_approve">Approve %1$s</string>
     <string name="push_request_deny">No</string>
+    <!-- Tamper alerts (M8-06). The accessibility title and the body are the prototype\'s copy; the rest follow it. -->
+    <string name="push_alert_accessibility">Accessibility turned off on %1$s</string>
+    <string name="push_alert_usage">Usage access turned off on %1$s</string>
+    <string name="push_alert_overlay">Display over other apps turned off on %1$s</string>
+    <string name="push_alert_notifications">Notifications turned off on %1$s</string>
+    <string name="push_alert_other">A permission was turned off on %1$s</string>
+    <string name="push_alert_text">Blocking is paused on this phone until it\'s back on.</string>
     <string name="push_unlinked_title">%1$s unlinked</string>
     <string name="push_unlinked_text">This phone is no longer managed from your account.</string>
 </resources>

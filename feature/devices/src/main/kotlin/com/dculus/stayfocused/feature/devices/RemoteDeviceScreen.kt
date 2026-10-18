@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -165,6 +166,13 @@ internal fun RemoteDeviceScreen(
     state: RemoteUiState,
     now: () -> Instant,
     actions: RemoteActions,
+) = CompositionLocalProvider(LocalNow provides now) { RemoteDeviceList(state, now, actions) }
+
+@Composable
+private fun RemoteDeviceList(
+    state: RemoteUiState,
+    now: () -> Instant,
+    actions: RemoteActions,
 ) {
     val c = StayFocusedTheme.colors
     val ready = state as? RemoteUiState.Ready
@@ -230,7 +238,7 @@ private fun Header(
     }
 }
 
-/** "ONLINE · 64% · USING YOUTUBE"; an offline phone shows no app, as its last one is not current. */
+/** "ONLINE · 64% · USING YOUTUBE"; an offline phone shows no app but when it was last seen. */
 @Composable
 private fun statusLine(ready: RemoteUiState.Ready): String {
     val device = ready.device
@@ -240,6 +248,7 @@ private fun statusLine(ready: RemoteUiState.Ready): String {
         )
     device.battery?.let { parts += "$it%" }
     if (device.online) device.currentApp?.let { parts += stringResource(R.string.remote_status_using, it) }
+    if (!device.online) lastSeenText(device.lastSeen)?.let { parts += it }
     return parts.joinToString(" · ").uppercase()
 }
 

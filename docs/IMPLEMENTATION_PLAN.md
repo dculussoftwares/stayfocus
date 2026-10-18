@@ -239,7 +239,8 @@ the callable Functions and AI Logic.
 | `approveLink` | callable (child) | 2: creates the device doc in the parent's tree | M7-07 |
 | `unlinkDevice` | callable (parent or child) | 3: complete recursive delete + notify | M7-09 |
 | `deleteAccount` | callable (user) | 3: complete deletion (Play requirement) | M6-06 |
-| `notifyParent` | Firestore trigger | 1: FCM push for requests, alerts, unlink | M8-05, M8-06 |
+| `notifyParent` | Firestore trigger | 1: FCM push for unlock requests | M8-05 |
+| `notifyParentAlert` | Firestore trigger | 1: FCM push for lost-permission alerts (unlink is pushed by `unlinkDevice`) | M8-06 |
 
 **Done without Functions:** parent → child commands (child's foreground-service Firestore listener), child status, usage,
 app list, requests and alerts (direct writes guarded by rules), offline detection (derived from `lastSeen` on the parent),

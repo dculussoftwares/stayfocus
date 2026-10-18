@@ -68,6 +68,16 @@ internal object AuthModule {
             NoChildStatusRepository
         }
 
+    /** The Kids phone's tamper alerts (`devices/{id}/alerts`); none without Firebase. */
+    @Provides
+    @Singleton
+    fun childAlerts(availability: FirebaseAvailability): ChildAlertsRepository =
+        if (availability.isConfigured) {
+            FirebaseChildAlertsRepository(FirebaseFirestore.getInstance())
+        } else {
+            NoChildAlertsRepository
+        }
+
     /** Parent to child commands (`devices/{id}/commands`); none without Firebase. */
     @Provides
     @Singleton

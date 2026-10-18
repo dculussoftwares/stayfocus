@@ -111,6 +111,29 @@ class RemoteDeviceViewModelTest {
     }
 
     @Test
+    fun aPhoneOfflineForADayShowsADerivedOfflineCardThatDismissesLocally() =
+        runTest {
+            val seen = Instant.parse("2026-10-16T08:15:00Z")
+            devices.devices.value =
+                listOf(device(id = "kid", online = false).copy(lastSeen = seen, longOffline = true))
+            val viewModel = viewModel()
+            val card = viewModel.ready().alerts.single()
+            assertEquals(DERIVED_OFFLINE_ID, card.id)
+            assertEquals(TamperKind.OFFLINE, card.kind)
+            assertEquals("08:15", card.time)
+            viewModel.dismiss(card)
+            assertEquals(emptyList(), viewModel.ready().alerts)
+            assertEquals(emptyList(), remote.dismissed, "nothing is written: no document stands behind the card")
+        }
+
+    @Test
+    fun aPhoneOfflineForLessThanADayHasNoOfflineCard() =
+        runTest {
+            devices.devices.value = listOf(device(id = "kid", online = false))
+            assertEquals(emptyList(), viewModel().ready().alerts)
+        }
+
+    @Test
     fun usageFromAnOldDayIsNotShownAsToday() =
         runTest {
             remote.usage.value = UsageSummary("2026-10-01", 300, emptyList())
