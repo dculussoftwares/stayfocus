@@ -1,4 +1,4 @@
-# Dev environment resources. Later stories add more milestone by milestone
+# Per-environment resources (dev and prod, the same module; only variables differ). Later stories add more milestone by milestone
 # (M7-01 rules, M7-02 Functions in functions.tf, M9-03 AI Logic, ...).
 
 locals {

@@ -184,6 +184,30 @@ default 5, at 50/90/100%).
    The managed keys need SHA-1 fingerprints (`FIREBASE_SHA1_FINGERPRINTS_DEV`); an app without them gets no managed key. The keys in `google-services.json` are the Firebase-created ones; bringing those under Terraform (import by key UID) is a follow-up.
 3. Verify on dev after the apply: a Gemini call through the SDK from a build with no App Check token returns an App Check error.
 
+### Prod environment, monitoring and budgets (M10-04)
+
+`infra/bootstrap` now creates two projects from the same resources: `stayfocus-dev` and `stayfocus-prod` (WIF pool, `tf-deploy`, `tf-plan`,
+billing roles). `infra/firebase` is the same module for both; the `infra-firebase` workflow runs it twice with only variable
+differences: project id, HCP workspace (`stayfocus-firebase-prod`, created in Local mode by the apply job), fingerprints, Google OAuth client,
+alert email. Prod never gets App Check debug tokens and always enforces App Check. The `apply-prod` job runs after the dev apply succeeds and waits for
+a reviewer on the GitHub environment `prod` (managed in `infra/github/repository.tf`, reviewers in the `prod_reviewers` variable, deployments from `main` only).
+PRs also post a separate "Firebase/GCP (prod) Terraform plan" comment.
+
+`infra/firebase/monitoring.tf` adds, per environment: an email notification channel (`alert_email`), an alert on Cloud Functions 5xx responses
+(`function_error_threshold` per 5 minutes) and an alert on FCM send failures (log-based metric on the `push batch failed` warning,
+`fcm_failure_threshold` per 15 minutes). The budget alerts (project and Gemini) already take `var.env`, so prod gets its own.
+
+**One-time steps for the maintainer:**
+1. Re-run **infra-bootstrap** with a temporary key (steps 1-5 above). It creates `stayfocus-prod` and grants the new roles
+   (`monitoring.alertPolicyEditor`, `monitoring.notificationChannelEditor`, `logging.configWriter` for deploy; `monitoring.viewer`, `logging.viewer`
+   for plan). The billing account needs room for a second project. Copy the `prod` entry of the printed `projects` output into the variables below.
+2. Repository variables: `GCP_WIF_PROVIDER_PROD`, `GCP_DEPLOY_SA_PROD`, `GCP_PLAN_SA_PROD` (optional `GCP_PROJECT_ID_PROD`, default `stayfocus-prod`).
+   Optional: `ALERT_EMAIL_DEV` / `ALERT_EMAIL_PROD`, `GOOGLE_OAUTH_WEB_CLIENT_ID_PROD` + secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET_PROD`,
+   `GEMINI_QUOTA_OVERRIDES_PROD`. Prod jobs are skipped until the three `_PROD` variables exist.
+3. Once the app exists in Play Console, set `FIREBASE_SHA1_FINGERPRINTS_PROD` / `FIREBASE_SHA256_FINGERPRINTS_PROD`
+   (`{"app":["..."],"kids":["..."]}`) to the **Play App Signing** certificate fingerprints (Play Console, *App integrity*), not the upload key.
+   Link Play Integrity to the prod apps there as well (see the App Check steps above).
+
 ### Forks
 
 Run the same bootstrap from your fork with your own billing account (the workflow passes your repository ID), set

@@ -113,3 +113,21 @@ variable "app_check_debug_tokens" {
     error_message = "app_check_debug_tokens keys must be app or kids."
   }
 }
+
+variable "alert_email" {
+  description = "Email address that receives Cloud Monitoring alerts (function errors, FCM failures). Empty creates the policies without a notification channel."
+  type        = string
+  default     = ""
+}
+
+variable "function_error_threshold" {
+  description = "Server errors (5xx) per function in 5 minutes above which the error-rate alert fires."
+  type        = number
+  default     = 5
+}
+
+variable "fcm_failure_threshold" {
+  description = "Failed FCM push batches in 15 minutes above which the FCM alert fires."
+  type        = number
+  default     = 2
+}

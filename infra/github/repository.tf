@@ -102,3 +102,29 @@ resource "github_repository_ruleset" "main" {
     }
   }
 }
+
+# Protected environment for applying infra/firebase to the prod project (M10-04). The apply job waits for a reviewer.
+data "github_user" "prod_reviewer" {
+  for_each = var.prod_reviewers
+  username = each.value
+}
+
+resource "github_repository_environment" "prod" {
+  repository  = github_repository.this.name
+  environment = "prod"
+
+  reviewers {
+    users = [for u in data.github_user.prod_reviewer : u.id]
+  }
+
+  deployment_branch_policy {
+    protected_branches     = false
+    custom_branch_policies = true
+  }
+}
+
+resource "github_repository_environment_deployment_policy" "prod_main" {
+  repository     = github_repository.this.name
+  environment    = github_repository_environment.prod.environment
+  branch_pattern = "main"
+}

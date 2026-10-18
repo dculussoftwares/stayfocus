@@ -41,3 +41,9 @@ variable "required_status_checks" {
   # see it, and a failed graph would leave dependency review without the Gradle snapshot.
   default = ["ci-pass", "security-pass", "gradle-dependency-graph"]
 }
+
+variable "prod_reviewers" {
+  description = "GitHub logins that must approve an apply of infra/firebase to prod (environment `prod`). Keep at least one: it is the manual approval gate."
+  type        = set(string)
+  default     = ["natheeshsunway"]
+}

@@ -115,17 +115,32 @@ resource "google_project_iam_member" "plan_bucket_reader" {
   member  = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 
+# These were single dev-only resources before prod existed (M10-04).
+moved {
+  from = google_billing_account_iam_member.deploy_budgets
+  to   = google_billing_account_iam_member.deploy_budgets["dev"]
+}
+
+moved {
+  from = google_billing_account_iam_member.plan_budgets
+  to   = google_billing_account_iam_member.plan_budgets["dev"]
+}
+
 # M6-01: budgets live on the billing account, not the project. Costs Manager manages budgets; Viewer lets PR plans read them.
 resource "google_billing_account_iam_member" "deploy_budgets" {
+  for_each = var.environments
+
   billing_account_id = var.billing_account
   role               = "roles/billing.costsManager"
-  member             = "serviceAccount:${google_service_account.deploy["dev"].email}"
+  member             = "serviceAccount:${google_service_account.deploy[each.key].email}"
 }
 
 resource "google_billing_account_iam_member" "plan_budgets" {
+  for_each = var.environments
+
   billing_account_id = var.billing_account
   role               = "roles/billing.viewer"
-  member             = "serviceAccount:${google_service_account.plan["dev"].email}"
+  member             = "serviceAccount:${google_service_account.plan[each.key].email}"
 }
 
 resource "google_project_iam_member" "deploy_project_metadata_reader" {
