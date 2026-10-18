@@ -14,8 +14,8 @@ export interface AlertEvent {
 }
 
 /**
- * Pushes "Accessibility turned off on {device}" to the parent. Only a `permission_lost` alert that has not been
- * dismissed is announced (an offline alert is derived on the parent side, an unlink is pushed by `unlinkDevice`). The
+ * Pushes "Accessibility turned off on {device}" to the parent. Only a `permission_lost` alert that is still
+ * undismissed is announced (an offline alert is derived on the parent side, an unlink is pushed by `unlinkDevice`). The
  * device name is read from the device document and the permission is reduced to a known name, so no client text other
  * than the cleaned name reaches the message. Returns null when nothing should be sent.
  */
@@ -25,15 +25,13 @@ export async function handleAlertCreated(deps: NotifyDeps, event: AlertEvent): P
     logWarn("ignored an alert document that is not announced", { fn: "notifyParentAlert", outcome: "not-announced" });
     return null;
   }
-  const device = await deps
-    .db()
-    .collection("users")
-    .doc(event.parentUid)
-    .collection("devices")
-    .doc(event.deviceId)
-    .get();
+  const deviceRef = deps.db().collection("users").doc(event.parentUid).collection("devices").doc(event.deviceId);
+  const device = await deviceRef.get();
   // The device was unlinked between the alert and now: nobody to tell.
   if (!device.exists) return null;
+  // The parent may have dismissed the alert (or the device was unlinked and its alerts deleted) before this ran.
+  const current = await deviceRef.collection("alerts").doc(event.alertId).get();
+  if (!current.exists || current.get("dismissed") !== false) return null;
   const raw = typeof data.permission === "string" ? data.permission.toLowerCase() : "";
   return pushToParent(deps, "notifyParentAlert", event.parentUid, {
     type: "alert",

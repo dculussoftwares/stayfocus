@@ -57,7 +57,7 @@ reviews:
         Flag any rule that lets a client create device docs, claim link tokens or write another user's data.
     - path: "firebase/functions/**"
       instructions: |
-        Only the 5 functions in plan §8 may exist. Each must use the shared secure wrapper: App Check enforced,
+        Only the 6 functions in plan §8 may exist. Each must use the shared secure wrapper: App Check enforced,
         request.auth required with the caller's role checked, zod input validation, per-uid rate limiting,
         transactions for multi-document writes, typed HttpsErrors without internal details, no personal data in logs.
     - path: ".github/workflows/**"

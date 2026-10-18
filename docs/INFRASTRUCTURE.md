@@ -4,7 +4,7 @@
 
 **Every resource is created and changed only through Terraform, applied by GitHub Actions.**
 That covers GitHub (labels, milestones, backlog issues, repo settings, Pages) and GCP/Firebase
-(projects, Firestore, Auth, rules, App Check, the 5 Cloud Functions, budgets). Nobody clicks in a console
+(projects, Firestore, Auth, rules, App Check, the 6 Cloud Functions, budgets). Nobody clicks in a console
 to create or change infrastructure. A change is a PR: the Terraform plan is posted on the PR, CodeRabbit reviews the code,
 and the apply runs when it merges to `main`. For an extra gate on applies, require reviewers on the GitHub environment
 (`backlog`, `dev`, `prod`).

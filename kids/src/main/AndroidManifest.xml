@@ -45,6 +45,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Opens the settings screen named by a parent's reminder notification; no UI, not reachable from other apps. -->
+        <activity
+            android:name=".monitoring.PermissionSettingsActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
         <!--
           Foreground-app detection, enabled from the permission setup. Same minimum capabilities as the phone app;
           the Play monitoring-tool declarations for this app come in M8-03.

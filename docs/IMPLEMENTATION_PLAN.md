@@ -25,7 +25,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Packages | `com.dculus.stayfocused` (main app), `com.dculus.stayfocused.kids` (Kids app) |
 | Two apps | `:app` = self-control + parent. `:kids` = child companion (carries `IsMonitoringTool`, FGS `specialUse`, persistent notification) |
 | Accounts | **Optional.** "Continue without an account" on sign-in. Self-blocking and AI work with no account; an account is needed only to link a child's phone. The child phone has no account (Firebase Anonymous Auth under the hood) |
-| Backend | **Firebase-first**: Auth, Firestore + security rules, App Check, FCM, AI Logic (Gemini). Client SDKs talk to Firebase directly; **Cloud Functions (TypeScript, 2nd gen, Blaze plan) only where security or clean architecture needs them** (5 functions, see §9). Lives in `/firebase` |
+| Backend | **Firebase-first**: Auth, Firestore + security rules, App Check, FCM, AI Logic (Gemini). Client SDKs talk to Firebase directly; **Cloud Functions (TypeScript, 2nd gen, Blaze plan) only where security or clean architecture needs them** (6 functions, see §9). Lives in `/firebase` |
 | Infrastructure | **Only Terraform, applied by GitHub Actions** (state in HCP Terraform), for GitHub (backlog, repo settings, Pages) and GCP/Firebase. Built phase by phase: each milestone's `infra` stories add only what it needs. See `docs/INFRASTRUCTURE.md` |
 | Backlog | Lives in `backlog/phase1/` as Markdown + front matter and is turned into issues by `infra/github`. Edit the files, not the issues |
 | Open source | GPL-3.0. Forks bring their own `google-services.json`; the app **must build and run without it** (Firebase features disabled) |

@@ -2,14 +2,17 @@ package com.dculus.stayfocused.kids.monitoring
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -18,7 +21,6 @@ import com.dculus.stayfocused.core.sync.AlertPermission
 import com.dculus.stayfocused.core.sync.CommandHandler
 import com.dculus.stayfocused.core.sync.CommandType
 import com.dculus.stayfocused.core.sync.RemoteCommand
-import com.dculus.stayfocused.core.usage.UsageAccess
 import com.dculus.stayfocused.kids.R
 import dagger.Binds
 import dagger.Module
@@ -26,6 +28,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import dagger.multibindings.IntoSet
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -60,7 +63,6 @@ internal class AndroidPermissionReminder
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-        private val usageAccess: UsageAccess,
     ) : PermissionReminder {
         @SuppressLint("MissingPermission") // checked in canNotify()
         override fun remind(
@@ -71,11 +73,13 @@ internal class AndroidPermissionReminder
             ensureChannel()
             val parent = parentName?.takeIf { it.isNotBlank() } ?: context.getString(R.string.kids_parent_fallback)
             val label = context.getString(permissionLabel(permission))
+            // An explicit intent to our own trampoline: a PendingIntent never carries an implicit one.
             val open =
                 PendingIntent.getActivity(
                     context,
-                    permission.hashCode() and Int.MAX_VALUE,
-                    settingsIntent(permission).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                    notificationId(permission),
+                    Intent(context, PermissionSettingsActivity::class.java)
+                        .putExtra(PermissionSettingsActivity.EXTRA_PERMISSION, permission),
                     PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
                 )
             val notification =
@@ -91,26 +95,6 @@ internal class AndroidPermissionReminder
                     .build()
             NotificationManagerCompat.from(context).notify(notificationId(permission), notification)
         }
-
-        private fun settingsIntent(permission: String): Intent =
-            when (permission) {
-                AlertPermission.USAGE -> {
-                    usageAccess.settingsIntent()
-                }
-
-                AlertPermission.OVERLAY -> {
-                    Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
-                }
-
-                AlertPermission.NOTIFICATIONS -> {
-                    Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                        .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                }
-
-                else -> {
-                    Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                }
-            }
 
         private fun canNotify(): Boolean =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -136,6 +120,53 @@ internal class AndroidPermissionReminder
             fun notificationId(permission: String): Int = ID_BASE + (permission.hashCode() and Int.MAX_VALUE) % ID_RANGE
 
             const val ID_RANGE = 1000
+        }
+    }
+
+/**
+ * Opens the system settings screen for [permission]. A notification cannot carry an implicit intent in a
+ * `PendingIntent`, so the reminder opens this activity, which starts the settings screen and finishes at once.
+ */
+class PermissionSettingsActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val permission = intent?.getStringExtra(EXTRA_PERMISSION).orEmpty()
+        try {
+            startActivity(settingsIntent(permission, packageName).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (
+            @Suppress("SwallowedException") e: ActivityNotFoundException,
+        ) {
+            // A phone without that settings screen: nothing to open.
+            Timber.w("No settings screen for %s", permission)
+        }
+        finish()
+    }
+
+    companion object {
+        const val EXTRA_PERMISSION = "permission"
+    }
+}
+
+/** The settings screen where [permission] is turned back on. */
+internal fun settingsIntent(
+    permission: String,
+    packageName: String,
+): Intent =
+    when (permission) {
+        AlertPermission.USAGE -> {
+            Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+        }
+
+        AlertPermission.OVERLAY -> {
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+        }
+
+        AlertPermission.NOTIFICATIONS -> {
+            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
+        }
+
+        else -> {
+            Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
         }
     }
 

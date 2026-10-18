@@ -17,6 +17,7 @@ import kotlin.test.assertEquals
 class PermissionWatcherTest {
     private val target = DeviceTarget("parent-1", "device-1")
     private val granted = Permissions(usage = true, accessibility = true, overlay = true, notifications = true)
+    private val none = Permissions(usage = false, accessibility = false, overlay = false, notifications = false)
     private var current = granted
     private val checks =
         object : PermissionChecks {
@@ -30,22 +31,46 @@ class PermissionWatcherTest {
 
             override suspend fun ensureSignedIn() = "child"
         }
+    private val history =
+        object : PermissionHistory {
+            val granted = mutableSetOf<String>()
+
+            override fun everGranted(): Set<String> = granted.toSet()
+
+            override fun markGranted(permissions: Collection<String>) {
+                granted += permissions
+            }
+        }
     private val alerts = FakeChildAlertsRepository()
-    private val watcher = PermissionWatcher(checks, EngineHealthMonitor(TestClock()), alerts, signedIn)
-    private val raised = mutableSetOf<String>()
+
+    private fun watcher() = PermissionWatcher(checks, EngineHealthMonitor(TestClock()), alerts, signedIn, history)
+
+    private val watcher = watcher()
+    private var state = WatchState()
+
+    private suspend fun check() = watcher.check(target, state)
 
     @Test
     fun nothingIsRaisedWhileEverythingIsGranted() =
         runTest {
-            watcher.check(target, raised)
+            check()
+            assertEquals(emptyList(), alerts.calls)
+        }
+
+    @Test
+    fun aPermissionThatWasNeverGrantedIsNotLost() =
+        runTest {
+            current = none
+            check()
             assertEquals(emptyList(), alerts.calls)
         }
 
     @Test
     fun aLostAccessibilityServiceRaisesOneAlertEvenAfterManyChecks() =
         runTest {
+            check()
             current = granted.copy(accessibility = false)
-            repeat(5) { watcher.check(target, raised) }
+            repeat(5) { check() }
             assertEquals(listOf(AlertPermission.ACCESSIBILITY), alerts.calls)
             assertEquals(listOf(AlertPermission.ACCESSIBILITY), alerts.open)
         }
@@ -53,8 +78,9 @@ class PermissionWatcherTest {
     @Test
     fun everyLostPermissionGetsItsOwnAlert() =
         runTest {
-            current = Permissions(usage = false, accessibility = false, overlay = false, notifications = false)
-            watcher.check(target, raised)
+            check()
+            current = none
+            check()
             assertEquals(
                 listOf(
                     AlertPermission.ACCESSIBILITY,
@@ -69,34 +95,51 @@ class PermissionWatcherTest {
     @Test
     fun theBatteryExemptionIsNotATamperAlert() =
         runTest {
+            check()
             current = granted.copy(batteryUnrestricted = false)
-            watcher.check(target, raised)
+            check()
             assertEquals(emptyList(), alerts.calls)
         }
 
     @Test
-    fun aPermissionThatCameBackAndIsLostAgainIsAnotherAlert() =
+    fun aSecondLossIsAnotherAlertEvenIfTheFirstWasNotDismissed() =
         runTest {
+            check()
             current = granted.copy(usage = false)
-            watcher.check(target, raised)
-            alerts.dismiss(AlertPermission.USAGE)
+            check()
             current = granted
-            watcher.check(target, raised)
+            check()
             current = granted.copy(usage = false)
-            watcher.check(target, raised)
-            assertEquals(listOf(AlertPermission.USAGE, AlertPermission.USAGE), alerts.calls)
-            assertEquals(listOf(AlertPermission.USAGE), alerts.open)
+            check()
+            assertEquals(listOf(AlertPermission.USAGE, AlertPermission.USAGE), alerts.open)
+        }
+
+    @Test
+    fun aPermissionFoundOffAfterARestartDoesNotDuplicateAnOpenAlert() =
+        runTest {
+            check()
+            current = granted.copy(accessibility = false)
+            check()
+            // The service restarts: a new run knows nothing but the history on disk.
+            state = WatchState()
+            check()
+            assertEquals(listOf(AlertPermission.ACCESSIBILITY), alerts.open)
+            alerts.dismiss(AlertPermission.ACCESSIBILITY)
+            state = WatchState()
+            check()
+            assertEquals(listOf(AlertPermission.ACCESSIBILITY), alerts.open)
         }
 
     @Test
     fun aFailedWriteIsTriedAgainAtTheNextCheck() =
         runTest {
+            check()
             current = granted.copy(accessibility = false)
             alerts.failing = true
-            watcher.check(target, raised)
+            check()
             assertEquals(emptyList(), alerts.open)
             alerts.failing = false
-            watcher.check(target, raised)
+            check()
             assertEquals(listOf(AlertPermission.ACCESSIBILITY), alerts.open)
         }
 }

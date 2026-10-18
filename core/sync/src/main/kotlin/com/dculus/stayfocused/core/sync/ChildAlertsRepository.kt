@@ -15,12 +15,15 @@ object AlertPermission {
 /** The Kids side of tamper alerts: `devices/{id}/alerts`, which `firestore.rules` let only this phone create. */
 interface ChildAlertsRepository {
     /**
-     * Opens a `permission_lost` alert for [permission] unless one is already open (not dismissed), so a permission that
-     * stays off costs the parent one alert, not one per check. Throws on failure.
+     * Opens a `permission_lost` alert for [permission]. With [newLoss] false (the phone only found the permission off,
+     * for instance after a restart) it does nothing while an alert for it is still open, so a permission that stays off
+     * costs the parent one alert. With [newLoss] true (the phone saw it granted and then lost) it always opens one, so
+     * a second loss before the parent dismissed the first one is announced again. Throws on failure.
      */
     suspend fun raisePermissionLost(
         target: DeviceTarget,
         permission: String,
+        newLoss: Boolean,
     )
 }
 
@@ -30,6 +33,7 @@ internal class FirebaseChildAlertsRepository(
     override suspend fun raisePermissionLost(
         target: DeviceTarget,
         permission: String,
+        newLoss: Boolean,
     ) {
         val alerts =
             firestore
@@ -38,15 +42,17 @@ internal class FirebaseChildAlertsRepository(
                 .collection("devices")
                 .document(target.deviceId)
                 .collection("alerts")
-        val open =
-            alerts
-                .whereEqualTo("kind", KIND_PERMISSION_LOST)
-                .whereEqualTo("permission", permission)
-                .whereEqualTo("dismissed", false)
-                .limit(1)
-                .get()
-                .await()
-        if (!open.isEmpty) return
+        if (!newLoss) {
+            val open =
+                alerts
+                    .whereEqualTo("kind", KIND_PERMISSION_LOST)
+                    .whereEqualTo("permission", permission)
+                    .whereEqualTo("dismissed", false)
+                    .limit(1)
+                    .get()
+                    .await()
+            if (!open.isEmpty) return
+        }
         alerts
             .add(
                 mapOf(
@@ -68,10 +74,11 @@ internal object NoChildAlertsRepository : ChildAlertsRepository {
     override suspend fun raisePermissionLost(
         target: DeviceTarget,
         permission: String,
+        newLoss: Boolean,
     ) = Unit
 }
 
-/** In-memory repository for tests that mirrors the one-open-alert-per-permission rule. */
+/** In-memory repository for tests that mirrors the alert rules. */
 class FakeChildAlertsRepository : ChildAlertsRepository {
     /** Permissions with an open alert, in the order they were raised. */
     val open = mutableListOf<String>()
@@ -85,14 +92,15 @@ class FakeChildAlertsRepository : ChildAlertsRepository {
     override suspend fun raisePermissionLost(
         target: DeviceTarget,
         permission: String,
+        newLoss: Boolean,
     ) {
         calls += permission
         if (failing) error("offline")
-        if (permission !in open) open += permission
+        if (newLoss || permission !in open) open += permission
     }
 
-    /** The parent dismissed the alert. */
+    /** The parent dismissed every alert for [permission]. */
     fun dismiss(permission: String) {
-        open -= permission
+        open.removeAll { it == permission }
     }
 }

@@ -3,8 +3,12 @@
 package com.dculus.stayfocused.feature.devices
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.pluralStringResource
+import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
 
@@ -43,13 +47,32 @@ internal fun lastSeenAgo(
 /** The current time as the screens see it; tests provide a fixed one so "Last seen 3 h ago" is stable. */
 internal val LocalNow = staticCompositionLocalOf<() -> Instant> { { Instant.now() } }
 
+private const val TICK_MILLIS = 60_000L
+
+/** The time as [LocalNow] reads it, read again every minute so "Last seen" keeps counting. */
+@Composable
+private fun tickingNow(): Instant {
+    val clock = LocalNow.current
+    val inspecting = LocalInspectionMode.current
+    val now by produceState(clock(), clock) {
+        value = clock()
+        while (!inspecting) {
+            delay(TICK_MILLIS)
+            value = clock()
+        }
+    }
+    return now
+}
+
 /** "Last seen 3 h ago", or null when the phone has never reported. */
 @Composable
-internal fun lastSeenText(lastSeen: Instant?): String? =
-    lastSeen?.let {
-        when (val ago = lastSeenAgo(it, LocalNow.current())) {
+internal fun lastSeenText(lastSeen: Instant?): String? {
+    val now = tickingNow()
+    return lastSeen?.let {
+        when (val ago = lastSeenAgo(it, now)) {
             is LastSeen.Minutes -> pluralStringResource(R.plurals.devices_last_seen_minutes, ago.count, ago.count)
             is LastSeen.Hours -> pluralStringResource(R.plurals.devices_last_seen_hours, ago.count, ago.count)
             is LastSeen.Days -> pluralStringResource(R.plurals.devices_last_seen_days, ago.count, ago.count)
         }
     }
+}
