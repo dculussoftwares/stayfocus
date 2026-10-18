@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -134,11 +135,13 @@ class BlockActivity : ComponentActivity() {
         }
         BlockScreenState.visibleOwner = this
         BlockScreenState.visible = true
+        BlockingLog.log("BlockActivity", "visible for ${request?.pkg}")
         BlockScreenState.onVisible?.invoke()
     }
 
     override fun onStop() {
         if (BlockScreenState.visibleOwner === this) {
+            BlockingLog.log("BlockActivity", "stopped")
             BlockScreenState.visible = false
             BlockScreenState.visibleOwner = null
         }

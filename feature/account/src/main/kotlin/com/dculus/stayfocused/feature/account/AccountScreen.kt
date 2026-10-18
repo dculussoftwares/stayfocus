@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
@@ -144,6 +145,7 @@ internal fun AccountRoute(
         onLicences = { licencesVisible = true },
         onSignOut = viewModel::signOut,
         onDeleteAccount = viewModel::startDelete,
+        onShareLog = { context.shareBlockingLog() }, // TEMPORARY: remove with BlockingLog
     )
     DeleteAccountSheet(
         state = deleteState,
@@ -200,6 +202,16 @@ internal fun AccountRoute(
 private fun Context.versionName(): String =
     runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
 
+/** TEMPORARY: shares the newest blocking-debug log lines as text (no file provider needed). */
+private fun Context.shareBlockingLog() {
+    val send =
+        Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, "Stay Focused blocking log")
+            .putExtra(Intent.EXTRA_TEXT, BlockingLog.tail())
+    open(Intent.createChooser(send, "Share blocking log"))
+}
+
 private fun Context.open(intent: Intent) {
     try {
         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -220,6 +232,7 @@ internal fun AccountScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
+    onShareLog: (() -> Unit)? = null,
 ) {
     val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
@@ -278,6 +291,13 @@ internal fun AccountScreen(
                     color = colors.tertiary,
                 )
             }
+        }
+        if (onShareLog != null) {
+            OutlineButton(
+                text = "Share blocking log (temporary)",
+                onClick = onShareLog,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         if (state.user != null) {
             OutlineButton(

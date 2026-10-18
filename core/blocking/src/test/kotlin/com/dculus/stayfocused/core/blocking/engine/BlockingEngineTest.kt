@@ -68,6 +68,9 @@ private class FakeEnv : ForegroundEnvironment {
 private class RecordingPresenter : BlockPresenter {
     val shown = mutableListOf<Pair<String, Decision.Block>>()
     var dismissals = 0
+    var showing = true
+
+    override fun isShowing(): Boolean = showing
 
     override fun show(
         pkg: String,

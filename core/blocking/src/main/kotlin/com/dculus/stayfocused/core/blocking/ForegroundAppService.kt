@@ -46,6 +46,7 @@ class ForegroundAppService : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        BlockingLog.init(applicationContext)
         launcher.attach(this)
         // A rebind (reboot, update, the user toggling the service) must not trust a foreground app from before it.
         tracker.onScreenOff()
@@ -67,6 +68,7 @@ class ForegroundAppService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
         health.onEvent()
+        BlockingLog.log("Event", "${event.packageName}/${event.className}")
         tracker.onWindowStateChanged(event.packageName?.toString(), event.className?.toString())
     }
 

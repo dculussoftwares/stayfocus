@@ -9,6 +9,9 @@ interface BlockPresenter {
         decision: Decision.Block,
     )
 
+    /** Whether a block screen is on screen or on its way (activity launching, overlay up). */
+    fun isShowing(): Boolean
+
     /** Removes the fallback overlay, if showing. */
     fun dismissOverlay()
 }
