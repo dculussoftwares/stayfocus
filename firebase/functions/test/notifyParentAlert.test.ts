@@ -89,19 +89,27 @@ describe("notifyParentAlert", () => {
     expect(sent).toHaveLength(0);
   });
 
-  it("stops pushing when one phone floods the parent with alerts", async () => {
+  it("stops pushing when one permission is toggled over and over, but still announces another one", async () => {
     const s = await scene();
     const { deps, sent } = fakeMessaging();
     const alerts = s.alert.parent;
-    await Promise.all(Array.from({ length: 11 }, (_, i) => alerts.doc(`f${i}`).set(withTime())));
-    const result = await handleAlertCreated(deps, {
+    await Promise.all(Array.from({ length: 5 }, (_, i) => alerts.doc(`f${i}`).set(withTime())));
+    const flood = await handleAlertCreated(deps, {
       parentUid: s.parent,
       deviceId: s.deviceId,
       alertId: "f0",
       data: lost(),
     });
-    expect(result).toBeNull();
-    expect(sent).toHaveLength(0);
+    expect(flood).toBeNull();
+    await alerts.doc("u1").set(withTime({ permission: "usage" }));
+    const other = await handleAlertCreated(deps, {
+      parentUid: s.parent,
+      deviceId: s.deviceId,
+      alertId: "u1",
+      data: lost({ permission: "usage" }),
+    });
+    expect(other).toEqual({ sent: 1, pruned: 0 });
+    expect(sent).toHaveLength(1);
   });
 
   it("ignores other kinds, dismissed alerts, missing data and a device that is gone", async () => {

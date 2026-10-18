@@ -3,9 +3,15 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { logWarn } from "../lib/log";
 import { cleanLabel, defaultNotifyDeps, pushToParent, type NotifyDeps, type SendResult } from "../lib/notify";
 
-/** A phone that raises more than this many alerts within the window stops producing pushes (a flood is not news). */
-const MAX_ALERTS_PER_WINDOW = 10;
+/**
+ * One permission being switched off and on over and over is a flood, not news: after this many alerts for it within
+ * the window the rest are not pushed. Each distinct permission has its own budget, so a different permission lost
+ * later is still announced.
+ */
+const MAX_ALERTS_PER_PERMISSION = 3;
 const WINDOW_MS = 10 * 60 * 1000;
+/** Upper bound on the documents read to count the window. */
+const WINDOW_READ_LIMIT = 40;
 
 /** The permissions a child phone reports; anything else is shown as a generic "permission". */
 const KNOWN_PERMISSIONS = new Set(["accessibility", "usage", "overlay", "notifications"]);
@@ -37,23 +43,29 @@ export async function handleAlertCreated(deps: NotifyDeps, event: AlertEvent): P
   // The parent may have dismissed the alert (or the device was unlinked and its alerts deleted) before this ran.
   const current = await deviceRef.collection("alerts").doc(event.alertId).get();
   if (!current.exists || current.get("dismissed") !== false) return null;
-  // Rules let a linked child create alerts freely, so cap the pushes one phone can cause.
+  const raw = typeof data.permission === "string" ? data.permission.toLowerCase() : "";
+  const permission = KNOWN_PERMISSIONS.has(raw) ? raw : "other";
+  // Rules let a linked child create alerts freely, so cap the pushes one phone can cause for one permission.
   const recent = await deviceRef
     .collection("alerts")
     .where("createdAt", ">=", Timestamp.fromMillis(Date.now() - WINDOW_MS))
-    .limit(MAX_ALERTS_PER_WINDOW + 1)
+    .limit(WINDOW_READ_LIMIT)
     .get();
-  if (recent.size > MAX_ALERTS_PER_WINDOW) {
-    logWarn("too many alerts from one phone; push skipped", { fn: "notifyParentAlert", outcome: "rate-limited" });
+  const sameKind = recent.docs.filter((d) => {
+    const p: unknown = d.get("permission");
+    const name = typeof p === "string" ? p.toLowerCase() : "";
+    return d.get("kind") === "permission_lost" && (KNOWN_PERMISSIONS.has(name) ? name : "other") === permission;
+  });
+  if (sameKind.length > MAX_ALERTS_PER_PERMISSION) {
+    logWarn("too many alerts for one permission; push skipped", { fn: "notifyParentAlert", outcome: "rate-limited" });
     return null;
   }
-  const raw = typeof data.permission === "string" ? data.permission.toLowerCase() : "";
   return pushToParent(deps, "notifyParentAlert", event.parentUid, {
     type: "alert",
     deviceId: event.deviceId,
     alertId: event.alertId,
     device: cleanLabel(device.get("name"), "Your child's phone"),
-    permission: KNOWN_PERMISSIONS.has(raw) ? raw : "other",
+    permission,
   });
 }
 
