@@ -6,11 +6,13 @@ Guidance for Claude Code in this repository. The shared rules for every coding a
 
 ## Repository status
 
-Phase 1 is planned, not built yet. The Android code starts with story **M1-01** (Gradle skeleton). Until then, the repo holds:
+Phase 1 (M1–M10, waves 1–16) is built; only `needs-human` stories remain. The **v5 UI redesign** (M11–M13, waves 17–24) is next. The repo holds:
 
 | Path | What |
 |---|---|
 | `design_handoff_stay_focused_phase1/` | Design handoff: `README.md` (screens, tokens, behaviour) + an HTML prototype (open in Chrome; its `<script>` block holds the dial maths, AI prompt and copy) |
+| `design/` | **v5 redesign** source: `Stay Focused v5.dc.html` (prototype, source of truth), `screens-v5/` (24 reference PNGs, re-render with `scripts/design/capture-v5.mjs`). `README.md`/`screenshots/` there are the older v2 |
+| `docs/design/V5_SPEC.md` | v5 spec for epics M11–M13: strategy, tokens, components, copy per screen, extras |
 | `docs/IMPLEMENTATION_PLAN.md` | Decisions, module map, workflow, definition of done, data model, backend/Functions policy |
 | `docs/INFRASTRUCTURE.md` | Terraform + GitHub Actions only; HCP state; bootstrap |
 | `backlog/phase1/` | Epics and stories (source of truth for the GitHub issues) |

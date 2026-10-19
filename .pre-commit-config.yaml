@@ -10,10 +10,11 @@ repos:
     rev: v6.0.0
     hooks:
       # Room's generated schema JSON must stay byte-identical to what the build writes (CI diff check).
+      # design/ holds exported design files (prototype HTML, reference renders); keep them as exported.
       - id: trailing-whitespace
-        exclude: ^core/data/schemas/
+        exclude: ^(core/data/schemas|design)/
       - id: end-of-file-fixer
-        exclude: ^core/data/schemas/
+        exclude: ^(core/data/schemas|design)/
       - id: check-yaml
         # Maestro flows are two YAML documents (config header, then commands).
         args: [--allow-multiple-documents]
@@ -21,8 +22,9 @@ repos:
       - id: check-merge-conflict
       - id: check-added-large-files
         args: [--maxkb=500]
-        # The functions lockfile includes firebase-tools (emulator) and is generated.
-        exclude: ^firebase/functions/package-lock\.json$
+        # The functions lockfile includes firebase-tools (emulator) and is generated; design/ has the bundled
+        # prototype and the 2x v5 reference renders (design/screens-v5/).
+        exclude: ^(firebase/functions/package-lock\.json|design/.*)$
       - id: mixed-line-ending
         args: [--fix=lf]
 
