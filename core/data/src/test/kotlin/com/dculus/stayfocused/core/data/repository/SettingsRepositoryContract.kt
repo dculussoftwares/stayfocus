@@ -13,6 +13,7 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.time.Instant
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 
 /** Runs identically against the DataStore implementation and the in-memory fake. */
 abstract class SettingsRepositoryContract {
@@ -91,6 +92,39 @@ abstract class SettingsRepositoryContract {
                 assertEquals(null, awaitItem().accessibilityConsentAt)
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `goal defaults to 180 minutes, also when other settings already exist`() =
+        runTest {
+            repo.setOnboardingComplete(true)
+            repo.setAiEnabled(true)
+            repo.screenTimeGoalMins.test {
+                assertEquals(180, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `goal round trips without touching other settings`() =
+        runTest {
+            repo.setOnboardingComplete(true)
+            repo.screenTimeGoalMins.test {
+                assertEquals(180, awaitItem())
+                repo.setScreenTimeGoalMins(120)
+                assertEquals(120, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+            repo.settings.test {
+                assertEquals(AppSettings(onboardingComplete = true), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `goal must be positive`() =
+        runTest {
+            assertFailsWith<IllegalArgumentException> { repo.setScreenTimeGoalMins(0) }
         }
 
     @Test

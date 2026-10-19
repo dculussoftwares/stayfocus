@@ -64,6 +64,9 @@ interface BreakRepository {
 interface SettingsRepository {
     val settings: Flow<AppSettings>
 
+    /** Daily screen-time goal in minutes; 180 (3 h) until set. */
+    val screenTimeGoalMins: Flow<Int>
+
     suspend fun setOnboardingComplete(complete: Boolean)
 
     suspend fun setAccountSkipped(skipped: Boolean)
@@ -73,6 +76,9 @@ interface SettingsRepository {
     suspend fun setAccessibilityConsentAt(at: Instant?)
 
     suspend fun setAiEnabled(enabled: Boolean)
+
+    /** [mins] must be positive. */
+    suspend fun setScreenTimeGoalMins(mins: Int)
 }
 
 interface LinkedDevicesRepository {
