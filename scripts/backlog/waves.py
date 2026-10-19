@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Compute the execution order of the backlog and write it into docs/agents/PHASE1_EXECUTION.md.
 
-A story's wave = 1 + the highest wave among its dependencies. Stories in the same wave don't depend on each
-other, so they can run in parallel; a wave starts only when every story in the earlier waves is closed.
+A story's wave = 1 + the highest wave among its dependencies, but never below its epic's `wave_floor` (optional epic
+front matter; the v5 redesign epics start at wave 17, after Phase 1). Stories in the same wave don't depend on each
+other, so they can run in parallel; a wave starts only when every story in the earlier waves is closed, except
+`needs-human` stories, which an agent has already prepared and a person finishes (they don't hold NEXT_WAVE).
 
 Usage:
   python3 scripts/backlog/waves.py            # rewrite the block between the waves markers
@@ -21,14 +23,30 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 STORIES = ROOT / "backlog" / "phase1" / "stories"
+EPICS = ROOT / "backlog" / "phase1" / "epics"
 DOC = ROOT / "docs" / "agents" / "PHASE1_EXECUTION.md"
 START, END = "<!-- waves:start -->", "<!-- waves:end -->"
 
 
+def front_matter(f: Path) -> str:
+    return re.match(r"(?s)^---\n(.*?)\n---\n", f.read_text())[1]
+
+
+def wave_floors() -> dict[str, int]:
+    """Epic id -> lowest wave its stories may run in (1 when the epic sets no `wave_floor`)."""
+    floors = {}
+    for f in sorted(EPICS.glob("*.md")):
+        fm = front_matter(f)
+        floor = re.search(r"^wave_floor: (\d+)$", fm, re.M)
+        floors[re.search(r"^id: (.*)$", fm, re.M)[1]] = int(floor[1]) if floor else 1
+    return floors
+
+
 def load() -> dict[str, dict]:
+    floors = wave_floors()
     stories = {}
     for f in sorted(STORIES.glob("*.md")):
-        fm = re.match(r"(?s)^---\n(.*?)\n---\n", f.read_text())[1]
+        fm = front_matter(f)
 
         def field(k: str) -> str:
             return re.search(rf"^{k}: (.*)$", fm, re.M)[1]
@@ -38,6 +56,7 @@ def load() -> dict[str, dict]:
             "size": field("size"),
             "deps": json.loads(field("depends")),
             "labels": json.loads(field("labels")),
+            "floor": floors.get(field("epic"), 1),
         }
     return stories
 
@@ -54,7 +73,7 @@ def waves(stories: dict[str, dict]) -> dict[int, list[str]]:
         if n in path:
             raise SystemExit(f"dependency cycle: {' -> '.join(path + (n,))}")
         if n not in level:
-            level[n] = 1 + max((visit(d, path + (n,)) for d in stories[n]["deps"]), default=0)
+            level[n] = max(stories[n]["floor"], 1 + max((visit(d, path + (n,)) for d in stories[n]["deps"]), default=0))
         return level[n]
 
     for n in stories:
@@ -124,11 +143,17 @@ def print_status() -> None:
     stories = load()
     states = issue_states()
     next_wave = None
+    parked = []
     for lv, ids in waves(stories).items():
         open_ids = [i for i in ids if states.get(i, {}).get("state") != "CLOSED"]
-        if open_ids and next_wave is None:
+        human = [i for i in open_ids if "needs-human" in stories[i]["labels"]]
+        parked += human
+        if len(open_ids) > len(human) and next_wave is None:
             next_wave = lv
-        print(f"wave {lv:>2}: {len(ids) - len(open_ids)}/{len(ids)} closed" + (f"  open: {', '.join(open_ids)}" if open_ids else ""))
+        shown = ", ".join(f"{i}{' (human)' if i in human else ''}" for i in open_ids)
+        print(f"wave {lv:>2}: {len(ids) - len(open_ids)}/{len(ids)} closed" + (f"  open: {shown}" if open_ids else ""))
+    if parked:
+        print(f"WAITING_ON_HUMAN={','.join(parked)}")
     print(f"NEXT_WAVE={next_wave if next_wave is not None else 'done'}")
 
 

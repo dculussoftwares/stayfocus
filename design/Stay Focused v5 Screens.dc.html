@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@600&display=swap">
+<style>body{margin:0;background:#C4C4C2;font-family:'Urbanist',sans-serif}a{color:#FE5E0E}a:hover{color:#000B1A}</style>
+</helmet>
+<header style="padding:44px 44px 8px;display:flex;flex-direction:column;gap:6px"><span style="font:600 13px/1 Urbanist,sans-serif;color:#3A4250;letter-spacing:.04em">STAY FOCUSED · V5</span><span style="font:300 40px/1.1 Urbanist,sans-serif;color:#000B1A">All screens</span><span style="font:400 15px/1.5 Urbanist,sans-serif;color:#3A4250">24 screens in flow order. Each one is live, so you can tap inside it.</span></header>
+<section id="g1" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">1</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Onboarding</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s01" data-screen-label="01 Welcome" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">01</span>Welcome</div>
+<dc-import name="Stay Focused v5" start="welcome" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s02" data-screen-label="02 Sign up" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">02</span>Sign up</div>
+<dc-import name="Stay Focused v5" start="signin" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s03" data-screen-label="03 Permissions" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">03</span>Permissions</div>
+<dc-import name="Stay Focused v5" start="perms" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s04" data-screen-label="04 Accessibility disclosure" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">04</span>Accessibility disclosure</div>
+<dc-import name="Stay Focused v5" start="a11y" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+<section id="g2" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">2</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Home</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s05" data-screen-label="05 Home" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">05</span>Home</div>
+<dc-import name="Stay Focused v5" start="home" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+
+</div>
+<div id="s06" data-screen-label="06 Take a break sheet" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">06</span>Take a break sheet</div>
+<dc-import name="Stay Focused v5" start="break" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s07" data-screen-label="07 Break running" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">07</span>Break running</div>
+<dc-import name="Stay Focused v5" start="breakOn" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+<section id="g3" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">3</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Blocks</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s08" data-screen-label="08 Blocks · my phone" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">08</span>Blocks · my phone</div>
+<dc-import name="Stay Focused v5" start="blocks" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s09" data-screen-label="09 Blocks · child phone" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">09</span>Blocks · child phone</div>
+<dc-import name="Stay Focused v5" start="blocksKid" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s10" data-screen-label="10 New block 1 · type" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">10</span>New block 1 · type</div>
+<dc-import name="Stay Focused v5" start="new0" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s11" data-screen-label="11 New block 2 · apps" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">11</span>New block 2 · apps</div>
+<dc-import name="Stay Focused v5" start="new1" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s12" data-screen-label="12 New block 3 · use, then lock" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">12</span>New block 3 · use, then lock</div>
+<dc-import name="Stay Focused v5" start="new2" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s13" data-screen-label="13 New block 3 · schedule" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">13</span>New block 3 · schedule</div>
+<dc-import name="Stay Focused v5" start="newSched" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s14" data-screen-label="14 Describe with AI" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">14</span>Describe with AI</div>
+<dc-import name="Stay Focused v5" start="ai" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s15" data-screen-label="15 AI draft review" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">15</span>AI draft review</div>
+<dc-import name="Stay Focused v5" start="aiDraft" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s16" data-screen-label="16 Blocked app screen" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">16</span>Blocked app screen</div>
+<dc-import name="Stay Focused v5" start="blocked" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+<section id="g4" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">4</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Family & linking</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s17" data-screen-label="17 Family" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">17</span>Family</div>
+<dc-import name="Stay Focused v5" start="family" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s18" data-screen-label="18 Child's phone" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">18</span>Child's phone</div>
+<dc-import name="Stay Focused v5" start="child" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s19" data-screen-label="19 Scan code" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">19</span>Scan code</div>
+<dc-import name="Stay Focused v5" start="scan" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s20" data-screen-label="20 Codes match" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">20</span>Codes match</div>
+<dc-import name="Stay Focused v5" start="confirm" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+<section id="g5" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">5</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Insights</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s21" data-screen-label="21 Insights · day" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">21</span>Insights · day</div>
+<dc-import name="Stay Focused v5" start="insights" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s22" data-screen-label="22 Insights · week" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">22</span>Insights · week</div>
+<dc-import name="Stay Focused v5" start="insightsWeek" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+<section id="g6" style="padding:40px 44px 36px;border-bottom:1px solid rgba(0,11,26,.1)">
+<div style="display:flex;align-items:baseline;gap:12px;margin:0 0 22px"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 8px;background:#000B1A;color:#FFFFFF;border-radius:5px">6</span><span style="font:500 22px/1.2 Urbanist,sans-serif;color:#000B1A">Kids app (child phone)</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:32px;align-items:flex-start">
+<div id="s23" data-screen-label="23 Show code" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">23</span>Show code</div>
+<dc-import name="Stay Focused v5" start="kidqr" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+<div id="s24" data-screen-label="24 Allow parent" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;font:500 14px/1.2 Urbanist,sans-serif;color:#3A4250"><span style="font:600 11px/1 'JetBrains Mono',monospace;padding:4px 7px;background:rgba(0,11,26,.08);color:#000B1A;border-radius:5px">24</span>Allow parent</div>
+<dc-import name="Stay Focused v5" start="kidok" show-panel="{{ false }}" bare="{{ true }}" hint-size="410px,864px"></dc-import>
+</div>
+</div></section>
+</x-dc>
+<script type="text/x-dc" data-dc-script></script>
+</body>
+</html>

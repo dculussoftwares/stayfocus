@@ -34,6 +34,10 @@ locals {
     epic_id => sort([for id, s in local.stories : id if s.meta.epic == epic_id])
   }
 
+  # Optional epic front matter: `phase` (milestone text), `handoff` (design pointer in story bodies) and
+  # `wave_floor` (read only by scripts/backlog/waves.py). Defaults keep the Phase 1 issues unchanged.
+  default_handoff = "the design handoff in `design_handoff_stay_focused_phase1/`"
+
   managed_note = "_This issue is managed by Terraform. Edit `%s` in a PR instead of changing this description; manual edits are overwritten on the next apply. Track progress on the kanban board and in comments._"
 
   label_defs = {
@@ -45,6 +49,7 @@ locals {
     "infra"       = { color = "0e8a16", description = "Terraform / GitHub Actions; no manual console changes" }
     "needs-human" = { color = "b60205", description = "Needs a person (Play Console, testers, accounts)" }
     "agent-ready" = { color = "c6f432", description = "Fully specified; any coding agent can pick it up" }
+    "redesign"    = { color = "fe5e0e", description = "v5 UI redesign (epics M11-M13, docs/design/V5_SPEC.md)" }
   }
 }
 
@@ -63,7 +68,7 @@ resource "github_repository_milestone" "this" {
   owner       = var.owner
   repository  = var.repository
   title       = "${each.key} · ${each.value.meta.title}"
-  description = "Phase 1, ${each.key}: ${each.value.meta.title}. See docs/IMPLEMENTATION_PLAN.md."
+  description = "${try(each.value.meta.phase, "Phase 1")}, ${each.key}: ${each.value.meta.title}. See ${try(each.value.meta.plan, "docs/IMPLEMENTATION_PLAN.md")}."
   state       = "open"
 }
 
@@ -104,7 +109,7 @@ resource "github_issue" "story" {
     ? "> **Depends on:** nothing. Ready to start."
     : "> **Depends on:** ${join(", ", [for d in each.value.meta.depends : "**${d}** ${local.stories[d].meta.title}"])} (linked as \"blocked by\")",
     "",
-    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and the design handoff in `design_handoff_stay_focused_phase1/`. Workflow: `.claude/agents/story-worker.md` (run it with `/story <ID>` or `/wave <N>` in Claude Code). Move this card to *In progress* when you start and *In review* when your PR is open. The PR says `Closes #<this issue>` and merges only after CodeRabbit approves and CI is green.",
+    "**Before you start:** read `AGENTS.md`, `docs/IMPLEMENTATION_PLAN.md` (workflow §4, Definition of done) and ${try(local.epics[each.value.meta.epic].meta.handoff, local.default_handoff)}. Workflow: `.claude/agents/story-worker.md` (run it with `/story <ID>` or `/wave <N>` in Claude Code). Move this card to *In progress* when you start and *In review* when your PR is open. The PR says `Closes #<this issue>` and merges only after CodeRabbit approves and CI is green.",
     "",
     trimspace(each.value.body),
     "",

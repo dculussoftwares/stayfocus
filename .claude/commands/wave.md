@@ -1,9 +1,9 @@
 ---
-description: Run one wave of the Phase 1 backlog — parallel story-worker subagents, each in its own worktree
+description: Run one wave of the backlog (Phase 1 or the v5 redesign) — parallel story-worker subagents, each in its own worktree
 argument-hint: <wave-number> [max-parallel, default 2] [reviewer: coderabbit (default) | qodo]
 ---
 
-Run **wave $1** of the Stay Focused Phase 1 backlog. Max parallel workers: **$2** (if empty, use 2).
+Run **wave $1** of the Stay Focused backlog (Phase 1: waves 1–16; v5 redesign: waves 17–23). Max parallel workers: **$2** (if empty, use 2).
 Reviewer: **$3** (if empty, `coderabbit`; `qodo` = Qodo-only mode, no CodeRabbit).
 
 You are the coordinator. Keep this session small: don't implement stories yourself, don't read source files, and
@@ -13,6 +13,7 @@ don't paste large logs. Workers do the work in their own contexts and return a s
    - `git fetch origin && git switch main && git pull --ff-only origin main`
    - `python3 scripts/backlog/waves.py --status` → if wave $1 is later than `NEXT_WAVE`, stop: the earlier wave must
      finish first (say which stories are still open).
+     Stories listed in `WAITING_ON_HUMAN` are already prepared and don't count; mention them in the summary.
    - `python3 scripts/backlog/waves.py --wave $1` → one line per story: id, issue, state, size, needs-human, deps, title.
      Skip stories already CLOSED. If none are left, report "wave $1 already done" and stop.
 
@@ -34,7 +35,7 @@ don't paste large logs. Workers do the work in their own contexts and return a s
    - `python3 scripts/backlog/waves.py --status` (the wave's stories should be closed, except needs-human ones).
    - Output a compact table: story | issue | PR | result | Reviewer outcome (CodeRabbit / Qodo gate) | follow-ups / manual checks.
    - List anything that needs me (blockers, needs-human actions, decisions).
-   - Finish with: "Next: `/clear`, then `/wave <next>`" (or `/next-wave`), or "Phase 1 complete" if `NEXT_WAVE=done`.
+   - Finish with: "Next: `/clear`, then `/wave <next>`" (or `/next-wave`), or "Backlog complete" if `NEXT_WAVE=done`.
 
 Stop and ask me instead of continuing when a worker reports a decision only a human can make, or when two workers in a
 row are BLOCKED for the same reason (likely a shared problem such as missing credentials or a broken `main`).

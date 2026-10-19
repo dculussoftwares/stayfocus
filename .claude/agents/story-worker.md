@@ -30,6 +30,10 @@ gh issue comment N --repo dculussoftwares/stayfocus --body "🤖 Started <ID>."
 `AGENTS.md`; `docs/IMPLEMENTATION_PLAN.md` §4 (workflow, Definition of done), §5 (conventions), §8 (backend policy);
 `docs/INFRASTRUCTURE.md` for `infra` stories; `.coderabbit.yaml` and `.pr_agent.toml` (what the reviewers check);
 `design_handoff_stay_focused_phase1/README.md` and the prototype's `<script>` block for exact copy, tokens and maths.
+**Redesign stories (M11–M13, label `redesign`):** read `docs/design/V5_SPEC.md` first (§0 precedence, §2 strategy and
+extras rule); the source of truth is `design/Stay Focused v5.dc.html` and the references are `design/screens-v5/*.png`.
+`design/README.md`, `design/screenshots/` and the stack notes in `design/CLAUDE_CODE_PROMPT.md` are superseded.
+Put your Roborazzi render next to the reference PNG in the PR body.
 Look up current library/API details (Context7 / official docs) instead of relying on memory.
 
 ## 4. Branch
