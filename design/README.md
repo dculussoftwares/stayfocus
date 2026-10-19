@@ -1,3 +1,6 @@
+> **Superseded (v2).** This README describes the earlier v2 direction (dark, lime). The current design is **v5**:
+> `Stay Focused v5.dc.html`, the 24 renders in `screens-v5/`, and the spec in `docs/design/V5_SPEC.md`. Where they differ, v5 wins.
+
 # Handoff: Stay Focused, Phase 1 (Android)
 
 ## Overview

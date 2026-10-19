@@ -167,6 +167,7 @@ JetBrains Mono appears only on the design board, not in the app.
 | Link art dash (`sfDash`) | dash offset −16 per 1.1 s; lime dot blink 1 → .25, 1.6 s |
 | Scan line (`sfScan`) | 2 dp line, pink glow, top 14% ↔ 84%, 2.4 s ease-in-out |
 | Screen enter | keep the shipped fade + 8 dp rise |
+
 All infinite animations stop under "Remove animations" (`ANIMATOR_DURATION_SCALE == 0`) and in screenshot tests.
 
 ## 4. Components (M11)
@@ -335,7 +336,7 @@ bar width relative to the top app.
 |---|---|---|
 | Home "{n} min under your 3h goal" | No screen-time goal | M12-01: DataStore `screenTimeGoalMins`, default 180, read-only in v5 |
 | Home "Most used" tile, Blocked count | Check `HomeModel`; add if missing | M12-07 |
-| Family "Android {version}", child hourly dots/ticks | Status report has model, battery, app, today total only | M12-02: `osVersion` + today's 24 hourly buckets in the status doc (rules + tests) |
+| Family "Android {version}", child hourly dots/ticks | Status report has model, battery, app, today total only | M12-02: `osVersion` in the status doc; today's 24 hourly buckets in the daily usage doc, next to `totalMins` (rules + tests) |
 | "Lock all apps" tile | No command | M12-03: `LOCK_ALL` / `UNLOCK_ALL` commands, child enforcement (calls, SMS, launcher, settings and Stay Focused stay open), parent state |
 | Insights Week | 7-day cache exists (M3-03) | M12-17 |
 
@@ -348,7 +349,9 @@ bar width relative to the top app.
 | Insights | Day stepper (past days), Opens metric/tab | M13-04 |
 | Devices | Link sign-in gate, camera permission states, link waiting/declined/expired/network errors, offline / long-offline alerts, per-app lock toggles, focus 50 / 90 min | M13-05 |
 | Kids | Kids home, kids permissions + disclosure, blocked overlay "Ask for more time" (15/30/60 → "Request sent"), unlinked state, blocked reasons for non-cycle types | M13-06 |
+| Home | Shipped Home items v5 doesn't show (e.g. average marker, launches/unlocks stats, per-block toggles) | M13-08 |
 | Cleanup | Remove v2 tokens/components/fonts, move `core.ui.v5` → final package, light root theme, docs | M13-07 |
+
 M13 stories have no v5 mock-ups: use v5 components and patterns, keep shipped copy, and put screenshots in the PR for
 design sign-off.
 

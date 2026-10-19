@@ -6,7 +6,7 @@ Guidance for Claude Code in this repository. The shared rules for every coding a
 
 ## Repository status
 
-Phase 1 (M1–M10, waves 1–16) is built; only `needs-human` stories remain. The **v5 UI redesign** (M11–M13, waves 17–23) is next. The repo holds:
+Phase 1 (M1–M10, waves 1–16) is built; only `needs-human` stories remain. The **v5 UI redesign** (M11–M13, waves 17–24) is next. The repo holds:
 
 | Path | What |
 |---|---|

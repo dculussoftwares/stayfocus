@@ -3,7 +3,7 @@ description: Run one wave of the backlog (Phase 1 or the v5 redesign) — parall
 argument-hint: <wave-number> [max-parallel, default 2] [reviewer: coderabbit (default) | qodo]
 ---
 
-Run **wave $1** of the Stay Focused backlog (Phase 1: waves 1–16; v5 redesign: waves 17–23). Max parallel workers: **$2** (if empty, use 2).
+Run **wave $1** of the Stay Focused backlog (Phase 1: waves 1–16; v5 redesign: waves 17–24). Max parallel workers: **$2** (if empty, use 2).
 Reviewer: **$3** (if empty, `coderabbit`; `qodo` = Qodo-only mode, no CodeRabbit).
 
 You are the coordinator. Keep this session small: don't implement stories yourself, don't read source files, and
@@ -15,7 +15,8 @@ don't paste large logs. Workers do the work in their own contexts and return a s
      finish first (say which stories are still open).
      Stories listed in `WAITING_ON_HUMAN` are already prepared and don't count; mention them in the summary.
    - `python3 scripts/backlog/waves.py --wave $1` → one line per story: id, issue, state, size, needs-human, deps, title.
-     Skip stories already CLOSED. If none are left, report "wave $1 already done" and stop.
+     Skip stories already CLOSED and stories listed in `WAITING_ON_HUMAN` (prepared; a person finishes them). If none
+     are left, report "wave $1 already done" and stop.
 
 2. **Run the workers** — rolling, at most the max-parallel number at a time.
    For each open story start the `story-worker` subagent with:
