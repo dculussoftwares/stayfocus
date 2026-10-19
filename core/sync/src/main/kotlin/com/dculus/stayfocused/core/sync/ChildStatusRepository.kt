@@ -18,6 +18,8 @@ data class ChildStatus(
     /** Label (not package name) of the app in front, or null. */
     val currentApp: String?,
     val online: Boolean,
+    /** Android release (`Build.VERSION.RELEASE`), or null when unknown. */
+    val osVersion: String? = null,
 )
 
 data class UsageAppEntry(
@@ -33,6 +35,8 @@ data class UsageSummary(
     val date: String,
     val totalMins: Int,
     val apps: List<UsageAppEntry>,
+    /** Minutes of use per local hour of the day (24 entries, 0..60); null when not known. */
+    val hourly: List<Int>? = null,
 )
 
 /** The Kids side of monitoring: the writes the parent's remote device screen reads. All of them throw on failure. */
@@ -57,7 +61,10 @@ interface ChildStatusRepository {
 
 internal object StatusLimits {
     const val MAX_LABEL = 100
+    const val MAX_OS_VERSION = 50
     const val MAX_USAGE_APPS = 50
+    const val HOURS_PER_DAY = 24
+    const val MAX_HOUR_MINS = 60
     const val BATCH_SIZE = 400
 }
 
@@ -75,35 +82,17 @@ internal class FirebaseChildStatusRepository(
         target: DeviceTarget,
         status: ChildStatus,
     ) {
-        device(target)
-            .update(
-                mapOf(
-                    "battery" to status.battery?.coerceIn(0, MAX_PERCENT),
-                    "charging" to status.charging,
-                    "currentApp" to status.currentApp?.take(StatusLimits.MAX_LABEL)?.ifBlank { null },
-                    "online" to status.online,
-                    "lastSeen" to FieldValue.serverTimestamp(),
-                ),
-            ).await()
+        device(target).update(statusFields(status)).await()
     }
 
     override suspend fun writeUsage(
         target: DeviceTarget,
         summary: UsageSummary,
     ) {
-        val apps =
-            summary.apps.take(StatusLimits.MAX_USAGE_APPS).map {
-                mapOf(
-                    "pkg" to it.pkg,
-                    "label" to it.label.take(StatusLimits.MAX_LABEL),
-                    "mins" to it.mins,
-                    "opens" to it.opens,
-                )
-            }
         device(target)
             .collection("usage")
             .document(summary.date)
-            .set(mapOf("totalMins" to summary.totalMins.coerceIn(0, MAX_DAY_MINS), "apps" to apps))
+            .set(usageFields(summary))
             .await()
     }
 
@@ -135,6 +124,42 @@ internal class FirebaseChildStatusRepository(
         const val MAX_DAY_MINS = 1440
     }
 }
+
+/** The device-doc update for [status]; `osVersion` is only sent once known, so an older value is never blanked. */
+internal fun statusFields(status: ChildStatus): Map<String, Any?> =
+    buildMap {
+        put("battery", status.battery?.coerceIn(0, MAX_PERCENT))
+        put("charging", status.charging)
+        put("currentApp", status.currentApp?.take(StatusLimits.MAX_LABEL)?.ifBlank { null })
+        put("online", status.online)
+        status.osVersion?.trim()?.take(StatusLimits.MAX_OS_VERSION)?.takeIf { it.isNotEmpty() }?.let {
+            put("osVersion", it)
+        }
+        put("lastSeen", FieldValue.serverTimestamp())
+    }
+
+/** The `usage/{date}` doc for [summary]; `hourly` is left out unless it is exactly 24 buckets. */
+internal fun usageFields(summary: UsageSummary): Map<String, Any?> =
+    buildMap {
+        put("totalMins", summary.totalMins.coerceIn(0, MAX_DAY_MINS))
+        put(
+            "apps",
+            summary.apps.take(StatusLimits.MAX_USAGE_APPS).map {
+                mapOf(
+                    "pkg" to it.pkg,
+                    "label" to it.label.take(StatusLimits.MAX_LABEL),
+                    "mins" to it.mins,
+                    "opens" to it.opens,
+                )
+            },
+        )
+        summary.hourly?.takeIf { it.size == StatusLimits.HOURS_PER_DAY }?.let { hourly ->
+            put("hourly", hourly.map { it.coerceIn(0, StatusLimits.MAX_HOUR_MINS) })
+        }
+    }
+
+private const val MAX_PERCENT = 100
+private const val MAX_DAY_MINS = 1440
 
 internal sealed interface AppSyncOp {
     data class Put(

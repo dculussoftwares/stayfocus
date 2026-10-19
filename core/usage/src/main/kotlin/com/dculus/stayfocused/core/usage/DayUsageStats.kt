@@ -6,6 +6,7 @@ import java.time.LocalDate
 const val HOURS_PER_DAY = 24
 
 private const val MILLIS_PER_MINUTE = 60_000L
+private const val MINS_PER_HOUR = 60
 
 /** Usage of one app on one day. */
 data class AppUsageStat(
@@ -31,6 +32,9 @@ data class DayUsageStats(
     val hourlyUnlocks: List<Int>,
 ) {
     val totalMins: Int get() = millisToMins(totalMillis)
+
+    /** [hourlyMillis] in whole minutes, each capped at 60 (an hour has no more). */
+    val hourlyMins: List<Int> get() = hourlyMillis.map { millisToMins(it).coerceIn(0, MINS_PER_HOUR) }
 
     fun toDayUsage(): DayUsage = DayUsage(date = date, totalMins = totalMins)
 

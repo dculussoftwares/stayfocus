@@ -44,9 +44,12 @@ class ChildReporterTest {
     private val usage =
         object : UsageStatsDataSource {
             var apps = listOf(AppUsageStat("a.b", 5 * 60_000L, opens = 3, firstAfterUnlock = 1))
+            var hourlyMillis = List(24) { 0L }
 
             override suspend fun dayUsage(date: LocalDate) =
-                DayUsageStats.empty(date).copy(totalMillis = apps.sumOf { it.millis }, apps = apps)
+                DayUsageStats
+                    .empty(date)
+                    .copy(totalMillis = apps.sumOf { it.millis }, apps = apps, hourlyMillis = hourlyMillis)
         }
 
     private fun reporter() =
@@ -177,6 +180,17 @@ class ChildReporterTest {
             usage.apps = listOf(AppUsageStat("a.b", 9 * 60_000L, opens = 4, firstAfterUnlock = 1))
             advance(15 * 60_000L)
             assertEquals(listOf("2026-03-03", "2026-03-04", "2026-03-04"), repo.usages.map { it.date })
+            job.cancel()
+        }
+
+    @Test
+    fun usageCarriesTodaysHourlyMinutes() =
+        runTest {
+            val hourlyMillis = List(24) { hour -> if (hour == 9) 12 * 60_000L else 0L }
+            usage.hourlyMillis = hourlyMillis
+            val job = launch { reporter().reportUsage(target) }
+            runCurrent()
+            assertEquals(List(24) { hour -> if (hour == 9) 12 else 0 }, repo.usages.last().hourly)
             job.cancel()
         }
 

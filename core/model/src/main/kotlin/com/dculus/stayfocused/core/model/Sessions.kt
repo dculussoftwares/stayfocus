@@ -89,6 +89,10 @@ data class LinkedDevice(
     val focusEndsAt: Instant?,
     /** Minutes of screen time the phone reported for today; null until it has reported any. */
     val todayMins: Int? = null,
+    /** Android release of the phone (`Build.VERSION.RELEASE`); null until a Kids build that reports it has run. */
+    val osVersion: String? = null,
+    /** Minutes of use per local hour of today (24 entries of 0..60); null until the phone reports them. */
+    val hourlyMins: List<Int>? = null,
     /**
      * Not heard from for at least 24 h (derived from [lastSeen]; no function watches for it). Possibly switched off,
      * out of battery or uninstalled: the parent sees "Offline for a while".

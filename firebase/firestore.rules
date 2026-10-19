@@ -65,6 +65,14 @@ service cloud.firestore {
       return !(key in data) || data[key] == null || data[key] is timestamp;
     }
 
+    // 24 hourly buckets, each a whole number of minutes in 0..60 (hasOnly checks every element against the list).
+    function hourlyIsValid(h) {
+      return h is list && h.size() == 24
+        && h.hasOnly([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+                      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]);
+    }
+
     function blockIsValid(b) {
       return b.keys().hasOnly(['id', 'type', 'name', 'apps', 'limitMins', 'period', 'useMins', 'restMins', 'range',
                                'durationMins', 'startedAt', 'days', 'enabled', 'createdAt', 'source'])
@@ -185,7 +193,7 @@ service cloud.firestore {
         allow read: if isParent(uid) || isChildOf(resource.data);
         // The child reports its own status (and mirrors its focus end time); nothing else on the device doc is client-writable.
         allow update: if isChildOf(resource.data)
-          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt'])
+          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt', 'osVersion'])
           // The status fields are always present (approveLink creates them); the child may not delete them.
           && request.resource.data.keys().hasAll(['battery', 'charging', 'currentApp', 'online', 'lastSeen'])
           && (!('battery' in request.resource.data) || request.resource.data.battery == null
@@ -194,6 +202,8 @@ service cloud.firestore {
           && (!('online' in request.resource.data) || request.resource.data.online is bool)
           && (!('currentApp' in request.resource.data) || request.resource.data.currentApp == null
               || isStr(request.resource.data.currentApp, 255))
+          && (!('osVersion' in request.resource.data) || request.resource.data.osVersion == null
+              || isStr(request.resource.data.osVersion, 50))
           && isOptTimestamp(request.resource.data, 'lastSeen')
           && lastSeenIsNowIfChanged()
           && focusEndsAtIsValid();
@@ -264,11 +274,13 @@ service cloud.firestore {
           allow read: if isParent(uid) || isChildOfDevice(uid, deviceId);
           allow create, update: if isChildOfDevice(uid, deviceId)
             && date.matches('^[0-9]{4}-((0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])|(0[469]|11)-(0[1-9]|[12][0-9]|30)|02-(0[1-9]|1[0-9]|2[0-9]))$')
-            && request.resource.data.keys().hasOnly(['totalMins', 'apps'])
+            && request.resource.data.keys().hasOnly(['totalMins', 'apps', 'hourly'])
             && request.resource.data.keys().hasAll(['totalMins', 'apps'])
             && isIntIn(request.resource.data.totalMins, 0, 1440)
             && request.resource.data.apps is list
-            && request.resource.data.apps.size() <= 300;
+            && request.resource.data.apps.size() <= 300
+            // Optional (older Kids builds omit it): minutes per local hour, 24 whole numbers of 0..60.
+            && (!('hourly' in request.resource.data) || hourlyIsValid(request.resource.data.hourly));
         }
 
         // The child's launchable apps (document id = package name).

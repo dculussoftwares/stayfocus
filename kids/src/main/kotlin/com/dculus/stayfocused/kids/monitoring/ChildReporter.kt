@@ -86,6 +86,7 @@ internal fun DayUsageStats.toSummary(labelOf: (String) -> String): UsageSummary 
         date = date.toString(),
         totalMins = totalMins,
         apps = apps.map { UsageAppEntry(it.pkg, labelOf(it.pkg), it.mins, it.opens) },
+        hourly = hourlyMins,
     )
 
 /**
