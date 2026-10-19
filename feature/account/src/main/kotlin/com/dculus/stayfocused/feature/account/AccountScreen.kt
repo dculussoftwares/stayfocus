@@ -124,6 +124,7 @@ internal fun AccountRoute(
     var licencesVisible by rememberSaveable { mutableStateOf(false) }
     val version = remember(context) { context.versionName() }
     val scope = rememberCoroutineScope()
+    val logEmpty = stringResource(R.string.account_share_log_empty)
     AccountScreen(
         state = state,
         version = version,
@@ -156,7 +157,7 @@ internal fun AccountRoute(
                 {
                     scope.launch {
                         val log = withContext(Dispatchers.IO) { BlockingLog.tail() }
-                        context.shareBlockingLog(log ?: context.getString(R.string.account_share_log_empty))
+                        context.shareBlockingLog(log ?: logEmpty)
                     }
                 }
             } else {
