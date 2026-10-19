@@ -3,6 +3,7 @@ package com.dculus.stayfocused
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.sync.AppCheckInstaller
 import com.dculus.stayfocused.core.sync.AuthRepository
 import com.dculus.stayfocused.core.sync.PushTokenSync
@@ -40,6 +41,7 @@ class StayFocusedApp :
 
     override fun onCreate() {
         super.onCreate()
+        BlockingLog.init(this) // TEMPORARY: debug-only diagnostics; in release it deletes a leftover log
         appCheckInstaller.install()
         usageCacheScheduler.schedule()
         CoroutineScope(SupervisorJob() + Dispatchers.Default).launch { pushTokenSync.run() }

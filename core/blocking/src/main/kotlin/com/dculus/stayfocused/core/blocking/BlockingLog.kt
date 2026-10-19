@@ -15,7 +15,8 @@ import java.util.concurrent.Executors
  * falling back to the app's private files dir.
  *
  * It records which apps were opened, so it only runs in debuggable builds ([isEnabled]); a release build never
- * writes it and deletes a leftover file. Does nothing until [init] is called, so JVM tests are unaffected. All file
+ * writes it and deletes a leftover file. [init] runs at app start (and again from the accessibility service);
+ * nothing is written before it, so JVM tests are unaffected. All file
  * access happens on a background thread (or the caller's, for [tail]). Remove together with the share button once
  * the bug is understood.
  */
@@ -37,20 +38,20 @@ object BlockingLog {
             writer.execute { runCatching { resolve(app).delete() } } // a leftover from an earlier debug build
             return
         }
-        log("Log", "---- service connected ----")
+        log("Log", "---- log started ----")
     }
 
-    /** The newest [lines] lines (small enough to travel in a share intent), or a note when there is no log. */
-    fun tail(lines: Int = 600): String {
-        val app = appContext ?: return "No log: turn the accessibility service on first (debug builds only)."
+    /** The newest [lines] lines (small enough to travel in a share intent); null when there is nothing to share. */
+    fun tail(lines: Int = 600): String? {
+        val app = appContext ?: return null
         return try {
             resolve(app)
                 .readLines()
                 .takeLast(lines)
                 .joinToString("\n")
-                .ifEmpty { "Log is empty." }
-        } catch (e: java.io.IOException) {
-            "Could not read the log: ${e.message}"
+                .ifEmpty { null }
+        } catch (_: java.io.IOException) {
+            null
         }
     }
 

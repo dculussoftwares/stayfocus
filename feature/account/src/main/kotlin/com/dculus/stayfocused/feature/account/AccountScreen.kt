@@ -153,7 +153,12 @@ internal fun AccountRoute(
         // TEMPORARY, debug builds only: remove with BlockingLog
         onShareLog =
             if (BlockingLog.isEnabled(context)) {
-                { scope.launch { context.shareBlockingLog(withContext(Dispatchers.IO) { BlockingLog.tail() }) } }
+                {
+                    scope.launch {
+                        val log = withContext(Dispatchers.IO) { BlockingLog.tail() }
+                        context.shareBlockingLog(log ?: context.getString(R.string.account_share_log_empty))
+                    }
+                }
             } else {
                 null
             },

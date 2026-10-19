@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.kids
 
 import android.app.Application
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.sync.AppCheckInstaller
 import com.dculus.stayfocused.kids.monitoring.MonitoringLauncher
 import com.dculus.stayfocused.kids.monitoring.ParentRulesCleaner
@@ -20,6 +21,7 @@ class StayFocusedKidsApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        BlockingLog.init(this) // TEMPORARY: debug-only diagnostics; in release it deletes a leftover log
         appCheckInstaller.install()
         // No-op until a parent is linked; afterwards keeps the "Managed by" notification up.
         monitoringLauncher.sync()
