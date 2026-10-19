@@ -723,6 +723,28 @@ class BlockingEngineTest {
             r.engine.stop()
         }
 
+    @Test fun blockScreenThatDisappearedIsShownAgainWithinASecondWithoutANewRecord() =
+        runTest {
+            val r = rig(this)
+            r.locked.lock(APP, BlockTarget.ThisPhone)
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_500)
+            assertEquals(1, r.presenter.shown.size)
+
+            // Still "in front" for the tracker, but the block screen was left (e.g. through recents).
+            r.presenter.showing = false
+            r.pass(1_000)
+            assertEquals(2, r.presenter.shown.size)
+            assertEquals(1, r.events.size, "the same block is not recorded twice")
+
+            // While the screen is up nothing is shown again.
+            r.presenter.showing = true
+            r.pass(5_000)
+            assertEquals(2, r.presenter.shown.size)
+            r.engine.stop()
+        }
+
     @Test fun cycleCreatedMidSessionDoesNotChargeEarlierTime() =
         runTest {
             val r = rig(this)

@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.core.blocking
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
@@ -11,48 +12,58 @@ import java.util.concurrent.Executors
 /**
  * TEMPORARY diagnostics for "the blocked app sometimes opens anyway". Appends one line per event to
  * `<external files dir>/logs/blocking.log` (on a phone: `Android/data/<applicationId>/files/logs/blocking.log`),
- * falling back to the app's private files dir. Does nothing until [init] is called, so JVM tests are unaffected.
- * Remove together with the share button once the bug is understood.
+ * falling back to the app's private files dir.
+ *
+ * It records which apps were opened, so it only runs in debuggable builds ([isEnabled]); a release build never
+ * writes it and deletes a leftover file. Does nothing until [init] is called, so JVM tests are unaffected. All file
+ * access happens on a background thread (or the caller's, for [tail]). Remove together with the share button once
+ * the bug is understood.
  */
 object BlockingLog {
     private const val MAX_BYTES = 1_000_000L
     private val writer = Executors.newSingleThreadExecutor { r -> Thread(r, "blocking-log").apply { isDaemon = true } }
 
-    @Volatile private var file: File? = null
+    @Volatile private var appContext: Context? = null
+    private var logFile: File? = null
 
-    /** The log file, or null before [init]. */
-    fun file(): File? = file
+    /** Whether diagnostics are collected: only in a debuggable build. */
+    fun isEnabled(context: Context): Boolean = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+
+    fun init(context: Context) {
+        if (appContext != null) return
+        val app = context.applicationContext
+        appContext = app.takeIf(::isEnabled)
+        if (appContext == null) {
+            writer.execute { runCatching { resolve(app).delete() } } // a leftover from an earlier debug build
+            return
+        }
+        log("Log", "---- service connected ----")
+    }
 
     /** The newest [lines] lines (small enough to travel in a share intent), or a note when there is no log. */
     fun tail(lines: Int = 600): String {
-        val f = file ?: return "No log yet: turn the accessibility service on first."
+        val app = appContext ?: return "No log: turn the accessibility service on first (debug builds only)."
         return try {
-            f
+            resolve(app)
                 .readLines()
                 .takeLast(lines)
                 .joinToString("\n")
                 .ifEmpty { "Log is empty." }
         } catch (e: java.io.IOException) {
-            "Could not read ${f.path}: ${e.message}"
+            "Could not read the log: ${e.message}"
         }
-    }
-
-    fun init(context: Context) {
-        if (file != null) return
-        val dir = File(context.getExternalFilesDir(null) ?: context.filesDir, "logs").apply { mkdirs() }
-        file = File(dir, "blocking.log")
-        log("Log", "---- service connected ----")
     }
 
     fun log(
         tag: String,
         message: String,
     ) {
-        val target = file ?: return
+        val app = appContext ?: return
         val line = "${stamp()} $tag: $message\n"
         Log.d("StayFocused", "$tag: $message")
         writer.execute {
             try {
+                val target = resolve(app)
                 if (target.length() > MAX_BYTES) target.writeText("") // keep the newest ~1 MB, simply
                 target.appendText(line)
             } catch (_: java.io.IOException) {
@@ -60,6 +71,11 @@ object BlockingLog {
             }
         }
     }
+
+    @Synchronized
+    private fun resolve(app: Context): File =
+        logFile ?: File(File(app.getExternalFilesDir(null) ?: app.filesDir, "logs").apply { mkdirs() }, "blocking.log")
+            .also { logFile = it }
 
     private fun stamp(): String = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US).format(Date())
 }

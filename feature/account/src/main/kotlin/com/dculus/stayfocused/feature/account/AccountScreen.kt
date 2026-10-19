@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -58,6 +59,9 @@ import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 internal const val ACCOUNT_SIGN_IN_TAG = "account_sign_in"
@@ -119,6 +123,7 @@ internal fun AccountRoute(
     var batteryVisible by rememberSaveable { mutableStateOf(false) }
     var licencesVisible by rememberSaveable { mutableStateOf(false) }
     val version = remember(context) { context.versionName() }
+    val scope = rememberCoroutineScope()
     AccountScreen(
         state = state,
         version = version,
@@ -145,7 +150,13 @@ internal fun AccountRoute(
         onLicences = { licencesVisible = true },
         onSignOut = viewModel::signOut,
         onDeleteAccount = viewModel::startDelete,
-        onShareLog = { context.shareBlockingLog() }, // TEMPORARY: remove with BlockingLog
+        // TEMPORARY, debug builds only: remove with BlockingLog
+        onShareLog =
+            if (BlockingLog.isEnabled(context)) {
+                { scope.launch { context.shareBlockingLog(withContext(Dispatchers.IO) { BlockingLog.tail() }) } }
+            } else {
+                null
+            },
     )
     DeleteAccountSheet(
         state = deleteState,
@@ -203,13 +214,13 @@ private fun Context.versionName(): String =
     runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
 
 /** TEMPORARY: shares the newest blocking-debug log lines as text (no file provider needed). */
-private fun Context.shareBlockingLog() {
+private fun Context.shareBlockingLog(log: String) {
     val send =
         Intent(Intent.ACTION_SEND)
             .setType("text/plain")
-            .putExtra(Intent.EXTRA_SUBJECT, "Stay Focused blocking log")
-            .putExtra(Intent.EXTRA_TEXT, BlockingLog.tail())
-    open(Intent.createChooser(send, "Share blocking log"))
+            .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.account_share_log_subject))
+            .putExtra(Intent.EXTRA_TEXT, log)
+    open(Intent.createChooser(send, getString(R.string.account_share_log_chooser)))
 }
 
 private fun Context.open(intent: Intent) {
@@ -294,7 +305,7 @@ internal fun AccountScreen(
         }
         if (onShareLog != null) {
             OutlineButton(
-                text = "Share blocking log (temporary)",
+                text = stringResource(R.string.account_share_log),
                 onClick = onShareLog,
                 modifier = Modifier.fillMaxWidth(),
             )

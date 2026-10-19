@@ -152,16 +152,21 @@ class BlockScreenLauncher
         ) {
             BlockingLog.log("Launcher", "overlay shown for ${request.pkg}")
             overlay?.remove()
-            overlay =
+            // Stored before add(): a failed attachment reports through onRemoved() while add() is still running,
+            // and that must clear this very reference (otherwise isShowing() would see an overlay that isn't there).
+            lateinit var created: AccessibilityOverlay
+            created =
                 AccessibilityOverlay(
                     svc,
                     request,
                     decisionSource,
                     clock,
                     extras.orElse(null),
-                    onRemoved = { overlay = null },
+                    onRemoved = { if (overlay === created) overlay = null },
                     onFinished = { BlockScreenState.activeToken = 0L },
-                ).also { it.add() }
+                )
+            overlay = created
+            created.add()
         }
 
         private fun appLabel(pkg: String): String? =
