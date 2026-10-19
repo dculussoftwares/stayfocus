@@ -81,6 +81,58 @@ class LinkedDevicesMappingTest {
     }
 
     @Test
+    fun mapsOsVersionAndHourlyMinutesWhenReported() {
+        val hourly = List(24) { it * 2 }
+        val device =
+            RawDevice("d1", mapOf("osVersion" to "15"), emptyList(), emptyList(), 30, hourly).toLinkedDevice(now)
+        assertEquals("15", device.osVersion)
+        assertEquals(hourly, device.hourlyMins)
+    }
+
+    @Test
+    fun aChildOnThePreviousKidsBuildHasNoOsVersionOrHourlyMinutes() {
+        val device = raw(mapOf("name" to "Old build", "model" to "Redmi")).toLinkedDevice(now)
+        assertNull(device.osVersion)
+        assertNull(device.hourlyMins)
+        assertNull(raw(mapOf("osVersion" to "  ")).toLinkedDevice(now).osVersion)
+        assertNull(raw(mapOf("osVersion" to 15L)).toLinkedDevice(now).osVersion)
+    }
+
+    @Test
+    fun anOversizedOsVersionIsNullNotTruncated() {
+        assertEquals("9".repeat(50), raw(mapOf("osVersion" to "9".repeat(50))).toLinkedDevice(now).osVersion)
+        assertNull(raw(mapOf("osVersion" to "9".repeat(51))).toLinkedDevice(now).osVersion)
+    }
+
+    @Test
+    fun readsTodaysUsageDocWithAndWithoutHourly() {
+        val full = todayUsageFrom(mapOf("totalMins" to 90L, "apps" to emptyList<Any>(), "hourly" to List(24) { 5L }))
+        assertEquals(90, full.mins)
+        assertEquals(List(24) { 5 }, full.hourly)
+        val old = todayUsageFrom(mapOf("totalMins" to 90L, "apps" to emptyList<Any>()))
+        assertEquals(90, old.mins)
+        assertNull(old.hourly)
+        assertEquals(TodayUsage(null, null), todayUsageFrom(null))
+    }
+
+    @Test
+    fun aMalformedHourlyListOrTotalIsNullNotConverted() {
+        assertNull(List(23) { 1L }.toHourlyMins())
+        assertNull(List(25) { 1L }.toHourlyMins())
+        assertNull((List(23) { 1L } + "x").toHourlyMins())
+        assertNull("not a list".toHourlyMins())
+        assertNull(null.toHourlyMins())
+        assertNull((listOf(121L) + List(23) { 0L }).toHourlyMins())
+        assertNull((listOf(-1L) + List(23) { 0L }).toHourlyMins())
+        assertNull((listOf(1.5) + List(23) { 0L }).toHourlyMins())
+        assertEquals(List(24) { if (it == 0) 120 else 3 }, (listOf(120L) + List(23) { 3.0 }).toHourlyMins())
+        assertNull(todayUsageFrom(mapOf("totalMins" to 90.5)).mins)
+        assertNull(todayUsageFrom(mapOf("totalMins" to -1L)).mins)
+        assertNull(todayUsageFrom(mapOf("totalMins" to 1441L)).mins)
+        assertEquals(90, todayUsageFrom(mapOf("totalMins" to 90.0)).mins)
+    }
+
+    @Test
     fun missingFieldsFallBackSafely() {
         val device = raw(mapOf("name" to " ", "currentApp" to "")).toLinkedDevice(now)
         assertEquals("d1", device.name)

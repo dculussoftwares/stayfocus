@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { after, afterEach, before, describe, it } from 'node:test';
 import {
@@ -164,6 +165,23 @@ describe('device docs', () => {
     await assertSucceeds(updateDoc(doc(childDb(), D), {
       battery: 80, charging: true, currentApp: 'a.b', online: true, lastSeen: serverTimestamp(),
     }));
+  });
+  it('child writes osVersion (string, or null) with its status', async () => {
+    await seedDevice();
+    await assertSucceeds(updateDoc(doc(childDb(), D), {
+      battery: 80, charging: true, currentApp: null, online: true, lastSeen: serverTimestamp(), osVersion: '15',
+    }));
+    await assertSucceeds(updateDoc(doc(childDb(), D), { osVersion: null }));
+  });
+  it('child rejects an empty, oversized or non-string osVersion', async () => {
+    await seedDevice();
+    await assertFails(updateDoc(doc(childDb(), D), { osVersion: '' }));
+    await assertFails(updateDoc(doc(childDb(), D), { osVersion: 'v'.repeat(51) }));
+    await assertFails(updateDoc(doc(childDb(), D), { osVersion: 15 }));
+  });
+  it('parent cannot write osVersion', async () => {
+    await seedDevice();
+    await assertFails(updateDoc(doc(parentDb(), D), { osVersion: '15' }));
   });
   it('child cannot change childUid or name', async () => {
     await seedDevice();
@@ -423,6 +441,37 @@ describe('usage and apps', () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 90, apps: [{ pkg: 'a.b', label: 'A', mins: 90, opens: 3 }] }));
     await assertSucceeds(getDoc(doc(parentDb(), `${D}/usage/2026-02-03`)));
+  });
+  it('child writes 24 hourly buckets next to the total; parent reads them', async () => {
+    await seedDevice();
+    const hourly = Array.from({ length: 24 }, (_, h) => (h === 0 ? 60 : h % 7));
+    await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 90, apps: [], hourly }));
+    const snap = await assertSucceeds(getDoc(doc(parentDb(), `${D}/usage/2026-02-03`)));
+    assert.deepEqual(snap.data().hourly, hourly);
+  });
+  it('accepts a repeated fall-back hour of up to 120 minutes', async () => {
+    await seedDevice();
+    const hourly = [120, ...Array.from({ length: 23 }, () => 0)];
+    await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-11-01`), { totalMins: 120, apps: [], hourly }));
+  });
+  it('still accepts usage without hourly (older Kids builds)', async () => {
+    await seedDevice();
+    await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 5, apps: [] }));
+  });
+  it('rejects an hourly list of the wrong length, range or type', async () => {
+    await seedDevice();
+    const usage = (hourly) => setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 1, apps: [], hourly });
+    const zeros = (n) => Array.from({ length: n }, () => 0);
+    await assertFails(usage(zeros(23)));
+    await assertFails(usage(zeros(25)));
+    await assertFails(usage(zeros(300)));
+    await assertFails(usage([]));
+    await assertFails(usage([121, ...zeros(23)]));
+    await assertFails(usage([-1, ...zeros(23)]));
+    await assertFails(usage([1.5, ...zeros(23)]));
+    await assertFails(usage(['5', ...zeros(23)]));
+    await assertFails(usage(null));
+    await assertFails(usage('0'.repeat(24)));
   });
   it('rejects a bad date id, oversized total, too many apps and extra fields', async () => {
     await seedDevice();

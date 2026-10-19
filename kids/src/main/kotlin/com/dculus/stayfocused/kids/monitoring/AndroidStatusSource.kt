@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.BatteryManager
+import android.os.Build
 import androidx.core.content.ContextCompat
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.sync.ChildStatus
@@ -109,6 +110,7 @@ internal class AndroidStatusSource
                     charging = battery.charging,
                     currentApp = pkg?.let(::labelOf),
                     online = true,
+                    osVersion = Build.VERSION.RELEASE,
                 )
             }.flowOn(Dispatchers.IO)
 

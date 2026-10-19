@@ -84,7 +84,10 @@ internal data class RawDevice(
     val alerts: List<TamperAlert>,
     val requests: List<UnlockRequest>,
     val todayMins: Int?,
+    val hourlyMins: List<Int>? = null,
 )
+
+private const val MAX_OS_VERSION = 50
 
 private fun Any?.toInstant(): Instant? = (this as? Timestamp)?.toDate()?.toInstant()
 
@@ -105,6 +108,8 @@ internal fun RawDevice.toLinkedDevice(now: Instant): LinkedDevice {
         requests = requests,
         focusEndsAt = data["focusEndsAt"].toInstant(),
         todayMins = todayMins,
+        osVersion = (data["osVersion"] as? String)?.trim()?.takeIf { it.isNotEmpty() && it.length <= MAX_OS_VERSION },
+        hourlyMins = hourlyMins,
         longOffline = isLongOffline(lastSeen, now),
     )
 }
@@ -198,6 +203,7 @@ internal data class DeviceExtras(
     val alerts: List<TamperAlert> = emptyList(),
     val requests: List<UnlockRequest> = emptyList(),
     val todayMins: Int? = null,
+    val hourlyMins: List<Int>? = null,
 )
 
 /**
@@ -302,7 +308,7 @@ internal class FirebaseLinkedDevicesRepository(
             data
                 .map { (id, fields) ->
                     val e = extra[id] ?: DeviceExtras()
-                    RawDevice(id, fields, e.alerts, e.requests, e.todayMins)
+                    RawDevice(id, fields, e.alerts, e.requests, e.todayMins, e.hourlyMins)
                 }.oldestLinkFirst()
                 .map { it.toLinkedDevice(now) }
         }.distinctUntilChanged()
@@ -339,10 +345,10 @@ internal class FirebaseLinkedDevicesRepository(
                         .collection("usage")
                         .document(date)
                         .snapshots()
-                        .map { it.getLong("totalMins")?.toInt() }
-                        .orDefault(null, "usage")
+                        .map { todayUsageFrom(it.data) }
+                        .orDefault(TodayUsage(null, null), "usage")
                 }
-        return combine(alerts, requests, today) { a, r, t -> DeviceExtras(a, r, t) }
+        return combine(alerts, requests, today) { a, r, t -> DeviceExtras(a, r, t.mins, t.hourly) }
     }
 }
 
