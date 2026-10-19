@@ -449,6 +449,11 @@ describe('usage and apps', () => {
     const snap = await assertSucceeds(getDoc(doc(parentDb(), `${D}/usage/2026-02-03`)));
     assert.deepEqual(snap.data().hourly, hourly);
   });
+  it('accepts a repeated fall-back hour of up to 120 minutes', async () => {
+    await seedDevice();
+    const hourly = [120, ...Array.from({ length: 23 }, () => 0)];
+    await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-11-01`), { totalMins: 120, apps: [], hourly }));
+  });
   it('still accepts usage without hourly (older Kids builds)', async () => {
     await seedDevice();
     await assertSucceeds(setDoc(doc(childDb(), `${D}/usage/2026-02-03`), { totalMins: 5, apps: [] }));
@@ -461,7 +466,7 @@ describe('usage and apps', () => {
     await assertFails(usage(zeros(25)));
     await assertFails(usage(zeros(300)));
     await assertFails(usage([]));
-    await assertFails(usage([61, ...zeros(23)]));
+    await assertFails(usage([121, ...zeros(23)]));
     await assertFails(usage([-1, ...zeros(23)]));
     await assertFails(usage([1.5, ...zeros(23)]));
     await assertFails(usage(['5', ...zeros(23)]));

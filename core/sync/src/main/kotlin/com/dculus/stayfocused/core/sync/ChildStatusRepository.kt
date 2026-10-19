@@ -35,7 +35,7 @@ data class UsageSummary(
     val date: String,
     val totalMins: Int,
     val apps: List<UsageAppEntry>,
-    /** Minutes of use per local hour of the day (24 entries, 0..60); null when not known. */
+    /** Minutes of use per local hour of the day (24 entries, 0..120); null when not known. */
     val hourly: List<Int>? = null,
 )
 
@@ -64,7 +64,7 @@ internal object StatusLimits {
     const val MAX_OS_VERSION = 50
     const val MAX_USAGE_APPS = 50
     const val HOURS_PER_DAY = 24
-    const val MAX_HOUR_MINS = 60
+    const val MAX_HOUR_MINS = 120
     const val BATCH_SIZE = 400
 }
 

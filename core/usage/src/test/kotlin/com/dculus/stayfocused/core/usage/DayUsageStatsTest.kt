@@ -26,8 +26,10 @@ class DayUsageStatsTest {
     }
 
     @Test
-    fun anHourNeverExceedsSixtyMinutes() {
-        val stats = DayUsageStats.empty(date).copy(hourlyMillis = List(24) { 3 * 3_600_000L })
-        assertEquals(List(24) { 60 }, stats.hourlyMins)
+    fun aRepeatedFallBackHourKeepsBothHoursButNeverMore() {
+        val twoHours = DayUsageStats.empty(date).copy(hourlyMillis = List(24) { if (it == 1) 2 * 3_600_000L else 0L })
+        assertEquals(120, twoHours.hourlyMins[1])
+        val more = DayUsageStats.empty(date).copy(hourlyMillis = List(24) { 3 * 3_600_000L })
+        assertEquals(List(24) { 120 }, more.hourlyMins)
     }
 }

@@ -192,7 +192,7 @@ users/{uid}/devices/{id}/blocks/{blockId}     Block (target = this device)
 users/{uid}/devices/{id}/commands/{cmdId}     { type, payload, createdAt, status: pending|done|failed|expired, ackAt? }
 users/{uid}/devices/{id}/requests/{reqId}     { app, minutes, status: pending|approved|denied, createdAt, decidedAt? }
 users/{uid}/devices/{id}/alerts/{alertId}     { kind: permission_lost|unlinked|offline, permission?, createdAt, dismissed }
-users/{uid}/devices/{id}/usage/{yyyy-MM-dd}   { totalMins, apps: [{pkg, label, mins, opens}], hourly?: [24 × minutes 0..60] }
+users/{uid}/devices/{id}/usage/{yyyy-MM-dd}   { totalMins, apps: [{pkg, label, mins, opens}], hourly?: [24 × minutes 0..120, 120 for a repeated DST fall-back hour] }
 users/{uid}/devices/{id}/apps/{pkg}           { label }               child's launchable apps
 rateLimits/{uid_action}              Functions only, no client access
 linkTokens/{token}                   { childUid, model, createdAt, expiresAt (<= now + 5 min), code (6 digits), status: open, claimedBy? }
@@ -212,7 +212,7 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 | `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload fixed per type with bounded values) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
 | `requests` | read; decide a pending one (`status` approved/denied, `decidedAt`) | read; create (`app` <= 255, `minutes` 1..480, `pending`) |
 | `alerts` | read; update only `dismissed` | read; create (`kind` from the list, `dismissed: false`) |
-| `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps, optional `hourly`: exactly 24 whole numbers 0..60; older Kids builds omit it) |
+| `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps, optional `hourly`: exactly 24 whole numbers 0..120; older Kids builds omit it) |
 | `apps/{pkg}` | read | read; write `label` (<= 100), delete |
 | `linkTokens/{token}` | none | create with `childUid == auth.uid`, `expiresAt` in (now, now + 5 min], no `claimedBy`; read own (the child) or claimed (the parent); no update/delete |
 | `rateLimits/**`, anything else | none | none |

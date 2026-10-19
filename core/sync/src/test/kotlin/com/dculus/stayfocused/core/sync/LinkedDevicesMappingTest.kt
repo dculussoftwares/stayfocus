@@ -99,6 +99,12 @@ class LinkedDevicesMappingTest {
     }
 
     @Test
+    fun anOversizedOsVersionIsNullNotTruncated() {
+        assertEquals("9".repeat(50), raw(mapOf("osVersion" to "9".repeat(50))).toLinkedDevice(now).osVersion)
+        assertNull(raw(mapOf("osVersion" to "9".repeat(51))).toLinkedDevice(now).osVersion)
+    }
+
+    @Test
     fun readsTodaysUsageDocWithAndWithoutHourly() {
         val full = todayUsageFrom(mapOf("totalMins" to 90L, "apps" to emptyList<Any>(), "hourly" to List(24) { 5L }))
         assertEquals(90, full.mins)
@@ -110,13 +116,20 @@ class LinkedDevicesMappingTest {
     }
 
     @Test
-    fun aMalformedHourlyListIsIgnoredAndValuesAreClamped() {
+    fun aMalformedHourlyListOrTotalIsNullNotConverted() {
         assertNull(List(23) { 1L }.toHourlyMins())
         assertNull(List(25) { 1L }.toHourlyMins())
         assertNull((List(23) { 1L } + "x").toHourlyMins())
         assertNull("not a list".toHourlyMins())
         assertNull(null.toHourlyMins())
-        assertEquals(List(24) { if (it == 0) 60 else 0 }, (listOf(999L) + List(23) { -4L }).toHourlyMins())
+        assertNull((listOf(121L) + List(23) { 0L }).toHourlyMins())
+        assertNull((listOf(-1L) + List(23) { 0L }).toHourlyMins())
+        assertNull((listOf(1.5) + List(23) { 0L }).toHourlyMins())
+        assertEquals(List(24) { if (it == 0) 120 else 3 }, (listOf(120L) + List(23) { 3.0 }).toHourlyMins())
+        assertNull(todayUsageFrom(mapOf("totalMins" to 90.5)).mins)
+        assertNull(todayUsageFrom(mapOf("totalMins" to -1L)).mins)
+        assertNull(todayUsageFrom(mapOf("totalMins" to 1441L)).mins)
+        assertEquals(90, todayUsageFrom(mapOf("totalMins" to 90.0)).mins)
     }
 
     @Test

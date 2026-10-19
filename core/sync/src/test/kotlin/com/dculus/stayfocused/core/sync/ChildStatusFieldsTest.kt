@@ -44,9 +44,33 @@ class ChildStatusFieldsTest {
     }
 
     @Test
-    fun usageClampsBucketsToAnHour() {
-        val fields = usageFields(summary(List(24) { if (it == 0) 75 else -3 }))
-        assertEquals(List(24) { if (it == 0) 60 else 0 }, fields["hourly"])
+    fun usageKeepsARepeatedFallBackHourAndClampsBeyondIt() {
+        val fields =
+            usageFields(
+                summary(
+                    List(24) {
+                        if (it == 0) {
+                            200
+                        } else if (it == 1) {
+                            90
+                        } else {
+                            -3
+                        }
+                    },
+                ),
+            )
+        assertEquals(
+            List(24) {
+                if (it == 0) {
+                    120
+                } else if (it == 1) {
+                    90
+                } else {
+                    0
+                }
+            },
+            fields["hourly"],
+        )
     }
 
     @Test
