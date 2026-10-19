@@ -60,6 +60,12 @@ interface DeviceBlocksRepository {
         target: DeviceTarget,
         endsAt: Instant?,
     )
+
+    /** Kids: mirrors "all apps locked" to the device doc so the parent sees it. Queued, not awaited. */
+    fun setAllLocked(
+        target: DeviceTarget,
+        locked: Boolean,
+    )
 }
 
 /** Fields of a block document only some types use. */
@@ -165,6 +171,15 @@ internal class FirebaseDeviceBlocksRepository(
             .addOnFailureListener { Timber.w(it, "Mirroring the focus end was rejected") }
     }
 
+    override fun setAllLocked(
+        target: DeviceTarget,
+        locked: Boolean,
+    ) {
+        device(target)
+            .update("allLocked", locked)
+            .addOnFailureListener { Timber.w(it, "Mirroring the all-apps lock was rejected") }
+    }
+
     private fun DocumentSnapshot.toBlock(): Block? =
         data?.let { parseWireBlock(id, it) }.also {
             if (it == null) Timber.w("Ignoring malformed block %s", id)
@@ -196,6 +211,11 @@ internal object NoDeviceBlocksRepository : DeviceBlocksRepository {
         target: DeviceTarget,
         endsAt: Instant?,
     ) = Unit
+
+    override fun setAllLocked(
+        target: DeviceTarget,
+        locked: Boolean,
+    ) = Unit
 }
 
 /** In-memory repository for tests. */
@@ -205,6 +225,7 @@ class FakeDeviceBlocksRepository : DeviceBlocksRepository {
     val pushed = mutableListOf<Pair<DeviceTarget, Block>>()
     val removed = mutableListOf<Pair<DeviceTarget, String>>()
     val focusEnds = mutableListOf<Instant?>()
+    val allLockedMirrored = mutableListOf<Boolean>()
 
     /** Set to make [fetchBlocks] throw (offline). */
     var offline = false
@@ -244,5 +265,12 @@ class FakeDeviceBlocksRepository : DeviceBlocksRepository {
         endsAt: Instant?,
     ) {
         focusEnds += endsAt
+    }
+
+    override fun setAllLocked(
+        target: DeviceTarget,
+        locked: Boolean,
+    ) {
+        allLockedMirrored += locked
     }
 }

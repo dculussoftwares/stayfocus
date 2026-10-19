@@ -21,6 +21,7 @@ object RuleEvaluator {
     private val TIE_BREAK =
         listOf(
             BlockReason.MANUAL_LOCK,
+            BlockReason.ALL_LOCKED,
             BlockReason.BREAK,
             BlockReason.FOCUS,
             BlockReason.NOW,
@@ -46,8 +47,12 @@ object RuleEvaluator {
         if (ctx.pkg in ctx.allowlist) return null
         val times = mutableListOf<Instant?>()
         ctx.allowances.filter { it.pkg == ctx.pkg }.forEach { times += it.until }
-        // A manual lock only gives way to an allowance, so nothing else can change the decision.
-        if (ctx.lockedApps.any { it.pkg == ctx.pkg }) return times.filterNotNull().filter { it > now }.minOrNull()
+        // A manual lock (or "lock all apps") only gives way to an allowance, so nothing else can change the decision.
+        if (ctx.allLocked ||
+            ctx.lockedApps.any { it.pkg == ctx.pkg }
+        ) {
+            return times.filterNotNull().filter { it > now }.minOrNull()
+        }
         times += ctx.breakSession?.endsAt
         times += ctx.focusSession?.endsAt
         ctx.blocks.filter { it.enabled && ctx.pkg in it.apps }.forEach { times += blockChangeTimes(ctx, it) }
@@ -65,6 +70,7 @@ object RuleEvaluator {
         if (ctx.lockedApps.any { it.pkg == ctx.pkg }) {
             out += Decision.Block(BlockReason.MANUAL_LOCK, null, null)
         }
+        if (ctx.allLocked) out += Decision.Block(BlockReason.ALL_LOCKED, null, null)
         ctx.breakSession?.takeIf { now < it.endsAt }?.let {
             out += Decision.Block(BlockReason.BREAK, null, it.endsAt)
         }

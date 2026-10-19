@@ -368,6 +368,11 @@ class RemoteDeviceViewModel
 
         fun stopFocus() = send(RemoteCommand.StopFocus)
 
+        /** Locks every app on the phone except the always-allowed ones, with no end. Delivery as for any command. */
+        fun lockAll() = send(RemoteCommand.LockAll)
+
+        fun unlockAll() = send(RemoteCommand.UnlockAll)
+
         internal fun remind(alert: RemoteAlertCard) {
             val name = deviceName()
             send(RemoteCommand.RemindPermission(alert.permission?.takeIf { it.isNotBlank() } ?: DEFAULT_PERMISSION)) {

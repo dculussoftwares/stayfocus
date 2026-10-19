@@ -194,6 +194,13 @@ describe('device docs', () => {
     await assertSucceeds(updateDoc(doc(childDb(), D), { focusEndsAt: null }));
     await assertFails(updateDoc(doc(childDb(), D), { focusEndsAt: inMinutes(60 * 24) }));
   });
+  it('child mirrors allLocked as a boolean; the parent cannot write it', async () => {
+    await seedDevice();
+    await assertSucceeds(updateDoc(doc(childDb(), D), { allLocked: true }));
+    await assertSucceeds(updateDoc(doc(childDb(), D), { allLocked: false }));
+    await assertFails(updateDoc(doc(childDb(), D), { allLocked: 'yes' }));
+    await assertFails(updateDoc(doc(parentDb(), D), { allLocked: true }));
+  });
   it('child cannot delete a status field', async () => {
     await seedDevice();
     await assertFails(updateDoc(doc(childDb(), D), { online: deleteField() }));
@@ -323,10 +330,18 @@ describe('commands', () => {
     const ok = [
       ['START_FOCUS', { mins: 30 }], ['STOP_FOCUS', {}], ['SYNC_BLOCKS', {}], ['UNBLOCK_APP', { pkg: 'a.b' }],
       ['APPROVE_REQUEST', { reqId: 'r1', mins: 15 }], ['DENY_REQUEST', { reqId: 'r1' }],
-      ['REMIND_PERMISSION', { permission: 'usage' }],
+      ['REMIND_PERMISSION', { permission: 'usage' }], ['LOCK_ALL', {}], ['UNLOCK_ALL', {}],
     ];
     for (const [i, [type, payload]] of ok.entries()) {
       await assertSucceeds(setDoc(doc(parentDb(), `${D}/commands/ok${i}`), cmd({ type, payload })));
+    }
+  });
+  it('LOCK_ALL and UNLOCK_ALL carry an empty payload only', async () => {
+    await seedDevice();
+    for (const type of ['LOCK_ALL', 'UNLOCK_ALL']) {
+      await assertFails(setDoc(doc(parentDb(), `${D}/commands/x-${type}`), cmd({ type, payload: { pkg: 'a.b' } })));
+      await assertFails(setDoc(doc(parentDb(OTHER_PARENT), `${D}/commands/y-${type}`), cmd({ type, payload: {} })));
+      await assertFails(setDoc(doc(childDb(), `${D}/commands/z-${type}`), cmd({ type, payload: {} })));
     }
   });
   it('parent cannot update or delete a command', async () => {

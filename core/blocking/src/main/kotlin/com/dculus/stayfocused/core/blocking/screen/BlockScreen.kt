@@ -49,6 +49,7 @@ fun reasonRes(reason: BlockReason): Int =
         BlockReason.CYCLE_REST -> R.string.block_reason_cycle_rest
         BlockReason.SCHEDULE -> R.string.block_reason_schedule
         BlockReason.MANUAL_LOCK -> R.string.block_reason_manual_lock
+        BlockReason.ALL_LOCKED -> R.string.block_reason_all_locked
     }
 
 /** The block screen body. State comes in, "go home" goes out; [extraActions] is empty in `:app`. */

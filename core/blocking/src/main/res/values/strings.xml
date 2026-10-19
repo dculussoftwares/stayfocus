@@ -24,4 +24,5 @@
     <string name="block_reason_cycle_rest">Time to rest.</string>
     <string name="block_reason_schedule">Outside your allowed hours.</string>
     <string name="block_reason_manual_lock">You locked this app.</string>
+    <string name="block_reason_all_locked">Everything is locked now</string>
 </resources>

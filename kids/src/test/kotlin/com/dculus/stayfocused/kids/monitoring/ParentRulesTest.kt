@@ -25,6 +25,7 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -167,6 +168,37 @@ class ParentRulesTest {
             assertEquals(listOf(block("new")), local())
             assertTrue(locked.observeAll().first().isEmpty())
             assertNull(settings.settings.first().focusSession)
+        }
+
+    @Test
+    fun lockAllSetsTheFlagAndMirrorsItAndUnlockAllClearsIt() =
+        runTest {
+            LockAllHandler(settings, remote, targets, mirror).handle(RemoteCommand.LockAll)
+            LockAllHandler(settings, remote, targets, mirror).handle(RemoteCommand.LockAll)
+            assertTrue(settings.settings.first().allLocked)
+            assertEquals(listOf(true, true), remote.allLockedMirrored)
+            UnlockAllHandler(settings, remote, targets, mirror).handle(RemoteCommand.UnlockAll)
+            assertFalse(settings.settings.first().allLocked)
+            assertEquals(false, remote.allLockedMirrored.last())
+        }
+
+    @Test
+    fun lockAllNeedsALinkedPhone() =
+        runTest {
+            targets.target = null
+            assertFailsWith<IllegalStateException> {
+                LockAllHandler(settings, remote, targets, mirror).handle(RemoteCommand.LockAll)
+            }
+            assertFalse(settings.settings.first().allLocked)
+        }
+
+    @Test
+    fun clearEndsTheAllAppsLock() =
+        runTest {
+            settings.setAllLocked(true)
+            links.parentUid = null
+            mirror.clear()
+            assertFalse(settings.settings.first().allLocked)
         }
 
     @Test

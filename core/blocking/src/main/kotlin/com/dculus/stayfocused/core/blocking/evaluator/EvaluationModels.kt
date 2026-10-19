@@ -29,7 +29,7 @@ data class CycleState(
     val lockedUntil: Instant? = null,
 )
 
-enum class BlockReason { BREAK, FOCUS, NOW, LIMIT_DAILY, LIMIT_HOURLY, CYCLE_REST, SCHEDULE, MANUAL_LOCK }
+enum class BlockReason { BREAK, FOCUS, NOW, LIMIT_DAILY, LIMIT_HOURLY, CYCLE_REST, SCHEDULE, MANUAL_LOCK, ALL_LOCKED }
 
 sealed interface Decision {
     data object Allow : Decision
@@ -50,6 +50,8 @@ data class EvaluationContext(
     val lockedApps: List<LockedApp> = emptyList(),
     val breakSession: BreakSession? = null,
     val focusSession: FocusSession? = null,
+    /** The parent locked every app with no end time; the [allowlist] still applies. */
+    val allLocked: Boolean = false,
     val allowances: List<TemporaryAllowance> = emptyList(),
     val usage: Map<String, AppUsageSnapshot> = emptyMap(),
     val cycleStates: Map<CycleKey, CycleState> = emptyMap(),

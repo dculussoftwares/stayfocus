@@ -107,6 +107,7 @@ internal fun RawDevice.toLinkedDevice(now: Instant): LinkedDevice {
         alerts = alerts,
         requests = requests,
         focusEndsAt = data["focusEndsAt"].toInstant(),
+        allLocked = data["allLocked"] == true,
         todayMins = todayMins,
         osVersion = (data["osVersion"] as? String)?.trim()?.takeIf { it.isNotEmpty() && it.length <= MAX_OS_VERSION },
         hourlyMins = hourlyMins,

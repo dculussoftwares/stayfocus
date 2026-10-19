@@ -675,6 +675,46 @@ class BlockingEngineTest {
             r.engine.stop()
         }
 
+    @Test fun allAppsLockedBlocksEverythingButTheAllowlistAndSurvivesAnEngineRestart() =
+        runTest {
+            val r = rig(this)
+            r.settings.setAllLocked(true)
+            r.engine.start()
+            for (allowed in listOf(LAUNCHER, "com.android.settings", "com.android.systemui", context.packageName)) {
+                r.open(allowed)
+                r.pass(1_000)
+            }
+            assertTrue(r.presenter.shown.isEmpty(), "the allow list is never locked")
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(
+                BlockReason.ALL_LOCKED,
+                r.presenter.shown
+                    .single()
+                    .second.reason,
+            )
+            r.engine.stop()
+
+            // The flag is stored with the settings, so a fresh engine (process death) enforces it again.
+            r.presenter.shown.clear()
+            r.engine.start()
+            r.open(OTHER)
+            r.pass(1_000)
+            assertEquals(
+                BlockReason.ALL_LOCKED,
+                r.presenter.shown
+                    .single()
+                    .second.reason,
+            )
+
+            r.settings.setAllLocked(false)
+            r.pass(2_000)
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.shown.size, "unlocking blocks nothing new")
+            r.engine.stop()
+        }
+
     @Test fun stopCancelsEverythingAndLeavesNoPendingWork() =
         runTest {
             val r = rig(this)

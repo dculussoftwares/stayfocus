@@ -124,6 +124,7 @@ class ParentRulesMirror
                     .first()
                     .forEach { lockedApps.unlock(it.pkg, BlockTarget.ThisPhone) }
                 settings.setFocusSession(null)
+                settings.setAllLocked(false)
             }
     }
 

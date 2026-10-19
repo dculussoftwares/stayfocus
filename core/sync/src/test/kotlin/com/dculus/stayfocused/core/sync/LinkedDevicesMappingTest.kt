@@ -90,6 +90,14 @@ class LinkedDevicesMappingTest {
     }
 
     @Test
+    fun theAllLockedFlagIsReadFromTheDeviceDocAndDefaultsToFalse() {
+        assertTrue(raw(mapOf("allLocked" to true)).toLinkedDevice(now).allLocked)
+        assertFalse(raw(mapOf("allLocked" to false)).toLinkedDevice(now).allLocked)
+        assertFalse(raw(mapOf("name" to "Old build")).toLinkedDevice(now).allLocked)
+        assertFalse(raw(mapOf("allLocked" to "true")).toLinkedDevice(now).allLocked)
+    }
+
+    @Test
     fun aChildOnThePreviousKidsBuildHasNoOsVersionOrHourlyMinutes() {
         val device = raw(mapOf("name" to "Old build", "model" to "Redmi")).toLinkedDevice(now)
         assertNull(device.osVersion)

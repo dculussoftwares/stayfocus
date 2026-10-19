@@ -115,6 +115,8 @@ class FakeSettingsRepository(
 
     override suspend fun setFocusSession(session: FocusSession?) = state.update { it.copy(focusSession = session) }
 
+    override suspend fun setAllLocked(locked: Boolean) = state.update { it.copy(allLocked = locked) }
+
     override suspend fun setAccessibilityConsentAt(at: Instant?) = state.update { it.copy(accessibilityConsentAt = at) }
 
     override suspend fun setAiEnabled(enabled: Boolean) = state.update { it.copy(aiEnabled = enabled) }

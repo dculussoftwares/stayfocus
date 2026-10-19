@@ -10,6 +10,8 @@ enum class CommandType {
     DENY_REQUEST,
     SYNC_BLOCKS,
     REMIND_PERMISSION,
+    LOCK_ALL,
+    UNLOCK_ALL,
 }
 
 /** A parent to child command with its fixed payload (`users/{uid}/devices/{id}/commands/{cmdId}`). */
@@ -72,6 +74,19 @@ sealed interface RemoteCommand {
         override fun payload() = emptyMap<String, Any>()
     }
 
+    /** Locks every app except the always-allowed ones until [UnlockAll]; no end time. */
+    data object LockAll : RemoteCommand {
+        override val type get() = CommandType.LOCK_ALL
+
+        override fun payload() = emptyMap<String, Any>()
+    }
+
+    data object UnlockAll : RemoteCommand {
+        override val type get() = CommandType.UNLOCK_ALL
+
+        override fun payload() = emptyMap<String, Any>()
+    }
+
     data class RemindPermission(
         val permission: String,
     ) : RemoteCommand {
@@ -98,6 +113,8 @@ fun parseCommand(
         CommandType.DENY_REQUEST -> p.str("reqId")?.let { RemoteCommand.DenyRequest(it) }
         CommandType.SYNC_BLOCKS -> RemoteCommand.SyncBlocks
         CommandType.REMIND_PERMISSION -> p.str("permission")?.let { RemoteCommand.RemindPermission(it) }
+        CommandType.LOCK_ALL -> RemoteCommand.LockAll
+        CommandType.UNLOCK_ALL -> RemoteCommand.UnlockAll
     }
 }
 

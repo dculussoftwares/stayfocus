@@ -87,6 +87,8 @@ data class LinkedDevice(
     val alerts: List<TamperAlert>,
     val requests: List<UnlockRequest>,
     val focusEndsAt: Instant?,
+    /** Every app except the always-allowed ones is locked until the parent unlocks (`allLocked` on the device doc). */
+    val allLocked: Boolean = false,
     /** Minutes of screen time the phone reported for today; null until it has reported any. */
     val todayMins: Int? = null,
     /** Android release of the phone (`Build.VERSION.RELEASE`); null until a Kids build that reports it has run. */

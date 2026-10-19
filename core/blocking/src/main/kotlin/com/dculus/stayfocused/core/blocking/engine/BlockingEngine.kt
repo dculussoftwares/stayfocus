@@ -52,6 +52,7 @@ internal data class EngineInputs(
     val breakSession: BreakSession?,
     val focusSession: FocusSession?,
     val allowances: List<TemporaryAllowance>,
+    val allLocked: Boolean = false,
 )
 
 /**
@@ -270,9 +271,9 @@ class BlockingEngine
                     blocks.observeByTarget(BlockTarget.ThisPhone),
                     lockedApps.observeAll().map { all -> all.filter { it.target == BlockTarget.ThisPhone } },
                     breaks.observe(),
-                    settings.settings.map { it.focusSession },
+                    settings.settings.map { it.focusSession to it.allLocked },
                     allowances.observe(),
-                ) { b, l, br, f, a -> EngineInputs(b, l, br, f, a) }
+                ) { b, l, br, (f, locked), a -> EngineInputs(b, l, br, f, a, locked) }
             coroutineScope {
                 launch { watchBreakEnd() }
                 combine(tracker.foreground.map { it?.packageName }, inputs, clockChanges) { pkg, i, tick ->
@@ -556,6 +557,7 @@ class BlockingEngine
                 lockedApps = inputs.lockedApps,
                 breakSession = inputs.breakSession,
                 focusSession = inputs.focusSession,
+                allLocked = inputs.allLocked,
                 allowances = inputs.allowances,
                 usage = if (pkgs.isEmpty()) emptyMap() else usage.usage(pkgs, zoned),
                 cycleStates = cycles,

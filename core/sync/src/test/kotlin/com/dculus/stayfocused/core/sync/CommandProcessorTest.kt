@@ -163,6 +163,8 @@ class CommandProcessorTest {
                 RemoteCommand.DenyRequest("r"),
                 RemoteCommand.SyncBlocks,
                 RemoteCommand.RemindPermission("usage"),
+                RemoteCommand.LockAll,
+                RemoteCommand.UnlockAll,
             )
         for (command in all) assertEquals(command, parseCommand(command.type.name, command.payload()))
         assertNull(parseCommand(null, emptyMap()))
