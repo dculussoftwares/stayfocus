@@ -4,7 +4,7 @@
 A story's wave = 1 + the highest wave among its dependencies, but never below its epic's `wave_floor` (optional epic
 front matter; the v5 redesign epics start at wave 17, after Phase 1). Stories in the same wave don't depend on each
 other, so they can run in parallel; a wave starts only when every story in the earlier waves is closed, except
-`needs-human` stories, which an agent has already prepared and a person finishes (they don't hold NEXT_WAVE).
+`needs-human` stories with the `prepared-for-human` label, which an agent has prepared and a person finishes (they don't hold NEXT_WAVE). Unprepared human stories still hold NEXT_WAVE.
 
 Usage:
   python3 scripts/backlog/waves.py            # rewrite the block between the waves markers
@@ -115,14 +115,18 @@ def issue_states() -> dict[str, dict]:
     """Story id -> {number, state} from GitHub (titles start with "[Mx-yy]")."""
     out = subprocess.run(
         ["gh", "issue", "list", "--repo", "dculussoftwares/stayfocus", "--state", "all", "--limit", "300",
-         "--label", "type:story", "--json", "number,title,state"],
+         "--label", "type:story", "--json", "number,title,state,labels"],
         check=True, capture_output=True, text=True,
     ).stdout
     states = {}
     for issue in json.loads(out):
         m = re.match(r"^\[(M\d+-\d+)\]", issue["title"])
         if m:
-            states[m[1]] = {"number": issue["number"], "state": issue["state"]}
+            states[m[1]] = {
+                "number": issue["number"],
+                "state": issue["state"],
+                "prepared": any(label["name"] == "prepared-for-human" for label in issue["labels"]),
+            }
     return states
 
 
@@ -147,10 +151,23 @@ def print_status() -> None:
     for lv, ids in waves(stories).items():
         open_ids = [i for i in ids if states.get(i, {}).get("state") != "CLOSED"]
         human = [i for i in open_ids if "needs-human" in stories[i]["labels"]]
-        parked += human
-        if len(open_ids) > len(human) and next_wave is None:
-            next_wave = lv
-        shown = ", ".join(f"{i}{' (human)' if i in human else ''}" for i in open_ids)
+        prepared_human = [i for i in human if states.get(i, {}).get("prepared", False)]
+        unprepared_human = [i for i in human if i not in prepared_human]
+        blocked = [
+            i for i in open_ids if i not in human
+            and any(states.get(dep, {}).get("state") != "CLOSED" for dep in stories[i]["deps"])
+        ]
+        parked += prepared_human
+        # Do not skip an unprepared human story, or start a worker whose dependency is open.
+        if next_wave is None and open_ids:
+            if blocked:
+                break
+            if unprepared_human or len(open_ids) > len(human):
+                next_wave = lv
+        shown = ", ".join(
+            f"{i}{' (human)' if i in human else ''}{' (prepared)' if i in prepared_human else ''}"
+            for i in open_ids
+        )
         print(f"wave {lv:>2}: {len(ids) - len(open_ids)}/{len(ids)} closed" + (f"  open: {shown}" if open_ids else ""))
     if parked:
         print(f"WAITING_ON_HUMAN={','.join(parked)}")

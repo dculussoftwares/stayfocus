@@ -71,7 +71,10 @@ gh pr create --repo dculussoftwares/stayfocus --base main --title "[<ID>] <issue
 ## Follow-ups"
 python3 scripts/backlog/board.py status N "In review"
 ```
-For `needs-human` stories use `Refs #N` instead of `Closes #N` (see the end).
+For `needs-human` stories use `Refs #N` instead of `Closes #N` (see the end). After the repo work is complete and the PR is open, mark the issue prepared for the human step:
+`gh label create prepared-for-human --repo dculussoftwares/stayfocus --color 7057ff --description "Agent preparation complete; human action remains" 2>/dev/null || true`
+`gh issue edit N --repo dculussoftwares/stayfocus --add-label prepared-for-human`
+Only add this label when the documented repo-side preparation is complete; an unprepared `needs-human` story must continue to block later waves.
 
 ## 8. CodeRabbit review loop
 Repeat until the merge gate (step 9) is met; at most 5 rounds.

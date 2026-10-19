@@ -58,8 +58,9 @@ M13 extras + v2 removal). Run it exactly like Phase 1: `/wave 17`, `/clear`, `/w
   extras, open questions). Every M11–M13 issue links it. References: `design/screens-v5/*.png`.
 - **Wave floor:** the redesign epics set `wave_floor: 17` in their front matter, so their waves follow Phase 1 even where
   a story has no dependencies (`scripts/backlog/waves.py`).
-- **Open `needs-human` stories** (M10-05, M10-06, M10-08) don't hold `NEXT_WAVE`: `waves.py --status` lists them as
-  `WAITING_ON_HUMAN`. Do the store screenshots in M10-05 after M12 lands, so they show the new look.
+- **Prepared `needs-human` stories** (M10-05, M10-06, M10-08) don't hold `NEXT_WAVE`: after repo-side preparation,
+  workers add the `prepared-for-human` label and `waves.py --status` lists them as `WAITING_ON_HUMAN`. An unprepared
+  human story still blocks later waves. Do the store screenshots in M10-05 after M12 lands, so they show the new look.
 - **Conflict spots:** many M11 stories add files under `core/ui/.../v5/` (no overlap) but share `core/ui` previews and
   baselines; M12 stories in one module share its `strings.xml`. Rebase before merging; re-record only your own baselines.
 - **Waves 18–20 are wide (7–8 stories).** Keep parallelism at 2–3 for the reviewers' sake; it just takes more rounds.

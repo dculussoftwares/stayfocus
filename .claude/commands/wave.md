@@ -13,7 +13,7 @@ don't paste large logs. Workers do the work in their own contexts and return a s
    - `git fetch origin && git switch main && git pull --ff-only origin main`
    - `python3 scripts/backlog/waves.py --status` → if wave $1 is later than `NEXT_WAVE`, stop: the earlier wave must
      finish first (say which stories are still open).
-     Stories listed in `WAITING_ON_HUMAN` are already prepared and don't count; mention them in the summary.
+     Stories listed in `WAITING_ON_HUMAN` have the `prepared-for-human` label and don't count; unprepared `needs-human` stories still block advancement. Mention waiting stories in the summary.
    - `python3 scripts/backlog/waves.py --wave $1` → one line per story: id, issue, state, size, needs-human, deps, title.
      Skip stories already CLOSED. If none are left, report "wave $1 already done" and stop.
 
