@@ -64,6 +64,20 @@ class V5ScreenSystemBarsTest {
     }
 
     @Test
+    fun changingTheScreenBelowKeepsTheTopScreensIcons() {
+        var belowDark by mutableStateOf(false)
+        composeRule.setContent {
+            V5Screen(darkContent = belowDark) {}
+            V5Screen(darkContent = true) {}
+        }
+        composeRule.runOnIdle { assertEquals(true to true, lightIcons()) }
+        belowDark = true
+        composeRule.runOnIdle { assertEquals(true to true, lightIcons()) }
+        belowDark = false
+        composeRule.runOnIdle { assertEquals(true to true, lightIcons()) }
+    }
+
+    @Test
     fun leavingTheLastV5ScreenRestoresTheWindow() {
         val before = composeRule.runOnIdle { lightIcons() }
         var show by mutableStateOf(true)

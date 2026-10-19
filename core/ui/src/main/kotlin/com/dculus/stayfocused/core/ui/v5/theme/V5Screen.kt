@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalView
@@ -72,7 +74,7 @@ private class WindowBars(
 
 // Plain class on purpose: requests are removed by identity.
 private class IconRequest(
-    val lightIcons: Boolean,
+    var lightIcons: Boolean,
 )
 
 // Main thread only. The newest live request wins; when it leaves, the one below it is applied again.
@@ -90,13 +92,13 @@ private fun SystemBarIcons(lightIcons: Boolean) {
     val view = LocalView.current
     if (view.isInEditMode) return
     val window = view.context.findActivity()?.window ?: return
-    DisposableEffect(window, view, lightIcons) {
+    val request = remember(window, view) { IconRequest(lightIcons) }
+    DisposableEffect(request) {
         val controller = WindowCompat.getInsetsController(window, view)
         val bars =
             windowBars.getOrPut(window) {
                 WindowBars(controller.isAppearanceLightStatusBars, controller.isAppearanceLightNavigationBars)
             }
-        val request = IconRequest(lightIcons)
         bars.requests += request
         controller.applyIcons(bars)
         onDispose {
@@ -104,6 +106,12 @@ private fun SystemBarIcons(lightIcons: Boolean) {
             controller.applyIcons(bars)
             if (bars.requests.isEmpty()) windowBars.remove(window)
         }
+    }
+    // A changed preference keeps the request's stack position, so an underlying screen can't override the top one.
+    SideEffect {
+        if (request.lightIcons == lightIcons) return@SideEffect
+        request.lightIcons = lightIcons
+        windowBars[window]?.let { WindowCompat.getInsetsController(window, view).applyIcons(it) }
     }
 }
 
