@@ -4,8 +4,8 @@
 A story's wave = 1 + the highest wave among its dependencies, but never below its epic's `wave_floor` (optional epic
 front matter; the v5 redesign epics start at wave 17, after Phase 1). Stories in the same wave don't depend on each
 other, so they can run in parallel; a wave starts only when every story in the earlier waves is closed, except
-`needs-human` stories that a worker has already claimed and prepared (assigned issue); a person finishes those, so
-they don't hold NEXT_WAVE (`--status` prints them as WAITING_ON_HUMAN).
+`needs-human` stories whose handoff PR (`Refs #N`) has merged, and stories that depend on them; a person finishes
+those, so they don't hold NEXT_WAVE (`--status` prints them as WAITING_ON_HUMAN).
 
 Usage:
   python3 scripts/backlog/waves.py            # rewrite the block between the waves markers
@@ -116,15 +116,26 @@ def issue_states() -> dict[str, dict]:
     """Story id -> {number, state} from GitHub (titles start with "[Mx-yy]")."""
     out = subprocess.run(
         ["gh", "issue", "list", "--repo", "dculussoftwares/stayfocus", "--state", "all", "--limit", "300",
-         "--label", "type:story", "--json", "number,title,state,assignees"],
+         "--label", "type:story", "--json", "number,title,state"],
         check=True, capture_output=True, text=True,
     ).stdout
     states = {}
     for issue in json.loads(out):
         m = re.match(r"^\[(M\d+-\d+)\]", issue["title"])
         if m:
-            states[m[1]] = {"number": issue["number"], "state": issue["state"], "claimed": bool(issue["assignees"])}
+            states[m[1]] = {"number": issue["number"], "state": issue["state"]}
     return states
+
+
+def handed_over(number: int) -> bool:
+    """True when a merged PR says `Refs #<number>`: story-worker's handoff PR for a needs-human story (its repo part
+    is done and the issue stays open for a person). Claiming the issue alone isn't enough: the worker may have stopped."""
+    out = subprocess.run(
+        ["gh", "pr", "list", "--repo", "dculussoftwares/stayfocus", "--state", "merged", "--limit", "5",
+         "--search", f'"Refs #{number}" in:body', "--json", "number"],
+        check=True, capture_output=True, text=True,
+    ).stdout
+    return bool(json.loads(out))
 
 
 def print_wave(n: int) -> None:
@@ -148,12 +159,13 @@ def print_status() -> None:
     waiting: set[str] = set()  # open stories that only a person can move forward
     for lv, ids in waves(stories).items():
         open_ids = [i for i in ids if states.get(i, {}).get("state") != "CLOSED"]
-        # Waiting on a person: a needs-human story a worker has already claimed (assigned) and prepared, or any open
-        # story with a dependency that is waiting on a person. An unclaimed needs-human story whose dependencies are
-        # done still needs a worker first, so it keeps holding NEXT_WAVE.
+        # Waiting on a person: a needs-human story whose handoff PR has merged (`Refs #N`), or any open story with a
+        # dependency that is waiting on a person. A needs-human story without a handoff still needs a worker first,
+        # so it keeps holding NEXT_WAVE.
         for i in open_ids:
-            claimed_human = "needs-human" in stories[i]["labels"] and states.get(i, {}).get("claimed")
-            if claimed_human or any(d in waiting for d in stories[i]["deps"]):
+            if any(d in waiting for d in stories[i]["deps"]):
+                waiting.add(i)
+            elif "needs-human" in stories[i]["labels"] and i in states and handed_over(states[i]["number"]):
                 waiting.add(i)
         human = [i for i in open_ids if i in waiting]
         parked += human
