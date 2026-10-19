@@ -16,6 +16,15 @@
     <string name="sf_password_show_description">Show password</string>
     <string name="sf_password_hide_description">Hide password</string>
     <string name="sf_loading">Loading</string>
+    <string name="v5_toggle_on">On</string>
+    <string name="v5_toggle_off">Off</string>
+    <string name="v5_password_show">Show</string>
+    <string name="v5_password_hide">Hide</string>
+    <string name="v5_tag_protection_off">Protection off</string>
+    <string name="v5_tag_request">Request</string>
+    <string name="v5_tag_ai_draft">AI draft</string>
+    <string name="v5_online">Online</string>
+    <string name="v5_offline">Offline</string>
     <string name="sf_dial_minutes">MINUTES</string>
     <string name="sf_dial_hour">HOUR</string>
     <string name="sf_dial_hours">HOURS</string>
