@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import java.util.WeakHashMap
 
 /**
@@ -61,15 +62,28 @@ fun Modifier.v5StatusBarPadding(extra: Dp = 0.dp): Modifier =
 fun Modifier.v5NavigationBarPadding(extra: Dp = 0.dp): Modifier =
     windowInsetsPadding(WindowInsets.navigationBars).padding(bottom = extra)
 
-/** Icon appearance a window had before the first live [V5Screen], restored when the last one leaves. */
-private class SavedBars(
+/** Icon appearance a window had before the first live [V5Screen], plus the live screens' requests, oldest first. */
+private class WindowBars(
     val status: Boolean,
     val navigation: Boolean,
-    var screens: Int = 0,
+) {
+    val requests = mutableListOf<IconRequest>()
+}
+
+// Plain class on purpose: requests are removed by identity.
+private class IconRequest(
+    val lightIcons: Boolean,
 )
 
-// Main thread only. Counting keeps a screen that is still fading out from undoing the one fading in.
-private val savedBars = WeakHashMap<Window, SavedBars>()
+// Main thread only. The newest live request wins; when it leaves, the one below it is applied again.
+private val windowBars = WeakHashMap<Window, WindowBars>()
+
+private fun WindowInsetsControllerCompat.applyIcons(bars: WindowBars) {
+    val top = bars.requests.lastOrNull()
+    // "Appearance light" means dark icons, for a light bar background.
+    isAppearanceLightStatusBars = if (top != null) !top.lightIcons else bars.status
+    isAppearanceLightNavigationBars = if (top != null) !top.lightIcons else bars.navigation
+}
 
 @Composable
 private fun SystemBarIcons(lightIcons: Boolean) {
@@ -78,21 +92,17 @@ private fun SystemBarIcons(lightIcons: Boolean) {
     val window = view.context.findActivity()?.window ?: return
     DisposableEffect(window, view, lightIcons) {
         val controller = WindowCompat.getInsetsController(window, view)
-        val saved =
-            savedBars.getOrPut(window) {
-                SavedBars(controller.isAppearanceLightStatusBars, controller.isAppearanceLightNavigationBars)
+        val bars =
+            windowBars.getOrPut(window) {
+                WindowBars(controller.isAppearanceLightStatusBars, controller.isAppearanceLightNavigationBars)
             }
-        saved.screens++
-        // "Appearance light" means dark icons, for a light bar background.
-        controller.isAppearanceLightStatusBars = !lightIcons
-        controller.isAppearanceLightNavigationBars = !lightIcons
+        val request = IconRequest(lightIcons)
+        bars.requests += request
+        controller.applyIcons(bars)
         onDispose {
-            saved.screens--
-            if (saved.screens == 0) {
-                savedBars.remove(window)
-                controller.isAppearanceLightStatusBars = saved.status
-                controller.isAppearanceLightNavigationBars = saved.navigation
-            }
+            bars.requests -= request
+            controller.applyIcons(bars)
+            if (bars.requests.isEmpty()) windowBars.remove(window)
         }
     }
 }

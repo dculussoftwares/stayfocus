@@ -1,9 +1,11 @@
 package com.dculus.stayfocused.core.ui.v5.theme
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.captureToImage
@@ -38,7 +40,7 @@ class V5ShowcaseScreenshotTest {
     }
 
     @Test
-    @Config(qualifiers = "w411dp-h900dp-mdpi")
+    @Config(qualifiers = "w411dp-h1100dp-mdpi")
     fun v5ShowcaseGradients() {
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
@@ -46,6 +48,18 @@ class V5ShowcaseScreenshotTest {
             }
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/v5/V5ShowcaseGradients.png")
+    }
+
+    @Test
+    fun upperRadialLayerIsDrawnOverTheBase() {
+        composeRule.setContent {
+            Box(Modifier.size(200.dp, 400.dp).background(V5Gradients.pinkHero.adaptive))
+        }
+        val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
+        // The white .3 highlight is centred at the top edge, so it lightens the middle but not the corner.
+        val highlighted = Color(bitmap.getPixel(bitmap.width / 2, 2)).green
+        val corner = Color(bitmap.getPixel(1, 2)).green
+        assertTrue("highlight $highlighted vs corner $corner", highlighted - corner > 0.1f)
     }
 
     @Test

@@ -33,6 +33,23 @@ class V5TokensTest {
     }
 
     @Test
+    fun `grain is spatially coherent noise and tiles without a seam`() {
+        val size = GRAIN_TILE_SIZE
+        val alpha = grainPixels().map { (it ushr 24).toDouble() }
+        val mean = alpha.average()
+
+        // Lag-1 correlation along rows and columns, including the wrap from the last pixel to the first.
+        fun correlation(neighbour: (Int) -> Int): Double {
+            val covariance = alpha.indices.sumOf { (alpha[it] - mean) * (alpha[neighbour(it)] - mean) }
+            return covariance / alpha.sumOf { (it - mean) * (it - mean) }
+        }
+        val across = correlation { (it / size) * size + (it % size + 1) % size }
+        val down = correlation { ((it / size + 1) % size) * size + it % size }
+        assertTrue("across=$across", across > 0.15)
+        assertTrue("down=$down", down > 0.15)
+    }
+
+    @Test
     fun `type scale follows the spec`() {
         val t = v5Type()
         assertEquals(92.sp, t.displayXL.fontSize)
