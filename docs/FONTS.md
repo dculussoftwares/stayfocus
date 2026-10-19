@@ -5,6 +5,7 @@
 | Display | Clash Display 600 | ITF Free Font License | No | Space Grotesk (OFL) |
 | Body | Satoshi 400/500/700/800 | ITF Free Font License | No | Plus Jakarta Sans (OFL) |
 | Labels, numbers | Geist Mono 500/600/700 | SIL OFL 1.1 | Yes | n/a |
+| v5 (all text) | Urbanist 200-700 (variable `wght` 100-900) | SIL OFL 1.1 | Yes, `core/ui/src/main/res/font/urbanist.ttf` | n/a |
 
 ## Licence finding (M1-04)
 
@@ -28,3 +29,12 @@ release-pipeline decision for a later story.
   `core/ui/src/main/assets/fonts/`. At runtime `loadFontFamilies()` uses them when all files are present and
   otherwise falls back to the substitutes. The project builds and tests (including screenshots) without them.
 - Screenshot baselines are recorded with the substitutes, so CI is deterministic.
+
+## v5 redesign: Urbanist (M11-01)
+
+The v5 design system (`com.dculus.stayfocused.core.ui.v5`) uses a single family, **Urbanist** by Corey Hu, from
+[Google Fonts](https://fonts.google.com/specimen/Urbanist) (SIL OFL 1.1, so it can live in this repo). It is bundled as
+the variable font `core/ui/src/main/res/font/urbanist.ttf` (`wght` 100-900) and loaded at weights 200, 300, 400, 500, 600
+and 700 by `UrbanistFontFamily`. Nothing is downloaded at runtime and there is no fallback, so screenshots and devices
+render the same. The licence is `docs/licenses/Urbanist-OFL.txt`. The fonts in the table above stay until the v2 design
+system is removed (M13-07).
