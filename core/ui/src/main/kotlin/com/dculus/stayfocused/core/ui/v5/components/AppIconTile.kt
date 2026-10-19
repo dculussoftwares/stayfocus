@@ -145,7 +145,7 @@ fun AppIconStack(
 ) {
     val shape = RoundedCornerShape(size * TILE_RADIUS_RATIO)
     Row(
-        modifier = modifier.padding(start = -STACK_OVERLAP),
+        modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(STACK_OVERLAP),
     ) {
         pkgs.take(STACK_MAX).forEach { pkg ->

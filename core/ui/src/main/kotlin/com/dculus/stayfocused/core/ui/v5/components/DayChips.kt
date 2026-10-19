@@ -5,12 +5,12 @@ package com.dculus.stayfocused.core.ui.v5.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -57,8 +57,9 @@ fun toggleDay(
 
 /**
  * Seven 40 dp day circles, M T W T F S S (Monday first), spread across the width. On = ink with a white letter,
- * off = `track` with an ink letter. At least one day stays on. Each chip is a 48 dp checkbox named with the full
- * day name.
+ * off = `track` with an ink letter. At least one day stays on. Each chip is a checkbox named with the full day name,
+ * 48 dp square where the width allows it (7 × 48 = 336 dp); on narrower rows the slots share the width equally so
+ * the row never overflows.
  */
 @Composable
 fun DayChips(
@@ -68,31 +69,35 @@ fun DayChips(
 ) {
     val c = V5Theme.colors
     val locale = LocalConfiguration.current.locales[0]
-    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        dayLabels.forEach { (day, labelRes) ->
-            val on = day in selected
-            val name = day.getDisplayName(TextStyle.FULL, locale)
-            Box(
-                modifier =
-                    Modifier
-                        .sizeIn(minWidth = V5Theme.spacing.minTouchTarget, minHeight = V5Theme.spacing.minTouchTarget)
-                        .toggleable(value = on, role = Role.Checkbox) { onSelectedChange(toggleDay(selected, day)) }
-                        .semantics { contentDescription = name },
-                contentAlignment = Alignment.Center,
-            ) {
+    val minTouch = V5Theme.spacing.minTouchTarget
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val slot = minOf(minTouch, maxWidth / dayLabels.size)
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            dayLabels.forEach { (day, labelRes) ->
+                val on = day in selected
+                val name = day.getDisplayName(TextStyle.FULL, locale)
                 Box(
                     modifier =
                         Modifier
-                            .size(40.dp)
-                            .clip(CircleShape)
-                            .background(if (on) c.ink else c.track),
+                            .size(width = slot, height = minTouch)
+                            .toggleable(value = on, role = Role.Checkbox) { onSelectedChange(toggleDay(selected, day)) }
+                            .semantics { contentDescription = name },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        text = stringResource(labelRes),
-                        style = V5Theme.type.label,
-                        color = if (on) c.onGradient else c.ink,
-                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .size(minOf(40.dp, slot))
+                                .clip(CircleShape)
+                                .background(if (on) c.ink else c.track),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = stringResource(labelRes),
+                            style = V5Theme.type.label,
+                            color = if (on) c.onGradient else c.ink,
+                        )
+                    }
                 }
             }
         }

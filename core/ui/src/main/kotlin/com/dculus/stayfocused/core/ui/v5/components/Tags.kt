@@ -84,7 +84,7 @@ fun TargetTag(
     val clickable =
         if (onClick != null) {
             Modifier
-                .sizeIn(minHeight = V5Theme.spacing.minTouchTarget)
+                .sizeIn(minWidth = V5Theme.spacing.minTouchTarget, minHeight = V5Theme.spacing.minTouchTarget)
                 .clickable(role = Role.Button, onClick = onClick)
                 .semantics(mergeDescendants = true) {}
         } else {

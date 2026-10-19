@@ -1,11 +1,18 @@
 package com.dculus.stayfocused.core.ui.v5.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
@@ -16,14 +23,20 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.assertLeftPositionInRootIsEqualTo
 import androidx.compose.ui.test.assertWidthIsAtLeast
+import androidx.compose.ui.test.assertWidthIsEqualTo
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.v5.theme.V5Colors
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
@@ -71,9 +84,12 @@ class V5ControlsBehaviourTest {
     }
 
     @Test
+    @Config(qualifiers = "w400dp")
     fun dayChipsKeepOneDayOnAndAre48dpTargets() {
         var selected by mutableStateOf(setOf(DayOfWeek.MONDAY, DayOfWeek.TUESDAY))
-        composeRule.setContent { V5Theme { DayChips(selected, { selected = it }) } }
+        composeRule.setContent {
+            V5Theme { Box(Modifier.width(340.dp)) { DayChips(selected, { selected = it }) } }
+        }
 
         composeRule.onNodeWithContentDescription("Monday").assertTouchTarget48().performClick()
         assertEquals(setOf(DayOfWeek.TUESDAY), selected)
@@ -81,6 +97,22 @@ class V5ControlsBehaviourTest {
         assertEquals(setOf(DayOfWeek.TUESDAY), selected)
         composeRule.onNodeWithContentDescription("Tuesday").assertIsOn()
         composeRule.onNodeWithContentDescription("Monday").assertIsOff()
+    }
+
+    @Test
+    fun dayChipsFitANarrowRowWithoutOverflowingOrSquashing() {
+        composeRule.setContent {
+            V5Theme { Box(Modifier.width(288.dp)) { DayChips(setOf(DayOfWeek.MONDAY), {}) } }
+        }
+        DayOfWeek.entries.forEach { day ->
+            val name = day.getDisplayName(java.time.format.TextStyle.FULL, java.util.Locale.getDefault())
+            val node =
+                composeRule
+                    .onNodeWithContentDescription(name)
+                    .assertWidthIsAtLeast(40.dp)
+                    .assertHeightIsAtLeast(48.dp)
+            assertTrue("$name overflows", node.getUnclippedBoundsInRoot().right <= 288.dp)
+        }
     }
 
     // ---- V5Toggle ----
@@ -105,6 +137,13 @@ class V5ControlsBehaviourTest {
 
         composeRule.onNode(hasRole(Role.Switch)).assertIsNotEnabled().performClick()
         assertFalse(checked)
+    }
+
+    @Test
+    fun readOnlyDisabledToggleIsExposedAsDisabledSwitch() {
+        composeRule.setContent { V5Theme { V5Toggle(checked = true, onCheckedChange = null, enabled = false) } }
+
+        composeRule.onNode(hasRole(Role.Switch)).assertIsNotEnabled().assertIsOn()
     }
 
     // ---- SegmentedPill ----
@@ -199,8 +238,35 @@ class V5ControlsBehaviourTest {
         var clicks = 0
         composeRule.setContent { V5Theme { Column { TargetTag("Aarav's phone", onClick = { clicks++ }) } } }
 
-        composeRule.onNode(hasRole(Role.Button)).assertHeightIsAtLeast(48.dp).performClick()
+        composeRule.onNode(hasRole(Role.Button)).assertTouchTarget48().performClick()
         assertEquals(1, clicks)
+    }
+
+    @Test
+    fun shortClickableTargetTagStillHasA48dpTarget() {
+        composeRule.setContent { V5Theme { Column { TargetTag("A", onClick = {}) } } }
+
+        composeRule.onNode(hasRole(Role.Button)).assertTouchTarget48()
+    }
+
+    // ---- AppIconStack ----
+
+    @Test
+    fun appIconStackOverlapsByEightDpWithoutLeadingGap() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                V5Theme {
+                    Column {
+                        AppIconStack(listOf("a.one"), 38.dp, Modifier.testTag("one"))
+                        AppIconStack(listOf("a.one", "b.two"), 38.dp, Modifier.testTag("two"))
+                        AppIconStack(listOf("a.one", "b.two", "c.three", "d.four"), 38.dp, Modifier.testTag("many"))
+                    }
+                }
+            }
+        }
+        composeRule.onNodeWithTag("one").assertWidthIsEqualTo(38.dp).assertLeftPositionInRootIsEqualTo(0.dp)
+        composeRule.onNodeWithTag("two").assertWidthIsEqualTo(68.dp).assertLeftPositionInRootIsEqualTo(0.dp)
+        composeRule.onNodeWithTag("many").assertWidthIsEqualTo(98.dp)
     }
 
     // ---- V5TextField ----
@@ -221,6 +287,15 @@ class V5ControlsBehaviourTest {
     }
 
     // ---- AppIconTile colours ----
+
+    @Test
+    fun passwordFieldsAlwaysUseThePasswordKeyboardAndKeepOtherOptions() {
+        val custom = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Done)
+        val password = passwordAwareKeyboardOptions(isPassword = true, options = custom)
+        assertEquals(KeyboardType.Password, password.keyboardType)
+        assertEquals(ImeAction.Done, password.imeAction)
+        assertSame(custom, passwordAwareKeyboardOptions(isPassword = false, options = custom))
+    }
 
     @Test
     fun knownPackagesUseBrandColours() {

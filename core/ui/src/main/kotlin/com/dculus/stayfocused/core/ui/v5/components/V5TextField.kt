@@ -58,7 +58,7 @@ fun V5TextField(
     keyboardActions: KeyboardActions = KeyboardActions.Default,
 ) {
     val c = V5Theme.colors
-    var revealed by remember { mutableStateOf(false) }
+    var revealed by remember(isPassword) { mutableStateOf(false) }
     val masked = isPassword && !revealed
     val textStyle = V5Theme.type.body.copy(fontSize = 16.sp, color = c.ink)
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -80,12 +80,7 @@ fun V5TextField(
                 textStyle = textStyle,
                 cursorBrush = SolidColor(c.ink),
                 visualTransformation = if (masked) PasswordVisualTransformation() else VisualTransformation.None,
-                keyboardOptions =
-                    if (isPassword && keyboardOptions == KeyboardOptions.Default) {
-                        KeyboardOptions(keyboardType = KeyboardType.Password)
-                    } else {
-                        keyboardOptions
-                    },
+                keyboardOptions = passwordAwareKeyboardOptions(isPassword, keyboardOptions),
                 keyboardActions = keyboardActions,
                 modifier =
                     Modifier
@@ -137,6 +132,15 @@ fun V5TextField(
         }
     }
 }
+
+/**
+ * Keyboard options for the field: a password field always uses [KeyboardType.Password] (so the IME doesn't suggest or
+ * learn the secret), whatever else the caller sets (IME action, capitalisation …).
+ */
+internal fun passwordAwareKeyboardOptions(
+    isPassword: Boolean,
+    options: KeyboardOptions,
+): KeyboardOptions = if (isPassword) options.copy(keyboardType = KeyboardType.Password) else options
 
 @Preview(widthDp = 390, heightDp = 420)
 @Composable

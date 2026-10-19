@@ -50,7 +50,8 @@ private const val GLASS_FILL_ALPHA = 0.2f
 private val ContainerPadding = 4.dp
 
 /**
- * Pill container with [options] of equal width; the selected one is a white pill with ink text. Each option is a
+ * Pill container with [options] of equal width (meant for 2–4 short labels; each option gets `width / count`, so
+ * keep the count low enough for ≥ 48 dp per option); the selected one is a white pill with ink text. Each option is a
  * `Role.Tab` with its selected state. The container is at least 48 dp tall so every option is a 48 dp target
  * (for [SegmentedPillSize.Small] the container is 2 dp taller than the prototype's 46).
  */
