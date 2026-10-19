@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.model.BreakSession
+import com.dculus.stayfocused.core.model.DEFAULT_SCREEN_TIME_GOAL_MINS
 import com.dculus.stayfocused.core.model.FocusSession
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -29,6 +30,7 @@ private object Keys {
     val focusStartedAt = longPreferencesKey("focusSession.startedAt")
     val focusEndsAt = longPreferencesKey("focusSession.endsAt")
     val focusLengthMins = intPreferencesKey("focusSession.lengthMins")
+    val screenTimeGoalMins = intPreferencesKey("screenTimeGoalMins")
 }
 
 /** A session is only present when all three of its fields are stored. */
@@ -65,6 +67,9 @@ internal class DataStoreSettingsRepository
                     )
                 }.distinctUntilChanged()
 
+        override val screenTimeGoalMins: Flow<Int> =
+            store.data.map { it[Keys.screenTimeGoalMins] ?: DEFAULT_SCREEN_TIME_GOAL_MINS }.distinctUntilChanged()
+
         override suspend fun setOnboardingComplete(complete: Boolean) {
             store.edit { it[Keys.onboardingComplete] = complete }
         }
@@ -99,6 +104,11 @@ internal class DataStoreSettingsRepository
 
         override suspend fun setAiEnabled(enabled: Boolean) {
             store.edit { it[Keys.aiEnabled] = enabled }
+        }
+
+        override suspend fun setScreenTimeGoalMins(mins: Int) {
+            require(mins > 0) { "mins must be positive" }
+            store.edit { it[Keys.screenTimeGoalMins] = mins }
         }
 
         private fun Preferences.focusSession(): FocusSession? =

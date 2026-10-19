@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BreakSession
+import com.dculus.stayfocused.core.model.DEFAULT_SCREEN_TIME_GOAL_MINS
 import com.dculus.stayfocused.core.model.FocusSession
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.LockedApp
@@ -103,6 +104,10 @@ class FakeSettingsRepository(
 
     override val settings: Flow<AppSettings> = state
 
+    private val goalMins = MutableStateFlow(DEFAULT_SCREEN_TIME_GOAL_MINS)
+
+    override val screenTimeGoalMins: Flow<Int> = goalMins
+
     override suspend fun setOnboardingComplete(complete: Boolean) =
         state.update { it.copy(onboardingComplete = complete) }
 
@@ -113,6 +118,11 @@ class FakeSettingsRepository(
     override suspend fun setAccessibilityConsentAt(at: Instant?) = state.update { it.copy(accessibilityConsentAt = at) }
 
     override suspend fun setAiEnabled(enabled: Boolean) = state.update { it.copy(aiEnabled = enabled) }
+
+    override suspend fun setScreenTimeGoalMins(mins: Int) {
+        require(mins > 0) { "mins must be positive" }
+        goalMins.value = mins
+    }
 }
 
 class FakeLinkedDevicesRepository(
