@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.core.blocking.engine
 
 import android.util.Log
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
 import com.dculus.stayfocused.core.blocking.evaluator.CycleKey
@@ -381,18 +382,22 @@ class BlockingEngine
             }
             val list = allowlist.allowlist().also { cachedAllowlist = it }
             val ctx = context(pkg, now, inputs, list)
-            when (val decision = RuleEvaluator.evaluate(ctx)) {
+            val wait = nextWakeUp(ctx, inputs, now)
+            return when (val decision = RuleEvaluator.evaluate(ctx)) {
                 Decision.Allow -> {
+                    BlockingLog.log("Engine", "$pkg -> allow")
                     current.counting = true
                     clearShown(now)
+                    wait
                 }
 
                 is Decision.Block -> {
                     current.counting = false
                     enforce(current, decision, now)
+                    // Re-check soon: the block screen can disappear while the app stays "in front" for the tracker.
+                    minOf(wait, BLOCKED_RECHECK_MS)
                 }
             }
-            return nextWakeUp(ctx, inputs, now)
         }
 
         /**
@@ -412,9 +417,16 @@ class BlockingEngine
         ) {
             val key = Shown(current, decision.reason, decision.blockId, now)
             val previous = shown
-            if (previous != null && previous.copy(at = now) == key) return
+            val unchanged = previous != null && previous.copy(at = now) == key
+            if (unchanged && presenter.isShowing()) return
+            BlockingLog.log(
+                "Engine",
+                "${current.pkg} -> block ${decision.reason} (" +
+                    if (unchanged) "block screen is gone, showing it again)" else "new block)",
+            )
             shown = key
             presenter.show(current.pkg, decision)
+            if (unchanged) return
             // Not cancellable: an input change right now must not drop the record of a block that was shown.
             withContext(NonCancellable) {
                 try {
@@ -558,6 +570,7 @@ class BlockingEngine
             const val MAX_IDLE_MS = 30_000L
 
             private const val RETRY_MS = 5_000L
+            private const val BLOCKED_RECHECK_MS = 1_000L
             private const val DISMISS_GRACE_MS = 2_000L
         }
     }

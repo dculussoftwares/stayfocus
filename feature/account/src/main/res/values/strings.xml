@@ -22,6 +22,11 @@
     <string name="account_link_license">GPL-3.0 licence</string>
     <string name="account_link_oss">Open-source licences</string>
     <string name="account_link_privacy">Privacy policy</string>
+    <!-- TEMPORARY (debug builds only), removed with BlockingLog -->
+    <string name="account_share_log">Share blocking log (temporary)</string>
+    <string name="account_share_log_subject">Stay Focused blocking log</string>
+    <string name="account_share_log_empty">No blocking log yet. Turn the accessibility service on and try blocking an app first.</string>
+    <string name="account_share_log_chooser">Share blocking log</string>
     <string name="account_version">v%1$s</string>
     <string name="account_sign_out">Sign out</string>
     <string name="account_delete">Delete account and all data</string>

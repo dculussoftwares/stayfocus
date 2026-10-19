@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import com.dculus.stayfocused.core.blocking.BlockingLog
+import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
@@ -26,6 +28,7 @@ import javax.inject.Singleton
  * Which path each API level uses is documented in `docs/blocking/block-screen-launch.md`.
  */
 @Singleton
+@Suppress("TooManyFunctions") // one small function per step of the launch
 class BlockScreenLauncher
     @Inject
     constructor(
@@ -33,12 +36,17 @@ class BlockScreenLauncher
         private val decisionSource: BlockDecisionSource,
         private val clock: Clock,
         private val extras: Optional<BlockScreenExtras>,
+        private val tracker: ForegroundAppTracker,
     ) : BlockPresenter {
         private val handler = Handler(Looper.getMainLooper())
         private var service: AccessibilityService? = null
-        private var overlay: AccessibilityOverlay? = null
+
+        @Volatile private var overlay: AccessibilityOverlay? = null
         private var lastToken = 0L
         private var pendingCheck: Runnable? = null
+
+        /** True from [show] until the launch is settled (activity visible, overlay up, or cancelled). */
+        @Volatile private var launching = false
 
         init {
             // The activity made it to the screen (possibly late): the fallback overlay must not stay on top of it.
@@ -56,10 +64,15 @@ class BlockScreenLauncher
             service = null
         }
 
+        override fun isShowing(): Boolean = launching || BlockScreenState.visible || overlay != null
+
         override fun show(
             pkg: String,
             decision: Decision.Block,
         ) {
+            launching = true
+            tracker.onBlockScreenShown()
+            BlockingLog.log("Launcher", "show $pkg ${decision.reason}")
             handler.post { showOnMain(pkg, decision) }
         }
 
@@ -70,6 +83,7 @@ class BlockScreenLauncher
 
         /** Drops the pending launch check, makes a late-starting activity finish, and removes the overlay. */
         private fun invalidate() {
+            launching = false
             BlockScreenState.activeToken = 0L
             cancelCheck()
             removeOverlay()
@@ -84,20 +98,32 @@ class BlockScreenLauncher
             pkg: String,
             decision: Decision.Block,
         ) {
-            val svc = service ?: return
+            val svc =
+                service ?: run {
+                    launching = false
+                    BlockingLog.log("Launcher", "no accessibility service attached, cannot show $pkg")
+                    return
+                }
             cancelCheck()
             val token = ++lastToken
             BlockScreenState.activeToken = token
             val request = BlockRequest(pkg, appLabel(pkg), decision, token)
-            svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
-            if (!startBlockActivity(request)) {
-                showOverlay(svc, request)
+            val homed = svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+            val started = startBlockActivity(request)
+            BlockingLog.log("Launcher", "home=$homed activityStarted=$started token=$token")
+            // Home did not happen: the blocked app is still in front, so cover it right now.
+            if (!started || !homed) showOverlay(svc, request)
+            if (!started) {
+                launching = false
                 return
             }
             val check =
                 Runnable {
                     pendingCheck = null
-                    if (!BlockScreenState.visible && BlockScreenState.activeToken == token) showOverlay(svc, request)
+                    launching = false
+                    val visible = BlockScreenState.visible
+                    BlockingLog.log("Launcher", "launch check: activityVisible=$visible token=$token")
+                    if (!visible && BlockScreenState.activeToken == token) showOverlay(svc, request)
                 }
             pendingCheck = check
             handler.postDelayed(check, LAUNCH_CHECK_MS)
@@ -124,17 +150,23 @@ class BlockScreenLauncher
             svc: AccessibilityService,
             request: BlockRequest,
         ) {
+            BlockingLog.log("Launcher", "overlay shown for ${request.pkg}")
             overlay?.remove()
-            overlay =
+            // Stored before add(): a failed attachment reports through onRemoved() while add() is still running,
+            // and that must clear this very reference (otherwise isShowing() would see an overlay that isn't there).
+            lateinit var created: AccessibilityOverlay
+            created =
                 AccessibilityOverlay(
                     svc,
                     request,
                     decisionSource,
                     clock,
                     extras.orElse(null),
-                    onRemoved = { overlay = null },
+                    onRemoved = { if (overlay === created) overlay = null },
                     onFinished = { BlockScreenState.activeToken = 0L },
-                ).also { it.add() }
+                )
+            overlay = created
+            created.add()
         }
 
         private fun appLabel(pkg: String): String? =

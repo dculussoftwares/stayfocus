@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
@@ -57,6 +59,9 @@ import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 internal const val ACCOUNT_SIGN_IN_TAG = "account_sign_in"
@@ -118,6 +123,8 @@ internal fun AccountRoute(
     var batteryVisible by rememberSaveable { mutableStateOf(false) }
     var licencesVisible by rememberSaveable { mutableStateOf(false) }
     val version = remember(context) { context.versionName() }
+    val scope = rememberCoroutineScope()
+    val logEmpty = stringResource(R.string.account_share_log_empty)
     AccountScreen(
         state = state,
         version = version,
@@ -144,6 +151,18 @@ internal fun AccountRoute(
         onLicences = { licencesVisible = true },
         onSignOut = viewModel::signOut,
         onDeleteAccount = viewModel::startDelete,
+        // TEMPORARY, debug builds only: remove with BlockingLog
+        onShareLog =
+            if (BlockingLog.isEnabled(context)) {
+                {
+                    scope.launch {
+                        val log = withContext(Dispatchers.IO) { BlockingLog.tail() }
+                        context.shareBlockingLog(log ?: logEmpty)
+                    }
+                }
+            } else {
+                null
+            },
     )
     DeleteAccountSheet(
         state = deleteState,
@@ -200,6 +219,16 @@ internal fun AccountRoute(
 private fun Context.versionName(): String =
     runCatching { packageManager.getPackageInfo(packageName, 0).versionName }.getOrNull() ?: ""
 
+/** TEMPORARY: shares the newest blocking-debug log lines as text (no file provider needed). */
+private fun Context.shareBlockingLog(log: String) {
+    val send =
+        Intent(Intent.ACTION_SEND)
+            .setType("text/plain")
+            .putExtra(Intent.EXTRA_SUBJECT, getString(R.string.account_share_log_subject))
+            .putExtra(Intent.EXTRA_TEXT, log)
+    open(Intent.createChooser(send, getString(R.string.account_share_log_chooser)))
+}
+
 private fun Context.open(intent: Intent) {
     try {
         startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -220,6 +249,7 @@ internal fun AccountScreen(
     onSignOut: () -> Unit,
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
+    onShareLog: (() -> Unit)? = null,
 ) {
     val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
@@ -278,6 +308,13 @@ internal fun AccountScreen(
                     color = colors.tertiary,
                 )
             }
+        }
+        if (onShareLog != null) {
+            OutlineButton(
+                text = stringResource(R.string.account_share_log),
+                onClick = onShareLog,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         if (state.user != null) {
             OutlineButton(

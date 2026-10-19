@@ -49,6 +49,20 @@ class ForegroundAppTrackerTest {
         assertSame(first, tracker.foreground.value)
     }
 
+    @Test fun firstSamePackageEventAfterTheBlockScreenIsShownIsAReEntry() {
+        tracker.onWindowStateChanged("com.a", "A")
+        val first = tracker.foreground.value
+        tracker.onBlockScreenShown()
+        env.now = 5_000
+        tracker.onWindowStateChanged("com.a", "A")
+        assertEquals(ForegroundApp("com.a", 5_000), tracker.foreground.value)
+        // Only the first one: later repeats are duplicates again.
+        env.now = 6_000
+        tracker.onWindowStateChanged("com.a", "A")
+        assertEquals(ForegroundApp("com.a", 5_000), tracker.foreground.value)
+        assertEquals(false, first == tracker.foreground.value)
+    }
+
     @Test fun systemUiIsIgnored() {
         tracker.onWindowStateChanged("com.a", "A")
         tracker.onWindowStateChanged("com.android.systemui", "NotificationShade")
