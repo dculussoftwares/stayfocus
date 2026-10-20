@@ -15,8 +15,11 @@ data object OnboardingGraph
 @Serializable
 data object Welcome
 
+/** [createAccount]: open in create-account mode (first run); the Account and link entry points open to sign in. */
 @Serializable
-data object SignIn
+data class SignIn(
+    val createAccount: Boolean = false,
+)
 
 @Serializable
 data object Permissions

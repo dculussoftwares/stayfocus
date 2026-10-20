@@ -7,6 +7,7 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import androidx.navigation.toRoute
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.SignIn
@@ -14,7 +15,10 @@ import com.dculus.stayfocused.core.navigation.Welcome
 
 fun NavController.navigateToOnboarding(navOptions: NavOptions? = null) = navigate(OnboardingGraph, navOptions)
 
-fun NavController.navigateToSignIn(navOptions: NavOptions? = null) = navigate(SignIn, navOptions)
+fun NavController.navigateToSignIn(
+    createAccount: Boolean = false,
+    navOptions: NavOptions? = null,
+) = navigate(SignIn(createAccount), navOptions)
 
 fun NavController.navigateToPermissions(navOptions: NavOptions? = null) = navigate(Permissions, navOptions)
 
@@ -30,9 +34,10 @@ fun NavGraphBuilder.onboardingGraph(
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
     navigation<OnboardingGraph>(startDestination = Welcome) {
-        composable<Welcome> { WelcomeRoute(onContinue = { navController.navigateToSignIn() }) }
-        composable<SignIn> {
+        composable<Welcome> { WelcomeRoute(onContinue = { navController.navigateToSignIn(createAccount = true) }) }
+        composable<SignIn> { entry ->
             SignInRoute(
+                startInCreateAccount = entry.toRoute<SignIn>().createAccount,
                 onContinue = { navController.navigateToPermissions() },
                 onBack = { navController.popBackStack() },
                 viewModel = signInViewModel?.invoke() ?: hiltViewModel(),

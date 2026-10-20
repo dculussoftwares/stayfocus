@@ -18,6 +18,7 @@
     <string name="auth_continue">Continue</string>
     <string name="auth_have_account">Already have an account?</string>
     <string name="auth_subtitle">Your account keeps blocks and linked phones in sync.</string>
+    <string name="auth_google_glyph" translatable="false">G</string>
     <string name="auth_google">Continue with Google</string>
     <string name="auth_or_email">or with email</string>
     <string name="auth_email_placeholder">Email</string>

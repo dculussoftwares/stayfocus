@@ -40,7 +40,7 @@ internal enum class AuthError(
 internal enum class ErrorSlot { Email, Password, General }
 
 internal data class SignInUiState(
-    val mode: AuthMode = AuthMode.CreateAccount,
+    val mode: AuthMode = AuthMode.SignIn,
     val email: String = "",
     val password: String = "",
     val error: AuthError? = null,

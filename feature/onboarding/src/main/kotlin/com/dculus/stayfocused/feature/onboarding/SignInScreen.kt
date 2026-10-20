@@ -22,9 +22,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +36,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -72,6 +76,7 @@ internal const val SIGN_IN_ERROR_TAG = "sign_in_error"
 
 @Composable
 internal fun SignInRoute(
+    startInCreateAccount: Boolean,
     onContinue: () -> Unit,
     onBack: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
@@ -82,6 +87,12 @@ internal fun SignInRoute(
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
     val currentOnContinue by rememberUpdatedState(onContinue)
+    // Applied once per entry; the view model keeps the mode across rotation.
+    var modeApplied by rememberSaveable { mutableStateOf(false) }
+    if (!modeApplied) {
+        modeApplied = true
+        if (startInCreateAccount && state.mode == AuthMode.SignIn) viewModel.toggleMode()
+    }
     LaunchedEffect(viewModel, toast, resources) {
         viewModel.events.collect { event ->
             when (event) {
@@ -279,9 +290,11 @@ private fun ModeSwitch(
 @Composable
 private fun GoogleMark() {
     Text(
-        "G",
+        stringResource(R.string.auth_google_glyph),
         style = V5Theme.type.bodyL.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
         color = V5Theme.colors.google,
+        // Decorative: the button label already says "Continue with Google".
+        modifier = Modifier.clearAndSetSemantics {},
     )
 }
 

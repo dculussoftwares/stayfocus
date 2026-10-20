@@ -52,7 +52,7 @@ class SignInScreenTest {
 
     @Test
     fun signUp() {
-        screen(SignInUiState())
+        screen(SignInUiState(mode = AuthMode.CreateAccount))
         composeRule.onNodeWithText("Already have an account? Sign in").assertIsDisplayed()
         composeRule.onNodeWithText("Continue with Google").assertIsDisplayed()
         composeRule.onNodeWithText("or with email").assertIsDisplayed()
@@ -80,7 +80,7 @@ class SignInScreenTest {
 
     @Test
     fun createModeHidesForgotPassword() {
-        screen(SignInUiState())
+        screen(SignInUiState(mode = AuthMode.CreateAccount))
         composeRule.onNodeWithTag(SIGN_IN_FORGOT_TAG).assertDoesNotExist()
     }
 
