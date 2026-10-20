@@ -3,8 +3,8 @@
 package com.dculus.stayfocused.core.ui.v5.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,6 +56,7 @@ import androidx.compose.ui.window.DialogWindowProvider
 import com.dculus.stayfocused.core.ui.v5.theme.V5Easing
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.core.ui.v5.theme.V5_SHEET_DURATION_MS
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -127,6 +129,10 @@ fun V5BottomSheet(
     }
 }
 
+private class SnapBack {
+    var job: Job? = null
+}
+
 private class DismissLatch {
     var fired = false
 }
@@ -175,19 +181,18 @@ private fun DraggablePanel(
 ) {
     val colors = V5Theme.colors
     val scope = rememberCoroutineScope()
-    val dragOffset = remember { Animatable(0f) }
+    // Drag deltas are applied synchronously; only the release snap-back animates (and a new drag cancels it).
+    var dragPx by remember { mutableFloatStateOf(0f) }
+    val snapBack = remember { SnapBack() }
     var heightPx by remember { mutableIntStateOf(0) }
-    val dragState =
-        rememberDraggableState { delta ->
-            // Only downwards: the sheet never lifts off its resting position.
-            scope.launch { dragOffset.snapTo((dragOffset.value + delta).coerceAtLeast(0f)) }
-        }
+    // Only downwards: the sheet never lifts off its resting position.
+    val dragState = rememberDraggableState { delta -> dragPx = (dragPx + delta).coerceAtLeast(0f) }
     Column(
         Modifier
             .testTag(V5_SHEET_PANEL_TAG)
             .fillMaxWidth()
             .onSizeChanged { heightPx = it.height }
-            .offset { IntOffset(0, dragOffset.value.roundToInt()) }
+            .offset { IntOffset(0, dragPx.roundToInt()) }
             .clip(V5Theme.shapes.sheet)
             .background(colors.surfaceRaised)
             // Consume taps on the panel so they never reach the scrim (no click semantics).
@@ -195,11 +200,21 @@ private fun DraggablePanel(
             .draggable(
                 state = dragState,
                 orientation = Orientation.Vertical,
+                onDragStarted = { snapBack.job?.cancel() },
                 onDragStopped = { velocity ->
-                    if (shouldDismissSheetDrag(dragOffset.value, heightPx.toFloat(), velocity)) {
+                    if (shouldDismissSheetDrag(dragPx, heightPx.toFloat(), velocity)) {
                         onDismiss()
                     } else {
-                        dragOffset.animateTo(0f, tween(SNAP_BACK_MILLIS, easing = V5Easing))
+                        snapBack.job =
+                            scope.launch {
+                                animate(
+                                    dragPx,
+                                    0f,
+                                    animationSpec = tween(SNAP_BACK_MILLIS, easing = V5Easing),
+                                ) { value, _ ->
+                                    dragPx = value
+                                }
+                            }
                     }
                 },
             ).semantics {

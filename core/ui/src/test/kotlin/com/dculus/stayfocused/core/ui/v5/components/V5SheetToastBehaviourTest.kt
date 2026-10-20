@@ -101,17 +101,19 @@ class V5SheetBehaviourTest {
     }
 
     @Test
-    fun shortSlowDragSnapsBack() {
+    fun shortSlowDragSnapsBackToRestingPosition() {
         setSheet()
-        composeRule.onNodeWithTag(V5_SHEET_PANEL_TAG).performTouchInput {
-            val start = center
-            down(start)
+        val panel = composeRule.onNodeWithTag(V5_SHEET_PANEL_TAG)
+        val restingTop = panel.getUnclippedBoundsInRoot().top
+        panel.performTouchInput {
+            down(center)
             moveBy(Offset(0f, 8.dp.toPx()), delayMillis = 400)
             up()
         }
         composeRule.waitForIdle()
         assertEquals(0, dismissals)
         composeRule.onNodeWithText("SHEET BODY").assertExists()
+        assertEquals(restingTop.value, panel.getUnclippedBoundsInRoot().top.value, 0.5f)
     }
 
     @Test
