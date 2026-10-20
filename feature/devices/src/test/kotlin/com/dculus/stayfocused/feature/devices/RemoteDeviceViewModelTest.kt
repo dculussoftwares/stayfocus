@@ -220,6 +220,20 @@ class RemoteDeviceViewModelTest {
         }
 
     @Test
+    fun lockAllAndUnlockAllSendTheirCommandsWithAnEmptyPayload() =
+        runTest {
+            val viewModel = viewModel()
+            viewModel.ready()
+            viewModel.lockAll()
+            viewModel.unlockAll()
+            assertEquals(
+                listOf(CommandType.LOCK_ALL.name, CommandType.UNLOCK_ALL.name),
+                commands.sent.map { it.type },
+            )
+            assertEquals(listOf(emptyMap<String, Any>(), emptyMap()), commands.sent.map { it.payload })
+        }
+
+    @Test
     fun remindSendsTheAlertsPermission() =
         runTest {
             devices.devices.value = listOf(device(id = "kid", alerts = listOf(alert())))
@@ -310,6 +324,21 @@ class RemoteDeviceViewModelTest {
             viewModel.ready()
             viewModel.messages.test {
                 viewModel.stopFocus()
+                assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
+            }
+        }
+
+    @Test
+    fun aRejectedLockAllIsReportedLikeAnyCommand() =
+        runTest {
+            commands.rejectSends = true
+            val viewModel = viewModel()
+            viewModel.ready()
+            viewModel.messages.test {
+                viewModel.lockAll()
+                assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
+                commands.rejectSends = true
+                viewModel.unlockAll()
                 assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
             }
         }

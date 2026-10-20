@@ -141,7 +141,7 @@ service cloud.firestore {
               && isStr(p.pkg, 255))
         || (type == 'START_FOCUS' && p.keys().hasOnly(['mins']) && p.keys().hasAll(['mins'])
             && isIntIn(p.mins, 1, 480))
-        || (type in ['STOP_FOCUS', 'SYNC_BLOCKS'] && p.keys().size() == 0)
+        || (type in ['STOP_FOCUS', 'SYNC_BLOCKS', 'LOCK_ALL', 'UNLOCK_ALL'] && p.keys().size() == 0)
         || (type == 'APPROVE_REQUEST' && p.keys().hasOnly(['reqId', 'mins']) && p.keys().hasAll(['reqId', 'mins'])
             && isStr(p.reqId, 128) && isIntIn(p.mins, 1, 480))
         || (type == 'DENY_REQUEST' && p.keys().hasOnly(['reqId']) && p.keys().hasAll(['reqId'])
@@ -197,7 +197,7 @@ service cloud.firestore {
         allow read: if isParent(uid) || isChildOf(resource.data);
         // The child reports its own status (and mirrors its focus end time); nothing else on the device doc is client-writable.
         allow update: if isChildOf(resource.data)
-          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt', 'osVersion'])
+          && onlyChanges(['battery', 'charging', 'currentApp', 'online', 'lastSeen', 'focusEndsAt', 'osVersion', 'allLocked'])
           // The status fields are always present (approveLink creates them); the child may not delete them.
           && request.resource.data.keys().hasAll(['battery', 'charging', 'currentApp', 'online', 'lastSeen'])
           && (!('battery' in request.resource.data) || request.resource.data.battery == null
@@ -208,6 +208,7 @@ service cloud.firestore {
               || isStr(request.resource.data.currentApp, 255))
           && (!('osVersion' in request.resource.data) || request.resource.data.osVersion == null
               || isStr(request.resource.data.osVersion, 50))
+          && (!('allLocked' in request.resource.data) || request.resource.data.allLocked is bool)
           && isOptTimestamp(request.resource.data, 'lastSeen')
           && lastSeenIsNowIfChanged()
           && focusEndsAtIsValid();
@@ -229,7 +230,8 @@ service cloud.firestore {
             && request.resource.data.keys().hasOnly(['type', 'payload', 'createdAt', 'status'])
             && request.resource.data.keys().hasAll(['type', 'payload', 'createdAt', 'status'])
             && request.resource.data.type in ['BLOCK_APP', 'UNBLOCK_APP', 'START_FOCUS', 'STOP_FOCUS',
-                                              'APPROVE_REQUEST', 'DENY_REQUEST', 'SYNC_BLOCKS', 'REMIND_PERMISSION']
+                                              'APPROVE_REQUEST', 'DENY_REQUEST', 'SYNC_BLOCKS', 'REMIND_PERMISSION',
+                                              'LOCK_ALL', 'UNLOCK_ALL']
             && request.resource.data.payload is map
             && payloadIsValid(request.resource.data.type, request.resource.data.payload)
             && request.resource.data.status == 'pending'

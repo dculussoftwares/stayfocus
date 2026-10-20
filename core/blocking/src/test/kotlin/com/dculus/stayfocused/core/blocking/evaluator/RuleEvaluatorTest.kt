@@ -77,6 +77,7 @@ private fun ctx(
     lockedApps: List<LockedApp> = emptyList(),
     breakSession: BreakSession? = null,
     focusSession: FocusSession? = null,
+    allLocked: Boolean = false,
     allowances: List<TemporaryAllowance> = emptyList(),
     usage: Map<String, AppUsageSnapshot> = emptyMap(),
     cycleStates: Map<CycleKey, CycleState> = emptyMap(),
@@ -88,6 +89,7 @@ private fun ctx(
     lockedApps = lockedApps,
     breakSession = breakSession,
     focusSession = focusSession,
+    allLocked = allLocked,
     allowances = allowances,
     usage = usage,
     cycleStates = cycleStates,
@@ -106,6 +108,7 @@ private fun focusUntil(end: Instant) = FocusSession(end.minusSeconds(600), end, 
 
 private fun lock(pkg: String = APP) = LockedApp(pkg, BlockTarget.ThisPhone, Instant.EPOCH)
 
+@Suppress("LargeClass")
 class RuleEvaluatorTest {
     private val wed = at("2026-10-07T12:30:00") // Wednesday
 
@@ -193,6 +196,48 @@ class RuleEvaluatorTest {
             blocked(BlockReason.FOCUS, null, end),
             RuleEvaluator.evaluate(ctx(wed, focusSession = focusUntil(end))),
         )
+    }
+
+    @Test
+    fun `all apps locked blocks every app with no end`() {
+        val expected = blocked(BlockReason.ALL_LOCKED, null, null)
+        assertEquals(expected, RuleEvaluator.evaluate(ctx(wed, allLocked = true)))
+        assertEquals(expected, RuleEvaluator.evaluate(ctx(wed, pkg = OTHER, allLocked = true)))
+    }
+
+    @Test
+    fun `all apps locked spares the allowlist but not other apps`() {
+        val allowlist = setOf("com.android.dialer", "com.stayfocused.kids")
+        for (pkg in allowlist) {
+            assertEquals(
+                Decision.Allow,
+                RuleEvaluator.evaluate(ctx(wed, pkg = pkg, allLocked = true, allowlist = allowlist)),
+            )
+        }
+        assertEquals(
+            blocked(BlockReason.ALL_LOCKED, null, null),
+            RuleEvaluator.evaluate(ctx(wed, pkg = APP, allLocked = true, allowlist = allowlist)),
+        )
+    }
+
+    @Test
+    fun `all apps locked outlasts a focus session and an allowance lifts it for that app`() {
+        val end = inst("2026-10-07T13:00:00")
+        assertEquals(
+            blocked(BlockReason.ALL_LOCKED, null, null),
+            RuleEvaluator.evaluate(ctx(wed, allLocked = true, focusSession = focusUntil(end))),
+        )
+        val allowance = TemporaryAllowance(APP, inst("2026-10-07T12:45:00"))
+        assertEquals(Decision.Allow, RuleEvaluator.evaluate(ctx(wed, allLocked = true, allowances = listOf(allowance))))
+        assertEquals(
+            allowance.until,
+            RuleEvaluator.nextEvaluationAt(ctx(wed, allLocked = true, allowances = listOf(allowance))),
+        )
+    }
+
+    @Test
+    fun `unlocking all apps allows them again`() {
+        assertEquals(Decision.Allow, RuleEvaluator.evaluate(ctx(wed, allLocked = false)))
     }
 
     @Test

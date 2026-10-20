@@ -187,7 +187,7 @@ Dial configs (from the prototype `DIALS`):
 ```
 users/{uid}                          { displayName, email, createdAt }                 parent profile
 users/{uid}/fcmTokens/{token}        { createdAt, platform: android }                  parent's devices, for push
-users/{uid}/devices/{deviceId}       { name, model, linkedAt, childUid, online, lastSeen, battery, charging, currentApp, osVersion?, focusEndsAt }
+users/{uid}/devices/{deviceId}       { name, model, linkedAt, childUid, online, lastSeen, battery, charging, currentApp, osVersion?, allLocked?, focusEndsAt }
 users/{uid}/devices/{id}/blocks/{blockId}     Block (target = this device)
 users/{uid}/devices/{id}/commands/{cmdId}     { type, payload, createdAt, status: pending|done|failed|expired, ackAt? }
 users/{uid}/devices/{id}/requests/{reqId}     { app, minutes, status: pending|approved|denied, createdAt, decidedAt? }
@@ -207,9 +207,9 @@ Deny by default. Parent = non-anonymous user with `auth.uid == uid`. Child = use
 |---|---|---|
 | `users/{uid}` | read; create (`displayName`, `email`, `createdAt` = server time); update `displayName`/`email`; no delete | none |
 | `fcmTokens/{token}` | read, write, delete own | none |
-| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead), `osVersion` (optional string <= 50, e.g. `15`); the status fields must stay present, so `approveLink` creates the doc with all of them: `online` and `charging` as booleans, `battery`, `currentApp` and `lastSeen` possibly null |
+| `devices/{id}` | read; **no create/update/delete** (Functions only) | read own; update only `battery`, `charging`, `currentApp`, `online`, `lastSeen` (server time), `focusEndsAt` (null or <= 8 h ahead), `osVersion` (optional string <= 50, e.g. `15`), `allLocked` (boolean: the child mirrors "all apps locked"; absent means false); the status fields must stay present, so `approveLink` creates the doc with all of them: `online` and `charging` as booleans, `battery`, `currentApp` and `lastSeen` possibly null |
 | `blocks` | read, create, update, delete (whitelisted keys, enums and the fields each block type needs; device must exist) | read |
-| `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list, payload fixed per type with bounded values) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
+| `commands` | read; create only (fixed schema, `status: pending`, server `createdAt`, type from the fixed list `BLOCK_APP`, `UNBLOCK_APP`, `START_FOCUS`, `STOP_FOCUS`, `APPROVE_REQUEST`, `DENY_REQUEST`, `SYNC_BLOCKS`, `REMIND_PERMISSION`, `LOCK_ALL`, `UNLOCK_ALL`, payload fixed per type with bounded values; `LOCK_ALL`/`UNLOCK_ALL` carry an empty payload) | read; update a `pending` command only: `status` (done/failed/expired) and `ackAt` |
 | `requests` | read; decide a pending one (`status` approved/denied, `decidedAt`) | read; create (`app` <= 255, `minutes` 1..480, `pending`) |
 | `alerts` | read; update only `dismissed` | read; create (`kind` from the list, `dismissed: false`) |
 | `usage/{date}` | read | read; write (`yyyy-MM-dd` id, `totalMins` 0..1440, <= 300 apps, optional `hourly`: exactly 24 whole numbers 0..120; older Kids builds omit it) |

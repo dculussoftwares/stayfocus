@@ -96,6 +96,48 @@ class StopFocusHandler
             }
     }
 
+/**
+ * `LOCK_ALL`: everything except the always-allowed apps (the same allow list as a focus session) is blocked with no
+ * end, until `UNLOCK_ALL`. The flag is stored on the phone (so it survives a reboot or process death) and mirrored to
+ * the device doc so the parent sees it.
+ */
+class LockAllHandler
+    @Inject
+    internal constructor(
+        private val settings: SettingsRepository,
+        private val remote: DeviceBlocksRepository,
+        private val targets: ReportTargetStore,
+        private val mirror: ParentRulesMirror,
+    ) : CommandHandler {
+        override val type = CommandType.LOCK_ALL
+
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked {
+                val target = targets.require()
+                settings.setAllLocked(true)
+                remote.setAllLocked(target, true)
+            }
+    }
+
+/** `UNLOCK_ALL`: clears the flag on the phone and on the device doc. Unlocking an unlocked phone changes nothing. */
+class UnlockAllHandler
+    @Inject
+    internal constructor(
+        private val settings: SettingsRepository,
+        private val remote: DeviceBlocksRepository,
+        private val targets: ReportTargetStore,
+        private val mirror: ParentRulesMirror,
+    ) : CommandHandler {
+        override val type = CommandType.UNLOCK_ALL
+
+        override suspend fun handle(command: RemoteCommand) =
+            mirror.whileLinked {
+                val target = targets.require()
+                settings.setAllLocked(false)
+                remote.setAllLocked(target, false)
+            }
+    }
+
 /** `SYNC_BLOCKS`: fetches the blocks from the server now instead of waiting for the listener. */
 class SyncBlocksHandler
     @Inject
@@ -126,6 +168,14 @@ internal abstract class ParentCommandHandlersModule {
     @Binds
     @IntoSet
     abstract fun stopFocus(impl: StopFocusHandler): CommandHandler
+
+    @Binds
+    @IntoSet
+    abstract fun lockAll(impl: LockAllHandler): CommandHandler
+
+    @Binds
+    @IntoSet
+    abstract fun unlockAll(impl: UnlockAllHandler): CommandHandler
 
     @Binds
     @IntoSet

@@ -30,6 +30,7 @@ private object Keys {
     val focusStartedAt = longPreferencesKey("focusSession.startedAt")
     val focusEndsAt = longPreferencesKey("focusSession.endsAt")
     val focusLengthMins = intPreferencesKey("focusSession.lengthMins")
+    val allLocked = booleanPreferencesKey("allLocked")
     val screenTimeGoalMins = intPreferencesKey("screenTimeGoalMins")
 }
 
@@ -62,6 +63,7 @@ internal class DataStoreSettingsRepository
                         onboardingComplete = prefs[Keys.onboardingComplete] ?: false,
                         accountSkipped = prefs[Keys.accountSkipped] ?: false,
                         focusSession = prefs.focusSession(),
+                        allLocked = prefs[Keys.allLocked] ?: false,
                         accessibilityConsentAt = prefs[Keys.accessibilityConsentAt]?.let(Instant::ofEpochMilli),
                         aiEnabled = prefs[Keys.aiEnabled] ?: false,
                     )
@@ -89,6 +91,12 @@ internal class DataStoreSettingsRepository
                     prefs[Keys.focusEndsAt] = session.endsAt.toEpochMilli()
                     prefs[Keys.focusLengthMins] = session.lengthMins
                 }
+            }
+        }
+
+        override suspend fun setAllLocked(locked: Boolean) {
+            store.edit { prefs ->
+                if (locked) prefs[Keys.allLocked] = true else prefs.remove(Keys.allLocked)
             }
         }
 

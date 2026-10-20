@@ -73,6 +73,8 @@ interface SettingsRepository {
 
     suspend fun setFocusSession(session: FocusSession?)
 
+    suspend fun setAllLocked(locked: Boolean)
+
     suspend fun setAccessibilityConsentAt(at: Instant?)
 
     suspend fun setAiEnabled(enabled: Boolean)

@@ -5,6 +5,7 @@ import com.dculus.stayfocused.core.data.settings.DataStoreSettingsRepository
 import com.dculus.stayfocused.core.model.AppSettings
 import com.dculus.stayfocused.core.model.FocusSession
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Before
@@ -122,6 +123,19 @@ abstract class SettingsRepositoryContract {
         }
 
     @Test
+    fun `all apps lock round trips and clears`() =
+        runTest {
+            repo.settings.test {
+                assertEquals(false, awaitItem().allLocked)
+                repo.setAllLocked(true)
+                assertEquals(true, awaitItem().allLocked)
+                repo.setAllLocked(false)
+                assertEquals(false, awaitItem().allLocked)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `goal must be positive`() =
         runTest {
             assertFailsWith<IllegalArgumentException> { repo.setScreenTimeGoalMins(0) }
@@ -156,4 +170,17 @@ class DataStoreSettingsRepositoryTest : SettingsRepositoryContract() {
     }
 
     override fun close() = ds.close()
+
+    @Test
+    fun `all apps lock survives a restart of the store`() =
+        runTest {
+            DataStoreSettingsRepository(ds.store).setAllLocked(true)
+            ds.close()
+            val reopened = TempDataStore(folder)
+            try {
+                assertEquals(true, DataStoreSettingsRepository(reopened.store).settings.first().allLocked)
+            } finally {
+                reopened.close()
+            }
+        }
 }
