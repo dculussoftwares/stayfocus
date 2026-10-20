@@ -72,7 +72,8 @@ class ChartMathTest {
         assertEquals(0.08f, barFraction(1, 20, GlassBarMode.Day), 0f)
         assertEquals(0.5f, barFraction(10, 20, GlassBarMode.Day), 0f)
         assertEquals(1f, barFraction(500, 20, GlassBarMode.Day), 0f)
-        assertEquals(0f, barFraction(5, 0, GlassBarMode.Day), 0.08f)
+        assertEquals(0f, barFraction(5, 0, GlassBarMode.Day), 0f)
+        assertEquals(0f, barFraction(5, -3, GlassBarMode.Day), 0f)
     }
 
     @Test

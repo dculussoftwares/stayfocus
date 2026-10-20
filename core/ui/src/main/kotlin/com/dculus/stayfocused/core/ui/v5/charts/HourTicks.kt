@@ -73,10 +73,10 @@ fun HourTicks(
         }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
+    val is24Hour = DateFormat.is24HourFormat(context)
     val labels =
-        remember(configuration) {
+        remember(configuration, is24Hour) {
             val locale = ConfigurationCompat.getLocales(configuration).get(0) ?: Locale.getDefault()
-            val is24Hour = DateFormat.is24HourFormat(context)
             AXIS_HOURS.map { hourLabel(it, locale, is24Hour) }
         }
     Column(

@@ -3,8 +3,15 @@ package com.dculus.stayfocused.core.ui.v5.charts
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsNode
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.test.assertContentDescriptionEquals
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -74,6 +81,37 @@ class V5ChartsBehaviourTest {
         }
         composeRule.onNodeWithContentDescription("zeros").assertExists()
         composeRule.onNodeWithContentDescription("big").assertExists()
+    }
+
+    @Test
+    fun usageRowReadsTheNameOnceBeforeTheTime() {
+        composeRule.setContent {
+            V5Theme {
+                UsageRow(
+                    icon = { Text("I", Modifier.semantics { contentDescription = "Instagram" }) },
+                    name = "Instagram",
+                    timeText = "52 min",
+                    fraction = 0.4f,
+                )
+            }
+        }
+        val texts =
+            composeRule
+                .onAllNodes(isRoot())
+                .onFirst()
+                .fetchSemanticsNode()
+                .let { root -> collectLabels(root) }
+        assertEquals(listOf("Instagram", "52 min"), texts)
+    }
+
+    private fun collectLabels(node: SemanticsNode): List<String> {
+        val own =
+            node.config
+                .getOrNull(SemanticsProperties.Text)
+                .orEmpty()
+                .map { it.text } +
+                node.config.getOrNull(SemanticsProperties.ContentDescription).orEmpty()
+        return own + node.children.flatMap { collectLabels(it) }
     }
 
     @Test

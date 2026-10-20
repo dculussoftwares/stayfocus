@@ -58,7 +58,7 @@ internal const val BAR_HIGH_MINUTES = 12
 internal const val DAY_BAR_MIN_FRACTION = 0.08f
 internal const val AVERAGE_LINE_MAX_FRACTION = 0.96f
 
-/** Height of a bar as a fraction of its track. Day: 0 stays 0, anything else at least 8 %; week: proportional. */
+/** Height of a bar as a fraction of its track. Day: empty stays empty (also without a valid [max]), else at least 8 %; week: proportional. */
 internal fun barFraction(
     value: Int,
     max: Int,
@@ -66,7 +66,7 @@ internal fun barFraction(
 ): Float {
     val f = clampedFraction(value.toFloat(), max.toFloat())
     return when (mode) {
-        GlassBarMode.Day -> if (value > 0) max(DAY_BAR_MIN_FRACTION, f) else 0f
+        GlassBarMode.Day -> if (f > 0f) max(DAY_BAR_MIN_FRACTION, f) else 0f
         GlassBarMode.Week -> f
     }
 }

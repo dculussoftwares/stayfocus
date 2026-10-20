@@ -2,6 +2,7 @@
 
 package com.dculus.stayfocused.core.ui.v5.charts
 
+import android.graphics.BlurMaskFilter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
@@ -24,11 +25,14 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipPath
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -50,12 +54,13 @@ private const val AVERAGE_LINE_ALPHA = 0.5f
 private const val AXIS_ALPHA = 0.8f
 private const val HIGHLIGHT_TOP_ALPHA = 0.6f
 private const val LOW_HIGHLIGHT_ALPHA = 0.5f
+private const val GLOW_ALPHA = 0.55f
+private const val GLOW_BLUR_DP = 14f
 
 /**
  * Glass bar chart of the Insights hero (violet card). One bar per entry of [values] in a translucent track, bar height
  * `value / max` (day: at least 8 % when non-zero), clamped to the track. Bar fills: the [highlightIndex] bar is orange
- * with a bright top rim (the prototype's 16 dp glow is clipped by the track, so it isn't visible outside the bar), the
- * others white → violet tint when "high" (week: all; day: above 12 min/h) or translucent white when low.
+ * with an orange glow (clipped by the track, as in the prototype), the others white → violet tint when "high" (week: all; day: above 12 min/h) or translucent white when low.
  * A dashed line marks [average] (same unit as [values]) and an "Avg [averageLabel]" pill sits above the top-right
  * corner of the chart (drawn 62 dp above the bars, over the card's headline row). [axisLabels] are spread evenly below.
  *
@@ -164,6 +169,31 @@ private fun DrawScope.drawBars(
     }
 }
 
+/**
+ * The prototype's `box-shadow: 0 0 16px rgba(orange, .55)` on the current bar: a blurred copy of the bar behind it.
+ * Like the prototype it is clipped to the track by the caller. Blur mask filters are ignored by the platform on API
+ * 26–27, where only the gradient and top rim remain.
+ */
+private fun DrawScope.drawGlow(
+    left: Float,
+    top: Float,
+    width: Float,
+    corner: CornerRadius,
+    color: Color,
+) {
+    drawIntoCanvas { canvas ->
+        val paint =
+            Paint().apply {
+                asFrameworkPaint().apply {
+                    isAntiAlias = true
+                    this.color = color.copy(alpha = GLOW_ALPHA).toArgb()
+                    maskFilter = BlurMaskFilter(GLOW_BLUR_DP.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+                }
+            }
+        canvas.drawRoundRect(left, top, left + width, size.height, corner.x, corner.y, paint)
+    }
+}
+
 private fun DrawScope.drawBarFill(
     style: BarStyle,
     left: Float,
@@ -173,6 +203,7 @@ private fun DrawScope.drawBarFill(
     colors: V5Colors,
 ) {
     val height = size.height - top
+    if (style == BarStyle.Current) drawGlow(left, top, width, corner, colors.orange)
     val brush =
         when (style) {
             BarStyle.Current -> {
