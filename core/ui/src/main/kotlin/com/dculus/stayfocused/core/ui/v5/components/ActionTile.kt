@@ -24,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradient
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
@@ -100,7 +101,7 @@ fun ActionTile(
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
-                    ControlIcons.plus,
+                    V5Icons.plus,
                     contentDescription = null,
                     tint = colors.ink,
                     modifier = Modifier.size(PlusIconSize),

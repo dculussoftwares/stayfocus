@@ -27,6 +27,7 @@
     <string name="v5_offline">Offline</string>
     <string name="v5_chart_avg">Avg</string>
     <string name="v5_ruler_drag_to_set">Drag to set</string>
+    <string name="v5_unit_min">min</string>
     <string name="sf_dial_minutes">MINUTES</string>
     <string name="sf_dial_hour">HOUR</string>
     <string name="sf_dial_hours">HOURS</string>

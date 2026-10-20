@@ -38,6 +38,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Colors
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import org.junit.Assert.assertEquals
@@ -217,7 +218,7 @@ class V5ControlsBehaviourTest {
         composeRule.setContent {
             V5Theme {
                 RoundIconButton(
-                    ControlIcons.bell,
+                    V5Icons.bell,
                     "Alerts",
                     { clicks++ },
                     showBadge = true,

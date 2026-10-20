@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.R
+import com.dculus.stayfocused.core.ui.v5.art.Spinner
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.core.ui.v5.theme.grainOverlay
@@ -199,7 +201,7 @@ fun PillButton(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             if (loading) {
-                V5Spinner(colors.content)
+                Spinner(color = colors.content)
             } else {
                 leadingIcon?.invoke()
             }
@@ -237,7 +239,7 @@ internal fun PillButtonLightPreview() {
     V5PreviewSurface(gradient = false) {
         val plus: @Composable () -> Unit = {
             Icon(
-                ControlIcons.plus,
+                V5Icons.plus,
                 contentDescription = null,
                 tint = V5Theme.colors.onGradient,
                 modifier = Modifier.size(18.dp),
