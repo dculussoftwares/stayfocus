@@ -30,26 +30,26 @@ class V5CardsScreenshotTest {
     }
 
     @Test
-    @Config(qualifiers = "w390dp-h420dp-xhdpi")
+    @Config(qualifiers = "w390dp-h640dp-xhdpi")
     fun cardsOnWhite() = capture("V5Cards") { V5CardPreview() }
 
     @Test
-    @Config(qualifiers = "w390dp-h520dp-xhdpi")
+    @Config(qualifiers = "w390dp-h640dp-xhdpi")
     fun cardsOnGradient() = capture("GlowCardsAndGlassTiles") { GlowCardPreview() }
 
     @Test
     @Config(qualifiers = "w390dp-h200dp-xhdpi")
-    fun glassTileBlurAndFallback() = capture("GlassTileBlurAndFallback") { GlassTileNoBlurPreview() }
+    fun glassTileBlurAndFallback() = capture("GlassTileBlurAndFallback") { GlassTilePreview() }
 
     @Test
     @Config(sdk = [26], qualifiers = "w390dp-h200dp-xhdpi")
-    fun glassTileOnApi26() = capture("GlassTileApi26") { GlassTileNoBlurPreview() }
+    fun glassTileOnApi26() = capture("GlassTileApi26") { GlassTilePreview() }
 
     @Test
-    @Config(qualifiers = "w390dp-h260dp-xhdpi")
-    fun actionTileRaised() = capture("ActionTileRaised") { ActionTilePreview() }
+    @Config(qualifiers = "w390dp-h480dp-xhdpi")
+    fun actionTilesOnWhite() = capture("ActionTiles") { ActionTilePreview() }
 
     @Test
-    @Config(qualifiers = "w390dp-h260dp-xhdpi")
-    fun actionTileGradient() = capture("ActionTileGradient") { ActionTileGradientPreview() }
+    @Config(qualifiers = "w390dp-h480dp-xhdpi")
+    fun actionTilesOnGradient() = capture("ActionTilesOnGradient") { ActionTileOnGradientPreview() }
 }

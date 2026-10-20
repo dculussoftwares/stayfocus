@@ -47,7 +47,7 @@ private const val CARD_SHADOW_ALPHA = 0.35f
 private val CardShadowElevation = 12.dp
 private const val GLASS_FILL_ALPHA = 0.18f
 private const val GLASS_BORDER_ALPHA = 0.3f
-private const val GLASS_BLUR_RADIUS = 16f
+private const val GLASS_BLUR_RADIUS = 16
 
 /**
  * Makes a card tappable: a ripple clipped to [shape] (so it never spills past the rounded corners) and, when
@@ -164,7 +164,7 @@ fun GlassTile(
             Box(
                 Modifier
                     .matchParentSize()
-                    .then(if (blur) Modifier.graphicsLayer { renderEffect = glassBlurEffect() } else Modifier)
+                    .then(if (blur) Modifier.glassBlur() else Modifier)
                     .background(white.copy(alpha = GLASS_FILL_ALPHA)),
             )
             Box(Modifier.matchParentSize().border(1.dp, white.copy(alpha = GLASS_BORDER_ALPHA), shape))
@@ -173,15 +173,23 @@ fun GlassTile(
     }
 }
 
-private fun glassBlurEffect() = BlurEffect(GLASS_BLUR_RADIUS, GLASS_BLUR_RADIUS, TileMode.Clamp)
+/** 16 dp blur (the effect takes pixels, so it is converted with the screen density). */
+private fun Modifier.glassBlur(): Modifier =
+    graphicsLayer {
+        val radius = GLASS_BLUR_RADIUS.dp.toPx()
+        renderEffect = BlurEffect(radius, radius, TileMode.Clamp)
+    }
 
-@Preview(widthDp = 390, heightDp = 420)
+private val PreviewBodyColor: Color
+    @Composable get() = V5Theme.colors.textSecondary
+
+@Preview(widthDp = 390, heightDp = 640)
 @Composable
 internal fun V5CardPreview() {
     V5PreviewSurface(gradient = false) {
         V5Card(Modifier.fillMaxWidth()) {
             Text("Active blocks", style = V5Theme.type.bodyL)
-            Text("2 of 3 on", style = V5Theme.type.body, color = V5Theme.colors.textSecondary)
+            Text("2 of 3 on", style = V5Theme.type.body, color = PreviewBodyColor)
         }
         V5Card(
             Modifier.fillMaxWidth(),
@@ -190,19 +198,27 @@ internal fun V5CardPreview() {
             onClick = {},
         ) {
             Text("Raised, tappable", style = V5Theme.type.bodyL)
-            Text("Ripple stays inside the corners", style = V5Theme.type.body, color = V5Theme.colors.textSecondary)
+            Text("Ripple stays inside the corners", style = V5Theme.type.body, color = PreviewBodyColor)
         }
         GlowCard(V5Gradients.violet, Modifier.fillMaxWidth(), onClick = {}) {
             Text("Blocked", style = V5Theme.type.bodyL)
             Text("12 times today", style = V5Theme.type.body)
         }
+        GlassTile(Modifier.fillMaxWidth()) {
+            Text("Glass on white", style = V5Theme.type.label, color = V5Theme.colors.ink)
+            Text("barely there", style = V5Theme.type.body, color = PreviewBodyColor)
+        }
     }
 }
 
-@Preview(widthDp = 390, heightDp = 520)
+@Preview(widthDp = 390, heightDp = 640)
 @Composable
 internal fun GlowCardPreview() {
     V5PreviewSurface(gradient = true) {
+        V5Card(Modifier.fillMaxWidth()) {
+            Text("White card on gradient", style = V5Theme.type.bodyL)
+            Text("2 of 3 on", style = V5Theme.type.body, color = PreviewBodyColor)
+        }
         GlowCard(V5Gradients.violet, Modifier.fillMaxWidth()) {
             Text("Insights", style = V5Theme.type.bodyL)
             Text("2h 33m on screen", style = V5Theme.type.body)
@@ -211,30 +227,31 @@ internal fun GlowCardPreview() {
             Text("Maya", style = V5Theme.type.cardTitle)
             Text("Online", style = V5Theme.type.body)
         }
-        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            GlassTile(Modifier.fillMaxWidth()) {
-                Text("Blocked", style = V5Theme.type.label)
-                Text("12", style = V5Theme.type.rule)
-            }
-            GlassTile(Modifier.fillMaxWidth(), onClick = {}) {
-                Text("Focus", style = V5Theme.type.label)
-                Text("1h 20m", style = V5Theme.type.rule)
-            }
+        GlassTile(Modifier.fillMaxWidth()) {
+            Text("Blocked", style = V5Theme.type.label)
+            Text("12", style = V5Theme.type.rule)
+        }
+        GlassTile(Modifier.fillMaxWidth(), onClick = {}) {
+            Text("Focus", style = V5Theme.type.label)
+            Text("1h 20m", style = V5Theme.type.rule)
         }
     }
 }
 
-/** The same tile with the blur switched off: what API 26–30 devices get. */
+/**
+ * A glass tile with the automatic blur choice (blurred on API 31+, plain below) above one with the blur forced off.
+ * Rendered at API 26 and API 34 so both paths of [glassBlurSupported] have a baseline.
+ */
 @Preview(widthDp = 390, heightDp = 200)
 @Composable
-internal fun GlassTileNoBlurPreview() {
+internal fun GlassTilePreview() {
     V5PreviewSurface(gradient = true) {
-        GlassTile(Modifier.fillMaxWidth(), blur = false) {
-            Text("Blocked", style = V5Theme.type.label)
+        GlassTile(Modifier.fillMaxWidth()) {
+            Text("Automatic", style = V5Theme.type.label)
             Text("12", style = V5Theme.type.rule)
         }
-        GlassTile(Modifier.fillMaxWidth(), blur = true) {
-            Text("Blocked", style = V5Theme.type.label)
+        GlassTile(Modifier.fillMaxWidth(), blur = false) {
+            Text("No blur", style = V5Theme.type.label)
             Text("12", style = V5Theme.type.rule)
         }
     }

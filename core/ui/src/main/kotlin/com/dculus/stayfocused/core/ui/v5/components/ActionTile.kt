@@ -3,8 +3,10 @@
 package com.dculus.stayfocused.core.ui.v5.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -108,10 +110,9 @@ fun ActionTile(
     }
 }
 
-@Preview(widthDp = 390, heightDp = 260)
 @Composable
-internal fun ActionTilePreview() {
-    V5PreviewSurface(gradient = false) {
+private fun ActionTilesPair(modifier: Modifier = Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ActionTile("Block\napps", onClick = {}, modifier = Modifier.fillMaxWidth()) {
             Box(
                 Modifier
@@ -126,13 +127,6 @@ internal fun ActionTilePreview() {
                 Text("Active blocks", style = V5Theme.type.bodyL)
             }
         }
-    }
-}
-
-@Preview(widthDp = 390, heightDp = 260)
-@Composable
-internal fun ActionTileGradientPreview() {
-    V5PreviewSurface(gradient = false) {
         ActionTile(
             "Take a\nbreak",
             onClick = {},
@@ -146,4 +140,18 @@ internal fun ActionTileGradientPreview() {
             )
         }
     }
+}
+
+/** Raised and gradient action tiles on the v5 background. */
+@Preview(widthDp = 390, heightDp = 480)
+@Composable
+internal fun ActionTilePreview() {
+    V5PreviewSurface(gradient = false) { ActionTilesPair() }
+}
+
+/** The same two tiles on the welcome gradient. */
+@Preview(widthDp = 390, heightDp = 480)
+@Composable
+internal fun ActionTileOnGradientPreview() {
+    V5PreviewSurface(gradient = true) { ActionTilesPair() }
 }
