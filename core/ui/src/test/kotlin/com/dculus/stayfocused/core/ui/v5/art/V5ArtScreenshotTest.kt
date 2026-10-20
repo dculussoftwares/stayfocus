@@ -48,5 +48,5 @@ class V5ArtScreenshotTest {
 
     @Test
     @Config(qualifiers = "w200dp-h60dp-xxhdpi")
-    fun indicators() = capture("art/Indicators") { IndicatorsPreview() }
+    fun indicators() = capture("art/SpinnerAndPulse") { IndicatorsPreview() }
 }
