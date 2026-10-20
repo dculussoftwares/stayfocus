@@ -46,6 +46,14 @@ fun durationLabel(minutes: Int): String =
         else -> "${minutes / 60} h"
     }
 
+/** v5 `fm()` (V5_SPEC §5): "45 min" / "1h" / "1h 30m". */
+fun v5Duration(minutes: Int): String =
+    when {
+        minutes < 60 -> "$minutes min"
+        minutes % 60 != 0 -> "${minutes / 60}h ${minutes % 60}m"
+        else -> "${minutes / 60}h"
+    }
+
 /** "every day" / "on weekdays" / "on Mon, Wed" / "no days". */
 fun daysSummary(days: DaysOfWeek): String =
     when {

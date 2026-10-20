@@ -21,6 +21,20 @@ class FormattersTest {
     }
 
     @Test
+    fun v5Duration() {
+        listOf(
+            1 to "1 min",
+            5 to "5 min",
+            59 to "59 min",
+            60 to "1h",
+            90 to "1h 30m",
+            240 to "4h",
+            480 to "8h",
+            495 to "8h 15m",
+        ).forEach { (m, e) -> assertEquals(e, v5Duration(m), "v5Duration($m)") }
+    }
+
+    @Test
     fun mmss() {
         listOf(
             0L to "0:00",
