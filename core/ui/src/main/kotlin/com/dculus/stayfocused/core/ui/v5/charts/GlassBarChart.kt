@@ -60,7 +60,8 @@ private const val GLOW_BLUR_DP = 14f
 /**
  * Glass bar chart of the Insights hero (violet card). One bar per entry of [values] in a translucent track, bar height
  * `value / max` (day: at least 8 % when non-zero), clamped to the track. Bar fills: the [highlightIndex] bar is orange
- * with an orange glow (clipped by the track, as in the prototype), the others white → violet tint when "high" (week: all; day: above 12 min/h) or translucent white when low.
+ * with an orange glow (clipped by the track, as in the prototype), the others white → violet tint when "high" (week:
+ * all; day: above 12 min/h) or translucent white when low.
  * A dashed line marks [average] (same unit as [values]) and an "Avg [averageLabel]" pill sits above the top-right
  * corner of the chart (drawn 62 dp above the bars, over the card's headline row). [axisLabels] are spread evenly below.
  *
