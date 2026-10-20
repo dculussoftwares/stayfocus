@@ -76,7 +76,8 @@ class SignInViewModelTest {
 
     @After fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = SignInViewModel(auth, settings)
+    // The screen opens in create-account mode (v5); most tests exercise the shipped sign-in mode.
+    private fun vm() = SignInViewModel(auth, settings).also { it.toggleMode() }
 
     private fun SignInViewModel.fill(
         email: String,
@@ -86,8 +87,8 @@ class SignInViewModelTest {
         onPasswordChange(password)
     }
 
-    @Test fun startsInSignInMode() {
-        assertEquals(AuthMode.SignIn, vm().state.value.mode)
+    @Test fun startsInCreateAccountMode() {
+        assertEquals(AuthMode.CreateAccount, SignInViewModel(auth, settings).state.value.mode)
     }
 
     @Test fun toggleSwitchesModeAndClearsError() {
