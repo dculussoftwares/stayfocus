@@ -2,12 +2,6 @@
 
 package com.dculus.stayfocused.core.ui.v5.art
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +9,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -31,7 +26,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.core.ui.v5.theme.rememberInfiniteMotion
-import com.dculus.stayfocused.core.ui.v5.theme.rememberV5AnimationsEnabled
 
 private const val SPINNER_MILLIS = 800
 private const val RING_ALPHA = 0.4f
@@ -48,7 +42,7 @@ fun Spinner(
     color: Color = Color.White,
 ) {
     val angle by rememberInfiniteMotion(from = 0f, to = 360f, durationMillis = SPINNER_MILLIS)
-    Canvas(modifier.size(18.dp).clearAndSetSemantics { }) {
+    Canvas(modifier.clearAndSetSemantics { }.wrapContentSize().size(18.dp)) {
         val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
         val inset = stroke.width / 2f
         val arcSize = Size(size.width - stroke.width, size.height - stroke.width)
@@ -76,7 +70,8 @@ private val PulseDotSize = 8.dp
 
 /**
  * 8 dp dot with an expanding, fading ring (`sfPulse`: scale .7 → 1.8, opacity .9 → 0, 1.8 s). With `pulse = false`, or
- * when animations are off, only the dot shows. Decorative: hidden from TalkBack (the online/offline label says it).
+ * when animations are off, only the dot shows (the ring rests fully faded). Decorative: hidden from TalkBack (the
+ * online/offline label says it).
  */
 @Composable
 fun PulseDot(
@@ -84,29 +79,26 @@ fun PulseDot(
     modifier: Modifier = Modifier,
     pulse: Boolean = true,
 ) {
-    val animate = pulse && rememberV5AnimationsEnabled()
-    Box(modifier.size(PulseDotSize).clearAndSetSemantics { }) {
-        if (animate) {
-            val transition = rememberInfiniteTransition(label = "pulse")
-            val progress by transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 1f,
-                animationSpec = infiniteRepeatable(tween(PULSE_MILLIS, easing = LinearEasing), RepeatMode.Restart),
-                label = "pulseProgress",
-            )
-            Canvas(
-                Modifier
-                    .size(PulseDotSize)
-                    .graphicsLayer {
-                        val scale = PULSE_START_SCALE + (PULSE_END_SCALE - PULSE_START_SCALE) * progress
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = PULSE_START_ALPHA * (1f - progress)
-                    },
-            ) { drawCircle(color) }
-        }
+    Box(modifier.clearAndSetSemantics { }.wrapContentSize().size(PulseDotSize)) {
+        if (pulse) PulseRing(color)
         Canvas(Modifier.size(PulseDotSize)) { drawCircle(color) }
     }
+}
+
+/** The expanding ring. Rests at the end of the cycle (fully faded) when animations are off. */
+@Composable
+private fun PulseRing(color: Color) {
+    val progress by rememberInfiniteMotion(from = 0f, to = 1f, durationMillis = PULSE_MILLIS, staticValue = 1f)
+    Canvas(
+        Modifier
+            .size(PulseDotSize)
+            .graphicsLayer {
+                val scale = PULSE_START_SCALE + (PULSE_END_SCALE - PULSE_START_SCALE) * progress
+                scaleX = scale
+                scaleY = scale
+                alpha = PULSE_START_ALPHA * (1f - progress)
+            },
+    ) { drawCircle(color) }
 }
 
 @Preview(widthDp = 200, heightDp = 60)

@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -64,7 +65,7 @@ fun ScanFrame(
         repeatMode = RepeatMode.Reverse,
         staticValue = SCAN_STATIC_FRACTION,
     )
-    Canvas(modifier.size(260.dp).clearAndSetSemantics { }) {
+    Canvas(modifier.clearAndSetSemantics { }.wrapContentSize().size(260.dp)) {
         val dp = density
         drawBrackets(bracketColor, dp)
         drawScanLine(position, dp, colors.pink, colors.pinkScan)

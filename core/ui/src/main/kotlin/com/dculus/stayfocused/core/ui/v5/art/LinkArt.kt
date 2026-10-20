@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -69,7 +70,7 @@ fun LinkArt(
         repeatMode = RepeatMode.Reverse,
         staticValue = 1f,
     )
-    Canvas(modifier.size(ART_WIDTH.dp, ART_HEIGHT.dp).clearAndSetSemantics { }) {
+    Canvas(modifier.clearAndSetSemantics { }.wrapContentSize().size(ART_WIDTH.dp, ART_HEIGHT.dp)) {
         val unit = size.width / ART_WIDTH
         drawPhone(PHONE_LEFT, rightPhone = false, unit)
         drawPhone(PHONE_RIGHT, rightPhone = true, unit)
