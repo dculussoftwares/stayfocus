@@ -7,7 +7,7 @@ tags:
     clearState: true
 - assertVisible: "Get started"
 - tapOn: "Get started"
-- assertVisible: "Sign in"
+- assertVisible: "Continue with Google"
 - tapOn: "Continue without an account"
 - assertVisible: "SYSTEM CHECK"
 - tapOn: "Continue for now"

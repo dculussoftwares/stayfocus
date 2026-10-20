@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.feature.onboarding
 
 import android.content.Context
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
@@ -58,6 +59,7 @@ internal sealed interface SignInEvent {
 
 private val EMAIL_PATTERN = Regex("""\S+@\S+\.\S+""")
 internal const val MIN_PASSWORD_LENGTH = 6
+internal const val CREATE_ACCOUNT_ARG = "createAccount"
 
 @HiltViewModel
 class SignInViewModel
@@ -65,8 +67,20 @@ class SignInViewModel
     constructor(
         private val auth: AuthRepository,
         private val settings: SettingsRepository,
+        // Holds the SignIn route arguments: `createAccount` picks the starting mode, also after process death.
+        savedState: SavedStateHandle = SavedStateHandle(),
     ) : ViewModel() {
-        private val mutableState = MutableStateFlow(SignInUiState())
+        private val mutableState =
+            MutableStateFlow(
+                SignInUiState(
+                    mode =
+                        if (savedState.get<Boolean>(CREATE_ACCOUNT_ARG) == true) {
+                            AuthMode.CreateAccount
+                        } else {
+                            AuthMode.SignIn
+                        },
+                ),
+            )
         internal val state: StateFlow<SignInUiState> = mutableState.asStateFlow()
 
         private val eventChannel = Channel<SignInEvent>(Channel.BUFFERED)

@@ -263,7 +263,7 @@ class AppNavigationTest {
     fun tabBarIsVisibleExactlyOnTabsRemoteDeviceAndAccount() {
         launch()
         val shown = listOf(Home, Block, Devices, Insights, RemoteDevice("device"), Account)
-        val hidden = listOf(BlockWizard(), LinkAdd, LinkScan, LinkConfirm("token"), Welcome, SignIn, Permissions)
+        val hidden = listOf(BlockWizard(), LinkAdd, LinkScan, LinkConfirm("token"), Welcome, SignIn(), Permissions)
         shown.forEach {
             navigate(it)
             assertTrue(tabBarVisible(), "tab bar should show on $it")

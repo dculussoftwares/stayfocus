@@ -12,7 +12,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -31,7 +31,7 @@ class SignInScreenTest {
 
     private fun show(content: @Composable () -> Unit) =
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content() } }
+            CompositionLocalProvider(LocalInspectionMode provides true) { V5Screen(darkContent = false) { content() } }
         }
 
     private fun screen(
@@ -45,16 +45,19 @@ class SignInScreenTest {
 
     @Test
     fun signIn() {
-        screen(SignInUiState())
+        screen(SignInUiState(mode = AuthMode.SignIn))
         composeRule.onNodeWithText("Forgot password?").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/SignIn.png")
     }
 
     @Test
-    fun createAccount() {
-        screen(SignInUiState(mode = AuthMode.CreateAccount, email = "me@example.com"))
-        composeRule.onNodeWithText("Have an account? Sign in").assertIsDisplayed()
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/SignInCreate.png")
+    fun signUp() {
+        screen(SignInUiState(mode = AuthMode.CreateAccount))
+        composeRule.onNodeWithText("Already have an account? Sign in").assertIsDisplayed()
+        composeRule.onNodeWithText("Continue with Google").assertIsDisplayed()
+        composeRule.onNodeWithText("or with email").assertIsDisplayed()
+        composeRule.onNodeWithTag(SIGN_IN_FORGOT_TAG).assertDoesNotExist()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/SignUp.png")
     }
 
     @Test
@@ -68,7 +71,7 @@ class SignInScreenTest {
     fun skipAndToggleInvokeCallbacks() {
         var skipped = 0
         var toggled = 0
-        screen(SignInUiState(), onSkip = { skipped++ }, onToggle = { toggled++ })
+        screen(SignInUiState(mode = AuthMode.SignIn), onSkip = { skipped++ }, onToggle = { toggled++ })
         composeRule.onNodeWithTag(SIGN_IN_TOGGLE_TAG).performScrollTo().performClick()
         composeRule.onNodeWithTag(SIGN_IN_SKIP_TAG).performScrollTo().performClick()
         assertEquals(1, toggled)
@@ -100,7 +103,7 @@ class SignInScreenTest {
     @Test
     fun generalFailureShowsAsItsOwnLine() {
         screen(SignInUiState(error = AuthError.Network))
-        composeRule.onNodeWithTag(SIGN_IN_GENERAL_ERROR_TAG).assertIsDisplayed()
+        composeRule.onNodeWithTag(SIGN_IN_ERROR_TAG).assertIsDisplayed()
         composeRule.onNodeWithText("No connection. Check your internet and try again.").assertIsDisplayed()
     }
 }
