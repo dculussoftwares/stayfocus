@@ -24,6 +24,9 @@ data class V5Colors(
     val orangeGlowDeep: Color = Color(0xFFFF7A2E),
     val orangeSoft: Color = Color(0xFFF7934F),
     val orangeGold: Color = Color(0xFFFEBE42),
+    /** Top and middle stops of the current-bar gradient (`#FFB27A → #FE7A2E → orange`). */
+    val orangeBarTop: Color = Color(0xFFFFB27A),
+    val orangeBarMid: Color = Color(0xFFFE7A2E),
     val violet: Color = Color(0xFF4B3FD1),
     val violetGlow: Color = Color(0xFF9B8CFF),
     val violetTint: Color = Color(0xFFE4DFFF),
