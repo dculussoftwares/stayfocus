@@ -2,7 +2,6 @@
 
 package com.dculus.stayfocused.core.ui.v5.components
 
-import android.provider.Settings
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -29,25 +28,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-
-/**
- * Whether infinite animations (spinner, pulse) may run. They stop in previews and screenshot tests
- * (`LocalInspectionMode`) and when the user turned animations off ("Remove animations",
- * `ANIMATOR_DURATION_SCALE == 0`).
- */
-@Composable
-internal fun rememberV5AnimationsEnabled(): Boolean {
-    if (LocalInspectionMode.current) return false
-    val resolver = LocalContext.current.contentResolver
-    return remember(resolver) {
-        Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
-    }
-}
+import com.dculus.stayfocused.core.ui.v5.theme.rememberInfiniteMotion
+import com.dculus.stayfocused.core.ui.v5.theme.rememberV5AnimationsEnabled
 
 /** Preview/screenshot surface: the v5 background, or the welcome gradient for controls that sit on a gradient. */
 @Composable
@@ -77,20 +62,7 @@ internal fun V5Spinner(
     color: Color,
     modifier: Modifier = Modifier,
 ) {
-    val animate = rememberV5AnimationsEnabled()
-    val angle =
-        if (animate) {
-            val transition = rememberInfiniteTransition(label = "spinner")
-            val turn by transition.animateFloat(
-                initialValue = 0f,
-                targetValue = 360f,
-                animationSpec = infiniteRepeatable(tween(SPINNER_MILLIS, easing = LinearEasing)),
-                label = "spinnerAngle",
-            )
-            turn
-        } else {
-            0f
-        }
+    val angle by rememberInfiniteMotion(from = 0f, to = 360f, durationMillis = SPINNER_MILLIS)
     Canvas(modifier.size(18.dp)) {
         val stroke = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round)
         val inset = stroke.width / 2f
