@@ -24,6 +24,7 @@ import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -175,6 +176,24 @@ class V5SheetBehaviourTest {
     }
 
     @Test
+    fun dragPastThresholdSnapsBackWhenCallerKeepsSheetOpen() {
+        composeRule.setContent {
+            V5Theme {
+                V5BottomSheet(
+                    visible = true,
+                    onDismiss = { dismissals++ },
+                ) { androidx.compose.material3.Text("SHEET BODY") }
+            }
+        }
+        val panel = composeRule.onNodeWithTag(V5_SHEET_PANEL_TAG)
+        val restingTop = panel.getUnclippedBoundsInRoot().top
+        panel.performTouchInput { swipeDown(durationMillis = 150) }
+        composeRule.waitForIdle()
+        assertEquals(1, dismissals)
+        assertEquals(restingTop.value, panel.getUnclippedBoundsInRoot().top.value, 0.5f)
+    }
+
+    @Test
     fun dragDismissRule() {
         assertTrue(shouldDismissSheetDrag(offsetPx = 301f, heightPx = 1000f, velocityPxPerSec = 0f))
         assertFalse(shouldDismissSheetDrag(offsetPx = 299f, heightPx = 1000f, velocityPxPerSec = 0f))
@@ -221,10 +240,16 @@ class V5ToastBehaviourTest {
         composeRule.mainClock.advanceTimeBy(400)
         composeRule.onNodeWithText("Block is on").assertExists()
 
-        composeRule.mainClock.advanceTimeBy(SF_TOAST_DURATION_MS - 600)
+        // Clock is at ~416 ms: just before the 2.6 s boundary the message is still set, just after it is cleared.
+        composeRule.mainClock.advanceTimeBy(SF_TOAST_DURATION_MS - 416 - 50)
+        composeRule.runOnUiThread { assertEquals("Block is on", controller.message) }
         composeRule.onNodeWithText("Block is on").assertExists()
 
-        composeRule.mainClock.advanceTimeBy(1_000)
+        composeRule.mainClock.advanceTimeBy(100)
+        composeRule.runOnUiThread { assertNull(controller.message) }
+
+        // AnimatedContent keeps the outgoing toast for its 150 ms fade-out.
+        composeRule.mainClock.advanceTimeBy(400)
         composeRule.onNodeWithText("Block is on").assertDoesNotExist()
     }
 }

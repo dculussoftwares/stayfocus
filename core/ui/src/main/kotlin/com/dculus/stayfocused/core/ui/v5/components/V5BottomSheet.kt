@@ -168,7 +168,7 @@ private fun V5SheetLayout(
             enter = slideInVertically(slide) { it },
             exit = slideOutVertically(slide) { it },
         ) {
-            DraggablePanel(onDismiss, contentSpacing, content)
+            DraggablePanel(onDismiss, { state.targetState }, contentSpacing, content)
         }
     }
 }
@@ -176,10 +176,10 @@ private fun V5SheetLayout(
 @Composable
 private fun DraggablePanel(
     onDismiss: () -> Unit,
+    isTargetVisible: () -> Boolean,
     contentSpacing: Dp,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val colors = V5Theme.colors
     val scope = rememberCoroutineScope()
     // Drag deltas are applied synchronously; only the release snap-back animates (and a new drag cancels it).
     var dragPx by remember { mutableFloatStateOf(0f) }
@@ -187,42 +187,72 @@ private fun DraggablePanel(
     var heightPx by remember { mutableIntStateOf(0) }
     // Only downwards: the sheet never lifts off its resting position.
     val dragState = rememberDraggableState { delta -> dragPx = (dragPx + delta).coerceAtLeast(0f) }
-    Column(
-        Modifier
-            .testTag(V5_SHEET_PANEL_TAG)
-            .fillMaxWidth()
-            .onSizeChanged { heightPx = it.height }
-            .offset { IntOffset(0, dragPx.roundToInt()) }
-            .clip(V5Theme.shapes.sheet)
-            .background(colors.surfaceRaised)
-            // Consume taps on the panel so they never reach the scrim (no click semantics).
-            .pointerInput(Unit) { detectTapGestures { } }
-            .draggable(
-                state = dragState,
-                orientation = Orientation.Vertical,
-                onDragStarted = { snapBack.job?.cancel() },
-                onDragStopped = { velocity ->
-                    if (shouldDismissSheetDrag(dragPx, heightPx.toFloat(), velocity)) {
-                        onDismiss()
-                    } else {
-                        snapBack.job =
-                            scope.launch {
-                                animate(
-                                    dragPx,
-                                    0f,
-                                    animationSpec = tween(SNAP_BACK_MILLIS, easing = V5Easing),
-                                ) { value, _ ->
-                                    dragPx = value
+    val settle = {
+        snapBack.job =
+            scope.launch {
+                animate(dragPx, 0f, animationSpec = tween(SNAP_BACK_MILLIS, easing = V5Easing)) { value, _ ->
+                    dragPx = value
+                }
+            }
+    }
+    V5SheetSurface(
+        modifier =
+            Modifier
+                .testTag(V5_SHEET_PANEL_TAG)
+                .onSizeChanged { heightPx = it.height }
+                .offset { IntOffset(0, dragPx.roundToInt()) },
+        contentSpacing = contentSpacing,
+        interactionModifier =
+            Modifier
+                // Consume taps on the panel so they never reach the scrim (no click semantics).
+                .pointerInput(Unit) { detectTapGestures { } }
+                .draggable(
+                    state = dragState,
+                    orientation = Orientation.Vertical,
+                    onDragStarted = { snapBack.job?.cancel() },
+                    onDragStopped = { velocity ->
+                        if (shouldDismissSheetDrag(dragPx, heightPx.toFloat(), velocity)) {
+                            onDismiss()
+                            // A caller that keeps the sheet open must not be left with a displaced panel.
+                            snapBack.job =
+                                scope.launch {
+                                    withFrameNanos {}
+                                    withFrameNanos {}
+                                    if (isTargetVisible()) settle()
                                 }
-                            }
+                        } else {
+                            settle()
+                        }
+                    },
+                ).semantics {
+                    dismiss {
+                        onDismiss()
+                        true
                     }
                 },
-            ).semantics {
-                dismiss {
-                    onDismiss()
-                    true
-                }
-            }.navigationBarsPadding()
+        content = content,
+    )
+}
+
+/**
+ * The sheet surface shared by [DraggablePanel] and the previews: `surfaceRaised` panel with the sheet's top radius,
+ * the handle and the 12 / 18 / 34 padding plus the navigation-bar inset. [modifier] is applied before the clip
+ * (size, offset), [interactionModifier] after the background.
+ */
+@Composable
+private fun V5SheetSurface(
+    contentSpacing: Dp,
+    modifier: Modifier = Modifier,
+    interactionModifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier
+            .fillMaxWidth()
+            .clip(V5Theme.shapes.sheet)
+            .background(V5Theme.colors.surfaceRaised)
+            .then(interactionModifier)
+            .navigationBarsPadding()
             .padding(start = SheetHorizontalPadding, end = SheetHorizontalPadding, top = SheetTopPadding)
             .padding(bottom = SheetBottomPadding),
         verticalArrangement = Arrangement.spacedBy(contentSpacing),
@@ -256,22 +286,12 @@ internal fun V5BottomSheetPreview() {
 /** Static sheet panel as in the "Take a break" sheet header, used by previews and screenshot tests. */
 @Composable
 internal fun V5SheetSample(modifier: Modifier = Modifier) {
-    val colors = V5Theme.colors
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(V5Theme.shapes.sheet)
-            .background(colors.surfaceRaised)
-            .padding(start = SheetHorizontalPadding, end = SheetHorizontalPadding, top = SheetTopPadding)
-            .padding(bottom = SheetBottomPadding),
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
-        SheetHandle(Modifier.align(Alignment.CenterHorizontally))
-        Text("Sheet title", style = V5Theme.type.heading, color = colors.ink)
+    V5SheetSurface(contentSpacing = 14.dp, modifier = modifier) {
+        Text("Sheet title", style = V5Theme.type.heading, color = V5Theme.colors.ink)
         Text(
             "Every distracting app locks. Calls and messages still work.",
             style = V5Theme.type.body,
-            color = colors.textSecondary,
+            color = V5Theme.colors.textSecondary,
         )
     }
 }
