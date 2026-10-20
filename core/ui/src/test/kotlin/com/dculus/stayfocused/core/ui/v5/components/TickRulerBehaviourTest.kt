@@ -161,6 +161,41 @@ class TickRulerBehaviourTest {
     }
 
     @Test
+    fun keyRepeatsBeforeTheParentRecomposesEachAdvanceOneStep() {
+        val seen = mutableListOf<Int>()
+        composeRule.setContent {
+            V5Theme {
+                Box(Modifier.width(300.dp)) {
+                    TickRuler(
+                        value = 45,
+                        onValueChange = { seen += it }, // the parent never feeds the value back
+                        scale = RulerScales.Limit,
+                        colors = TickRulerColors.onGradient(),
+                        contentDescription = "Minutes",
+                        valueDescription = "45 minutes",
+                        modifier = Modifier.testTag(tag),
+                    )
+                }
+            }
+        }
+        val node = composeRule.onNodeWithTag(tag)
+        node.requestFocus()
+        node.performKeyInput {
+            pressKey(Key.DirectionRight)
+            pressKey(Key.DirectionRight)
+        }
+        assertEquals(listOf(50, 55), seen)
+    }
+
+    @Test
+    fun setProgressRoundsFractionalTargetsToTheNearestStep() {
+        setRuler(RulerScales.Limit, start = 5)
+        composeRule.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.SetProgress) { it(47.5f) }
+        composeRule.waitForIdle()
+        assertEquals(50, value)
+    }
+
+    @Test
     fun keyStepMapsOnlyAdjustKeysOnKeyDown() {
         assertEquals(1, keyStepOf(KeyEventType.KeyDown, Key.VolumeUp))
         assertEquals(-1, keyStepOf(KeyEventType.KeyDown, Key.VolumeDown))

@@ -186,4 +186,19 @@ class RulerScaleTest {
         assertFailsWith<IllegalArgumentException> { RulerScale(5, 10, 0) }
         assertFailsWith<IllegalArgumentException> { RulerScale(5, 10, -1) }
     }
+
+    @Test
+    fun endpointsMustBeMultiplesOfTheStep() {
+        assertFailsWith<IllegalArgumentException> { RulerScale(1, 10, 2) }
+        assertFailsWith<IllegalArgumentException> { RulerScale(1, 10, 3) }
+        assertFailsWith<IllegalArgumentException> { RulerScale(0, 10, 3) }
+    }
+
+    @Test
+    fun fractionalTargetsSnapToTheNearestStep() {
+        assertEquals(50, RulerScales.Limit.snap(47.5))
+        assertEquals(45, RulerScales.Limit.snap(47.4))
+        assertEquals(240, RulerScales.Limit.snap(1e9))
+        assertEquals(5, RulerScales.Limit.snap(Double.NaN))
+    }
 }

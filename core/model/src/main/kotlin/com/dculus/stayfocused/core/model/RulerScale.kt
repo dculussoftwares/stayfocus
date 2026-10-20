@@ -17,6 +17,7 @@ data class RulerScale(
     init {
         require(step > 0) { "step must be positive" }
         require(max > min) { "max must be greater than min" }
+        require(min % step == 0 && max % step == 0) { "min and max must be multiples of step" }
     }
 
     /** Number of whole steps from [min] to [max]. */
@@ -25,20 +26,24 @@ data class RulerScale(
     /** Value under a pointer at [fraction] (0 = left edge, 1 = right edge) of the ruler; out-of-range and NaN clamp. */
     fun valueAt(fraction: Double): Int {
         val f = if (fraction.isNaN()) 0.0 else fraction.coerceIn(0.0, 1.0)
-        return snapRaw(min + f * (max - min))
+        return snap(min + f * (max - min))
     }
 
     /** Position of [value] on the ruler, 0..1 (clamped). */
     fun fractionOf(value: Int): Double = ((value - min).toDouble() / (max - min)).coerceIn(0.0, 1.0)
 
     /** [value] rounded to the nearest multiple of [step] (halves round up, like the prototype) and clamped. */
-    fun snap(value: Int): Int = snapRaw(value.toDouble())
+    fun snap(value: Int): Int = snap(value.toDouble())
+
+    /** [snap] for a fractional target (e.g. an accessibility `SetProgress` value); NaN clamps to [min]. */
+    fun snap(value: Double): Int =
+        if (value.isNaN()) min else (floor(value / step + HALF) * step).coerceIn(min.toDouble(), max.toDouble()).toInt()
 
     /** [value] moved by [steps] whole steps (negative = down), clamped to the range. */
     fun stepBy(
         value: Int,
         steps: Int,
-    ): Int = snapRaw(value.toDouble() + steps.toDouble() * step)
+    ): Int = snap(value.toDouble() + steps.toDouble() * step)
 
     /**
      * The `n + 1` tick states for [value]: the tick at index `round(p · n)` is [RulerTick.Current], earlier ones
@@ -58,9 +63,6 @@ data class RulerScale(
             }
         }
     }
-
-    private fun snapRaw(raw: Double): Int =
-        (floor(raw / step + HALF) * step).coerceIn(min.toDouble(), max.toDouble()).toInt()
 
     private fun roundHalfUp(x: Double): Int = floor(x + HALF).toInt()
 

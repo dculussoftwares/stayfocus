@@ -107,8 +107,12 @@ fun TickRuler(
     val haptics = LocalHapticFeedback.current
     val ticks = remember(value, scale) { scale.ticks(value) }
 
+    // Last value this ruler asked for; key repeats can arrive before the parent recomposes with the new value.
+    val lastRequested = remember(value) { intArrayOf(value) }
+
     fun emit(next: Int) {
-        if (next == currentValue) return
+        if (next == lastRequested[0]) return
+        lastRequested[0] = next
         currentOnChange(next)
         haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
@@ -141,7 +145,7 @@ fun TickRuler(
                     }
                 }.onKeyEvent { event ->
                     val delta = keyStepOf(event.type, event.key)
-                    if (delta != 0) emit(currentScale.stepBy(currentValue, delta))
+                    if (delta != 0) emit(currentScale.stepBy(lastRequested[0], delta))
                     delta != 0
                 }.focusable()
                 .clearAndSetSemantics {
@@ -154,7 +158,7 @@ fun TickRuler(
                             steps = (scale.stepCount - 1).coerceAtLeast(0),
                         )
                     setProgress { target ->
-                        emit(currentScale.snap(target.toInt()))
+                        emit(currentScale.snap(target.toDouble()))
                         true
                     }
                 },
