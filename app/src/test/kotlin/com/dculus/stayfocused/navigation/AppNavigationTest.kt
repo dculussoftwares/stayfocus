@@ -64,9 +64,9 @@ import com.dculus.stayfocused.core.testing.FakeLockedAppsRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
 import com.dculus.stayfocused.core.ui.components.SF_PLACEHOLDER_LIST_TAG
-import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
-import com.dculus.stayfocused.core.ui.components.sfTabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.V5_TAB_BAR_TAG
+import com.dculus.stayfocused.core.ui.v5.components.v5TabTag
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageAccess
@@ -248,7 +248,7 @@ class AppNavigationTest {
         composeRule.waitForIdle()
     }
 
-    private fun tab(tab: MainTab) = composeRule.onNodeWithTag(sfTabTag(tab.name))
+    private fun tab(tab: MainTab) = composeRule.onNodeWithTag(v5TabTag(tab.name))
 
     private fun pressBack() {
         composeRule.runOnUiThread { composeRule.activity.onBackPressedDispatcher.onBackPressed() }
@@ -257,7 +257,7 @@ class AppNavigationTest {
 
     private fun currentIs(route: kotlin.reflect.KClass<*>) = navController.currentDestination?.hasRoute(route) == true
 
-    private fun tabBarVisible() = composeRule.onAllNodesWithTag(SF_TAB_BAR_TAG).fetchSemanticsNodes().isNotEmpty()
+    private fun tabBarVisible() = composeRule.onAllNodesWithTag(V5_TAB_BAR_TAG).fetchSemanticsNodes().isNotEmpty()
 
     @Test
     fun tabBarIsVisibleExactlyOnTabsRemoteDeviceAndAccount() {

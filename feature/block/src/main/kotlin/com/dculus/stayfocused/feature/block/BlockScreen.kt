@@ -48,6 +48,7 @@ import com.dculus.stayfocused.core.ui.components.TypeChip
 import com.dculus.stayfocused.core.ui.components.blockDetail
 import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 
 fun blockRowTag(id: String): String = "block_row_$id"
 
@@ -81,7 +82,13 @@ fun BlockScreen(
     val targetName = state.selectedTarget.device?.name ?: stringResource(R.string.block_this_phone)
     LazyColumn(
         modifier = modifier.fillMaxSize().background(c.background),
-        contentPadding = PaddingValues(horizontal = spacing.screen, vertical = 6.dp),
+        contentPadding =
+            PaddingValues(
+                start = spacing.screen,
+                end = spacing.screen,
+                top = 6.dp,
+                bottom = 6.dp + LocalTabBarPadding.current,
+            ),
         verticalArrangement = Arrangement.spacedBy(spacing.gap14),
     ) {
         item {

@@ -33,6 +33,7 @@ import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import timber.log.Timber
 
 private const val DEFAULT_BREAK_MINS = 30
@@ -132,7 +133,14 @@ internal fun HomeScreen(
     LazyColumn(
         state = rememberLazyListState(),
         modifier = Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).testTag(HOME_LIST_TAG),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 24.dp),
+        contentPadding =
+            PaddingValues(
+                start = 18.dp,
+                end = 18.dp,
+                top = 6.dp,
+                bottom =
+                    24.dp + LocalTabBarPadding.current,
+            ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         item(key = "header") { HomeHeader(state.header, destinations.onOpenAccount) }

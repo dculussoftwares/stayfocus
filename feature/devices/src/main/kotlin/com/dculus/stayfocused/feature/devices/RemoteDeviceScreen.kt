@@ -60,6 +60,7 @@ import com.dculus.stayfocused.core.ui.components.TypeChip
 import com.dculus.stayfocused.core.ui.components.daysLabel
 import com.dculus.stayfocused.core.ui.icon.AppIcon
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import kotlinx.coroutines.delay
 import java.time.Instant
 
@@ -178,7 +179,14 @@ private fun RemoteDeviceList(
     val ready = state as? RemoteUiState.Ready
     LazyColumn(
         Modifier.fillMaxSize().background(c.background).testTag(REMOTE_LIST_TAG),
-        contentPadding = PaddingValues(start = 18.dp, end = 18.dp, top = 6.dp, bottom = 24.dp),
+        contentPadding =
+            PaddingValues(
+                start = 18.dp,
+                end = 18.dp,
+                top = 6.dp,
+                bottom =
+                    24.dp + LocalTabBarPadding.current,
+            ),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         item { Header(ready, actions.onBack) }
