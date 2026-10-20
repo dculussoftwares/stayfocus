@@ -188,6 +188,31 @@ class TickRulerBehaviourTest {
     }
 
     @Test
+    fun keyAfterADragBeforeRecompositionStartsFromTheDraggedValue() {
+        val seen = mutableListOf<Int>()
+        composeRule.setContent {
+            V5Theme {
+                Box(Modifier.width(300.dp)) {
+                    TickRuler(
+                        value = 45,
+                        onValueChange = { seen += it }, // the parent never feeds the value back
+                        scale = RulerScales.Use,
+                        colors = TickRulerColors.onGradient(),
+                        contentDescription = "Minutes",
+                        valueDescription = "45 minutes",
+                        modifier = Modifier.testTag(tag),
+                    )
+                }
+            }
+        }
+        val node = composeRule.onNodeWithTag(tag)
+        node.performTouchInput { click(Offset(width - 1f, centerY)) }
+        node.requestFocus()
+        node.performKeyInput { pressKey(Key.DirectionLeft) }
+        assertEquals(listOf(60, 59), seen)
+    }
+
+    @Test
     fun setProgressRoundsFractionalTargetsToTheNearestStep() {
         setRuler(RulerScales.Limit, start = 5)
         composeRule.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.SetProgress) { it(47.5f) }

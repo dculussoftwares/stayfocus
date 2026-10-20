@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -101,14 +102,14 @@ fun TickRuler(
     valueDescription: String,
     modifier: Modifier = Modifier,
 ) {
-    val currentValue by rememberUpdatedState(value)
     val currentOnChange by rememberUpdatedState(onValueChange)
     val currentScale by rememberUpdatedState(scale)
     val haptics = LocalHapticFeedback.current
     val ticks = remember(value, scale) { scale.ticks(value) }
 
     // Last value this ruler asked for; key repeats can arrive before the parent recomposes with the new value.
-    val lastRequested = remember(value) { intArrayOf(value) }
+    val lastRequested = remember { intArrayOf(value) }
+    SideEffect { lastRequested[0] = value }
 
     fun emit(next: Int) {
         if (next == lastRequested[0]) return
@@ -124,16 +125,9 @@ fun TickRuler(
                 .height(RULER_HEIGHT)
                 .pointerInput(Unit) {
                     awaitEachGesture {
-                        var lastEmitted = currentValue
-
                         fun apply(change: PointerInputChange) {
                             val fraction = if (size.width > 0) change.position.x.toDouble() / size.width else 0.0
-                            val next = currentScale.valueAt(fraction)
-                            if (next != lastEmitted) {
-                                lastEmitted = next
-                                currentOnChange(next)
-                                haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                            }
+                            emit(currentScale.valueAt(fraction))
                             change.consume()
                         }
                         val down = awaitFirstDown(requireUnconsumed = false)
