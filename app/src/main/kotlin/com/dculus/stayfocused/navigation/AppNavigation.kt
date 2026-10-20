@@ -35,6 +35,8 @@ import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import com.dculus.stayfocused.core.ui.v5.components.PillTab
 import com.dculus.stayfocused.core.ui.v5.components.PillTabBar
 import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.v5.components.recordBackdrop
+import com.dculus.stayfocused.core.ui.v5.components.rememberPillTabBarBackdrop
 import com.dculus.stayfocused.core.ui.v5.components.rememberPillTabBarContentPadding
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.feature.account.AccountViewModel
@@ -97,6 +99,7 @@ fun StayFocusedNavigation(
     val tabs = MainTab.entries.map { tab -> PillTab(tab.name, stringResource(tab.label)) }
     val showTabBar = destination.showsTabBar()
     val tabBarPadding = rememberPillTabBarContentPadding()
+    val backdrop = rememberPillTabBarBackdrop()
     Box(
         modifier =
             modifier
@@ -106,7 +109,10 @@ fun StayFocusedNavigation(
     ) {
         // Tab screens draw under the floating bar (they pad their lists with LocalTabBarPadding); other screens
         // keep clear of the navigation bar themselves.
-        Box(if (showTabBar) Modifier.fillMaxSize() else Modifier.fillMaxSize().navigationBarsPadding()) {
+        Box(
+            (if (showTabBar) Modifier.fillMaxSize() else Modifier.fillMaxSize().navigationBarsPadding())
+                .recordBackdrop(backdrop),
+        ) {
             CompositionLocalProvider(LocalTabBarPadding provides if (showTabBar) tabBarPadding else 0.dp) {
                 AppNavHost(
                     navController,
@@ -135,6 +141,7 @@ fun StayFocusedNavigation(
                     selectedId = destination.selectedTab()?.name,
                     onSelect = { id -> navController.navigateToTab(MainTab.valueOf(id)) },
                     modifier = Modifier.align(Alignment.BottomCenter),
+                    backdrop = backdrop,
                 )
             }
         }

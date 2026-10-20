@@ -28,6 +28,7 @@ import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
 import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import kotlinx.coroutines.flow.MutableStateFlow
 
 fun NavController.navigateToBlock(navOptions: NavOptions? = null) = navigate(Block, navOptions)
@@ -178,7 +179,7 @@ internal fun BlockRoute(
         }
     Box(Modifier.fillMaxSize()) {
         BlockScreen(state, actions)
-        SfToastHost(toast)
+        SfToastHost(toast, bottomPadding = 24.dp + LocalTabBarPadding.current)
     }
 }
 

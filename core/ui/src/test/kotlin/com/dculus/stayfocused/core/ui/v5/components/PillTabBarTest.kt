@@ -1,10 +1,13 @@
 package com.dculus.stayfocused.core.ui.v5.components
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
@@ -55,6 +58,21 @@ class PillTabBarTest {
         composeRule.onNodeWithTag(v5TabTag("block")).performClick()
         assertEquals("block", selected)
         composeRule.onNodeWithTag(v5TabTag("block")).assertIsSelected()
+    }
+
+    @Test
+    fun barWithBackdropStillComposesAndSelects() {
+        var selected by mutableStateOf<String?>("home")
+        composeRule.setContent {
+            V5Theme {
+                val backdrop = rememberPillTabBarBackdrop()
+                androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().recordBackdrop(backdrop)) {
+                    PillTabBar(tabs, selected, { selected = it }, Modifier.align(Alignment.BottomCenter), backdrop)
+                }
+            }
+        }
+        composeRule.onNodeWithTag(v5TabTag("devices")).performClick()
+        composeRule.onNodeWithTag(v5TabTag("devices")).assertIsSelected()
     }
 
     @Test

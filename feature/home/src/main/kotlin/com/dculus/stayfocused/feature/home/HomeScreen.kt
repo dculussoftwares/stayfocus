@@ -113,7 +113,7 @@ internal fun HomeRoute(
         )
     Box(Modifier.fillMaxSize()) {
         HomeScreen(state = state, breakUi = breakUi, actions = actions)
-        SfToastHost(toast, bottomPadding = 24.dp)
+        SfToastHost(toast, bottomPadding = 24.dp + LocalTabBarPadding.current)
     }
 }
 
