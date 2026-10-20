@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Stay Focused</string>
-    <string name="tab_home">HOME</string>
-    <string name="tab_block">BLOCK</string>
-    <string name="tab_devices">DEVICES</string>
-    <string name="tab_insights">INSIGHTS</string>
+    <string name="tab_home">Home</string>
+    <string name="tab_block">Blocks</string>
+    <string name="tab_devices">Family</string>
+    <string name="tab_insights">Insights</string>
     <!-- Push notifications from the child phones (M8-05). Copy of the question follows the Remote screen's amber card. -->
     <string name="push_channel_name">Requests and alerts</string>
     <string name="push_request_title">%1$s</string>

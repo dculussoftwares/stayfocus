@@ -168,3 +168,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M11-05 TickRuler TalkBack
 - Check: with TalkBack on, focusing a TickRuler (wizard rule card, break sheet) announces its name and value (e.g. "45 minutes"); swipe up/down (or volume keys while focused) changes the value by one step without dragging.
 - How: once a screen uses TickRuler (M11-0x / M12-1x), run a debug build on a phone with TalkBack, focus the ruler and adjust it; the semantics (`setProgress`, range info) are already covered by `TickRulerBehaviourTest`.
+
+## M11-09 Pill tab bar on a device
+- Check: `maestro test e2e/flows/smoke/navigation_tabs.yaml` and `./gradlew ciDevicesGroupDebugAndroidTest` pass with the new tab labels (Home, Blocks, Family, Insights); the last item on every tab scrolls above the floating bar on a gesture-nav and a 3-button-nav phone.
+- How: run both on an emulator or phone with a debug build; not run in the authoring session (no emulator available).

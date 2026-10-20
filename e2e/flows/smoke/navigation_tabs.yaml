@@ -12,13 +12,13 @@ tags:
 - assertVisible: "SYSTEM CHECK"
 - tapOn: "Continue for now"
 - assertVisible: "Take a break"
-- tapOn: "BLOCK"
+- tapOn: "Blocks"
 - assertVisible: "New block"
-- tapOn: "DEVICES"
-- tapOn: "INSIGHTS"
+- tapOn: "Family"
+- tapOn: "Insights"
 - back
 - assertVisible: "Take a break"
 - tapOn: "Account"
 - assertVisible: "Account"
 # The tab bar stays visible on Account.
-- assertVisible: "BLOCK"
+- assertVisible: "Blocks"

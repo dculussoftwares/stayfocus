@@ -46,6 +46,7 @@ import com.dculus.stayfocused.core.ui.components.Panel
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.icon.AppIcon
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import java.time.LocalDate
 
 @Composable
@@ -77,7 +78,12 @@ internal fun InsightsScreen(
         modifier = modifier.fillMaxSize().background(StayFocusedTheme.colors.background),
         contentPadding =
             androidx.compose.foundation.layout
-                .PaddingValues(horizontal = spacing.screen, vertical = spacing.gap16),
+                .PaddingValues(
+                    start = spacing.screen,
+                    end = spacing.screen,
+                    top = spacing.gap16,
+                    bottom = spacing.gap16 + LocalTabBarPadding.current,
+                ),
         verticalArrangement = Arrangement.Top,
     ) {
         item {

@@ -13,8 +13,8 @@ import androidx.test.core.app.ActivityScenario
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.testing.ScenarioCleanupRule
 import com.dculus.stayfocused.core.testing.ScreenshotOnFailureRule
-import com.dculus.stayfocused.core.ui.components.SF_TAB_BAR_TAG
-import com.dculus.stayfocused.core.ui.components.sfTabTag
+import com.dculus.stayfocused.core.ui.v5.components.V5_TAB_BAR_TAG
+import com.dculus.stayfocused.core.ui.v5.components.v5TabTag
 import com.dculus.stayfocused.navigation.MainTab
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
@@ -56,9 +56,9 @@ class AppNavigationInstrumentedTest {
         scenario = scenarios.launch(MainActivity::class.java)
     }
 
-    private fun tab(tab: MainTab) = composeRule.onNodeWithTag(sfTabTag(tab.name))
+    private fun tab(tab: MainTab) = composeRule.onNodeWithTag(v5TabTag(tab.name))
 
-    private fun tabBarVisible() = composeRule.onAllNodesWithTag(SF_TAB_BAR_TAG).fetchSemanticsNodes().isNotEmpty()
+    private fun tabBarVisible() = composeRule.onAllNodesWithTag(V5_TAB_BAR_TAG).fetchSemanticsNodes().isNotEmpty()
 
     @Test
     fun appLaunchesOnHomeWithFourTabs() {

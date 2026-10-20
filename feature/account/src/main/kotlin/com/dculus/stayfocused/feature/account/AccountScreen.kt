@@ -59,6 +59,7 @@ import com.dculus.stayfocused.core.ui.components.OutlineButton
 import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -258,7 +259,7 @@ internal fun AccountScreen(
             .fillMaxSize()
             .background(colors.background)
             .verticalScroll(rememberScrollState())
-            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 24.dp),
+            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 24.dp + LocalTabBarPadding.current),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val back = stringResource(R.string.account_back)

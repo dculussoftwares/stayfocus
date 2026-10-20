@@ -53,6 +53,7 @@ import com.dculus.stayfocused.core.model.hasDerivedOfflineAlert
 import com.dculus.stayfocused.core.ui.components.LedDot
 import com.dculus.stayfocused.core.ui.components.WhiteButton
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 
 internal const val DEVICES_LIST_TAG = "devices_list"
 internal const val DEVICES_LINK_TAG = "devices_link"
@@ -91,7 +92,7 @@ internal fun DevicesScreen(
                 start = 18.dp,
                 end = 18.dp,
                 top = 6.dp,
-                bottom = 24.dp,
+                bottom = 24.dp + LocalTabBarPadding.current,
             ),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
