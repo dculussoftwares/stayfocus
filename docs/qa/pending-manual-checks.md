@@ -164,3 +164,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M10-08 Device QA matrix
 - Check: the full Phase 1 regression in `docs/qa/phase1-matrix.md` run on Pixel (API 36), Samsung, Xiaomi (HyperOS), Oppo or Vivo and an API 26 device; every failure filed as an issue; no open blocker issues remain. The issue stays open until this is done.
 - How: follow "How to run" in `docs/qa/phase1-matrix.md` with a release-candidate build (`docs/RELEASING.md`) and a second phone for the Kids app; fill in the tables in a follow-up PR.
+
+## M11-05 TickRuler TalkBack
+- Check: with TalkBack on, focusing a TickRuler (wizard rule card, break sheet) announces its name and value (e.g. "45 minutes"); swipe up/down (or volume keys while focused) changes the value by one step without dragging.
+- How: once a screen uses TickRuler (M11-0x / M12-1x), run a debug build on a phone with TalkBack, focus the ruler and adjust it; the semantics (`setProgress`, range info) are already covered by `TickRulerBehaviourTest`.
