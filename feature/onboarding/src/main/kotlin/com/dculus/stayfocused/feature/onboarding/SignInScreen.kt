@@ -22,12 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -76,7 +73,6 @@ internal const val SIGN_IN_ERROR_TAG = "sign_in_error"
 
 @Composable
 internal fun SignInRoute(
-    startInCreateAccount: Boolean,
     onContinue: () -> Unit,
     onBack: () -> Unit,
     viewModel: SignInViewModel = hiltViewModel(),
@@ -87,12 +83,6 @@ internal fun SignInRoute(
     val scope = rememberCoroutineScope()
     val toast = remember(scope) { ToastController(scope) }
     val currentOnContinue by rememberUpdatedState(onContinue)
-    // Applied once per entry; the view model keeps the mode across rotation.
-    var modeApplied by rememberSaveable { mutableStateOf(false) }
-    if (!modeApplied) {
-        modeApplied = true
-        if (startInCreateAccount && state.mode == AuthMode.SignIn) viewModel.toggleMode()
-    }
     LaunchedEffect(viewModel, toast, resources) {
         viewModel.events.collect { event ->
             when (event) {

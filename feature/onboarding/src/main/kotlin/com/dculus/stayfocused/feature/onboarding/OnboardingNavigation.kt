@@ -7,7 +7,6 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
-import androidx.navigation.toRoute
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
 import com.dculus.stayfocused.core.navigation.Permissions
 import com.dculus.stayfocused.core.navigation.SignIn
@@ -35,9 +34,8 @@ fun NavGraphBuilder.onboardingGraph(
 ) {
     navigation<OnboardingGraph>(startDestination = Welcome) {
         composable<Welcome> { WelcomeRoute(onContinue = { navController.navigateToSignIn(createAccount = true) }) }
-        composable<SignIn> { entry ->
+        composable<SignIn> {
             SignInRoute(
-                startInCreateAccount = entry.toRoute<SignIn>().createAccount,
                 onContinue = { navController.navigateToPermissions() },
                 onBack = { navController.popBackStack() },
                 viewModel = signInViewModel?.invoke() ?: hiltViewModel(),

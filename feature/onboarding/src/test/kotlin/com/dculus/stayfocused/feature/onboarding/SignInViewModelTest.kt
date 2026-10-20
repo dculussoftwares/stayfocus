@@ -90,6 +90,11 @@ class SignInViewModelTest {
         assertEquals(AuthMode.SignIn, vm().state.value.mode)
     }
 
+    @Test fun createAccountArgumentStartsInCreateMode() {
+        val handle = androidx.lifecycle.SavedStateHandle(mapOf(CREATE_ACCOUNT_ARG to true))
+        assertEquals(AuthMode.CreateAccount, SignInViewModel(auth, settings, handle).state.value.mode)
+    }
+
     @Test fun toggleSwitchesModeAndClearsError() {
         val vm = vm()
         vm.submit()
