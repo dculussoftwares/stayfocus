@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -133,6 +134,45 @@ class V5SheetBehaviourTest {
     }
 
     @Test
+    fun twoDismissEventsInOneFrameNotifyOnce() {
+        setSheet()
+        composeRule.mainClock.autoAdvance = false
+        composeRule.onNodeWithTag(V5_SHEET_SCRIM_TAG).performClick()
+        Espresso.pressBack()
+        assertEquals(1, dismissals)
+    }
+
+    @Test
+    fun dismissedBeforeEntranceFinishesStillPlaysExit() {
+        composeRule.mainClock.autoAdvance = false
+        setSheet()
+        composeRule.mainClock.advanceTimeBy(100)
+        composeRule.onNodeWithText("SHEET BODY").assertExists()
+        composeRule.onNodeWithTag(V5_SHEET_SCRIM_TAG).performClick()
+        composeRule.mainClock.advanceTimeByFrame()
+        composeRule.mainClock.advanceTimeBy(50)
+        composeRule.onNodeWithText("SHEET BODY").assertExists()
+        composeRule.mainClock.advanceTimeBy(600)
+        composeRule.onNodeWithText("SHEET BODY").assertDoesNotExist()
+    }
+
+    @Test
+    fun sheetCanBeDismissedAgainWhenCallerKeepsItOpen() {
+        composeRule.setContent {
+            V5Theme {
+                V5BottomSheet(
+                    visible = true,
+                    onDismiss = { dismissals++ },
+                ) { androidx.compose.material3.Text("SHEET BODY") }
+            }
+        }
+        composeRule.onNodeWithTag(V5_SHEET_SCRIM_TAG).performClick()
+        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(V5_SHEET_SCRIM_TAG).performClick()
+        assertEquals(2, dismissals)
+    }
+
+    @Test
     fun dragDismissRule() {
         assertTrue(shouldDismissSheetDrag(offsetPx = 301f, heightPx = 1000f, velocityPxPerSec = 0f))
         assertFalse(shouldDismissSheetDrag(offsetPx = 299f, heightPx = 1000f, velocityPxPerSec = 0f))
@@ -159,6 +199,15 @@ class V5ToastBehaviourTest {
                 V5ToastHost(controller)
             }
         }
+    }
+
+    @Test
+    fun longMessageIsCappedAt320dp() {
+        setHost()
+        composeRule.runOnUiThread { controller.show("A very long message ".repeat(12)) }
+        composeRule.waitForIdle()
+        val width = composeRule.onNodeWithTag(V5_TOAST_TAG).getUnclippedBoundsInRoot().let { it.right - it.left }
+        assertTrue("toast is $width wide", width <= 320.dp && width > 200.dp)
     }
 
     @Test

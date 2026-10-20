@@ -35,6 +35,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -98,9 +99,23 @@ fun V5BottomSheet(
 ) {
     val state = remember { MutableTransitionState(false) }
     state.targetState = visible
-    if (state.currentState || state.targetState) {
-        // Ignore taps/back while the exit animation runs so the caller is notified once.
-        val dismissOnce = { if (state.targetState) onDismiss() }
+    val scope = rememberCoroutineScope()
+    val latch = remember { DismissLatch() }
+    // Keep the dialog until the exit has finished, also when the sheet is closed before its entrance completed
+    // (then current and target are both false, but the transition is still running).
+    if (state.currentState || state.targetState || !state.isIdle) {
+        // Ignore taps/back while the exit animation runs, and a second event in the same frame, so the caller is
+        // notified once. If the caller keeps the sheet open, the latch re-arms after a frame.
+        val dismissOnce = {
+            if (state.targetState && !latch.fired) {
+                latch.fired = true
+                onDismiss()
+                scope.launch {
+                    withFrameNanos {}
+                    latch.fired = false
+                }
+            }
+        }
         Dialog(
             onDismissRequest = dismissOnce,
             properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnClickOutside = false),
@@ -110,6 +125,10 @@ fun V5BottomSheet(
             V5SheetLayout(state, dismissOnce, contentSpacing, modifier, content)
         }
     }
+}
+
+private class DismissLatch {
+    var fired = false
 }
 
 @Composable
