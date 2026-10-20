@@ -77,10 +77,11 @@ fun V5Toast(
         text = text,
         modifier =
             modifier
-                .testTag(V5_TOAST_TAG)
-                .semantics { liveRegion = LiveRegionMode.Polite }
+                // Side margin first, then the 320 dp cap on the pill itself (the tag/semantics node is the pill).
                 .padding(horizontal = 16.dp)
                 .widthIn(max = ToastMaxWidth)
+                .testTag(V5_TOAST_TAG)
+                .semantics { liveRegion = LiveRegionMode.Polite }
                 .shadow(
                     16.dp,
                     shape,
