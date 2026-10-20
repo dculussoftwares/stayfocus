@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 
@@ -93,9 +94,9 @@ fun RoundIconButton(
 internal fun RoundIconButtonPreview() {
     V5PreviewSurface(gradient = false) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            RoundIconButton(ControlIcons.back, "Back", onClick = {})
-            RoundIconButton(ControlIcons.bell, "Alerts", onClick = {}, showBadge = true, badgeDescription = "New alert")
-            RoundIconButton(ControlIcons.plus, "New block", onClick = {}, enabled = false)
+            RoundIconButton(V5Icons.back, "Back", onClick = {})
+            RoundIconButton(V5Icons.bell, "Alerts", onClick = {}, showBadge = true, badgeDescription = "New alert")
+            RoundIconButton(V5Icons.plus, "New block", onClick = {}, enabled = false)
         }
         Box(
             Modifier
@@ -103,7 +104,7 @@ internal fun RoundIconButtonPreview() {
                 .size(width = 354.dp, height = 60.dp),
         ) {
             RoundIconButton(
-                ControlIcons.back,
+                V5Icons.back,
                 "Back",
                 onClick = {},
                 dark = true,

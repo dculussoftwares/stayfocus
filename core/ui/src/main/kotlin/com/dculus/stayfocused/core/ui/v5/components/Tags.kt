@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.R
+import com.dculus.stayfocused.core.ui.v5.art.PulseDot
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 
@@ -135,7 +137,7 @@ fun StatusTag(
         StatusTagKind.AiDraft -> {
             TagPill(26.dp, c.orange, modifier, gap = 5.dp) {
                 Icon(
-                    ControlIcons.sparkle,
+                    V5Icons.sparkle,
                     contentDescription = null,
                     tint = c.onGradient,
                     modifier = Modifier.size(11.dp),
@@ -178,7 +180,7 @@ fun OnlinePill(
             c.hairline
         }
     TagPill(30.dp, background, modifier, gap = 7.dp) {
-        V5PulseDot(dot, pulse = online)
+        PulseDot(dot, pulse = online)
         TagText(
             stringResource(if (online) R.string.v5_online else R.string.v5_offline),
             content,
