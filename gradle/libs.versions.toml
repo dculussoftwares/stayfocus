@@ -1,6 +1,6 @@
 [versions]
 agp = "9.4.1"
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 ksp = "2.3.12"
 composeBom = "2026.06.01"
 hilt = "2.60.1"
@@ -23,9 +23,9 @@ turbine = "1.2.1"
 mockk = "1.14.11"
 robolectric = "4.17"
 roborazzi = "1.76.0"
-spotless = "8.10.3"
+spotless = "8.10.4"
 ktlint = "1.8.0"
-composeRulesKtlint = "0.6.7"
+composeRulesKtlint = "0.6.8"
 detekt = "2.0.0-alpha.6"
 kover = "0.9.11"
 firebaseBom = "34.19.0"
@@ -34,7 +34,7 @@ credentials = "1.6.0"
 googleid = "1.2.1"
 camerax = "1.5.3"
 mlkitBarcode = "18.3.1"
-zxing = "3.5.3"
+zxing = "3.5.4"
 
 [libraries]
 # Build-logic only
