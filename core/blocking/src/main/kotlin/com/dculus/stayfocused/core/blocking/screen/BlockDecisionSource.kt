@@ -22,6 +22,9 @@ fun interface BlockDecisionSource {
         initial: Decision.Block,
         now: Instant,
     ): Decision
+
+    /** Use / rest minutes of cycle block [blockId], for the rule line of a rest screen; null when unknown. */
+    suspend fun cycleRule(blockId: String?): CycleRuleMins? = null
 }
 
 /** Default: the block holds until its end time; nothing else is known here. */

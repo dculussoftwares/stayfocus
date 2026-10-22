@@ -111,7 +111,7 @@ class BlockActivity : ComponentActivity() {
             return
         }
         request = first
-        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(BLOCK_STATUS_BAR_COLOR))
+        enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
         setContent { StayFocusedTheme { Content() } }
     }
 
