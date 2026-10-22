@@ -4,8 +4,10 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +30,7 @@ class DeleteAccountSheetTest {
         onPassword: (String) -> Unit = {},
         onGoogle: () -> Unit = {},
     ) = composeRule.setContent {
-        StayFocusedTheme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
+        V5Theme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
     }
 
     @Test
@@ -36,6 +38,7 @@ class DeleteAccountSheetTest {
         var confirmed = 0
         show(DeleteUiState(step = DeleteStep.Confirm), onConfirm = { confirmed++ })
         composeRule.onNodeWithText("Delete account and all data?").assertIsDisplayed()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/DeleteAccountConfirm.png")
         composeRule.onNodeWithTag(DELETE_CONFIRM_TAG).performClick()
         assertEquals(1, confirmed)
     }
@@ -55,6 +58,7 @@ class DeleteAccountSheetTest {
         var google = 0
         show(DeleteUiState(step = DeleteStep.Reauth, usesPassword = false), onGoogle = { google++ })
         composeRule.onNodeWithText("Confirm it's you").assertIsDisplayed()
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/DeleteAccountReauth.png")
         composeRule.onNodeWithTag(DELETE_GOOGLE_TAG).performClick()
         assertEquals(1, google)
     }
