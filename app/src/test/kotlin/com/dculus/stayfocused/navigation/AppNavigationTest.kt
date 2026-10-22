@@ -355,26 +355,26 @@ class AppNavigationTest {
     @Test
     fun homeActionsLeadToTheWizardInsightsAndDevices() {
         launch()
-        composeRule.onNodeWithText("New block").performClick()
+        composeRule.onNodeWithTag("home_new_block").performClick()
         composeRule.waitForIdle()
-        assertTrue(currentIs(BlockWizard::class), "New block opens the wizard")
+        assertTrue(currentIs(BlockWizard::class), "Block apps opens the wizard")
         pressBack()
         assertTrue(currentIs(Home::class))
-        composeRule.onNodeWithTag("home_gauge_card").performClick()
+        composeRule.onNodeWithTag("home_blocked_tile").performClick()
         composeRule.waitForIdle()
-        assertTrue(currentIs(Insights::class), "the gauge opens Insights")
+        assertTrue(currentIs(Insights::class), "the hero tiles open Insights")
         tab(MainTab.HOME).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_link_phone"))
         composeRule.onNodeWithTag("home_link_phone").performClick()
         composeRule.waitForIdle()
-        assertTrue(currentIs(Devices::class), "the empty linked-phones state leads to Devices")
+        assertTrue(currentIs(LinkAdd::class), "the empty linked-phones state leads to the link flow")
     }
 
     @Test
     fun aiDescribeOpensTheBlockTab() {
         launch()
-        composeRule.onNodeWithContentDescription("AI Describe").performClick()
+        composeRule.onNodeWithContentDescription("Describe a block in your words").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Block::class))
         tab(MainTab.BLOCK).assertIsSelected()

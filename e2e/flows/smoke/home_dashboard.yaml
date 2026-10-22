@@ -1,4 +1,4 @@
-# M3-04: Home shows the dashboard cards; "New block" opens the wizard.
+# M3-04 / M12-07: Home shows the v5 hero and tiles; "Block apps" opens the wizard.
 appId: com.dculus.stayfocused
 tags:
   - smoke
@@ -8,7 +8,7 @@ tags:
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
 - tapOn: "Continue for now"
-- assertVisible: "SCREEN TIME"
+- assertVisible: "Screen time today"
 - assertVisible: "Take a break"
-- tapOn: "New block"
+- tapOn: "Block apps.*"
 - assertVisible: "Time limit"

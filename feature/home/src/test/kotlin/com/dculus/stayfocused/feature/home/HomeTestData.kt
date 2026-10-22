@@ -13,6 +13,8 @@ import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.TamperAlert
 import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.TimeRange
+import com.dculus.stayfocused.core.model.UnlockRequest
+import com.dculus.stayfocused.core.model.UnlockRequestStatus
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
@@ -171,18 +173,26 @@ internal fun device(
     id: String = "d1",
     name: String = "Aarav's phone",
     alerts: Int = 0,
+    online: Boolean = true,
+    request: Boolean = false,
 ) = LinkedDevice(
     id = id,
     name = name,
     model = "Pixel 6a",
-    battery = 80,
-    currentApp = "Instagram",
-    online = true,
+    battery = 74,
+    currentApp = "YouTube",
+    online = online,
     lastSeen = Epoch,
     alerts =
         List(
             alerts,
         ) { TamperAlert("a$it", TamperKind.PERMISSION_LOST, "accessibility", Epoch, dismissed = false) },
-    requests = emptyList(),
+    requests =
+        if (request) {
+            listOf(UnlockRequest("r1", "YouTube", 30, UnlockRequestStatus.PENDING, Epoch))
+        } else {
+            emptyList()
+        },
     focusEndsAt = null,
+    todayMins = 128,
 )

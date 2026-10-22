@@ -1,17 +1,16 @@
 package com.dculus.stayfocused.feature.home
 
 import android.content.ActivityNotFoundException
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,31 +27,33 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dculus.stayfocused.core.model.durationLabel
+import com.dculus.stayfocused.core.model.v5Duration
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
-import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
 import timber.log.Timber
 
-private const val DEFAULT_BREAK_MINS = 30
+internal const val HOME_LIST_TAG = "home_list"
 
-/** Rows are 8 dp apart; each new card or section starts 14 dp below the previous one (8 + 6). */
-private val SectionGap = 6.dp
+private const val DEFAULT_BREAK_MINS = 30
 
 /** Where each tappable part of Home leads. Supplied by the app's navigation graph. */
 class HomeDestinations(
     val onOpenAccount: () -> Unit,
-    /** "+ New block": the wizard with target "This phone". */
+    /** "Block apps": the wizard with target "This phone". */
     val onNewBlock: () -> Unit,
-    /** "AI Describe": the Block tab with the describe box open. */
+    /** "Describe a block in your words": the Block tab with the describe box open. */
     val onAiDescribe: () -> Unit,
     val onOpenInsights: () -> Unit,
     /** "Manage": the Block tab. */
     val onOpenBlock: () -> Unit,
+    /** The Family tab (the bell when no phone needs attention). */
     val onOpenDevices: () -> Unit,
     val onOpenDevice: (deviceId: String) -> Unit,
+    /** "Link a child's phone": the link flow (its sign-in gate applies). */
+    val onLinkPhone: () -> Unit,
 )
 
 /** Everything the dashboard can do, bound to the ViewModel in [HomeRoute]. */
@@ -70,7 +71,9 @@ internal fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val state = viewModel.state.collectAsStateWithLifecycle().value
-    val breakUi = viewModel.breakUi.collectAsStateWithLifecycle().value
+    // Kept as State (not read here): only the break tile reads it, once per second.
+    val breakState: State<BreakUi> = viewModel.breakUi.collectAsStateWithLifecycle()
+    val breakUi = remember(breakState) { { breakState.value } }
     val resources = LocalResources.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -82,7 +85,11 @@ internal fun HomeRoute(
             toast.show(
                 when (event) {
                     is HomeEvent.BreakStarted -> {
-                        resources.getString(R.string.break_toast_started, durationLabel(event.mins))
+                        resources.getString(R.string.break_toast_started, v5Duration(event.mins))
+                    }
+
+                    HomeEvent.BreakEnded -> {
+                        resources.getString(R.string.break_toast_ended)
                     }
 
                     HomeEvent.BreakFailed -> {
@@ -113,89 +120,86 @@ internal fun HomeRoute(
         )
     Box(Modifier.fillMaxSize()) {
         HomeScreen(state = state, breakUi = breakUi, actions = actions)
-        SfToastHost(toast, bottomPadding = 24.dp + LocalTabBarPadding.current)
+        V5ToastHost(toast)
     }
 }
 
 /**
- * The Home tab: header, actions, screen-time gauge, break card, this phone's blocks and the linked phones.
- * Status (gauge, devices) and actions (new block, break) are separate cards.
+ * The Home tab (v5): header, violet hero, "Block apps" and "Take a break" tiles, the AI pill and a card per linked
+ * phone. [breakUi] is a lambda so only the break tile reads the per-second countdown.
  */
 @Composable
 internal fun HomeScreen(
     state: HomeUiState,
-    breakUi: BreakUi,
+    breakUi: () -> BreakUi,
     actions: HomeActions,
 ) {
     var sheetVisible by rememberSaveable { mutableStateOf(false) }
     var mins by rememberSaveable { mutableIntStateOf(DEFAULT_BREAK_MINS) }
     val destinations = actions.destinations
-    LazyColumn(
-        state = rememberLazyListState(),
-        modifier = Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).testTag(HOME_LIST_TAG),
-        contentPadding =
-            PaddingValues(
-                start = 18.dp,
-                end = 18.dp,
-                top = 6.dp,
-                bottom =
-                    24.dp + LocalTabBarPadding.current,
-            ),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        item(key = "header") { HomeHeader(state.header, destinations.onOpenAccount) }
-        item(key = "actions") {
-            HomeActionRow(
-                destinations.onNewBlock,
-                destinations.onAiDescribe,
-                showAi = state.aiAvailable,
-                modifier = Modifier.padding(top = SectionGap),
-            )
-        }
-        item(key = "gauge") {
-            GaugeCard(
-                state.gauge,
-                destinations.onOpenInsights,
-                actions.onAllowUsageAccess,
-                Modifier.padding(top = SectionGap),
-            )
-        }
-        item(key = "break") {
-            Box(Modifier.padding(top = SectionGap)) {
-                when (breakUi) {
-                    BreakUi.Idle -> BreakIdleCard(onClick = { sheetVisible = true })
-                    is BreakUi.Active -> BreakActiveCard(breakUi, onEnd = actions.onEndBreak)
+    V5Screen(darkContent = false) {
+        LazyColumn(
+            state = rememberLazyListState(),
+            modifier = Modifier.fillMaxSize().testTag(HOME_LIST_TAG),
+            // The app shell already insets the status bar; the prototype's 54 dp top is 8 dp below it.
+            contentPadding =
+                PaddingValues(
+                    start = 14.dp,
+                    end = 14.dp,
+                    top = 8.dp,
+                    bottom = 24.dp + LocalTabBarPadding.current,
+                ),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            item(key = "header") {
+                val attention = state.attentionDevice
+                HomeHeader(
+                    header = state.header,
+                    showBell = state.devices.isNotEmpty(),
+                    bellBadge = attention != null,
+                    onAvatar = destinations.onOpenAccount,
+                    onBell = { attention?.let { destinations.onOpenDevice(it.id) } ?: destinations.onOpenDevices() },
+                )
+            }
+            item(key = "hero") {
+                HomeHero(state.gauge, destinations.onOpenInsights, actions.onAllowUsageAccess)
+            }
+            item(key = "tiles") {
+                HomeTiles(
+                    state = state,
+                    breakUi = breakUi,
+                    breakLengthMins = mins,
+                    onNewBlock = destinations.onNewBlock,
+                    onOpenBreakSheet = { sheetVisible = true },
+                    onEndBreak = actions.onEndBreak,
+                )
+            }
+            if (state.aiAvailable) item(key = "ai") { AiPill(destinations.onAiDescribe) }
+            if (state.devices.isEmpty()) {
+                item(key = "link") { LinkChildRow(destinations.onLinkPhone) }
+            } else {
+                items(state.devices, key = { it.id }) { device ->
+                    ChildCard(device, onClick = { destinations.onOpenDevice(device.id) })
                 }
             }
+            // v5-extra: M13-08 (shipped Home content the prototype does not show)
+            (state.gauge as? GaugeUi.Ready)?.let { gauge -> item(key = "stats") { TodayStatsCard(gauge) } }
+            item(key = "blocks") {
+                ActiveBlocksCard(state.blocks, actions.onSetBlockEnabled, destinations.onOpenBlock)
+            }
         }
-        item(key = "blocks-header") { ActiveBlocksHeader(destinations.onOpenBlock, Modifier.padding(top = SectionGap)) }
-        if (state.blocks.isEmpty()) {
-            item(key = "blocks-empty") { EmptyBlocks() }
-        } else {
-            // One lazy item per row so a long list only composes what is on screen.
-            items(state.blocks, key = { it.block.id }) { row -> BlockRow(row, actions.onSetBlockEnabled) }
-        }
-        item(key = "devices") {
-            LinkedPhonesSection(
-                state.devices,
-                destinations.onOpenDevices,
-                destinations.onOpenDevice,
-                destinations.onOpenDevices,
-                Modifier.padding(top = SectionGap),
+        SfBottomSheet(visible = sheetVisible, onDismiss = { sheetVisible = false }) {
+            BreakSheetContent(
+                mins = mins,
+                onMinsChange = { mins = it },
+                onStart = {
+                    // A second tap while the sheet slides out must not start the break twice.
+                    if (sheetVisible) {
+                        sheetVisible = false
+                        actions.onStartBreak(mins)
+                    }
+                },
             )
         }
-    }
-    SfBottomSheet(visible = sheetVisible, onDismiss = { sheetVisible = false }) {
-        BreakSheetContent(
-            mins = mins,
-            onMinsChange = { mins = it },
-            onStart = {
-                // A second tap while the sheet slides out must not start the break twice.
-                if (sheetVisible) {
-                    sheetVisible = false
-                    actions.onStartBreak(mins)
-                }
-            },
-        )
     }
 }

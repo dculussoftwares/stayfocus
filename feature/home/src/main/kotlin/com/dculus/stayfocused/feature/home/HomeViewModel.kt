@@ -9,10 +9,12 @@ import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.data.repository.LinkedDevicesRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.BlockTarget
+import com.dculus.stayfocused.core.model.DEFAULT_SCREEN_TIME_GOAL_MINS
 import com.dculus.stayfocused.core.model.fallbackAppLabel
-import com.dculus.stayfocused.core.model.ledLevels
+import com.dculus.stayfocused.core.usage.HOURS_PER_DAY
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageAccess
+import com.dculus.stayfocused.core.usage.UsageAverages
 import com.dculus.stayfocused.core.usage.UsageRepository
 import com.dculus.stayfocused.core.usage.totalOpens
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -47,6 +49,9 @@ internal sealed interface HomeEvent {
 
     /** Starting or ending the break could not be stored. */
     data object BreakFailed : HomeEvent
+
+    /** The running break was ended (toast "Break ended"). */
+    data object BreakEnded : HomeEvent
 
     /** A block's switch could not be stored. */
     data object BlockToggleFailed : HomeEvent
@@ -85,33 +90,49 @@ class HomeViewModel
         private val header: Flow<HeaderUi> =
             combine(minuteTicks, profile.observeFirstName()) { now, name -> headerFor(zoned(now), name) }
 
+        private class GaugeInputs(
+            val averages: UsageAverages,
+            val blocked: Int,
+            val goalMins: Int,
+            val labels: Map<String, String>,
+        )
+
+        private val gaugeInputs: Flow<GaugeInputs> =
+            combine(
+                usage.averages(),
+                usage.blockedToday(),
+                settings.screenTimeGoalMins,
+                installedApps.observeLaunchableApps(),
+            ) { averages, blocked, goal, installed ->
+                GaugeInputs(averages, blocked, goal, installed.associate { it.pkg to it.label })
+            }
+
         private val gauge: Flow<GaugeUi> =
             accessGranted.flatMapLatest { granted ->
                 if (!granted) {
                     flowOf(GaugeUi.NoAccess)
                 } else {
-                    combine(
-                        usage.today(),
-                        usage.averages(),
-                        usage.blockedToday(),
-                        minuteTicks,
-                    ) { today, averages, blocked, now ->
-                        val hourlyMins =
-                            today.hourlyMillis.map {
-                                ((it + MILLIS_PER_MINUTE - 1) / MILLIS_PER_MINUTE)
-                                    .toInt()
-                            }
+                    combine(usage.today(), gaugeInputs, minuteTicks) { today, inputs, now ->
                         GaugeUi.Ready(
                             totalMins = today.totalMins,
-                            avgMins = averages.takeIf { it.hasData }?.avgTotalMins,
-                            levels = ledLevels(hourlyMins, HOME_LED_ROWS, zoned(now).hour),
+                            goalMins = inputs.goalMins,
+                            // A started hour always shows at least one lit dot, however short the session.
+                            hourlyMins = today.hourlyMillis.map { ceilMins(it) },
+                            currentHour = zoned(now).hour,
+                            mostUsed =
+                                today.apps.maxByOrNull { it.millis }?.let { app ->
+                                    MostUsedUi(app.pkg, inputs.labels[app.pkg] ?: fallbackAppLabel(app.pkg), app.mins)
+                                },
+                            blocked = inputs.blocked,
+                            avgMins = inputs.averages.takeIf { it.hasData }?.avgTotalMins,
                             launches = today.totalOpens,
                             unlocks = today.unlocks,
-                            blocked = blocked,
                         )
                     }
                 }
             }
+
+        private fun ceilMins(millis: Long): Int = ((millis + MILLIS_PER_MINUTE - 1) / MILLIS_PER_MINUTE).toInt()
 
         private val blockRows: Flow<List<HomeBlockUi>> =
             combine(
@@ -136,10 +157,23 @@ class HomeViewModel
         private fun initialState() =
             HomeUiState(
                 header = headerFor(zoned(clock.instant()), null),
-                gauge = if (accessGranted.value) GaugeUi.Ready(0, null, emptyList(), 0, 0, 0) else GaugeUi.NoAccess,
+                gauge = if (accessGranted.value) emptyGauge() else GaugeUi.NoAccess,
                 blocks = emptyList(),
                 devices = emptyList(),
                 aiAvailable = false,
+            )
+
+        private fun emptyGauge() =
+            GaugeUi.Ready(
+                totalMins = 0,
+                goalMins = DEFAULT_SCREEN_TIME_GOAL_MINS,
+                hourlyMins = List(HOURS_PER_DAY) { 0 },
+                currentHour = zoned(clock.instant()).hour,
+                mostUsed = null,
+                blocked = 0,
+                avgMins = null,
+                launches = 0,
+                unlocks = 0,
             )
 
         /** Re-reads the usage-access permission, e.g. when the person returns from the system settings. */
@@ -233,7 +267,7 @@ class HomeViewModel
         }
 
         fun endBreak() {
-            viewModelScope.launch { runStored(null, HomeEvent.BreakFailed) { breaks.end() } }
+            viewModelScope.launch { runStored(HomeEvent.BreakEnded, HomeEvent.BreakFailed) { breaks.end() } }
         }
 
         private suspend fun runStored(
