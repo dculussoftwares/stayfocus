@@ -374,7 +374,8 @@ class AppNavigationTest {
     @Test
     fun aiDescribeOpensTheBlockTab() {
         launch()
-        composeRule.onNodeWithContentDescription("Describe a block in your words").performClick()
+        composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_ai_describe"))
+        composeRule.onNodeWithTag("home_ai_describe").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Block::class))
         tab(MainTab.BLOCK).assertIsSelected()
