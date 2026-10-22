@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="devices_title">Devices</string>
+    <string name="devices_title">Family</string>
+    <string name="devices_subtitle">Phones you manage</string>
     <string name="link_back">Back</string>
     <string name="link_add_heading">Link a\nchild\'s phone</string>
     <string name="link_add_body">Install Stay Focused Kids on their phone first. Then scan the QR code it shows.</string>
@@ -79,21 +80,24 @@
     <string name="remote_toast_denied">Request denied</string>
     <string name="remote_toast_unlinked">%1$s unlinked</string>
     <string name="remote_toast_unlink_failed">Couldn\'t unlink %1$s. Check your connection and try again.</string>
-    <string name="devices_link_action">+ Link</string>
     <string name="devices_this_phone">THIS PHONE · %1$s · PARENT · %2$d LINKED</string>
-    <string name="devices_online">ONLINE</string>
-    <string name="devices_offline">OFFLINE</string>
-    <string name="devices_stat_today">TODAY</string>
-    <string name="devices_stat_battery">BATTERY</string>
-    <string name="devices_stat_using">USING</string>
+    <string name="devices_stat_today">Today</string>
+    <string name="devices_stat_battery">Battery</string>
+    <string name="devices_stat_using">Using now</string>
+    <string name="devices_link_title">Link a\nchild\'s phone</string>
+    <string name="devices_link_helper">Install Stay Focused Kids on their phone. It shows a code, and you scan it from here.</string>
+    <string name="devices_model_android">%1$s · Android %2$s</string>
+    <string name="devices_android">Android %1$s</string>
+    <string name="devices_protection_off">Protection is off</string>
+    <string name="devices_hour_ticks_description">Screen time by hour today</string>
     <string name="devices_stat_none">—</string>
     <string name="devices_alert_accessibility">Accessibility turned off</string>
     <string name="devices_alert_permission">Permission turned off</string>
     <string name="devices_alert_unlinked">Phone was unlinked</string>
     <string name="devices_alert_offline">Offline for a while</string>
     <plurals name="devices_requests_line">
-        <item quantity="one">%d request for more time</item>
-        <item quantity="other">%d requests for more time</item>
+        <item quantity="one">%d request waiting</item>
+        <item quantity="other">%d requests waiting</item>
     </plurals>
     <!-- How long ago an offline phone last reported (M8-06). New copy. -->
     <plurals name="devices_last_seen_minutes">
@@ -110,5 +114,4 @@
     </plurals>
     <string name="devices_empty_title">No linked phones</string>
     <string name="devices_empty_body">Link your child\'s phone to see their usage and set limits from here.</string>
-    <string name="devices_empty_cta">Link a child\'s phone</string>
 </resources>
