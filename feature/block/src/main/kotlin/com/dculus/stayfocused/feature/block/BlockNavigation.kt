@@ -28,7 +28,7 @@ import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
 import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
 import kotlinx.coroutines.flow.MutableStateFlow
 
 fun NavController.navigateToBlock(navOptions: NavOptions? = null) = navigate(Block, navOptions)
@@ -151,6 +151,8 @@ internal fun BlockRoute(
         }
     }
     val describeFirst = stringResource(R.string.block_ai_describe_first)
+    val paused = stringResource(R.string.block_toast_paused)
+    val turnedOn = stringResource(R.string.block_toast_on)
     val currentOpenWizard by rememberUpdatedState(onOpenWizard)
     val currentEditBlock by rememberUpdatedState(onEditBlock)
     LaunchedEffect(viewModel) {
@@ -171,7 +173,10 @@ internal fun BlockRoute(
                 onAiText = viewModel::setAiText,
                 onAiSubmit = viewModel::submitAi,
                 onSelectTab = viewModel::selectTab,
-                onSetEnabled = viewModel::setBlockEnabled,
+                onSetEnabled = { id, enabled ->
+                    viewModel.setBlockEnabled(id, enabled)
+                    toast.show(if (enabled) turnedOn else paused)
+                },
                 onEdit = viewModel::editBlock,
                 onTemplate = viewModel::useTemplate,
                 onToggleAppLock = viewModel::toggleAppLock,
@@ -179,7 +184,7 @@ internal fun BlockRoute(
         }
     Box(Modifier.fillMaxSize()) {
         BlockScreen(state, actions)
-        SfToastHost(toast, bottomPadding = 24.dp + LocalTabBarPadding.current)
+        V5ToastHost(toast)
     }
 }
 

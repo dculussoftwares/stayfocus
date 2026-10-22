@@ -51,6 +51,8 @@ data class BlockRowUi(
     val block: Block,
     /** Display names of the blocked apps. */
     val appLabels: List<String>,
+    /** Today's usage against the allowance of a limit or cycle block; null for the other types. */
+    val progress: BlockProgress? = null,
 )
 
 /** One row of the All apps tab. [locked] is a manual lock (indefinite) on the selected target. */
@@ -276,13 +278,14 @@ class BlockViewModel
             val labels = installed.associate { it.pkg to it.label }
             val lockedHere = locked.filter { it.target == selected }.mapTo(hashSetOf()) { it.pkg }
             val collator = Collator.getInstance()
+            val todayMins = today.mapValues { it.value.mins }
             return BlockUiState(
                 targets = targets,
                 selected = selected,
                 tab = l.tab,
                 blocks =
                     blocksByTarget[selected].orEmpty().map { b ->
-                        BlockRowUi(b, b.apps.map { labels[it] ?: fallbackAppLabel(it) })
+                        BlockRowUi(b, b.apps.map { labels[it] ?: fallbackAppLabel(it) }, blockProgress(b, todayMins))
                     },
                 // A child phone has no app list until device linking (M8-03) syncs one.
                 apps =
