@@ -2,7 +2,6 @@ package com.dculus.stayfocused.feature.insights
 
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
-import com.dculus.stayfocused.core.usage.UsageAverages
 import org.junit.Test
 import java.time.LocalDate
 import java.util.Locale
@@ -34,7 +33,6 @@ class InsightsModelTest {
     fun `ranks by screen time and drops zero apps`() {
         val ranked = rankApps(apps, InsightsMetric.ScreenTime) { it }
         assertEquals(listOf("a", "b", "c"), ranked.map { it.pkg })
-        assertEquals(listOf("01", "02", "03"), ranked.map { it.rankLabel })
         assertEquals(1f, ranked.first().fraction)
         assertEquals(33f / 41f, ranked[1].fraction)
     }
@@ -53,15 +51,8 @@ class InsightsModelTest {
     }
 
     @Test
-    fun `unlocks rank by first app opened after unlock`() {
-        val ranked = rankApps(apps, InsightsMetric.Unlocks) { it }
-        assertEquals(listOf("b", "c", "a"), ranked.map { it.pkg })
-        assertEquals(listOf(9, 9, 1), ranked.map { it.value })
-    }
-
-    @Test
     fun `nothing to rank gives an empty list`() {
-        assertTrue(rankApps(listOf(app("a", 5, 1, 0)), InsightsMetric.Unlocks) { it }.isEmpty())
+        assertTrue(rankApps(listOf(app("a", 0, 0, 0)), InsightsMetric.Opens) { it }.isEmpty())
         assertTrue(rankApps(emptyList(), InsightsMetric.Opens) { it }.isEmpty())
     }
 
@@ -87,45 +78,69 @@ class InsightsModelTest {
         assertFalse(canStepBack(-6))
     }
 
+    private fun dayStats(
+        mins: Long,
+        hourly: List<Long> = List(24) { 0L },
+        apps: List<AppUsageStat> = emptyList(),
+    ) = DayUsageStats(date, mins * min, apps, hourly, unlocks = 3, hourlyUnlocks = List(24) { 0 })
+
     @Test
-    fun `builds totals averages and chart per metric`() {
-        val hourly = List(24) { if (it == 10) 60 * min else 0L }
-        val stats =
-            DayUsageStats(
-                date = date,
-                totalMillis = 60 * min,
-                apps = apps,
-                hourlyMillis = hourly,
-                unlocks = 12,
-                hourlyUnlocks = List(24) { if (it == 8) 4 else 0 },
-            )
-        val averages = UsageAverages(daysCounted = 3, avgTotalMillis = 48 * min, avgOpens = 40, avgUnlocks = 24)
-
-        val time = buildInsightsDay(stats, averages, InsightsMetric.ScreenTime, currentHour = null) { it }
-        assertEquals(60, time.total)
-        assertEquals(48, time.average)
-        assertEquals(LED_ROWS, time.levels[10].level)
-        assertEquals(0, time.levels[9].level)
-        assertEquals((48 * 60f / 24) / 3600f, time.avgFraction!!, 1e-6f)
-
-        val opens = buildInsightsDay(stats, averages, InsightsMetric.Opens, currentHour = null) { it }
-        assertEquals(45, opens.total)
-        assertEquals(40, opens.average)
-
-        val unlocks = buildInsightsDay(stats, averages, InsightsMetric.Unlocks, currentHour = null) { it }
-        assertEquals(12, unlocks.total)
-        assertEquals(24, unlocks.average)
-        assertEquals(LED_ROWS, unlocks.levels[8].level)
-        assertEquals(1f / 4f, unlocks.avgFraction!!, 1e-6f)
+    fun `day uses hourly minutes, a floor of 20 on the scale and total over 24 as average`() {
+        val hourly = List(24) { if (it == 10) 30 * min else 0L }
+        val day = buildDay(dayStats(144, hourly, apps), InsightsMetric.ScreenTime, currentHour = 10) { it }
+        assertEquals(InsightsRange.Day, day.range)
+        assertEquals(144, day.heroMins)
+        assertEquals(30, day.values[10])
+        assertEquals(30, day.chartMax)
+        assertEquals(6f, day.average)
+        assertEquals(10, day.highlightIndex)
+        assertEquals(3, day.apps.size)
+        assertEquals(DAY_CHART_MIN_MAX, buildDay(dayStats(5), InsightsMetric.ScreenTime, null) { it }.chartMax)
+        assertNull(buildDay(dayStats(5), InsightsMetric.ScreenTime, null) { it }.highlightIndex)
     }
 
     @Test
-    fun `no history gives no average and no average line`() {
-        val stats = DayUsageStats.empty(date).copy(totalMillis = 5 * min, hourlyMillis = List(24) { 5 * min / 24 })
-        val day = buildInsightsDay(stats, UsageAverages.NONE, InsightsMetric.ScreenTime, currentHour = 3) { it }
-        assertNull(day.average)
-        assertNull(day.avgFraction)
-        assertTrue(day.levels[3].isCurrent)
+    fun `day keeps only the top six apps`() {
+        val many = (1..9).map { app("p$it", mins = it.toLong(), opens = it) }
+        val day = buildDay(dayStats(45, apps = many), InsightsMetric.ScreenTime, null) { it }
+        assertEquals(listOf("p9", "p8", "p7", "p6", "p5", "p4"), day.apps.map { it.pkg })
+    }
+
+    @Test
+    fun `week averages seven days, highlights today and sums apps`() {
+        val days =
+            List(7) { i ->
+                if (i == 1) {
+                    null
+                } else {
+                    dayStats((60 * (i + 1)).toLong(), apps = listOf(app("a", mins = 10, opens = 2)))
+                }
+            }
+        val week = buildWeek(days, InsightsMetric.ScreenTime, listOf("M")) { it }
+        assertEquals(listOf(60, 0, 180, 240, 300, 360, 420), week.values)
+        assertEquals(420, week.chartMax)
+        assertEquals(1560 / 7f, week.average)
+        assertEquals(223, week.heroMins)
+        assertEquals(6, week.highlightIndex)
+        val top = week.apps.single()
+        assertEquals(60, top.value)
+        val opens = buildWeek(days, InsightsMetric.Opens, emptyList()) { it }
+        assertEquals(12, opens.apps.single().value)
+    }
+
+    @Test
+    fun `week axis starts at the right weekday and ends today`() {
+        // 2026-10-08 is a Thursday.
+        assertEquals(
+            listOf("F", "S", "S", "M", "T", "W", "T"),
+            weekAxisLabels(LocalDate.of(2026, 10, 8), Locale.ENGLISH),
+        )
+    }
+
+    @Test
+    fun `hero parts pad minutes`() {
+        assertEquals("2" to "33", dayHeroParts(153))
+        assertEquals("0" to "05", dayHeroParts(5))
     }
 
     @Test

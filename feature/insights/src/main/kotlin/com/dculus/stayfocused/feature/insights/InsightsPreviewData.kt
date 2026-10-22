@@ -2,62 +2,65 @@
 
 package com.dculus.stayfocused.feature.insights
 
-import com.dculus.stayfocused.core.model.ledLevels
 import java.time.LocalDate
 
-private fun previewHours(metric: InsightsMetric): List<Int> =
-    if (metric == InsightsMetric.Unlocks) {
-        listOf(0, 0, 0, 0, 0, 1, 2, 5, 4, 2, 3, 2, 4, 2, 1, 2, 3, 2, 3, 4, 4, 3, 1, 0)
-    } else {
-        listOf(0, 0, 0, 0, 0, 0, 2, 6, 14, 9, 5, 8, 12, 4, 3, 7, 10, 6, 9, 18, 22, 15, 8, 2)
-    }
+private val PreviewApps =
+    listOf(
+        "Instagram" to 41,
+        "YouTube" to 33,
+        "Reddit" to 24,
+        "WhatsApp" to 18,
+        "Chrome" to 12,
+        "Snapchat" to 8,
+    )
 
+private val PreviewHours = listOf(0, 0, 0, 0, 0, 0, 2, 6, 14, 9, 5, 8, 12, 4, 3, 7, 10, 6, 9, 18, 22, 15, 8, 2)
+private val PreviewWeek = listOf(190, 150, 210, 120, 175, 230, 147)
+
+/** Sample state for previews and screenshots; the reference PNGs use the same shape of data. */
 internal fun previewInsightsState(
-    metric: InsightsMetric,
+    range: InsightsRange,
+    metric: InsightsMetric = InsightsMetric.ScreenTime,
     offset: Int = 0,
     empty: Boolean = false,
 ): InsightsUiState {
-    val hours = previewHours(metric)
-    val values =
-        when (metric) {
-            InsightsMetric.ScreenTime -> listOf(41, 33, 24, 18, 12)
-            InsightsMetric.Opens -> listOf(20, 16, 12, 9, 6)
-            InsightsMetric.Unlocks -> listOf(20, 12, 8, 5, 3)
-        }
-    val names = listOf("Instagram", "YouTube", "Reddit", "WhatsApp", "Chrome")
     val apps =
-        names.mapIndexed { i, name ->
-            RankedApp(i + 1, "com.example.${name.lowercase()}", name, values[i], values[i].toFloat() / values.first())
-        }
-    // Opens totals sum the app values; screen time has other, smaller apps on top of the five shown.
-    val total = if (metric == InsightsMetric.ScreenTime) 147 else values.sum()
-    val average =
-        if (metric == InsightsMetric.ScreenTime) {
-            139
-        } else if (metric == InsightsMetric.Opens) {
-            58
-        } else {
-            51
+        PreviewApps.mapIndexed { i, (name, mins) ->
+            RankedApp(i + 1, "com.example.${name.lowercase()}", name, mins, mins.toFloat() / PreviewApps.first().second)
         }
     val date = LocalDate.of(2026, 10, 8).plusDays(offset.toLong())
+    val day =
+        if (range == InsightsRange.Day) {
+            InsightsDay(
+                range = range,
+                heroMins = 153,
+                values = PreviewHours,
+                chartMax = DAY_CHART_MIN_MAX,
+                average = 153f / HOURS_PER_DAY,
+                highlightIndex = if (offset == 0) 21 else null,
+                axisLabels = emptyList(),
+                apps = apps,
+            )
+        } else {
+            InsightsDay(
+                range = range,
+                heroMins = Math.round(PreviewWeek.sum() / 7f),
+                values = PreviewWeek,
+                chartMax = WEEK_CHART_MIN_MAX,
+                average = PreviewWeek.sum() / 7f,
+                highlightIndex = 6,
+                axisLabels = weekAxisLabels(date, java.util.Locale.ENGLISH),
+                apps = apps,
+            )
+        }
     return InsightsUiState(
+        range = range,
         dayOffset = offset,
         date = date,
         metric = metric,
         loading = false,
-        day =
-            if (empty) {
-                null
-            } else {
-                InsightsDay(
-                    metric = metric,
-                    total = total,
-                    average = average,
-                    levels = ledLevels(hours, LED_ROWS, if (offset == 0) 10 else null),
-                    // Opens charts hourly foreground time, so its average line uses the screen-time average.
-                    avgFraction = (if (metric == InsightsMetric.Unlocks) 51f else 139f) / 24f / hours.max(),
-                    apps = apps,
-                )
-            },
+        day = if (empty) null else day,
+        unlocksToday = 41,
+        blockedToday = 23,
     )
 }

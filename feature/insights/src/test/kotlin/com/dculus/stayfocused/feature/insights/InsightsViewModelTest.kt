@@ -46,7 +46,7 @@ class InsightsViewModelTest {
 
         override fun averages(): Flow<UsageAverages> = flowOf(UsageAverages.NONE)
 
-        override fun blockedToday(): Flow<Int> = flowOf(0)
+        override fun blockedToday(): Flow<Int> = flowOf(4)
 
         var backfills = 0
 
@@ -91,7 +91,7 @@ class InsightsViewModelTest {
                 var s = awaitItem()
                 while (s.loading || s.day == null) s = awaitItem()
                 assertEquals(0, s.dayOffset)
-                assertEquals(30, s.day!!.total)
+                assertEquals(30, s.day!!.heroMins)
                 assertEquals(
                     "Alpha",
                     s.day!!
@@ -104,7 +104,7 @@ class InsightsViewModelTest {
                 vm.previousDay()
                 s = awaitItem()
                 while (s.dayOffset != -1 || s.day == null) s = awaitItem()
-                assertEquals(90, s.day!!.total)
+                assertEquals(90, s.day!!.heroMins)
                 assertEquals(today.minusDays(1), s.date)
 
                 vm.previousDay()
@@ -118,7 +118,7 @@ class InsightsViewModelTest {
                 assertEquals(OLDEST_DAY_OFFSET, oldest.dayOffset)
                 assertEquals(false, oldest.canStepBack)
 
-                vm.selectMetric(InsightsMetric.Unlocks)
+                vm.selectMetric(InsightsMetric.Opens)
                 assertNotNull(awaitItem())
                 cancelAndIgnoreRemainingEvents()
             }
@@ -134,6 +134,27 @@ class InsightsViewModelTest {
             assertEquals(1, usage.backfills)
             vm.state.map { it.dayOffset }.test {
                 assertEquals(0, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `week sums seven days ending today and tiles show today`() =
+        runTest {
+            val cached = (1..6).associate { today.minusDays(it.toLong()) to stats(today.minusDays(it.toLong()), 60) }
+            val usage = FakeUsage(MutableStateFlow(stats(today, 30)), cached.toMutableMap())
+            val vm = InsightsViewModel(usage, installed, clock)
+            vm.state.test {
+                var s = awaitItem()
+                vm.selectRange(InsightsRange.Week)
+                while (s.range != InsightsRange.Week || s.day == null) s = awaitItem()
+                val week = checkNotNull(s.day)
+                assertEquals(listOf(60, 60, 60, 60, 60, 60, 30), week.values)
+                assertEquals(6, week.highlightIndex)
+                assertEquals(56, week.heroMins)
+                assertEquals(390, week.apps.single().value)
+                assertEquals(2, s.unlocksToday)
+                assertEquals(4, s.blockedToday)
                 cancelAndIgnoreRemainingEvents()
             }
         }
