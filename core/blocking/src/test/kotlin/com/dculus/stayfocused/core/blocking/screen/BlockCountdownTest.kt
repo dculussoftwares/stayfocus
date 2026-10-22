@@ -91,3 +91,13 @@ class BlockCountdownTest {
             assertEquals(open, source.current("p", open, now.plusSeconds(99_999)))
         }
 }
+
+class DotCountdownTextTest {
+    @Test
+    fun `minutes are padded and hours lose the leading zero`() {
+        assertEquals("04:59", dotCountdownText("4:59"))
+        assertEquals("14:52", dotCountdownText("14:52"))
+        assertEquals("5:12:09", dotCountdownText("05:12:09"))
+        assertEquals("12:00:01", dotCountdownText("12:00:01"))
+    }
+}

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -31,6 +32,10 @@ internal fun BlockHost(
     var decision by remember(request) { mutableStateOf<Decision>(request.decision) }
     var now by remember(request) { mutableStateOf(clock.instant()) }
     val allow by rememberUpdatedState(onAllow)
+    val cycleRule by produceState<CycleRuleMins?>(null, request) {
+        value =
+            decisionSource.cycleRule(request.decision.blockId)
+    }
     LaunchedEffect(request) {
         while (true) {
             now = clock.instant()
@@ -49,6 +54,7 @@ internal fun BlockHost(
         reason = block.reason,
         timeLine = timeLineFor(block, now),
         onGoHome = onGoHome,
+        cycleRule = cycleRule,
         extraActions = { extras?.Content(request.pkg, block, Modifier) },
     )
 }

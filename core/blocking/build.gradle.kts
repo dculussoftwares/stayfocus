@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.roborazzi)
     id("stayfocused.android.library.compose")
     id("stayfocused.android.hilt")
 }
@@ -25,4 +26,9 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.robolectric)
     testImplementation(libs.turbine)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    testImplementation(libs.roborazzi.junit.rule)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

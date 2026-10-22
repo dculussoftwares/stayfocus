@@ -5,7 +5,9 @@ import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.screen.BlockDecisionSource
 import com.dculus.stayfocused.core.blocking.screen.BlockPresenter
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher
+import com.dculus.stayfocused.core.blocking.screen.CycleRuleMins
 import com.dculus.stayfocused.core.blocking.screen.TimeBasedBlockDecisionSource
+import com.dculus.stayfocused.core.data.repository.BlockRepository
 import dagger.Binds
 import dagger.Lazy
 import dagger.Module
@@ -32,7 +34,15 @@ class EngineBlockDecisionSource
     internal constructor(
         private val engine: Lazy<BlockingEngine>,
         private val fallback: TimeBasedBlockDecisionSource,
+        private val blocks: BlockRepository,
     ) : BlockDecisionSource {
+        override suspend fun cycleRule(blockId: String?): CycleRuleMins? {
+            val block = blockId?.let { blocks.get(it) }
+            val use = block?.useMins
+            val rest = block?.restMins
+            return if (use != null && rest != null) CycleRuleMins(use, rest) else null
+        }
+
         override suspend fun current(
             pkg: String,
             initial: Decision.Block,
