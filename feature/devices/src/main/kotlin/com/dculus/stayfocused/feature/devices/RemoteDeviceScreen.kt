@@ -736,7 +736,7 @@ private fun UnlinkButton(
     )
 }
 
-/** A pill that is only as wide as its label allows: the shared [PillButton] pads 24 dp a side, too much for four in a row. */
+/** A pill with 14 dp side padding: the shared [PillButton] pads 24 dp, too much for four in a row. */
 @Composable
 private fun CompactPill(
     text: String,
