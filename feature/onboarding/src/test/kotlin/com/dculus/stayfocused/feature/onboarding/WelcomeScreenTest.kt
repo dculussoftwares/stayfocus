@@ -14,7 +14,6 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -33,7 +32,7 @@ class WelcomeScreenTest {
 
     private fun show(content: @Composable () -> Unit) =
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content() } }
+            CompositionLocalProvider(LocalInspectionMode provides true) { content() }
         }
 
     @Test
