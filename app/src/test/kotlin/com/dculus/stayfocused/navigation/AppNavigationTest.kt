@@ -158,7 +158,12 @@ class AppNavigationTest {
     private val signInViewModel = SignInViewModel(FakeAuthRepository(), FakeSettingsRepository())
     private val fakePermissions = FakePermissionsRepository()
     private val permissionsViewModel =
-        PermissionsViewModel(fakePermissions, FakeSettingsRepository(), Clock.systemUTC())
+        PermissionsViewModel(
+            fakePermissions,
+            FakeSettingsRepository(),
+            FakeAccountProfileRepository(),
+            Clock.systemUTC(),
+        )
     private val linkAddViewModel = LinkAddViewModel(FakeAuthRepository())
     private val linkConfirmViewModel =
         LinkConfirmViewModel(
@@ -384,8 +389,8 @@ class AppNavigationTest {
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
         composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
-        composeRule.onNodeWithText("Continue for now").performClick()
-        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("perms_skip").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) { currentIs(Home::class) }
         assertTrue(currentIs(Home::class))
         assertTrue(tabBarVisible())
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Welcome::class) })
@@ -401,8 +406,8 @@ class AppNavigationTest {
         composeRule.waitUntil(5_000) { currentIs(SignIn::class) }
         composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
         composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
-        composeRule.onNodeWithText("Continue for now").performClick()
-        composeRule.waitForIdle()
+        composeRule.onNodeWithTag("perms_skip").performScrollTo().performClick()
+        composeRule.waitUntil(5_000) { currentIs(Home::class) }
         assertTrue(currentIs(Home::class))
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Account::class) })
     }
@@ -421,24 +426,27 @@ class AppNavigationTest {
     }
 
     @Test
-    fun onboardingWithAllFourPermissionsUpdatesLiveAndFinishesWithoutToast() {
+    fun onboardingWithAllFourPermissionsUpdatesLiveAndFinishesWithAllSetToast() {
         launch(StartGraph.ONBOARDING)
         composeRule.onNodeWithText("Get started").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
         composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
-        composeRule.onNodeWithText("0/4").assertIsDisplayed()
+        composeRule.onNodeWithText("0 of 4 allowed").assertIsDisplayed()
         // "No thanks" on the disclosure leaves the row as Allow.
         composeRule.onNodeWithTag("perms_allow_accessibility").performClick()
         composeRule.onNodeWithTag("accessibility_disclosure_no").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("0/4").assertIsDisplayed()
+        composeRule.onNodeWithText("0 of 4 allowed").assertIsDisplayed()
         // The user comes back from Settings with everything granted.
         fakePermissions.grant(usage = true, accessibility = true, overlay = true, notifications = true)
-        composeRule.waitUntil(5_000) { composeRule.onAllNodesWithText("4/4").fetchSemanticsNodes().isNotEmpty() }
-        composeRule.onNodeWithText("All set · Continue").performClick()
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Start using Stay Focused").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Start using Stay Focused").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
+        composeRule.onNodeWithText("All set").assertIsDisplayed()
         composeRule.onAllNodesWithText("Blocking needs all 4. Finish in Account.").assertCountEquals(0)
     }
 }

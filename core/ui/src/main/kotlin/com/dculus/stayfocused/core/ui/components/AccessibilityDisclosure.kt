@@ -18,10 +18,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 
 const val ACCESSIBILITY_DISCLOSURE_AGREE_TAG = "accessibility_disclosure_agree"
 const val ACCESSIBILITY_DISCLOSURE_NO_TAG = "accessibility_disclosure_no"
@@ -29,7 +34,6 @@ const val ACCESSIBILITY_DISCLOSURE_PRIVACY_TAG = "accessibility_disclosure_priva
 
 /** The words of the Play prominent disclosure. The Kids app supplies its own copy. */
 data class AccessibilityDisclosureCopy(
-    val eyebrow: String,
     val title: String,
     val readsLabel: String,
     val reads: String,
@@ -44,8 +48,8 @@ data class AccessibilityDisclosureCopy(
 )
 
 /**
- * Play-required prominent disclosure shown right before the Accessibility settings screen.
- * Only [onAgree] may lead to Settings; [onDismiss] ("No thanks", back, scrim) must do nothing else.
+ * Play-required prominent disclosure shown right before the Accessibility settings screen, as a v5 bottom sheet.
+ * Only [onAgree] may lead to Settings; [onDismiss] ("No thanks", back, scrim, drag down) must do nothing else.
  */
 @Composable
 fun AccessibilityDisclosure(
@@ -56,51 +60,52 @@ fun AccessibilityDisclosure(
     onPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    SfBottomSheet(visible = visible, onDismiss = onDismiss, modifier = modifier) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(max = 620.dp)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 6.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            MonoLabel(copy.eyebrow, color = colors.accent)
-            Text(
-                copy.title,
-                style = type.displayM.copy(fontSize = 26.sp, lineHeight = 29.sp, letterSpacing = (-0.5).sp),
-                color = colors.text,
-            )
+    V5Theme {
+        val colors = V5Theme.colors
+        val type = V5Theme.type
+        V5BottomSheet(visible = visible, onDismiss = onDismiss, modifier = modifier, contentSpacing = 12.dp) {
             Column(
-                Modifier.clip(RoundedCornerShape(18.dp)).background(colors.hairline06),
-                verticalArrangement = Arrangement.spacedBy(1.dp),
+                Modifier.fillMaxWidth().heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                DisclosureSection(copy.readsLabel, copy.reads)
-                DisclosureSection(copy.whyLabel, copy.why)
-                DisclosureSection(copy.neverLabel, copy.never)
-            }
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(copy.footer, style = type.bodyS.copy(fontSize = 12.sp), color = colors.secondary)
+                Text(copy.title, style = type.heading, color = colors.ink)
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(26.dp))
+                        .background(colors.surface)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                ) {
+                    DisclosureSection(copy.readsLabel, copy.reads)
+                    DisclosureSection(copy.whyLabel, copy.why)
+                    DisclosureSection(copy.neverLabel, copy.never)
+                }
+                // v5-extra: M13-01 (shipped: Play disclosure footer and privacy policy link)
+                Text(copy.footer, style = type.body.copy(fontSize = 13.sp), color = colors.textSecondary)
                 Text(
                     copy.privacyPolicy,
-                    style = type.bodyS.copy(fontSize = 12.sp, textDecoration = TextDecoration.Underline),
-                    color = colors.text,
+                    style = type.body.copy(fontSize = 13.sp, textDecoration = TextDecoration.Underline),
+                    color = colors.ink,
                     modifier =
                         Modifier
                             .testTag(ACCESSIBILITY_DISCLOSURE_PRIVACY_TAG)
-                            .clickable(role = Role.Button, onClick = onPrivacyPolicy),
+                            .clickable(role = Role.Button, onClick = onPrivacyPolicy)
+                            .padding(vertical = 4.dp),
                 )
             }
-            PrimaryButton(
+            PillButton(
                 text = copy.agree,
                 onClick = onAgree,
+                variant = PillButtonVariant.Primary,
+                size = PillButtonSize.Sheet,
                 modifier = Modifier.testTag(ACCESSIBILITY_DISCLOSURE_AGREE_TAG),
             )
-            GhostButton(
+            PillButton(
                 text = copy.noThanks,
                 onClick = onDismiss,
+                variant = PillButtonVariant.Text,
+                size = PillButtonSize.Medium,
                 modifier = Modifier.testTag(ACCESSIBILITY_DISCLOSURE_NO_TAG),
             )
         }
@@ -112,16 +117,8 @@ private fun DisclosureSection(
     label: String,
     body: String,
 ) {
-    val colors = StayFocusedTheme.colors
-    Column(
-        Modifier.fillMaxWidth().background(colors.background).padding(horizontal = 14.dp, vertical = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-    ) {
-        MonoLabel(label, color = colors.secondary)
-        Text(
-            body,
-            style = StayFocusedTheme.type.bodyS.copy(fontSize = 13.5.sp, lineHeight = 19.5.sp),
-            color = colors.text,
-        )
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = V5Theme.type.body.copy(fontWeight = FontWeight.Bold), color = V5Theme.colors.ink)
+        Text(body, style = V5Theme.type.body, color = V5Theme.colors.ink)
     }
 }

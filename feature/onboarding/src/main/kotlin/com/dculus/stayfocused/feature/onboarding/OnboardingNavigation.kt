@@ -23,12 +23,12 @@ fun NavController.navigateToPermissions(navOptions: NavOptions? = null) = naviga
 
 /**
  * The onboarding graph: Welcome, SignIn, Permissions. [onFinished] runs after the last step with the toast to show
- * on the next screen (null when all four permissions are on). The view-model parameters are null to use Hilt
- * (navigation tests run without it).
+ * on the next screen ("All set, {name}" when all four permissions are on). The view-model parameters are null to
+ * use Hilt (navigation tests run without it).
  */
 fun NavGraphBuilder.onboardingGraph(
     navController: NavController,
-    onFinished: (toast: String?) -> Unit,
+    onFinished: (toast: String) -> Unit,
     signInViewModel: (@Composable () -> SignInViewModel)? = null,
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
@@ -42,7 +42,11 @@ fun NavGraphBuilder.onboardingGraph(
             )
         }
         composable<Permissions> {
-            PermissionsRoute(onFinish = onFinished, viewModel = permissionsViewModel?.invoke() ?: hiltViewModel())
+            PermissionsRoute(
+                onFinish = { toast, _ -> onFinished(toast) },
+                viewModel =
+                    permissionsViewModel?.invoke() ?: hiltViewModel(),
+            )
         }
     }
 }

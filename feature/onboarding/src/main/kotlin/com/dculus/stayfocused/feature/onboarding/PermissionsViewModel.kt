@@ -4,12 +4,14 @@ import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
+import com.dculus.stayfocused.core.data.repository.AccountProfileRepository
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.model.Permissions
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import timber.log.Timber
 import java.time.Clock
@@ -49,12 +51,20 @@ class PermissionsViewModel
     constructor(
         repository: PermissionsRepository,
         private val settings: SettingsRepository,
+        profile: AccountProfileRepository,
         private val clock: Clock,
     ) : ViewModel() {
         internal val permissions: StateFlow<Permissions> =
             repository
                 .observe()
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), repository.current())
+
+        /** First name for the "All set, {name}" toast; null without an account. */
+        internal val firstName: StateFlow<String?> =
+            profile
+                .observeFirstName()
+                .map { it?.trim()?.takeIf(String::isNotEmpty) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
         private var notificationRequests = 0
 
