@@ -29,21 +29,27 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 internal data class InsightsUiState(
+    val range: InsightsRange = InsightsRange.Day,
     val dayOffset: Int = 0,
     val date: LocalDate,
     val metric: InsightsMetric = InsightsMetric.ScreenTime,
     val loading: Boolean = true,
-    /** Null when the day has no data (empty state). */
+    /** Null when the day (or the whole week) has no data (empty state). */
     val day: InsightsDay? = null,
+    /** The "Unlocks" and "Blocked" tiles always show today. */
+    val unlocksToday: Int = 0,
+    val blockedToday: Int = 0,
 ) {
     val canStepBack: Boolean get() = canStepBack(dayOffset)
     val canStepForward: Boolean get() = canStepForward(dayOffset)
 }
 
-private data class DayStats(
+/** The usage a screen state is built from: one entry for a day, [WEEK_DAYS] (oldest first, today last) for a week. */
+private data class Source(
+    val range: InsightsRange,
     val offset: Int,
     val date: LocalDate,
-    val stats: DayUsageStats?,
+    val days: List<DayUsageStats?>,
 )
 
 @HiltViewModel
@@ -55,6 +61,7 @@ internal class InsightsViewModel
         installedApps: InstalledAppsRepository,
         private val clock: Clock,
     ) : ViewModel() {
+        private val range = MutableStateFlow(InsightsRange.Day)
         private val dayOffset = MutableStateFlow(0)
         private val metric = MutableStateFlow(InsightsMetric.ScreenTime)
 
@@ -75,11 +82,20 @@ internal class InsightsViewModel
                 }
             }.distinctUntilChanged()
 
-        private val dayStats: Flow<DayStats> =
-            combine(dayOffset, localDate, ::Pair).flatMapLatest { (offset, now) ->
-                val date = now.plusDays(offset.toLong())
-                val source: Flow<DayUsageStats?> = if (offset == 0) usage.today() else usage.day(date)
-                source.map { DayStats(offset, date, it) }
+        private val source: Flow<Source> =
+            combine(range, dayOffset, localDate, ::Triple).flatMapLatest { (range, offset, now) ->
+                when (range) {
+                    InsightsRange.Day -> {
+                        val date = now.plusDays(offset.toLong())
+                        val one: Flow<DayUsageStats?> = if (offset == 0) usage.today() else usage.day(date)
+                        one.map { Source(range, offset, date, listOf(it)) }
+                    }
+
+                    InsightsRange.Week -> {
+                        val past = (WEEK_DAYS - 1 downTo 1).map { usage.day(now.minusDays(it.toLong())) }
+                        combine(past + usage.today()) { it.toList() }.map { Source(range, 0, now, it) }
+                    }
+                }
             }
 
         init {
@@ -99,32 +115,45 @@ internal class InsightsViewModel
         }
 
         val state: StateFlow<InsightsUiState> =
-            combine(dayStats, usage.averages(), metric, labels) { (offset, date, stats), averages, metric, names ->
+            combine(
+                source,
+                metric,
+                labels,
+                usage.today().map { it.unlocks }.onStart { emit(0) },
+                usage.blockedToday().onStart { emit(0) },
+            ) { src, metric, names, unlocks, blocked ->
+                val labelOf = { pkg: String -> names[pkg] ?: pkg.substringAfterLast('.') }
                 val day =
-                    if (stats.hasNoData()) {
-                        null
-                    } else {
-                        buildInsightsDay(
-                            stats = checkNotNull(stats),
-                            averages = averages,
-                            metric = metric,
-                            currentHour =
-                                if (offset ==
-                                    0
-                                ) {
-                                    clock.instant().atZone(ZoneId.systemDefault()).hour
-                                } else {
-                                    null
-                                },
-                            labelOf = { pkg -> names[pkg] ?: pkg.substringAfterLast('.') },
-                        )
+                    when {
+                        src.days.all { it.hasNoData() } -> {
+                            null
+                        }
+
+                        src.range == InsightsRange.Day -> {
+                            buildDay(
+                                stats = checkNotNull(src.days.single()),
+                                metric = metric,
+                                currentHour = if (src.offset == 0) now().hour else null,
+                                labelOf = labelOf,
+                            )
+                        }
+
+                        else -> {
+                            buildWeek(src.days, metric, weekAxisLabels(src.date), labelOf)
+                        }
                     }
-                InsightsUiState(offset, date, metric, loading = false, day = day)
+                InsightsUiState(src.range, src.offset, src.date, metric, loading = false, day, unlocks, blocked)
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
                 InsightsUiState(date = today()),
             )
+
+        private fun now() = clock.instant().atZone(ZoneId.systemDefault())
+
+        fun selectRange(value: InsightsRange) {
+            range.value = value
+        }
 
         fun previousDay() = dayOffset.update { if (canStepBack(it)) it - 1 else it }
 

@@ -1,56 +1,25 @@
 package com.dculus.stayfocused.feature.insights
 
-import com.dculus.stayfocused.core.model.LedColumn
-import com.dculus.stayfocused.core.model.ledLevels
+import com.dculus.stayfocused.core.ui.v5.charts.GlassBarMode
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
-import com.dculus.stayfocused.core.usage.UsageAverages
-import com.dculus.stayfocused.core.usage.totalOpens
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-/** How far back the stepper goes: today (0) to -6. */
-internal const val OLDEST_DAY_OFFSET = -6
-
-internal const val LED_ROWS = 10
 internal const val HOURS_PER_DAY = 24
-private const val MILLIS_PER_SECOND = 1000L
+internal const val WEEK_DAYS = 7
+internal const val TOP_APPS = 6
 
-internal enum class InsightsMetric { ScreenTime, Opens, Unlocks }
+/** The prototype's fixed chart scales (20 min per hour, 4 h per day); a busier hour or day stretches the scale. */
+internal const val DAY_CHART_MIN_MAX = 20
+internal const val WEEK_CHART_MIN_MAX = 240
 
-/** Title of the day stepper; the weekday name is locale-formatted, the other two are string resources. */
-internal sealed interface DayTitle {
-    data object Today : DayTitle
+internal enum class InsightsRange { Day, Week }
 
-    data object Yesterday : DayTitle
-
-    data class Weekday(
-        val name: String,
-    ) : DayTitle
-}
-
-internal fun dayTitle(
-    offset: Int,
-    date: LocalDate,
-    locale: Locale = Locale.getDefault(),
-): DayTitle =
-    when (offset) {
-        0 -> DayTitle.Today
-        -1 -> DayTitle.Yesterday
-        else -> DayTitle.Weekday(date.dayOfWeek.getDisplayName(TextStyle.FULL, locale))
-    }
-
-/** "06 OCT". */
-internal fun dayDateLabel(
-    date: LocalDate,
-    locale: Locale = Locale.getDefault(),
-): String = DateTimeFormatter.ofPattern("dd MMM", locale).format(date).uppercase(locale)
-
-internal fun canStepBack(offset: Int): Boolean = offset > OLDEST_DAY_OFFSET
-
-internal fun canStepForward(offset: Int): Boolean = offset < 0
+/** What the ranked list shows. [Opens] is a v5-extra (M13-04). */
+internal enum class InsightsMetric { ScreenTime, Opens }
 
 /** One row of the ranked list. [value] is minutes for screen time, a count otherwise. */
 internal data class RankedApp(
@@ -60,10 +29,7 @@ internal data class RankedApp(
     val value: Int,
     /** 0..1 relative to the top app. */
     val fraction: Float,
-) {
-    /** "01", "02", ... */
-    val rankLabel: String get() = rank.toString().padStart(2, '0')
-}
+)
 
 private fun AppUsageStat.valueFor(metric: InsightsMetric): Int =
     when (metric) {
@@ -71,9 +37,6 @@ private fun AppUsageStat.valueFor(metric: InsightsMetric): Int =
         InsightsMetric.ScreenTime -> if (millis > 0) maxOf(mins, 1) else 0
 
         InsightsMetric.Opens -> opens
-
-        // Unlocks are ranked by the app opened first after an unlock (M3-01).
-        InsightsMetric.Unlocks -> firstAfterUnlock
     }
 
 /** Apps sorted by [metric] (desc), ties broken by screen time then label; apps with a value of 0 are dropped. */
@@ -97,63 +60,87 @@ internal fun rankApps(
     }
 }
 
-/** Everything the content composable draws for one day and metric. */
+/** Everything the content composables draw for one day or week. */
 internal data class InsightsDay(
-    val metric: InsightsMetric,
-    /** Minutes for [InsightsMetric.ScreenTime], otherwise a count. */
-    val total: Int,
-    /** The average to print after "AVG", or null when there is no history yet. */
-    val average: Int?,
-    val levels: List<LedColumn>,
-    val avgFraction: Float?,
+    val range: InsightsRange,
+    /** Screen time in minutes: the day's total, or the daily average of the week. */
+    val heroMins: Int,
+    /** Bar values in minutes: 24 hours, or 7 days ending today. */
+    val values: List<Int>,
+    val chartMax: Int,
+    /** Dashed average line, in the unit of [values]: minutes per hour (day) or per day (week). */
+    val average: Float,
+    val highlightIndex: Int?,
+    /** Week: the weekday letters. Day: empty, the screen draws its hour labels from resources. */
+    val axisLabels: List<String>,
     val apps: List<RankedApp>,
-)
+) {
+    val mode: GlassBarMode get() = if (range == InsightsRange.Day) GlassBarMode.Day else GlassBarMode.Week
+}
 
-private fun DayUsageStats.totalFor(metric: InsightsMetric): Int =
-    when (metric) {
-        InsightsMetric.ScreenTime -> totalMins
-        InsightsMetric.Opens -> totalOpens
-        InsightsMetric.Unlocks -> unlocks
-    }
+internal fun dayHeroParts(mins: Int): Pair<String, String> =
+    (mins / 60).toString() to (mins % 60).toString().padStart(2, '0')
 
-private fun UsageAverages.averageFor(metric: InsightsMetric): Int? =
-    when {
-        !hasData -> null
-        metric == InsightsMetric.ScreenTime -> avgTotalMins
-        metric == InsightsMetric.Opens -> avgOpens
-        else -> avgUnlocks
-    }
-
-/** Average per chart hour, in the chart's unit (seconds, or unlocks). */
-private fun UsageAverages.avgPerHour(unlockChart: Boolean): Double? =
-    when {
-        !hasData -> null
-        unlockChart -> avgUnlocks.toDouble() / HOURS_PER_DAY
-        else -> avgHourlyMillis.toDouble() / MILLIS_PER_SECOND
-    }
-
-/** [InsightsMetric.ScreenTime] and [Opens] chart the hourly foreground time; [Unlocks] the hourly unlocks. */
-internal fun buildInsightsDay(
+/** One day: hourly minutes, average per hour = total / 24, the current hour highlighted when it is today. */
+internal fun buildDay(
     stats: DayUsageStats,
-    averages: UsageAverages,
     metric: InsightsMetric,
     currentHour: Int?,
     labelOf: (String) -> String,
 ): InsightsDay {
-    val unlockChart = metric == InsightsMetric.Unlocks
-    val hourly =
-        if (unlockChart) stats.hourlyUnlocks else stats.hourlyMillis.map { (it / MILLIS_PER_SECOND).toInt() }
-    val avgPerHour = averages.avgPerHour(unlockChart)
-    val max = hourly.maxOrNull() ?: 0
+    val values = stats.hourlyMins
     return InsightsDay(
-        metric = metric,
-        total = stats.totalFor(metric),
-        average = averages.averageFor(metric),
-        levels = ledLevels(hourly, LED_ROWS, currentHour),
-        avgFraction = if (avgPerHour != null && max > 0) (avgPerHour / max).toFloat().coerceIn(0f, 1f) else null,
-        apps = rankApps(stats.apps, metric, labelOf),
+        range = InsightsRange.Day,
+        heroMins = stats.totalMins,
+        values = values,
+        chartMax = maxOf(DAY_CHART_MIN_MAX, values.maxOrNull() ?: 0),
+        average = stats.totalMins.toFloat() / HOURS_PER_DAY,
+        highlightIndex = currentHour,
+        axisLabels = emptyList(),
+        apps = rankApps(stats.apps, metric, labelOf).take(TOP_APPS),
     )
 }
+
+/** Sums the apps of several days into one list (screen time, opens, unlock starts). */
+internal fun aggregateApps(days: List<DayUsageStats?>): List<AppUsageStat> =
+    days
+        .filterNotNull()
+        .flatMap { it.apps }
+        .groupBy { it.pkg }
+        .map { (pkg, list) ->
+            AppUsageStat(pkg, list.sumOf { it.millis }, list.sumOf { it.opens }, list.sumOf { it.firstAfterUnlock })
+        }
+
+/**
+ * The last 7 days, oldest first with today last ([days] has [WEEK_DAYS] entries, null for days not cached): bar =
+ * the day's minutes, hero and average line = the mean of the 7 days, apps = 7-day totals.
+ */
+internal fun buildWeek(
+    days: List<DayUsageStats?>,
+    metric: InsightsMetric,
+    axisLabels: List<String>,
+    labelOf: (String) -> String,
+): InsightsDay {
+    val values = days.map { it?.totalMins ?: 0 }
+    val average = values.sum().toFloat() / WEEK_DAYS
+    return InsightsDay(
+        range = InsightsRange.Week,
+        heroMins = Math.round(average),
+        values = values,
+        chartMax = maxOf(WEEK_CHART_MIN_MAX, values.maxOrNull() ?: 0),
+        average = average,
+        highlightIndex = days.lastIndex,
+        axisLabels = axisLabels,
+        apps = rankApps(aggregateApps(days), metric, labelOf).take(TOP_APPS),
+    )
+}
+
+/** Narrow weekday letters of the 7 days ending [today] ("M T W T F S S" starts at the right weekday). */
+internal fun weekAxisLabels(
+    today: LocalDate,
+    locale: Locale = Locale.getDefault(),
+): List<String> =
+    (WEEK_DAYS - 1 downTo 0).map { today.minusDays(it.toLong()).dayOfWeek.getDisplayName(TextStyle.NARROW, locale) }
 
 /** A day with nothing recorded gets the empty state instead of zeros everywhere. */
 internal fun DayUsageStats?.hasNoData(): Boolean = this == null || (totalMillis <= 0L && unlocks <= 0 && apps.isEmpty())

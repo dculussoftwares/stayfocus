@@ -1,16 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="insights_title">Insights</string>
+    <string name="insights_range_day">Day</string>
+    <string name="insights_range_week">Week</string>
+    <string name="insights_label_today">Screen time today</string>
+    <string name="insights_label_week">Daily average this week</string>
+    <string name="insights_unit_hours">h</string>
+    <string name="insights_unit_minutes">m</string>
+    <string name="insights_avg_per_hour">%1$dm/h</string>
+    <string name="insights_hero_description">%1$s: %2$s</string>
+    <string name="insights_axis_12am">12 AM</string>
+    <string name="insights_axis_6am">6 AM</string>
+    <string name="insights_axis_12pm">12 PM</string>
+    <string name="insights_axis_6pm">6 PM</string>
+    <string name="insights_axis_11pm">11 PM</string>
+    <string name="insights_chart_day">Screen time by hour of the day, average %1$s</string>
+    <string name="insights_chart_week">Screen time by day for the last 7 days, today last, average %1$s</string>
+    <string name="insights_unlocks">Unlocks</string>
+    <string name="insights_today">Today</string>
+    <string name="insights_blocked">Blocked</string>
+    <string name="insights_times_today">Times today</string>
+    <string name="insights_unlocks_description">Unlocks today: %1$d</string>
+    <string name="insights_blocked_description">Blocked %1$d times today</string>
+    <!-- v5-extra: M13-04 -->
     <string name="insights_day_today">Today</string>
     <string name="insights_day_yesterday">Yesterday</string>
     <string name="insights_previous_day">Previous day</string>
     <string name="insights_next_day">Next day</string>
     <string name="insights_metric_screen_time">Screen time</string>
     <string name="insights_metric_opens">Opens</string>
-    <string name="insights_metric_unlocks">Unlocks</string>
-    <string name="insights_avg">- - - AVG %1$s</string>
+    <plurals name="insights_opens_count">
+        <item quantity="one">%d open</item>
+        <item quantity="other">%d opens</item>
+    </plurals>
     <string name="insights_empty_title">No data for this day</string>
     <string name="insights_empty_body">Nothing was recorded on this day.</string>
     <string name="insights_no_apps">No apps to rank for this metric on this day.</string>
-    <string name="insights_chart_summary">%1$s per hour of day, 00 to 23</string>
 </resources>

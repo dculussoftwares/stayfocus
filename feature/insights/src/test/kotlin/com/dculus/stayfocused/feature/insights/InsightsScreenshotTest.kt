@@ -9,7 +9,6 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -21,7 +20,7 @@ import org.robolectric.annotation.GraphicsMode
 
 @RunWith(RobolectricTestRunner::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
-@Config(sdk = [34], qualifiers = "w360dp-h780dp-xxhdpi")
+@Config(sdk = [34], qualifiers = "w360dp-h780dp-hdpi")
 class InsightsScreenshotTest {
     @get:Rule
     val composeRule = createComposeRule()
@@ -29,38 +28,38 @@ class InsightsScreenshotTest {
     private fun shot(
         name: String,
         state: InsightsUiState,
-        content: @Composable (InsightsUiState) -> Unit = { InsightsScreen(it, {}) },
     ) {
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content(state) } }
+            CompositionLocalProvider(LocalInspectionMode provides true) { InsightsScreen(state, {}) }
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/$name.png")
     }
 
-    @Test fun screenTime() = shot("InsightsScreenTime", previewInsightsState(InsightsMetric.ScreenTime))
+    @Test fun day() = shot("InsightsDay", previewInsightsState(InsightsRange.Day))
 
-    @Test fun opens() = shot("InsightsOpens", previewInsightsState(InsightsMetric.Opens))
+    @Test fun week() = shot("InsightsWeek", previewInsightsState(InsightsRange.Week))
 
-    @Test fun unlocks() = shot("InsightsUnlocks", previewInsightsState(InsightsMetric.Unlocks))
+    @Test fun opens() = shot("InsightsOpens", previewInsightsState(InsightsRange.Day, InsightsMetric.Opens))
 
-    @Test fun emptyDay() =
-        shot("InsightsEmptyDay", previewInsightsState(InsightsMetric.ScreenTime, offset = -3, empty = true))
+    @Test fun emptyDay() = shot("InsightsEmptyDay", previewInsightsState(InsightsRange.Day, offset = -3, empty = true))
 
     @Test
-    fun nextIsDisabledOnTodayAndMetricTabsSelect() {
-        val picked = mutableListOf<InsightsMetric>()
+    fun nextIsDisabledOnTodayAndRangeAndMetricSelect() {
+        val events = mutableListOf<InsightsEvent>()
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
-                StayFocusedTheme {
-                    InsightsScreen(
-                        state = previewInsightsState(InsightsMetric.ScreenTime),
-                        onEvent = { event -> if (event is InsightsEvent.SelectMetric) picked += event.metric },
-                    )
-                }
+                InsightsScreen(state = previewInsightsState(InsightsRange.Day), onEvent = { events += it })
             }
         }
         composeRule.onNodeWithContentDescription("Next day").assertIsNotEnabled()
-        composeRule.onNodeWithText("Unlocks").performClick()
-        assertEquals(listOf(InsightsMetric.Unlocks), picked)
+        composeRule.onNodeWithText("Week").performClick()
+        composeRule.onNodeWithText("Opens").performClick()
+        assertEquals(
+            listOf(
+                InsightsEvent.SelectRange(InsightsRange.Week),
+                InsightsEvent.SelectMetric(InsightsMetric.Opens),
+            ),
+            events,
+        )
     }
 }
