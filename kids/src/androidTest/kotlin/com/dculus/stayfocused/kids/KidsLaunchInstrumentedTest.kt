@@ -28,6 +28,6 @@ class KidsLaunchInstrumentedTest {
     fun kidsAppLaunches() {
         hiltRule.inject()
         scenarios.launch(MainActivity::class.java)
-        composeRule.onNodeWithText("SYSTEM CHECK").assertExists()
+        composeRule.onNodeWithText("Four switches", substring = true).assertExists()
     }
 }

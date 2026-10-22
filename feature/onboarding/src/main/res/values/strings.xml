@@ -35,33 +35,36 @@
     <string name="auth_error_network">No connection. Check your internet and try again.</string>
     <string name="auth_error_no_google_account">Couldn\'t find a Google account to use. Add or sign in to one in Settings, then try again.</string>
     <string name="auth_error_other">Something went wrong. Try again.</string>
-    <string name="perms_system_check">System check</string>
-    <string name="perms_count">%1$d/4</string>
     <string name="perms_headline_1">Four switches,</string>
-    <string name="perms_headline_2">then you\'re in.</string>
-    <string name="perms_body">Android needs these before Stay Focused can see and block apps.</string>
+    <string name="perms_headline_2">then you\'re set</string>
+    <string name="perms_body">Android needs these to block apps. Your data stays on this phone.</string>
     <string name="perms_usage_title">Usage access</string>
-    <string name="perms_usage_why">Shows screen time and knows when limits are reached.</string>
+    <string name="perms_usage_why">See how long each app is used</string>
     <string name="perms_accessibility_title">Accessibility</string>
-    <string name="perms_accessibility_why">Notices when a blocked app opens.</string>
-    <string name="perms_overlay_title">Display over apps</string>
-    <string name="perms_overlay_why">Shows the block screen on top.</string>
+    <string name="perms_accessibility_why">Spot a blocked app the moment it opens</string>
+    <string name="perms_overlay_title">Display over other apps</string>
+    <string name="perms_overlay_why">Show the block screen on top</string>
     <string name="perms_notifications_title">Notifications</string>
-    <string name="perms_notifications_why">Breaks, limits and requests.</string>
+    <string name="perms_notifications_why">Tell you when a block starts or ends</string>
     <string name="perms_allow">Allow</string>
-    <string name="perms_on">On</string>
-    <string name="perms_continue_all">All set · Continue</string>
+    <string name="perms_allow_cd">Allow %1$s</string>
+    <string name="perms_allowed_cd">%1$s allowed</string>
+    <string name="perms_count_button">%1$d of 4 allowed</string>
+    <string name="perms_start">Start using Stay Focused</string>
+    <string name="perms_toast_all_set">All set, %1$s</string>
+    <string name="perms_toast_all_set_anonymous">All set</string>
+    <!-- v5-extra: M13-01 (shipped: leave with fewer than four permissions) -->
     <string name="perms_continue_now">Continue for now</string>
     <string name="perms_toast_incomplete">Blocking needs all 4. Finish in Account.</string>
-    <!-- Accessibility prominent disclosure (Play). Keep in step with foreground_service_description in :core:blocking. -->
-    <string name="perms_disclosure_eyebrow">BEFORE YOU CONTINUE</string>
-    <string name="perms_disclosure_title">Stay Focused uses the Accessibility service</string>
-    <string name="perms_disclosure_reads_label">WHAT IT READS</string>
-    <string name="perms_disclosure_reads">The app on your screen, and the website address in supported browsers.</string>
-    <string name="perms_disclosure_why_label">WHY</string>
-    <string name="perms_disclosure_why">To show the block screen when a blocked app opens, and to count screen time.</string>
-    <string name="perms_disclosure_never_label">NEVER</string>
-    <string name="perms_disclosure_never">Reads messages, passwords or typing. Never shared or sold. Stays on this phone unless you link a child\'s device.</string>
+
+    <string name="perms_disclosure_title">Accessibility access</string>
+    <string name="perms_disclosure_reads_label">What it reads</string>
+    <string name="perms_disclosure_reads">Which app is on screen and the address of websites you open.</string>
+    <string name="perms_disclosure_why_label">Why</string>
+    <string name="perms_disclosure_why">To block an app or site the moment it opens.</string>
+    <string name="perms_disclosure_never_label">Never</string>
+    <string name="perms_disclosure_never">Your messages, passwords or typing. Nothing leaves this phone.</string>
+    <!-- v5-extra: M13-01 (shipped: Play disclosure footer and privacy policy link) -->
     <string name="perms_disclosure_footer">Turn it off anytime in Android Settings.</string>
     <string name="perms_disclosure_privacy">Privacy policy</string>
     <string name="perms_disclosure_agree">Agree and open Settings</string>

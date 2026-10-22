@@ -9,7 +9,7 @@ tags:
 - tapOn: "Get started"
 - assertVisible: "Continue with Google"
 - tapOn: "Continue without an account"
-- assertVisible: "SYSTEM CHECK"
+- assertVisible: "Allow"
 - tapOn: "Continue for now"
 - assertVisible: "Take a break"
 - tapOn: "Blocks"

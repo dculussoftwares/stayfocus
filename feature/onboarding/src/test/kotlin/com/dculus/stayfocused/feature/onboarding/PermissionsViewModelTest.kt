@@ -3,6 +3,7 @@ package com.dculus.stayfocused.feature.onboarding
 import app.cash.turbine.test
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
 import com.dculus.stayfocused.core.model.Permissions
+import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +46,7 @@ class PermissionsViewModelTest {
     fun rowsFollowTheRepositoryLive() =
         runTest {
             val repo = FakePermissions()
-            val viewModel = PermissionsViewModel(repo, FakeSettingsRepository(), CLOCK)
+            val viewModel = PermissionsViewModel(repo, FakeSettingsRepository(), FakeAccountProfileRepository(), CLOCK)
             viewModel.permissions.test {
                 assertEquals(0, awaitItem().grantedCount())
                 repo.state.value = NONE.copy(usage = true)
@@ -63,14 +64,16 @@ class PermissionsViewModelTest {
 
     @Test
     fun notificationsAskOnceThenOpenSettings() {
-        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), CLOCK)
+        val viewModel =
+            PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), FakeAccountProfileRepository(), CLOCK)
         assertEquals(NotificationStep.RequestRuntime, viewModel.nextNotificationStep(runtimePermissionExists = true))
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = true))
     }
 
     @Test
     fun notificationsOpenSettingsWhenThereIsNoRuntimePermission() {
-        val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), CLOCK)
+        val viewModel =
+            PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), FakeAccountProfileRepository(), CLOCK)
         assertEquals(NotificationStep.OpenSettings, viewModel.nextNotificationStep(runtimePermissionExists = false))
     }
 
@@ -78,10 +81,22 @@ class PermissionsViewModelTest {
     fun agreeingStoresTheConsentTime() =
         runTest {
             val settings = FakeSettingsRepository()
-            val viewModel = PermissionsViewModel(FakePermissions(), settings, CLOCK)
+            val viewModel = PermissionsViewModel(FakePermissions(), settings, FakeAccountProfileRepository(), CLOCK)
             assertEquals(null, settings.settings.first().accessibilityConsentAt)
             assertEquals(true, viewModel.recordAccessibilityConsent())
             assertEquals(Instant.parse("2026-01-02T03:04:05Z"), settings.settings.first().accessibilityConsentAt)
+        }
+
+    @Test
+    fun firstNameIsTrimmedAndBlankMeansNone() =
+        runTest {
+            val profile = FakeAccountProfileRepository("  Sam ")
+            val viewModel = PermissionsViewModel(FakePermissions(), FakeSettingsRepository(), profile, CLOCK)
+            viewModel.firstName.test {
+                assertEquals("Sam", awaitItem())
+                profile.firstName.value = "  "
+                assertEquals(null, awaitItem())
+            }
         }
 
     private companion object {

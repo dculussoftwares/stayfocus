@@ -4,12 +4,10 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -19,7 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -33,10 +30,10 @@ import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.ui.components.BatteryGuidance
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
 import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.feature.onboarding.PermissionsCopy
 import com.dculus.stayfocused.feature.onboarding.PermissionsRoute
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
@@ -60,7 +57,7 @@ fun KidsNavigation(
     val resources = LocalResources.current
     val toastScope = rememberCoroutineScope()
     val toast = remember { ToastController(toastScope) }
-    // v5 screens (Link, Consent, Home) draw edge to edge; Permissions still sits inside the system bars (LegacyInsets).
+    // Every Kids screen is v5 and draws edge to edge.
     Box(modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
@@ -72,22 +69,20 @@ fun KidsNavigation(
         ) {
             composable<KidsPermissions> {
                 val scope = rememberCoroutineScope()
-                LegacyInsets {
-                    KidsPermissionsRoute(
-                        onFinish = { incomplete ->
-                            scope.launch {
-                                // Setup only counts as done with all four on, so the next launch asks again otherwise.
-                                // The flag is stored before leaving, so a restart right after cannot show this again.
-                                if (!incomplete) onSetupComplete()
-                                navController.navigate(
-                                    KidsLink,
-                                    navOptions { popUpTo<KidsPermissions> { inclusive = true } },
-                                )
-                            }
-                        },
-                        viewModel = permissionsViewModel,
-                    )
-                }
+                KidsPermissionsRoute(
+                    onFinish = { incomplete ->
+                        scope.launch {
+                            // Setup only counts as done with all four on, so the next launch asks again otherwise.
+                            // The flag is stored before leaving, so a restart right after cannot show this again.
+                            if (!incomplete) onSetupComplete()
+                            navController.navigate(
+                                KidsLink,
+                                navOptions { popUpTo<KidsPermissions> { inclusive = true } },
+                            )
+                        }
+                    },
+                    viewModel = permissionsViewModel,
+                )
             }
             composable<KidsLink> {
                 KidsLinkRoute(
@@ -127,12 +122,6 @@ fun KidsNavigation(
     }
 }
 
-/** Permissions is still the shared v2 screen until M12-06 migrates it: v2 background, inside the system bars. */
-@Composable
-private fun LegacyInsets(content: @Composable () -> Unit) {
-    Box(Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).safeDrawingPadding()) { content() }
-}
-
 /** The shared system check with Kids words and the battery guidance (strongly recommended on a child's phone). */
 @Composable
 private fun KidsPermissionsRoute(
@@ -152,11 +141,11 @@ private fun KidsPermissionsRoute(
         }
     val appName = stringResource(R.string.app_name)
     val footer: @Composable () -> Unit = {
-        Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap10)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 stringResource(R.string.kids_battery_strong),
-                style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.Bold),
-                color = StayFocusedTheme.colors.accent,
+                style = V5Theme.type.label,
+                color = V5Theme.colors.ink,
             )
             BatteryGuidance(
                 onOpenBatterySettings = { context.openSafely(PermissionIntents.batteryOptimizationSettings()) },
@@ -167,11 +156,11 @@ private fun KidsPermissionsRoute(
     }
     // PermissionsRoute reports "fewer than four" with a message for the phone app's Account screen; Kids has none.
     if (viewModel != null) {
-        PermissionsRoute(onFinish = { message ->
-            onFinish(message != null)
+        PermissionsRoute(onFinish = { _, allGranted ->
+            onFinish(!allGranted)
         }, copy = copy, footer = footer, viewModel = viewModel())
     } else {
-        PermissionsRoute(onFinish = { message -> onFinish(message != null) }, copy = copy, footer = footer)
+        PermissionsRoute(onFinish = { _, allGranted -> onFinish(!allGranted) }, copy = copy, footer = footer)
     }
 }
 

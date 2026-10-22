@@ -11,20 +11,23 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,7 +43,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -53,23 +58,25 @@ import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_AGREE_
 import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_NO_TAG
 import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosure
 import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosureCopy
-import com.dculus.stayfocused.core.ui.components.LedDot
-import com.dculus.stayfocused.core.ui.components.MonoLabel
-import com.dculus.stayfocused.core.ui.components.OutlineButton
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 internal const val PERMS_CONTINUE_TAG = "perms_continue"
+internal const val PERMS_SKIP_TAG = "perms_skip"
 internal const val PERMS_DISCLOSURE_AGREE_TAG = ACCESSIBILITY_DISCLOSURE_AGREE_TAG
 internal const val PERMS_DISCLOSURE_NO_TAG = ACCESSIBILITY_DISCLOSURE_NO_TAG
 internal const val PRIVACY_URL = "https://dculussoftwares.github.io/stayfocus/privacy.html"
 
 internal fun permsAllowTag(row: PermissionRow) = "perms_allow_${row.tag}"
-
-private val OffLed = Color(0xFF3A3E35)
 
 /**
  * The words that differ between hosts (the phone app and the Kids app); everything else is shared.
@@ -86,13 +93,13 @@ data class PermissionsCopy(
 )
 
 /**
- * The system check. [onFinish] gets the "Blocking needs all 4" message when leaving with fewer than four
- * permissions (the host shows it on the next screen), or null when all four are on. [copy] swaps the headline and
+ * The system check. [onFinish] gets the toast the host shows on the next screen ("All set, {first name}" with all
+ * four on, "Blocking needs all 4" when leaving with fewer) and whether all four are on. [copy] swaps the headline and
  * disclosure words; [footer] is extra content under the four cards (the Kids app puts battery guidance there).
  */
 @Composable
 fun PermissionsRoute(
-    onFinish: (message: String?) -> Unit,
+    onFinish: (message: String, allGranted: Boolean) -> Unit,
     modifier: Modifier = Modifier,
     copy: PermissionsCopy = PermissionsCopy(),
     footer: (@Composable () -> Unit)? = null,
@@ -108,6 +115,10 @@ fun PermissionsRoute(
     // The result needs no handling: the repository re-reads when the app resumes after the dialog closes.
     val requestNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val incomplete = stringResource(R.string.perms_toast_incomplete)
+    val firstName by viewModel.firstName.collectAsStateWithLifecycle()
+    val allSet =
+        firstName?.let { stringResource(R.string.perms_toast_all_set, it) }
+            ?: stringResource(R.string.perms_toast_all_set_anonymous)
     PermissionsScreen(
         permissions = permissions,
         modifier = modifier,
@@ -141,7 +152,10 @@ fun PermissionsRoute(
                 }
             }
         },
-        onContinue = { onFinish(if (permissions.grantedCount() < PermissionRow.entries.size) incomplete else null) },
+        onContinue = {
+            val all = permissions.grantedCount() == PermissionRow.entries.size
+            onFinish(if (all) allSet else incomplete, all)
+        },
     )
     PhoneAccessibilityDisclosure(
         visible = disclosureVisible,
@@ -185,70 +199,77 @@ internal fun PermissionsScreen(
     copy: PermissionsCopy = PermissionsCopy(),
     footer: (@Composable () -> Unit)? = null,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
+    val colors = V5Theme.colors
+    val type = V5Theme.type
     val granted = permissions.grantedCount()
-    val total = PermissionRow.entries.size
-    Column(
-        modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .safeDrawingPadding()
-            .padding(horizontal = 22.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Column(
-            Modifier.weight(1f).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(22.dp),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    MonoLabel(stringResource(R.string.perms_system_check), color = colors.secondary)
-                    Text(
-                        stringResource(R.string.perms_count, granted),
-                        style = type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Bold),
-                        color = colors.accent,
-                    )
-                }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+    val all = granted == PermissionRow.entries.size
+    V5Screen(darkContent = false, modifier = modifier) {
+        // Fills the screen when it fits; scrolls on short screens or at large font scales.
+        BoxWithConstraints(Modifier.matchParentSize()) {
+            val minHeight = maxHeight
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = minHeight)
+                    .v5StatusBarPadding(extra = 18.dp)
+                    .v5NavigationBarPadding(extra = 34.dp)
+                    .padding(horizontal = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    stringResource(copy.headline1) + "\n" + stringResource(copy.headline2),
+                    style = type.headline.copy(fontSize = 36.sp, lineHeight = 37.8.sp),
+                    color = colors.ink,
+                )
+                Text(
+                    stringResource(copy.body),
+                    style = type.body.copy(lineHeight = 21.75.sp),
+                    color = colors.textSecondary,
+                )
+                // Decorative: the bottom button says "{n} of 4 allowed".
+                Row(
+                    Modifier.fillMaxWidth().padding(vertical = 4.dp).clearAndSetSemantics {},
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     PermissionRow.entries.forEach { row ->
                         Box(
                             Modifier
                                 .weight(1f)
                                 .height(4.dp)
                                 .clip(RoundedCornerShape(2.dp))
-                                .background(if (row.isGranted(permissions)) colors.accent else colors.track),
+                                .background(if (row.isGranted(permissions)) colors.success else colors.hairline),
                         )
                     }
                 }
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(copy.headline1) + "\n" + stringResource(copy.headline2),
-                    style = type.displayL.copy(fontSize = 32.sp, lineHeight = 33.sp, letterSpacing = (-0.6).sp),
-                    color = colors.text,
-                )
-                Text(stringResource(copy.body), style = type.body, color = colors.secondary)
-            }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 PermissionRow.entries.forEach { row ->
                     PermissionCard(row, row.isGranted(permissions)) { onAllow(row) }
                 }
+                // v5-extra: M13-01 (Kids: battery guidance under the four rows)
+                footer?.invoke()
+                Box(Modifier.weight(1f))
+                PillButton(
+                    text =
+                        if (all) {
+                            stringResource(R.string.perms_start)
+                        } else {
+                            stringResource(R.string.perms_count_button, granted)
+                        },
+                    onClick = onContinue,
+                    enabled = all,
+                    modifier = Modifier.testTag(PERMS_CONTINUE_TAG),
+                )
+                // v5-extra: M13-01 (shipped: leave with fewer than four permissions)
+                if (!all) {
+                    PillButton(
+                        text = stringResource(R.string.perms_continue_now),
+                        onClick = onContinue,
+                        variant = PillButtonVariant.Text,
+                        size = PillButtonSize.Medium,
+                        modifier = Modifier.testTag(PERMS_SKIP_TAG),
+                    )
+                }
             }
-            footer?.invoke()
-        }
-        if (granted == total) {
-            PrimaryButton(
-                text = stringResource(R.string.perms_continue_all),
-                onClick = onContinue,
-                modifier = Modifier.testTag(PERMS_CONTINUE_TAG),
-            )
-        } else {
-            OutlineButton(
-                text = stringResource(R.string.perms_continue_now),
-                onClick = onContinue,
-                modifier = Modifier.testTag(PERMS_CONTINUE_TAG),
-            )
         }
     }
 }
@@ -259,47 +280,50 @@ private fun PermissionCard(
     on: Boolean,
     onAllow: () -> Unit,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    val shape = RoundedCornerShape(18.dp)
+    val colors = V5Theme.colors
+    val type = V5Theme.type
+    val title = stringResource(row.title)
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(shape)
-            .background(colors.panel)
-            .border(1.dp, if (on) colors.accent.copy(alpha = 0.3f) else colors.hairline06, shape)
+            .clip(V5Theme.shapes.card)
+            .background(colors.surface)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        LedDot(color = if (on) colors.accent else OffLed, size = 10.dp, glow = on)
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                stringResource(row.title),
-                style = type.bodyL.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
-                color = colors.text,
-            )
+            Text(title, style = type.bodyL, color = colors.ink)
             Text(
                 stringResource(row.why),
-                style = type.bodyS.copy(fontSize = 12.5.sp, lineHeight = 18.sp),
-                color = colors.secondary,
+                style = type.body.copy(fontSize = 14.sp, lineHeight = 18.9.sp),
+                color = colors.textSecondary,
             )
         }
-        val buttonShape = RoundedCornerShape(12.dp)
-        Box(
-            Modifier
-                .testTag(permsAllowTag(row))
-                .height(36.dp)
-                .clip(buttonShape)
-                .background(if (on) colors.accent.copy(alpha = 0.14f) else colors.text)
-                .clickable(enabled = !on, role = Role.Button, onClick = onAllow)
-                .padding(horizontal = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                stringResource(if (on) R.string.perms_on else R.string.perms_allow),
-                style = type.bodyL.copy(fontSize = 13.sp, fontWeight = FontWeight.ExtraBold),
-                color = if (on) colors.accent else colors.onAccent,
+        if (on) {
+            val allowed = stringResource(R.string.perms_allowed_cd, title)
+            Box(
+                Modifier
+                    .testTag(permsAllowTag(row))
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(colors.success)
+                    .semantics { contentDescription = allowed },
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(V5Icons.check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            }
+        } else {
+            val allowDescription = stringResource(R.string.perms_allow_cd, title)
+            PillButton(
+                text = stringResource(R.string.perms_allow),
+                onClick = onAllow,
+                size = PillButtonSize.Small,
+                modifier =
+                    Modifier
+                        .width(IntrinsicSize.Max)
+                        .testTag(permsAllowTag(row))
+                        .semantics { contentDescription = allowDescription },
             )
         }
     }
@@ -315,7 +339,6 @@ internal fun PhoneAccessibilityDisclosure(
 ) {
     val copy =
         AccessibilityDisclosureCopy(
-            eyebrow = stringResource(R.string.perms_disclosure_eyebrow),
             title = stringResource(words.disclosureTitle),
             readsLabel = stringResource(R.string.perms_disclosure_reads_label),
             reads = stringResource(words.disclosureReads),
@@ -334,11 +357,9 @@ internal fun PhoneAccessibilityDisclosure(
 @Preview(widthDp = 360, heightDp = 780)
 @Composable
 internal fun PermissionsScreenPreview() {
-    StayFocusedTheme {
-        PermissionsScreen(
-            Permissions(usage = true, accessibility = false, overlay = true, notifications = false),
-            {},
-            {},
-        )
-    }
+    PermissionsScreen(
+        Permissions(usage = true, accessibility = false, overlay = true, notifications = false),
+        {},
+        {},
+    )
 }

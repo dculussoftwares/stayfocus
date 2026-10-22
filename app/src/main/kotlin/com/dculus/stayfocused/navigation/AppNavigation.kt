@@ -186,7 +186,7 @@ private fun AppNavHost(
             permissionsViewModel = permissionsViewModel,
             onFinished = { toast ->
                 onFinishOnboarding()
-                toast?.let(showToast)
+                showToast(toast)
                 // Clears everything, so signing in from Account does not leave the old Account underneath the new Home.
                 navController.navigate(MainGraph) { popUpTo(navController.graph.id) { inclusive = true } }
             },

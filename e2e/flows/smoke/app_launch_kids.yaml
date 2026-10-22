@@ -5,4 +5,4 @@ tags:
 ---
 - launchApp:
     clearState: true
-- assertVisible: "SYSTEM CHECK"
+- assertVisible: "Allow"
