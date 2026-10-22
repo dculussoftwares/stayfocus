@@ -374,6 +374,29 @@ jobs:
       - uses: ./.github/actions/setup-maestro
       - name: Assemble debug APKs (app and kids)
         run: ./gradlew :app:assembleDebug :kids:assembleDebug --configuration-cache
+      # AVD snapshot caching (android-emulator-runner README): the system image is downloaded and the AVD created
+      # once per key; later runs restore the snapshot, so a corrupted image download or a cold first boot cannot
+      # fail the flows. A cache written on a PR branch is only reusable there; main fills it after the merge.
+      - name: AVD cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-api36-x86_64-${{ hashFiles('.github/workflows/ci.yml') }}
+      - name: Create AVD and generate snapshot for caching
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.38.0
+        with:
+          api-level: 36
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "Generated AVD snapshot for caching."
       - name: Smoke flows on an API 36 emulator
         uses: reactivecircus/android-emulator-runner@e89f39f1abbbd05b1113a29cf4db69e7540cae5a # v2.38.0
         with:
@@ -381,6 +404,8 @@ jobs:
           target: default
           arch: x86_64
           profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk

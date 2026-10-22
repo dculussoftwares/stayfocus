@@ -183,7 +183,6 @@ class PermissionsScreenTest {
             "Turn it off anytime in Android Settings.",
             "Privacy policy",
         ).forEach { composeRule.onNodeWithText(it).assertExists() }
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/PermissionsDisclosure.png")
         composeRule.onNodeWithTag(PERMS_DISCLOSURE_AGREE_TAG).performClick()
         assertEquals(1, agreed)
     }
