@@ -1,14 +1,15 @@
+@file:Suppress("MagicNumber")
+
 package com.dculus.stayfocused.kids
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -20,16 +21,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.dculus.stayfocused.core.ui.components.LedDot
-import com.dculus.stayfocused.core.ui.components.MonoLabel
-import com.dculus.stayfocused.core.ui.components.OutlineButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.grainOverlay
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 
-/** Kids: Link. Shows the QR with the one-time token and moves on once the parent has scanned it. */
+/** Kids: show code. Shows the QR with the one-time token and moves on once the parent has scanned it. */
 @Composable
 fun KidsLinkRoute(
     onClaim: (token: String) -> Unit,
@@ -50,69 +62,99 @@ internal fun KidsLinkScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
-    Column(
-        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(StayFocusedTheme.spacing.gap22),
-        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap22),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8)) {
+    V5Screen(darkContent = true, modifier = modifier, background = V5Gradients.kidsQr.adaptive) {
+        Box(Modifier.fillMaxSize().grainOverlay())
+        val colors = V5Theme.colors
+        val type = V5Theme.type
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .v5StatusBarPadding(extra = 18.dp)
+                .v5NavigationBarPadding(extra = 36.dp)
+                .padding(horizontal = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Text(
-                stringResource(R.string.kids_link_heading),
-                style = StayFocusedTheme.type.displayL,
-                color = colors.text,
+                stringResource(R.string.app_name),
+                style = type.label.copy(fontWeight = FontWeight.SemiBold),
+                color = colors.onGradient,
             )
-            Text(stringResource(R.string.kids_link_body), style = StayFocusedTheme.type.body, color = colors.secondary)
-        }
-        when (state) {
-            is KidsLinkState.Waiting -> {
-                QrCard(state.uri, Modifier.align(Alignment.CenterHorizontally))
-                Row(
-                    Modifier.align(Alignment.CenterHorizontally),
-                    horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    LedDot(pulse = true)
-                    MonoLabel(stringResource(R.string.kids_link_waiting, state.remaining))
+            Text(
+                stringResource(R.string.kids_link_title),
+                style = type.headline.copy(lineHeight = 36.7.sp),
+                color = colors.onGradient,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 20.dp),
+            )
+            Text(
+                stringResource(R.string.kids_link_subtitle),
+                style = type.body.copy(fontWeight = FontWeight.Medium),
+                color = colors.onGradient,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+            when (state) {
+                is KidsLinkState.Waiting -> {
+                    QrCard(state.uri, Modifier.padding(top = 30.dp))
+                    Text(
+                        stringResource(R.string.kids_link_expires, state.remaining),
+                        style = type.body.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.onGradient,
+                        modifier = Modifier.padding(top = 22.dp),
+                    )
                 }
-            }
 
-            KidsLinkState.Failed -> {
-                Text(
-                    stringResource(R.string.kids_link_failed),
-                    style = StayFocusedTheme.type.body,
-                    color = colors.warning,
-                )
-                OutlineButton(text = stringResource(R.string.kids_link_retry), onClick = onRetry)
-            }
+                KidsLinkState.Failed -> {
+                    // v5-extra: M13-06 (no code could be made: shipped message and retry, v5-styled)
+                    Text(
+                        stringResource(R.string.kids_link_failed),
+                        style = type.body.copy(fontWeight = FontWeight.Medium),
+                        color = colors.onGradient,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 30.dp),
+                    )
+                    PillButton(
+                        text = stringResource(R.string.kids_link_retry),
+                        onClick = onRetry,
+                        variant = PillButtonVariant.Glass,
+                        size = PillButtonSize.Sheet,
+                        modifier = Modifier.fillMaxWidth().padding(top = 22.dp),
+                    )
+                }
 
-            KidsLinkState.Loading, is KidsLinkState.Claimed -> {
-                Unit
+                KidsLinkState.Loading, is KidsLinkState.Claimed -> {
+                    Unit
+                }
             }
         }
     }
 }
 
-/** Ink modules on a light card; a stock camera app needs the strong contrast and the quiet zone. */
+/** Ink modules on a white r38 card (padding 20, 210 dp code); a stock camera app needs the contrast and quiet zone. */
 @Composable
 private fun QrCard(
     uri: String,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
-    val ink = colors.background.toArgb()
-    val light = colors.text.toArgb()
+    val colors = V5Theme.colors
+    val ink = colors.ink.toArgb()
+    val light = Color.White.toArgb()
     val bitmap = remember(uri, ink, light) { QrCodes.bitmap(uri, ink, light) }
     val description = stringResource(R.string.kids_link_qr_description)
-    Image(
-        bitmap = bitmap,
-        contentDescription = description,
-        filterQuality = FilterQuality.None,
-        modifier =
-            modifier
-                .fillMaxWidth(QR_WIDTH_FRACTION)
-                .aspectRatio(1f)
-                .background(colors.text, StayFocusedTheme.shapes.hero),
-    )
+    val shape = V5Theme.shapes.hero
+    val shadow = colors.ink.copy(alpha = 0.5f)
+    Box(
+        modifier
+            .shadow(30.dp, shape, ambientColor = shadow, spotColor = shadow)
+            .background(colors.surface, shape)
+            .padding(20.dp),
+    ) {
+        Image(
+            bitmap = bitmap,
+            contentDescription = description,
+            filterQuality = FilterQuality.None,
+            modifier = Modifier.size(210.dp),
+        )
+    }
 }
-
-private const val QR_WIDTH_FRACTION = 0.8f

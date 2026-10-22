@@ -2,10 +2,11 @@ package com.dculus.stayfocused.kids
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,7 +28,7 @@ class KidsConsentScreenTest {
         onCancel: () -> Unit = {},
         onShowNewCode: () -> Unit = {},
     ) = composeRule.setContent {
-        StayFocusedTheme { KidsConsentScreen(state, onAllow, onCancel, onShowNewCode) }
+        V5Theme { KidsConsentScreen(state, onAllow, onCancel, onShowNewCode) }
     }
 
     private val ready = KidsConsentUiState(code = "482913", parentName = "Asha")
@@ -35,21 +36,21 @@ class KidsConsentScreenTest {
     @Test
     fun showsTheCodeTheParentCanDoListAndTheNote() {
         show(ready)
-        composeRule.onNodeWithText("Let Asha manage this phone?").assertIsDisplayed()
-        composeRule.onNodeWithText("482 913").assertIsDisplayed()
-        composeRule.onNodeWithText("Lock and unlock apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Let Asha manage\nthis phone?").assertIsDisplayed()
+        composeRule.onNodeWithText("Check that Asha's phone shows").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("4 8 2 9 1 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Asha will be able to").assertIsDisplayed()
+        composeRule.onNodeWithText("Lock the phone for study time").assertIsDisplayed()
         composeRule.onNodeWithText("Answer your requests for more time").assertIsDisplayed()
         composeRule
-            .onNodeWithText(
-                "A notification always shows while this phone is managed. " +
-                    "You can unlink anytime, and Asha will be told.",
-            ).assertIsDisplayed()
+            .onNodeWithText("You can unlink anytime from this app. Asha gets a notification if you do.")
+            .assertIsDisplayed()
     }
 
     @Test
     fun aParentWithoutANameIsCalledYourParent() {
         show(ready.copy(parentName = null))
-        composeRule.onNodeWithText("Let your parent manage this phone?").assertIsDisplayed()
+        composeRule.onNodeWithText("Let your parent manage\nthis phone?").assertIsDisplayed()
     }
 
     @Test
