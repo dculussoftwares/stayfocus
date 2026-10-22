@@ -81,7 +81,6 @@ fun AccessibilityDisclosure(
                     DisclosureSection(copy.whyLabel, copy.why)
                     DisclosureSection(copy.neverLabel, copy.never)
                 }
-                // v5-extra: M13-01 (shipped: Play disclosure footer and privacy policy link)
                 Text(copy.footer, style = type.body.copy(fontSize = 13.sp), color = colors.textSecondary)
                 Text(
                     copy.privacyPolicy,

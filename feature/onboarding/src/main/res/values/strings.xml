@@ -53,7 +53,6 @@
     <string name="perms_start">Start using Stay Focused</string>
     <string name="perms_toast_all_set">All set, %1$s</string>
     <string name="perms_toast_all_set_anonymous">All set</string>
-    <!-- v5-extra: M13-01 (shipped: leave with fewer than four permissions) -->
     <string name="perms_continue_now">Continue for now</string>
     <string name="perms_toast_incomplete">Blocking needs all 4. Finish in Account.</string>
 
@@ -64,10 +63,13 @@
     <string name="perms_disclosure_why">To block an app or site the moment it opens.</string>
     <string name="perms_disclosure_never_label">Never</string>
     <string name="perms_disclosure_never">Your messages, passwords or typing. Nothing leaves this phone.</string>
-    <!-- v5-extra: M13-01 (shipped: Play disclosure footer and privacy policy link) -->
     <string name="perms_disclosure_footer">Turn it off anytime in Android Settings.</string>
     <string name="perms_disclosure_privacy">Privacy policy</string>
     <string name="perms_disclosure_agree">Agree and open Settings</string>
     <string name="perms_disclosure_no">No thanks</string>
+    <string name="perms_restricted_title">Allow restricted settings</string>
+    <string name="perms_restricted_body">App info → ⋮ → Allow restricted settings</string>
+    <string name="perms_restricted_open_app_info">Open app info</string>
+    <string name="perms_restricted_open_accessibility">Open Accessibility settings</string>
     <string name="perms_disclosure_save_failed">Could not save your choice. Try again.</string>
 </resources>

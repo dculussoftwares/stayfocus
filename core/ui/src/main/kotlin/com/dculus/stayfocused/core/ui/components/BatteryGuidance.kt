@@ -6,7 +6,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -19,7 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.R
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import java.util.Locale
 
 const val BATTERY_GUIDANCE_SETTINGS_TAG = "battery_guidance_settings"
@@ -61,9 +68,10 @@ enum class OemFamily(
 
 /**
  * OEM-specific steps for keeping Stay Focused alive in the background, plus a button for the battery optimisation
- * list and a link to dontkillmyapp.com. Navigation is the caller's job: [onOpenBatterySettings] and [onOpenGuide]
- * receive the click (the guide with the URL to open). [appName] defaults to the host app's label, so the steps name
- * "Stay Focused" or "Stay Focused Kids" as installed.
+ * list and a link to dontkillmyapp.com, built from v5 tokens (no container: host it in [BatteryGuidanceSheet]).
+ * Navigation is the caller's job: [onOpenBatterySettings] and [onOpenGuide] receive the click (the guide with the
+ * URL to open). [appName] defaults to the host app's label, so the steps name "Stay Focused" or
+ * "Stay Focused Kids" as installed.
  */
 @Composable
 fun BatteryGuidance(
@@ -73,45 +81,56 @@ fun BatteryGuidance(
     family: OemFamily = OemFamily.fromManufacturer(Build.MANUFACTURER),
     appName: String? = null,
 ) {
-    val c = StayFocusedTheme.colors
+    val colors = V5Theme.colors
+    val type = V5Theme.type
     val context = LocalContext.current
     val name =
         remember(context, appName) {
             appName ?: context.applicationInfo.loadLabel(context.packageManager).toString()
         }
     val steps = stringArrayResource(family.stepsRes).map { it.format(name) }
-    Panel(modifier.fillMaxWidth()) {
-        Column(Modifier.padding(StayFocusedTheme.spacing.gap16), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                stringResource(R.string.sf_battery_title, name),
-                style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.ExtraBold),
-                color = c.text,
-            )
-            Text(
-                stringResource(R.string.sf_battery_intro, name),
-                style = StayFocusedTheme.type.body,
-                color = c.secondary,
-            )
-            steps.forEachIndexed { index, step ->
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(
-                        "${index + 1}",
-                        style = StayFocusedTheme.type.numeric.copy(fontWeight = FontWeight.Bold),
-                        color = c.accent,
-                    )
-                    Text(step, style = StayFocusedTheme.type.body, color = c.text)
-                }
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.sf_battery_title, name), style = type.heading, color = colors.ink)
+        Text(stringResource(R.string.sf_battery_intro, name), style = type.body, color = colors.textSecondary)
+        steps.forEachIndexed { index, step ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text("${index + 1}", style = type.label.copy(fontWeight = FontWeight.Bold), color = colors.orange)
+                Text(step, style = type.body, color = colors.ink)
             }
-            OutlineButton(
-                text = stringResource(R.string.sf_battery_open_settings),
-                onClick = onOpenBatterySettings,
-                modifier = Modifier.fillMaxWidth().testTag(BATTERY_GUIDANCE_SETTINGS_TAG),
-            )
-            GhostButton(
-                text = stringResource(R.string.sf_battery_open_guide),
-                onClick = { onOpenGuide(family.guideUrl) },
-                modifier = Modifier.fillMaxWidth().testTag(BATTERY_GUIDANCE_GUIDE_TAG),
-            )
+        }
+        PillButton(
+            text = stringResource(R.string.sf_battery_open_settings),
+            onClick = onOpenBatterySettings,
+            variant = PillButtonVariant.Primary,
+            size = PillButtonSize.Sheet,
+            modifier = Modifier.testTag(BATTERY_GUIDANCE_SETTINGS_TAG),
+        )
+        PillButton(
+            text = stringResource(R.string.sf_battery_open_guide),
+            onClick = { onOpenGuide(family.guideUrl) },
+            variant = PillButtonVariant.Text,
+            size = PillButtonSize.Medium,
+            modifier = Modifier.testTag(BATTERY_GUIDANCE_GUIDE_TAG),
+        )
+    }
+}
+
+/** [BatteryGuidance] in a v5 bottom sheet; scrolls on short screens and at large font scales. */
+@Composable
+fun BatteryGuidanceSheet(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    onOpenBatterySettings: () -> Unit,
+    onOpenGuide: (url: String) -> Unit,
+    modifier: Modifier = Modifier,
+    family: OemFamily = OemFamily.fromManufacturer(Build.MANUFACTURER),
+    appName: String? = null,
+) {
+    V5Theme {
+        V5BottomSheet(visible = visible, onDismiss = onDismiss, modifier = modifier) {
+            Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
+                BatteryGuidance(onOpenBatterySettings, onOpenGuide, family = family, appName = appName)
+            }
         }
     }
 }
@@ -119,8 +138,8 @@ fun BatteryGuidance(
 @Preview(widthDp = 360, heightDp = 560)
 @Composable
 internal fun BatteryGuidancePreview() {
-    StayFocusedTheme {
-        Column(Modifier.padding(StayFocusedTheme.spacing.screen)) {
+    V5Theme {
+        Column(Modifier.padding(18.dp)) {
             BatteryGuidance(
                 onOpenBatterySettings = {},
                 onOpenGuide = {},

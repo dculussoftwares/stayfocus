@@ -186,4 +186,24 @@ class PermissionsScreenTest {
         composeRule.onNodeWithTag(PERMS_DISCLOSURE_AGREE_TAG).performClick()
         assertEquals(1, agreed)
     }
+
+    @Test
+    fun restrictedSettingsSheetOffersAppInfoAndAccessibility() {
+        var appInfo = 0
+        var accessibility = 0
+        show {
+            RestrictedSettingsSheet(
+                visible = true,
+                onDismiss = {},
+                onOpenAppInfo = { appInfo++ },
+                onOpenAccessibility = { accessibility++ },
+            )
+        }
+        composeRule.onNodeWithText("Allow restricted settings").assertExists()
+        composeRule.onNodeWithText("App info → ⋮ → Allow restricted settings").assertExists()
+        composeRule.onNodeWithTag(PERMS_RESTRICTED_APP_INFO_TAG).performClick()
+        composeRule.onNodeWithTag(PERMS_RESTRICTED_ACCESSIBILITY_TAG).performClick()
+        assertEquals(1, appInfo)
+        assertEquals(1, accessibility)
+    }
 }

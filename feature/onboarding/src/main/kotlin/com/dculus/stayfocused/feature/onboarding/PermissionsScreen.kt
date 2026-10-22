@@ -61,6 +61,7 @@ import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosureCopy
 import com.dculus.stayfocused.core.ui.v5.components.PillButton
 import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
 import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
 import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
@@ -72,6 +73,8 @@ import timber.log.Timber
 
 internal const val PERMS_CONTINUE_TAG = "perms_continue"
 internal const val PERMS_SKIP_TAG = "perms_skip"
+internal const val PERMS_RESTRICTED_APP_INFO_TAG = "perms_restricted_app_info"
+internal const val PERMS_RESTRICTED_ACCESSIBILITY_TAG = "perms_restricted_accessibility"
 internal const val PERMS_DISCLOSURE_AGREE_TAG = ACCESSIBILITY_DISCLOSURE_AGREE_TAG
 internal const val PERMS_DISCLOSURE_NO_TAG = ACCESSIBILITY_DISCLOSURE_NO_TAG
 internal const val PRIVACY_URL = "https://dculussoftwares.github.io/stayfocus/privacy.html"
@@ -111,6 +114,7 @@ fun PermissionsRoute(
     var agreeJob by remember { mutableStateOf<Job?>(null) }
     val consentFailed = stringResource(R.string.perms_disclosure_save_failed)
     var disclosureVisible by rememberSaveable { mutableStateOf(false) }
+    var restrictedVisible by rememberSaveable { mutableStateOf(false) }
     val notificationRuntime = PermissionIntents.notificationRuntimePermission()
     // The result needs no handling: the repository re-reads when the app resumes after the dialog closes.
     val requestNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
@@ -167,7 +171,11 @@ fun PermissionsRoute(
                     scope.launch {
                         if (viewModel.recordAccessibilityConsent()) {
                             disclosureVisible = false
-                            context.open(PermissionIntents.accessibility())
+                            if (viewModel.needsRestrictedSettingsGuidance()) {
+                                restrictedVisible = true
+                            } else {
+                                context.open(PermissionIntents.accessibility())
+                            }
                         } else {
                             Toast.makeText(context, consentFailed, Toast.LENGTH_LONG).show()
                         }
@@ -179,6 +187,18 @@ fun PermissionsRoute(
             disclosureVisible = false
         },
         onPrivacyPolicy = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) },
+    )
+    RestrictedSettingsSheet(
+        visible = restrictedVisible,
+        onDismiss = { restrictedVisible = false },
+        onOpenAppInfo = {
+            restrictedVisible = false
+            context.open(PermissionIntents.appInfo(context.packageName))
+        },
+        onOpenAccessibility = {
+            restrictedVisible = false
+            context.open(PermissionIntents.accessibility())
+        },
     )
 }
 
@@ -245,7 +265,6 @@ internal fun PermissionsScreen(
                 PermissionRow.entries.forEach { row ->
                     PermissionCard(row, row.isGranted(permissions)) { onAllow(row) }
                 }
-                // v5-extra: M13-01 (Kids: battery guidance under the four rows)
                 footer?.invoke()
                 Box(Modifier.weight(1f))
                 PillButton(
@@ -259,7 +278,6 @@ internal fun PermissionsScreen(
                     enabled = all,
                     modifier = Modifier.testTag(PERMS_CONTINUE_TAG),
                 )
-                // v5-extra: M13-01 (shipped: leave with fewer than four permissions)
                 if (!all) {
                     PillButton(
                         text = stringResource(R.string.perms_continue_now),
@@ -352,6 +370,44 @@ internal fun PhoneAccessibilityDisclosure(
             noThanks = stringResource(R.string.perms_disclosure_no),
         )
     AccessibilityDisclosure(visible, copy, onAgree, onDismiss, onPrivacyPolicy)
+}
+
+/** Android 13+ "Allow restricted settings" guidance, shown after the disclosure and before Accessibility settings. */
+@Composable
+internal fun RestrictedSettingsSheet(
+    visible: Boolean,
+    onDismiss: () -> Unit,
+    onOpenAppInfo: () -> Unit,
+    onOpenAccessibility: () -> Unit,
+) {
+    V5Theme {
+        V5BottomSheet(visible = visible, onDismiss = onDismiss) {
+            Text(
+                stringResource(R.string.perms_restricted_title),
+                style = V5Theme.type.heading,
+                color = V5Theme.colors.ink,
+            )
+            Text(
+                stringResource(R.string.perms_restricted_body),
+                style = V5Theme.type.body,
+                color = V5Theme.colors.textSecondary,
+            )
+            PillButton(
+                text = stringResource(R.string.perms_restricted_open_app_info),
+                onClick = onOpenAppInfo,
+                variant = PillButtonVariant.Primary,
+                size = PillButtonSize.Sheet,
+                modifier = Modifier.testTag(PERMS_RESTRICTED_APP_INFO_TAG),
+            )
+            PillButton(
+                text = stringResource(R.string.perms_restricted_open_accessibility),
+                onClick = onOpenAccessibility,
+                variant = PillButtonVariant.Text,
+                size = PillButtonSize.Medium,
+                modifier = Modifier.testTag(PERMS_RESTRICTED_ACCESSIBILITY_TAG),
+            )
+        }
+    }
 }
 
 @Preview(widthDp = 360, heightDp = 780)

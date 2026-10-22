@@ -10,12 +10,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -28,10 +33,13 @@ import com.dculus.stayfocused.core.navigation.KidsConsent
 import com.dculus.stayfocused.core.navigation.KidsHome
 import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
-import com.dculus.stayfocused.core.ui.components.BatteryGuidance
+import com.dculus.stayfocused.core.ui.components.BatteryGuidanceSheet
 import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
 import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.feature.onboarding.PermissionsCopy
@@ -43,6 +51,8 @@ import timber.log.Timber
 /**
  * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Unlinking (or being unlinked) returns to Link.
  */
+internal const val KIDS_BATTERY_GUIDANCE_TAG = "kids_battery_guidance"
+
 @Composable
 fun KidsNavigation(
     startRoute: Any,
@@ -141,13 +151,23 @@ private fun KidsPermissionsRoute(
         }
     val appName = stringResource(R.string.app_name)
     val footer: @Composable () -> Unit = {
+        var batteryVisible by rememberSaveable { mutableStateOf(false) }
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 stringResource(R.string.kids_battery_strong),
                 style = V5Theme.type.label,
                 color = V5Theme.colors.ink,
             )
-            BatteryGuidance(
+            PillButton(
+                text = stringResource(com.dculus.stayfocused.core.ui.R.string.sf_battery_title, appName),
+                onClick = { batteryVisible = true },
+                variant = PillButtonVariant.White,
+                size = PillButtonSize.Medium,
+                modifier = Modifier.testTag(KIDS_BATTERY_GUIDANCE_TAG),
+            )
+            BatteryGuidanceSheet(
+                visible = batteryVisible,
+                onDismiss = { batteryVisible = false },
                 onOpenBatterySettings = { context.openSafely(PermissionIntents.batteryOptimizationSettings()) },
                 onOpenGuide = { url -> context.openSafely(Intent(Intent.ACTION_VIEW, Uri.parse(url))) },
                 appName = appName,

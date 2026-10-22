@@ -7,7 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -57,7 +57,7 @@ class BatteryGuidanceTest {
         var guide: String? = null
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
-                StayFocusedTheme {
+                V5Theme {
                     BatteryGuidance(
                         onOpenBatterySettings = { settings++ },
                         onOpenGuide = { guide = it },
@@ -76,7 +76,7 @@ class BatteryGuidanceTest {
     fun stepsNameTheGivenApp() {
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
-                StayFocusedTheme {
+                V5Theme {
                     BatteryGuidance({}, {}, family = OemFamily.XIAOMI, appName = "Stay Focused Kids")
                 }
             }
