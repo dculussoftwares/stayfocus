@@ -65,6 +65,8 @@ internal data class RemoteAlertCard(
     val kind: TamperKind,
     val permission: String?,
     val time: String,
+    /** Whole minutes since the alert was raised, 0 for "Just now". */
+    val agoMins: Long = 0,
 )
 
 /** An unlock request as the amber card shows it. */
@@ -72,7 +74,7 @@ internal data class RemoteRequestCard(
     val id: String,
     val app: String,
     val minutes: Int,
-    /** Whole minutes since the child asked, at least 1. */
+    /** Whole minutes since the child asked, 0 for "Just now". */
     val agoMins: Long,
 )
 
@@ -110,6 +112,16 @@ internal sealed interface RemoteEvent {
         val device: String,
     ) : RemoteEvent
 
+    data class FocusStopped(
+        val device: String,
+    ) : RemoteEvent
+
+    data class AllLocked(
+        val device: String,
+    ) : RemoteEvent
+
+    data object AllUnlocked : RemoteEvent
+
     data class Reminded(
         val device: String,
     ) : RemoteEvent
@@ -124,10 +136,10 @@ internal sealed interface RemoteEvent {
         val device: String,
     ) : RemoteEvent
 
-    /** The parent allowed [label] (`15m`, `30m`, `1h`) more of [app]. */
+    /** The parent gave [device] [mins] more minutes. */
     data class RequestApproved(
-        val label: String,
-        val app: String,
+        val device: String,
+        val mins: Int,
     ) : RemoteEvent
 
     data object RequestDenied : RemoteEvent
@@ -164,6 +176,12 @@ internal fun isAroundToday(
             .between(day, LocalDate.parse(today)),
     ) <= 1
 }
+
+/** Whole minutes from [then] to [now], never negative. */
+internal fun agoMinutes(
+    then: Instant,
+    now: Instant,
+): Long = Duration.between(then, now).toMinutes().coerceAtLeast(0)
 
 /** Prototype `dlabel`: 15 -> "15m", 60 -> "1h", 90 -> "1h30". */
 internal fun minutesLabel(mins: Int): String =
@@ -312,6 +330,7 @@ class RemoteDeviceViewModel
                         TamperKind.OFFLINE,
                         null,
                         TIME_FORMAT.format(seen.atZone(clock.zone)),
+                        agoMinutes(seen, clock.instant()),
                     ),
                 )
             } else {
@@ -320,10 +339,15 @@ class RemoteDeviceViewModel
         }
 
         private fun TamperAlert.toCard() =
-            RemoteAlertCard(id, kind, permission, TIME_FORMAT.format(createdAt.atZone(clock.zone)))
+            RemoteAlertCard(
+                id,
+                kind,
+                permission,
+                TIME_FORMAT.format(createdAt.atZone(clock.zone)),
+                agoMinutes(createdAt, clock.instant()),
+            )
 
-        private fun UnlockRequest.toCard(now: Instant) =
-            RemoteRequestCard(id, app, minutes, Duration.between(createdAt, now).toMinutes().coerceAtLeast(1))
+        private fun UnlockRequest.toCard(now: Instant) = RemoteRequestCard(id, app, minutes, agoMinutes(createdAt, now))
 
         private val ready: RemoteUiState.Ready? get() = state.value as? RemoteUiState.Ready
 
@@ -366,12 +390,18 @@ class RemoteDeviceViewModel
             send(RemoteCommand.StartFocus(mins)) { events.trySend(RemoteEvent.FocusStarted(name)) }
         }
 
-        fun stopFocus() = send(RemoteCommand.StopFocus)
+        fun stopFocus() {
+            val name = deviceName()
+            send(RemoteCommand.StopFocus) { events.trySend(RemoteEvent.FocusStopped(name)) }
+        }
 
         /** Locks every app on the phone except the always-allowed ones, with no end. Delivery as for any command. */
-        fun lockAll() = send(RemoteCommand.LockAll)
+        fun lockAll() {
+            val name = deviceName()
+            send(RemoteCommand.LockAll) { events.trySend(RemoteEvent.AllLocked(name)) }
+        }
 
-        fun unlockAll() = send(RemoteCommand.UnlockAll)
+        fun unlockAll() = send(RemoteCommand.UnlockAll) { events.trySend(RemoteEvent.AllUnlocked) }
 
         internal fun remind(alert: RemoteAlertCard) {
             val name = deviceName()
@@ -399,7 +429,7 @@ class RemoteDeviceViewModel
                 }
                 events.trySend(
                     if (mins > 0) {
-                        RemoteEvent.RequestApproved(minutesLabel(mins), request.app)
+                        RemoteEvent.RequestApproved(name, mins)
                     } else {
                         RemoteEvent.RequestDenied
                     },
