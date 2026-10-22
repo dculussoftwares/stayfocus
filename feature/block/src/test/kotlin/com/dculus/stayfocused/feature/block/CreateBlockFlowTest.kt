@@ -120,11 +120,12 @@ class CreateBlockFlowTest {
         composeRule.onNodeWithText("Turn on block").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText(expectedName).assertExists()
+        composeRule.onNodeWithText("Instagram + YouTube").assertExists()
     }
 
     @Test
     fun limitBlockAppearsInTheList() =
-        createWith(BlockType.LIMIT, "Time limit") {
+        createWith(BlockType.LIMIT, "Daily limit") {
             composeRule.onNodeWithText("Per hour").performClick()
             composeRule.onNodeWithText("15m").performClick()
             composeRule.onNodeWithText("Lock Instagram and YouTube after 15 min an hour, on weekdays.").assertExists()
@@ -132,7 +133,7 @@ class CreateBlockFlowTest {
 
     @Test
     fun cycleBlockAppearsInTheList() =
-        createWith(BlockType.CYCLE, "Use, then rest") {
+        createWith(BlockType.CYCLE, "Use, then lock") {
             composeRule.onNodeWithText("THEN LOCKED").performClick()
             composeRule.onNodeWithText("1h").performClick()
             composeRule
@@ -143,7 +144,7 @@ class CreateBlockFlowTest {
 
     @Test
     fun scheduleBlockAppearsInTheList() =
-        createWith(BlockType.SCHEDULE, "Scheduled block") {
+        createWith(BlockType.SCHEDULE, "Blocked during hours") {
             composeRule.onNodeWithTag(wizardRangeTag("22:00–07:00")).performClick()
             composeRule.onNodeWithTag(wizardRangeTag("22:00–07:00")).assertIsSelected()
             composeRule.onNodeWithText("Lock Instagram and YouTube from 22:00 to 07:00, on weekdays.").assertExists()
@@ -151,7 +152,7 @@ class CreateBlockFlowTest {
 
     @Test
     fun nowBlockAppearsInTheList() =
-        createWith(BlockType.NOW, "Quick block") {
+        createWith(BlockType.NOW, "Blocked now") {
             composeRule.onNodeWithText("2h").performClick()
             composeRule.onNodeWithText("Lock Instagram and YouTube for the next 2 h.").assertExists()
         }

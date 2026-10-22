@@ -5,8 +5,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.model.BlockTarget
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
@@ -32,26 +33,33 @@ class BlockScreenshotTest {
         content: @Composable () -> Unit,
     ) {
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content() } }
+            CompositionLocalProvider(
+                LocalInspectionMode provides true,
+                LocalTabBarPadding provides 82.dp,
+            ) { content() }
         }
         composeRule.onRoot().captureRoboImage("src/test/screenshots/$name.png")
     }
 
     private fun rows() =
         listOf(
-            BlockRowUi(cycleBlock(), listOf("Instagram", "YouTube")),
-            BlockRowUi(limitBlock(), listOf("Reddit", "X")),
+            BlockRowUi(cycleBlock(), listOf("Instagram", "YouTube"), BlockProgress(6, 10)),
+            BlockRowUi(limitBlock(), listOf("Reddit", "X"), BlockProgress(21, 30)),
             BlockRowUi(scheduleBlock(), listOf("Instagram", "YouTube", "Reddit")),
         )
 
     @Test
-    fun empty() = shot("BlockEmpty", BlockUiState())
+    fun empty() = shot("BlockEmpty", BlockUiState(aiAvailable = true))
 
     @Test
     fun withBlocks() =
         shot(
             "BlockWithBlocks",
-            BlockUiState(targets = listOf(TargetUi(BlockTarget.ThisPhone, null, 2)), blocks = rows()),
+            BlockUiState(
+                aiAvailable = true,
+                targets = listOf(TargetUi(BlockTarget.ThisPhone, null, 2)),
+                blocks = rows(),
+            ),
         )
 
     @Test
@@ -60,6 +68,7 @@ class BlockScreenshotTest {
         shot(
             "BlockWithDevice",
             BlockUiState(
+                aiAvailable = true,
                 targets =
                     listOf(
                         TargetUi(BlockTarget.ThisPhone, null, 2),

@@ -120,7 +120,7 @@ class AiDescribeFlowTest {
     @Test
     fun sentenceDraftEditTurnOn() {
         launch()
-        composeRule.onNodeWithText("Describe").performClick()
+        composeRule.onNodeWithText("Or describe it in words").performClick()
         composeRule.onNodeWithText("Social media 45 min a day").performClick()
         composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
         composeRule.waitForIdle()
@@ -143,7 +143,7 @@ class AiDescribeFlowTest {
     @Test
     fun emptyTextShowsNoWizard() {
         launch()
-        composeRule.onNodeWithText("Describe").performClick()
+        composeRule.onNodeWithText("Or describe it in words").performClick()
         composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Check your block").assertDoesNotExist()
@@ -152,7 +152,7 @@ class AiDescribeFlowTest {
     @Test
     fun reportOpensAConfirmSheetShowingExactlyWhatIsSent() {
         launch()
-        composeRule.onNodeWithText("Describe").performClick()
+        composeRule.onNodeWithText("Or describe it in words").performClick()
         composeRule.onNodeWithText("Social media 45 min a day").performClick()
         composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
         composeRule.waitForIdle()
