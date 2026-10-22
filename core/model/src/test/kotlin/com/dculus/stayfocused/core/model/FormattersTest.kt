@@ -35,6 +35,18 @@ class FormattersTest {
     }
 
     @Test
+    fun rulerReadouts() {
+        listOf(
+            10 to RulerReadout("10", "min"),
+            45 to RulerReadout("45", "min"),
+            60 to RulerReadout("1", "h"),
+            90 to RulerReadout("1:30", "h"),
+            125 to RulerReadout("2:05", "h"),
+            480 to RulerReadout("8", "h"),
+        ).forEach { (m, e) -> assertEquals(e, rulerReadout(m), "rulerReadout($m)") }
+    }
+
+    @Test
     fun mmss() {
         listOf(
             0L to "0:00",

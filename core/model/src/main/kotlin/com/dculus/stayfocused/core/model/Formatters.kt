@@ -89,3 +89,16 @@ fun daysSummary(days: DaysOfWeek): String =
                     .joinToString(", ") { it.getDisplayName(TextStyle.SHORT, Locale.ENGLISH) }
         }
     }
+
+/** Big number and unit of a v5 ruler readout (prototype `bigOf`): "10" "min", "1:30" "h", "2" "h". */
+data class RulerReadout(
+    val big: String,
+    val unit: String,
+)
+
+fun rulerReadout(minutes: Int): RulerReadout =
+    when {
+        minutes < 60 -> RulerReadout(minutes.toString(), "min")
+        minutes % 60 != 0 -> RulerReadout("${minutes / 60}:${two((minutes % 60).toLong())}", "h")
+        else -> RulerReadout((minutes / 60).toString(), "h")
+    }

@@ -8,11 +8,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.lifecycle.SavedStateHandle
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.BlockDraft
@@ -37,6 +39,7 @@ import org.robolectric.annotation.Config
  * Block tab's list.
  */
 @RunWith(RobolectricTestRunner::class)
+@Suppress("LongMethod")
 @Config(sdk = [34], qualifiers = "w360dp-h780dp-xxhdpi")
 class CreateBlockFlowTest {
     @get:Rule
@@ -98,12 +101,20 @@ class CreateBlockFlowTest {
                                 onCycleValue = wizard::setCycleValue,
                                 onCycleEdit = wizard::selectCycleEdit,
                                 onRange = wizard::setRange,
-                                onToggleDay = wizard::toggleDay,
+                                onPreset = wizard::pickSchedulePreset,
+                                onDays = wizard::setDays,
                             ),
                         )
                     }
                 }
             }
+        }
+    }
+
+    /** Sets the step-3 ruler the way TalkBack does (a `SetProgress` action), instead of dragging. */
+    private fun setRuler(minutes: Int) {
+        composeRule.onNodeWithTag(WIZARD_RULER_TAG).performSemanticsAction(SemanticsActions.SetProgress) {
+            it(minutes.toFloat())
         }
     }
 
@@ -128,34 +139,38 @@ class CreateBlockFlowTest {
     fun limitBlockAppearsInTheList() =
         createWith(BlockType.LIMIT, "Daily limit") {
             composeRule.onNodeWithText("Per hour").performClick()
-            composeRule.onNodeWithText("15m").performClick()
-            composeRule.onNodeWithText("Lock Instagram and YouTube after 15 min an hour, on weekdays.").assertExists()
+            setRuler(15)
+            composeRule
+                .onNodeWithText(
+                    "Instagram and YouTube can be used 15 min an hour, Mon–Fri. " +
+                        "After that they lock until the next hour.",
+                ).assertExists()
         }
 
     @Test
     fun cycleBlockAppearsInTheList() =
         createWith(BlockType.CYCLE, "Use, then lock") {
-            composeRule.onNodeWithText("THEN LOCKED").performClick()
-            composeRule.onNodeWithText("1h").performClick()
+            composeRule.onNodeWithText("Then lock 30 min").performClick()
+            setRuler(60)
             composeRule
                 .onNodeWithText(
-                    "Each time you open Instagram and YouTube, you get 10 min. Then it locks for 1 h, on weekdays.",
+                    "Open Instagram and YouTube for 10 min, then they lock for 1h. This repeats Mon–Fri.",
                 ).assertExists()
         }
 
     @Test
     fun scheduleBlockAppearsInTheList() =
         createWith(BlockType.SCHEDULE, "Blocked during hours") {
-            composeRule.onNodeWithTag(wizardRangeTag("22:00–07:00")).performClick()
-            composeRule.onNodeWithTag(wizardRangeTag("22:00–07:00")).assertIsSelected()
-            composeRule.onNodeWithText("Lock Instagram and YouTube from 22:00 to 07:00, on weekdays.").assertExists()
+            composeRule.onNodeWithTag(wizardPresetTag(SchedulePreset.Night)).performClick()
+            composeRule.onNodeWithTag(wizardPresetTag(SchedulePreset.Night)).assertIsSelected()
+            composeRule.onNodeWithText("Instagram and YouTube are blocked from 22:00 to 07:00, Mon–Fri.").assertExists()
         }
 
     @Test
     fun nowBlockAppearsInTheList() =
         createWith(BlockType.NOW, "Blocked now") {
-            composeRule.onNodeWithText("2h").performClick()
-            composeRule.onNodeWithText("Lock Instagram and YouTube for the next 2 h.").assertExists()
+            setRuler(120)
+            composeRule.onNodeWithText("Instagram and YouTube are blocked for the next 2h.").assertExists()
         }
 
     @Test

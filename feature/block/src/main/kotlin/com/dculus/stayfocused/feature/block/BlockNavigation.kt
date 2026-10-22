@@ -232,12 +232,11 @@ internal fun BlockWizardRoute(
                 }
 
                 is WizardEvent.Saved -> {
-                    val target = event.targetName ?: resources.getString(R.string.block_this_phone)
                     val message =
-                        if (event.edited) {
-                            resources.getString(R.string.block_wizard_saved_changes, event.name)
-                        } else {
-                            resources.getString(R.string.block_wizard_saved, event.name, target)
+                        when {
+                            event.edited -> resources.getString(R.string.block_wizard_saved_changes, event.name)
+                            event.targetName == null -> resources.getString(R.string.block_toast_on)
+                            else -> resources.getString(R.string.block_wizard_sent, event.targetName)
                         }
                     currentSaved(event.deviceId, message)
                 }
@@ -278,10 +277,11 @@ internal fun BlockWizardRoute(
                 onPeriod = viewModel::setPeriod,
                 onMins = viewModel::setMins,
                 onNow = viewModel::setNow,
+                onPreset = viewModel::pickSchedulePreset,
+                onDays = viewModel::setDays,
                 onCycleValue = viewModel::setCycleValue,
                 onCycleEdit = viewModel::selectCycleEdit,
                 onRange = viewModel::setRange,
-                onToggleDay = viewModel::toggleDay,
                 onChangeType = viewModel::changeType,
                 onDelete = viewModel::deleteBlock,
                 onReport = viewModel::reportBadResult,

@@ -162,4 +162,60 @@ class BlockSummaryTest {
             BlockNameAndDescription("Quick block", "Next 1 h · Instagram, YouTube, Reddit, X"),
             BlockSummary.nameAndDescription(draft(BlockType.NOW), four),
         )
+
+    private val three = listOf("Instagram", "YouTube", "Reddit")
+
+    @Test
+    fun v5AppsText() {
+        assertEquals("These apps", BlockSummary.appsTextV5(emptyList()))
+        assertEquals("Instagram", BlockSummary.appsTextV5(ig))
+        assertEquals("Instagram and YouTube", BlockSummary.appsTextV5(two))
+        assertEquals("Instagram, YouTube and 1 more", BlockSummary.appsTextV5(three))
+        assertEquals("Instagram, YouTube and 2 more", BlockSummary.appsTextV5(four))
+    }
+
+    @Test
+    fun v5DaysText() {
+        assertEquals("every day", BlockSummary.daysTextV5(DaysOfWeek.ALL))
+        assertEquals("Mon–Fri", BlockSummary.daysTextV5(DaysOfWeek.WEEKDAYS))
+        assertEquals("weekends", BlockSummary.daysTextV5(DaysOfWeek.WEEKENDS))
+        assertEquals("no days", BlockSummary.daysTextV5(DaysOfWeek.NONE))
+        assertEquals("Mon, Wed", BlockSummary.daysTextV5(DaysOfWeek.of(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)))
+    }
+
+    @Test
+    fun v5Sentences() {
+        val all = DaysOfWeek.ALL
+        assertEquals(
+            "Instagram and YouTube can be used 45 min a day, every day. After that they lock until midnight.",
+            BlockSummary.sentenceV5(draft(BlockType.LIMIT) { copy(mins = 45, days = all) }, two),
+        )
+        assertEquals(
+            "Instagram can be used 1h 30m a day, Mon–Fri. After that they lock until midnight.",
+            BlockSummary.sentenceV5(draft(BlockType.LIMIT) { copy(mins = 90) }, ig),
+        )
+        assertEquals(
+            "Open Instagram, YouTube and 1 more for 10 min, then they lock for 30 min. This repeats weekends.",
+            BlockSummary.sentenceV5(
+                draft(BlockType.CYCLE) { copy(use = 10, rest = 30, days = DaysOfWeek.WEEKENDS) },
+                three,
+            ),
+        )
+        assertEquals(
+            "Instagram and YouTube are blocked from 22:00 to 07:00, Mon, Tue.",
+            BlockSummary.sentenceV5(
+                draft(BlockType.SCHEDULE) {
+                    copy(
+                        range = TimeRange.parse("22:00–07:00"),
+                        days = DaysOfWeek.of(DayOfWeek.MONDAY, DayOfWeek.TUESDAY),
+                    )
+                },
+                two,
+            ),
+        )
+        assertEquals(
+            "These apps are blocked for the next 1h.",
+            BlockSummary.sentenceV5(draft(BlockType.NOW) { copy(now = 60) }, emptyList()),
+        )
+    }
 }
