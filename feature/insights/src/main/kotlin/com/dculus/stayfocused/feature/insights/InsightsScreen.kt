@@ -82,7 +82,6 @@ internal fun InsightsScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Header(state.range) { onEvent(InsightsEvent.SelectRange(it)) }
-            // v5-extra: M13-04 (day stepper for past days)
             if (state.range == InsightsRange.Day) {
                 DayStepper(state, { onEvent(InsightsEvent.PreviousDay) }, { onEvent(InsightsEvent.NextDay) })
             }
@@ -126,7 +125,7 @@ private fun Header(
     }
 }
 
-/** v5-extra: M13-04. Previous/next day with the weekday and date between. */
+/** Previous/next day with the weekday and date between. */
 @Composable
 private fun DayStepper(
     state: InsightsUiState,
@@ -311,7 +310,6 @@ private fun AppList(
 ) {
     V5Card(Modifier.fillMaxWidth(), radius = 34.dp, padding = 0.dp) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            // v5-extra: M13-04 (Opens metric)
             SegmentedPill(
                 options =
                     listOf(

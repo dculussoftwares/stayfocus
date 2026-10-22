@@ -18,7 +18,7 @@ internal const val WEEK_CHART_MIN_MAX = 240
 
 internal enum class InsightsRange { Day, Week }
 
-/** What the ranked list shows. [Opens] is a v5-extra (M13-04). */
+/** What the ranked list shows. [Opens] ranks by launches. */
 internal enum class InsightsMetric { ScreenTime, Opens }
 
 /** One row of the ranked list. [value] is minutes for screen time, a count otherwise. */
