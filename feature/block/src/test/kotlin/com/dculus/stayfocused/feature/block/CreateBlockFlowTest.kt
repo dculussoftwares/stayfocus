@@ -114,6 +114,7 @@ class CreateBlockFlowTest {
     ) {
         launch()
         composeRule.onNodeWithTag(wizardTypeTag(type)).performClick()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithText("Continue with 2 apps").performClick()
         composeRule.onNodeWithTag(WIZARD_RULES_TAG).assertExists()
         onRules()
@@ -161,6 +162,7 @@ class CreateBlockFlowTest {
     fun customRangeOpensTheTimePicker() {
         launch()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.SCHEDULE)).performClick()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithText("Continue with 2 apps").performClick()
         composeRule.onNodeWithTag(WIZARD_RANGE_CUSTOM_TAG).performClick()
         composeRule.onNodeWithTag(TIME_PICKER_TAG).assertExists()
@@ -189,11 +191,11 @@ class CreateBlockFlowTest {
                 }
             }
         }
-        composeRule.onNodeWithText("Check your block").assertExists()
-        composeRule.onNodeWithText("AI DRAFT").assertExists()
+        composeRule.onNodeWithText("Set the rule").assertExists()
+        composeRule.onNodeWithText("AI draft").assertExists()
         composeRule.onNodeWithText("Instagram for 30 minutes a day.").assertExists()
         composeRule.onNodeWithText("Change").performClick()
-        composeRule.onNodeWithText("Rather just describe it?").assertDoesNotExist()
+        composeRule.onNodeWithText("Rather describe it in words").assertDoesNotExist()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.LIMIT)).assertExists()
     }
 }

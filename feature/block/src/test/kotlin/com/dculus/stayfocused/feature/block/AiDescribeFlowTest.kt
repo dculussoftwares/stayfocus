@@ -125,8 +125,8 @@ class AiDescribeFlowTest {
         composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
         composeRule.waitForIdle()
 
-        composeRule.onNodeWithText("Check your block").assertExists()
-        composeRule.onNodeWithText("AI DRAFT").assertExists()
+        composeRule.onNodeWithText("Set the rule").assertExists()
+        composeRule.onNodeWithText("AI draft").assertExists()
         // Nothing is on until the user taps "Turn on block".
         assertTrue(runBlocking { blocks.observeByTarget(BlockTarget.ThisPhone).first() }.isEmpty())
 
@@ -146,7 +146,7 @@ class AiDescribeFlowTest {
         composeRule.onNodeWithText("Or describe it in words").performClick()
         composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("Check your block").assertDoesNotExist()
+        composeRule.onNodeWithText("Set the rule").assertDoesNotExist()
     }
 
     @Test

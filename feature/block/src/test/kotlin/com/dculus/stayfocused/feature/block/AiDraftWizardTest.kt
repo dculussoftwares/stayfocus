@@ -88,6 +88,7 @@ class AiDraftWizardTest {
             assertFalse(vm.state.value.draft.fromAi)
             vm.pickType(BlockType.LIMIT)
             vm.next()
+            vm.next()
             vm.events.test {
                 vm.next()
                 assertTrue(awaitItem() is WizardEvent.Saved)

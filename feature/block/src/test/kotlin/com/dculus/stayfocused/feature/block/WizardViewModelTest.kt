@@ -128,12 +128,30 @@ class WizardViewModelTest {
     }
 
     @Test
-    fun pickingATypeSelectsItAndGoesToTheApps() {
+    fun pickingATypeOnlySelectsItAndContinueGoesToTheApps() {
         val vm = viewModel()
         vm.pickType(BlockType.SCHEDULE)
         assertEquals(BlockType.SCHEDULE, vm.state.value.draft.type)
+        assertEquals(WIZARD_STEP_TYPE, vm.state.value.step)
+        vm.next()
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
     }
+
+    @Test
+    fun theTargetTagSwitchesPhoneOrToastsWhenNoneIsLinked() =
+        kotlinx.coroutines.test.runTest {
+            val vm = viewModel()
+            vm.events.test {
+                vm.flipTarget()
+                assertEquals(WizardEvent.NoLinkedPhone, awaitItem())
+            }
+            devices.devices.value = listOf(device())
+            val linked = viewModel()
+            linked.flipTarget()
+            assertEquals(BlockTarget.Device("d1"), linked.state.value.draft.target)
+            linked.flipTarget()
+            assertEquals(BlockTarget.ThisPhone, linked.state.value.draft.target)
+        }
 
     @Test
     fun togglingAppsAddsAndRemovesThem() {
@@ -160,6 +178,7 @@ class WizardViewModelTest {
         kotlinx.coroutines.test.runTest {
             val vm = viewModel()
             vm.pickType(BlockType.LIMIT)
+            vm.next()
             vm.toggleApp(pkg("instagram"))
             vm.toggleApp(pkg("youtube"))
             vm.events.test {
@@ -236,6 +255,7 @@ class WizardViewModelTest {
             val vm = viewModel(target = "d1")
             vm.events.test {
                 vm.pickType(BlockType.NOW)
+                vm.next()
                 vm.next()
                 vm.next()
                 vm.next()
@@ -316,6 +336,7 @@ class WizardViewModelTest {
             )
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
         vm.pickType(BlockType.NOW)
+        vm.next()
         vm.selectTarget(BlockTarget.ThisPhone)
         assertEquals(BlockType.NOW, vm.state.value.draft.type)
         assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
