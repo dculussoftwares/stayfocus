@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Colors
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradient
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
@@ -48,7 +49,8 @@ private const val TILE_SHADOW_ALPHA = 0.35f
  *
  * Without a [gradient] it is a `surfaceRaised` card with the soft ink shadow and an ink title; with one it is a
  * [GlowCard]-style gradient with grain and white text. The whole tile is a single button: its TalkBack label is the
- * title plus any text in [content], or [contentDescription] when given. The "+" is decorative.
+ * title plus any text in [content], or [contentDescription] when given. The "+" is decorative;
+ * [showPlus] = false hides it (the running break tile).
  */
 @Composable
 fun ActionTile(
@@ -58,6 +60,7 @@ fun ActionTile(
     gradient: V5Gradient? = null,
     onClickLabel: String? = null,
     contentDescription: String? = null,
+    showPlus: Boolean = true,
     content: @Composable BoxScope.() -> Unit = {},
 ) {
     val colors = V5Theme.colors
@@ -87,27 +90,34 @@ fun ActionTile(
                 color = foreground,
                 modifier = Modifier.align(Alignment.TopStart).padding(ActionTilePadding),
             )
-            Box(
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(PlusCircleInset)
-                    .shadow(
-                        PlusShadow,
-                        CircleShape,
-                        ambientColor = colors.ink.copy(alpha = SHADOW_ALPHA),
-                        spotColor = colors.ink.copy(alpha = SHADOW_ALPHA),
-                    ).size(PlusCircleSize)
-                    .background(colors.surface, CircleShape),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    V5Icons.plus,
-                    contentDescription = null,
-                    tint = colors.ink,
-                    modifier = Modifier.size(PlusIconSize),
-                )
-            }
+            if (showPlus) PlusCircle(colors, Modifier.align(Alignment.TopEnd))
         }
+    }
+}
+
+@Composable
+private fun PlusCircle(
+    colors: V5Colors,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier
+            .padding(PlusCircleInset)
+            .shadow(
+                PlusShadow,
+                CircleShape,
+                ambientColor = colors.ink.copy(alpha = SHADOW_ALPHA),
+                spotColor = colors.ink.copy(alpha = SHADOW_ALPHA),
+            ).size(PlusCircleSize)
+            .background(colors.surface, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            V5Icons.plus,
+            contentDescription = null,
+            tint = colors.ink,
+            modifier = Modifier.size(PlusIconSize),
+        )
     }
 }
 

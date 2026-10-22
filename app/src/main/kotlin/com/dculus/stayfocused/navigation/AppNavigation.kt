@@ -211,6 +211,7 @@ private fun AppNavHost(
                             navController.popBackStack(Devices, inclusive = false)
                             navController.navigateToRemoteDevice(it)
                         },
+                        onLinkPhone = { navController.navigateToLinkAdd() },
                     ),
                 viewModelProvider = homeViewModel,
             )

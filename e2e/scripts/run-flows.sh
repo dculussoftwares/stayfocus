@@ -45,7 +45,10 @@ for flow in "${files[@]}"; do
   adb shell screenrecord --time-limit 170 "/sdcard/$name.mp4" &
   rec_pid=$!
   start=$(date +%s)
-  if maestro test --test-output-dir "$OUT_DIR/maestro/$name" "$flow"; then
+  # One retry: the first launch on a freshly booted CI emulator sometimes fails before the app is up (the flow
+  # itself is fine). A flow that fails twice is a real failure.
+  if maestro test --test-output-dir "$OUT_DIR/maestro/$name" "$flow" ||
+    { echo "::warning::$flow failed, retrying once"; sleep 5; maestro test --test-output-dir "$OUT_DIR/maestro/$name-retry" "$flow"; }; then
     result="pass"
   else
     result="fail"

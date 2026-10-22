@@ -6,7 +6,8 @@ import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.BlockTarget
-import com.dculus.stayfocused.core.model.LedColumn
+import com.dculus.stayfocused.core.model.DEFAULT_SCREEN_TIME_GOAL_MINS
+import com.dculus.stayfocused.core.model.GoalNote
 import com.dculus.stayfocused.core.testing.FakeAccountProfileRepository
 import com.dculus.stayfocused.core.testing.FakeBlockRepository
 import com.dculus.stayfocused.core.testing.FakeBreakRepository
@@ -181,8 +182,7 @@ class HomeViewModelTest {
             val vm = viewModel(clock, env)
             vm.state.test {
                 val header = latest(testScheduler).header
-                assertEquals("THU 08 OCT · 10:00", header.dateLabel.uppercase())
-                assertEquals(Greeting.MORNING, header.greeting)
+                assertEquals("Thursday, 8 October", header.dateLabel)
                 assertEquals("Natheesh", header.firstName)
                 assertEquals("N", header.initial)
             }
@@ -198,14 +198,52 @@ class HomeViewModelTest {
             }
         }
 
-    @Test fun headerClockMovesOnEveryMinute() =
+    @Test fun currentHourMovesWithTheClock() =
         runTest {
             val vm = viewModel(VirtualClock(testScheduler))
             vm.state.test {
-                assertEquals("THU 08 OCT · 10:00", latest(testScheduler).header.dateLabel.uppercase())
-                testScheduler.advanceTimeBy(60_000)
+                assertEquals(10, assertIs<GaugeUi.Ready>(latest(testScheduler).gauge).currentHour)
+                testScheduler.advanceTimeBy(60 * 60_000L)
                 testScheduler.runCurrent()
-                assertEquals("THU 08 OCT · 10:01", latest(testScheduler).header.dateLabel.uppercase())
+                assertEquals(11, assertIs<GaugeUi.Ready>(latest(testScheduler).gauge).currentHour)
+            }
+        }
+
+    @Test fun goalFollowsTheSetting() =
+        runTest {
+            val env = Env(usage = FakeUsage(typicalDay()))
+            env.settings.setScreenTimeGoalMins(120)
+            val vm = viewModel(VirtualClock(testScheduler), env)
+            vm.state.test {
+                val gauge = assertIs<GaugeUi.Ready>(latest(testScheduler).gauge)
+                assertEquals(120, gauge.goalMins)
+                assertEquals(GoalNote.Over(27), gauge.goalNote)
+            }
+        }
+
+    @Test fun mostUsedUsesTheLauncherLabelAndIsNullOnAnEmptyDay() =
+        runTest {
+            val installed = FakeInstalledApps(listOf(AppInfo(pkg("whatsapp"), "WhatsApp")))
+            val vm = viewModel(VirtualClock(testScheduler), Env(usage = FakeUsage(typicalDay()), installed = installed))
+            vm.state.test {
+                assertEquals(
+                    MostUsedUi(pkg("whatsapp"), "WhatsApp", 68),
+                    assertIs<GaugeUi.Ready>(latest(testScheduler).gauge).mostUsed,
+                )
+            }
+            val empty = viewModel(VirtualClock(testScheduler))
+            empty.state.test { assertNull(assertIs<GaugeUi.Ready>(latest(testScheduler).gauge).mostUsed) }
+        }
+
+    @Test fun endingTheBreakReportsItOnceStored() =
+        runTest {
+            val clock = VirtualClock(testScheduler)
+            val breaks = FakeBreakRepository(clock)
+            breaks.start(30)
+            val vm = viewModel(clock, breaks = breaks)
+            vm.events.test {
+                vm.endBreak()
+                assertEquals(HomeEvent.BreakEnded, awaitItem())
             }
         }
 
@@ -221,10 +259,12 @@ class HomeViewModelTest {
                 assertEquals(63, gauge.launches)
                 assertEquals(48, gauge.unlocks)
                 assertEquals(12, gauge.blocked)
-                assertEquals(24, gauge.levels.size)
-                // 10:00 is the current hour; later hours stay dark even though the sample has data there.
-                assertEquals(LedColumn(level = 1, isCurrent = true), gauge.levels[10])
-                assertTrue(gauge.levels.drop(11).all { it.level == 0 })
+                assertEquals(24, gauge.hourlyMins.size)
+                assertEquals(10, gauge.currentHour)
+                assertEquals(PrototypeHours[10], gauge.hourlyMins[10])
+                // The busiest app of the sample day is WhatsApp (68 min); no launcher label, so the fallback name.
+                assertEquals(MostUsedUi(pkg("whatsapp"), "Whatsapp", 68), gauge.mostUsed)
+                assertEquals(DEFAULT_SCREEN_TIME_GOAL_MINS, gauge.goalMins)
             }
         }
 
@@ -287,7 +327,7 @@ class HomeViewModelTest {
             val vm = viewModel(VirtualClock(testScheduler), Env(usage = FakeUsage(short)))
             vm.state.test {
                 val gauge = assertIs<GaugeUi.Ready>(latest(testScheduler).gauge)
-                assertEquals(HOME_LED_ROWS, gauge.levels[9].level)
+                assertEquals(1, gauge.hourlyMins[9])
             }
         }
 

@@ -3,22 +3,27 @@ package com.dculus.stayfocused.feature.home
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.KnownApps
 import com.dculus.stayfocused.core.model.LinkedDevice
-import com.dculus.stayfocused.core.model.ledLevels
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.util.Locale
 
 internal fun readyGauge(
-    totalMins: Int = 147,
+    totalMins: Int = 153,
     avgMins: Int? = 139,
     currentHour: Int = 10,
+    goalMins: Int = 180,
+    blocked: Int = 23,
+    mostUsed: MostUsedUi? = MostUsedUi(pkg("instagram"), "Instagram", 52),
 ) = GaugeUi.Ready(
     totalMins = totalMins,
+    goalMins = goalMins,
+    hourlyMins = PrototypeHours,
+    currentHour = currentHour,
+    mostUsed = mostUsed,
+    blocked = blocked,
     avgMins = avgMins,
-    levels = ledLevels(PrototypeHours, HOME_LED_ROWS, currentHour),
     launches = 63,
     unlocks = 48,
-    blocked = 12,
 )
 
 internal fun homeState(
@@ -28,7 +33,7 @@ internal fun homeState(
     firstName: String? = "Sam",
     aiAvailable: Boolean = true,
 ) = HomeUiState(
-    header = headerFor(ZonedDateTime.of(2026, 10, 6, 10, 42, 0, 0, ZoneOffset.UTC), firstName, Locale.ENGLISH),
+    header = headerFor(ZonedDateTime.of(2026, 10, 18, 10, 42, 0, 0, ZoneOffset.UTC), firstName, Locale.ENGLISH),
     gauge = gauge,
     blocks = blocks,
     devices = devices,
@@ -65,6 +70,7 @@ internal class Taps {
                     onOpenBlock = { log += "block" },
                     onOpenDevices = { log += "devices" },
                     onOpenDevice = { log += "device:$it" },
+                    onLinkPhone = { log += "link" },
                 ),
             onAllowUsageAccess = { log += "allowUsage" },
             onSetBlockEnabled = { id, on -> toggled += id to on },
