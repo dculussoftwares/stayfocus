@@ -54,6 +54,19 @@ fun v5Duration(minutes: Int): String =
         else -> "${minutes / 60}h"
     }
 
+/** The big number and its unit beside a v5 ruler (prototype `bigOf`): 45 is "45" "min", 90 is "1:30" "h". */
+data class V5BigValue(
+    val value: String,
+    val unit: String,
+)
+
+fun v5BigValue(minutes: Int): V5BigValue =
+    when {
+        minutes < 60 -> V5BigValue(minutes.toString(), "min")
+        minutes % 60 != 0 -> V5BigValue("${minutes / 60}:${(minutes % 60).toString().padStart(2, '0')}", "h")
+        else -> V5BigValue((minutes / 60).toString(), "h")
+    }
+
 /** "every day" / "on weekdays" / "on Mon, Wed" / "no days". */
 fun daysSummary(days: DaysOfWeek): String =
     when {
