@@ -1,6 +1,5 @@
 package com.dculus.stayfocused.feature.devices
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -9,13 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.model.TamperKind
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
@@ -42,68 +41,81 @@ class DevicesScreenTest {
             LocalInspectionMode provides true,
             LocalNow provides { Instant.EPOCH.plusSeconds(3 * 3600L) },
         ) {
-            StayFocusedTheme {
-                Box(Modifier.width(360.dp).height(780.dp).background(StayFocusedTheme.colors.background)) {
+            CompositionLocalProvider(LocalTabBarPadding provides 82.dp) {
+                Box(Modifier.width(360.dp).height(780.dp)) {
                     DevicesScreen(state, "Pixel 8", onLink, onOpen)
                 }
             }
         }
     }
 
+    private fun v5Device(
+        online: Boolean = true,
+        osVersion: String? = "15",
+        hourly: List<Int>? = List(24) { if (it in 8..21) (it * 3) % 25 else 0 },
+    ) = device(online = online).copy(model = "Pixel 7a", osVersion = osVersion, hourlyMins = hourly)
+
     @Test
-    fun onlineCardShowsTodayBatteryAndTheAppInUse() {
-        show(DevicesUiState.Loaded(listOf(device())))
+    fun onlineCardShowsModelVersionStatsAndTicks() {
+        show(DevicesUiState.Loaded(listOf(v5Device())))
+        composeRule.onNodeWithText("Family").assertIsDisplayed()
+        composeRule.onNodeWithText("Phones you manage").assertIsDisplayed()
         composeRule.onNodeWithText("Aarav's phone").assertIsDisplayed()
-        composeRule.onNodeWithText("ONLINE").assertIsDisplayed()
+        composeRule.onNodeWithText("Pixel 7a · Android 15").assertIsDisplayed()
+        composeRule.onNodeWithText("Online").assertIsDisplayed()
         composeRule.onNodeWithText("2h 27m").assertIsDisplayed()
         composeRule.onNodeWithText("64%").assertIsDisplayed()
         composeRule.onNodeWithText("YouTube").assertIsDisplayed()
+        composeRule.onNodeWithText("Using now").assertIsDisplayed()
         composeRule.onNodeWithText("THIS PHONE · PIXEL 8 · PARENT · 1 LINKED").assertIsDisplayed()
+        composeRule
+            .onNodeWithText(
+                "Install Stay Focused Kids on their phone. It shows a code, and you scan it from here.",
+            ).assertExists()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesOnline.png")
     }
 
     @Test
+    fun androidVersionAndTicksAreLeftOutWhenNotReported() {
+        show(DevicesUiState.Loaded(listOf(v5Device(osVersion = null, hourly = null))))
+        composeRule.onNodeWithText("Pixel 7a").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("Screen time by hour today").assertDoesNotExist()
+    }
+
+    @Test
     fun offlineCardHidesWhatItWasUsing() {
-        show(DevicesUiState.Loaded(listOf(device(online = false))))
-        composeRule.onNodeWithText("OFFLINE").assertIsDisplayed()
+        show(DevicesUiState.Loaded(listOf(v5Device(online = false))))
+        composeRule.onNodeWithText("Offline").assertIsDisplayed()
         composeRule.onNodeWithText("YouTube").assertDoesNotExist()
         composeRule.onNodeWithText("Last seen 3 h ago").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesOffline.png")
     }
 
     @Test
-    fun alertStateShowsTheBadgeAndTheAlertLine() {
-        show(
-            DevicesUiState.Loaded(
-                listOf(
-                    device(
-                        alerts = listOf(alert(), alert(TamperKind.OFFLINE, null)),
-                        requests = listOf(request()),
-                    ),
-                ),
-            ),
-        )
-        composeRule.onNodeWithTag(DEVICES_BADGE_TAG, useUnmergedTree = true).assertIsDisplayed()
-        composeRule.onNodeWithText("3", useUnmergedTree = true).assertIsDisplayed()
-        composeRule
-            .onNodeWithText("Accessibility turned off · Offline for a while · 1 request for more time")
-            .assertIsDisplayed()
+    fun attentionLineJoinsRequestsAndProtection() {
+        show(DevicesUiState.Loaded(listOf(v5Device().copy(alerts = listOf(alert()), requests = listOf(request())))))
+        composeRule.onNodeWithText("1 request waiting · Protection is off").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesAlert.png")
     }
 
     @Test
-    fun aPhoneOfflineForADayAddsTheOfflineAlertLineAndOneToTheBadge() {
-        show(DevicesUiState.Loaded(listOf(device(online = false).copy(longOffline = true))))
-        composeRule.onNodeWithText("Offline for a while").assertIsDisplayed()
-        composeRule.onNodeWithText("1", useUnmergedTree = true).assertIsDisplayed()
+    fun requestsArePluralised() {
+        show(DevicesUiState.Loaded(listOf(v5Device().copy(requests = listOf(request(), request().copy(id = "r2"))))))
+        composeRule.onNodeWithText("2 requests waiting").assertIsDisplayed()
     }
 
     @Test
-    fun emptyStateOffersToLinkAPhone() {
+    fun aPhoneOfflineForADayAddsTheOfflineLine() {
+        show(DevicesUiState.Loaded(listOf(device(online = false).copy(longOffline = true))))
+        composeRule.onNodeWithText("Offline for a while").assertIsDisplayed()
+    }
+
+    @Test
+    fun emptyStateStillOffersTheLinkTile() {
         var links = 0
         show(DevicesUiState.Loaded(emptyList()), onLink = { links++ })
         composeRule.onNodeWithText("No linked phones").assertIsDisplayed()
-        composeRule.onNodeWithTag(DEVICES_EMPTY_LINK_TAG).performClick()
+        composeRule.onNodeWithTag(DEVICES_LINK_TAG).performClick()
         assertEquals(1, links)
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesEmpty.png")
     }
@@ -121,13 +133,5 @@ class DevicesScreenTest {
         show(DevicesUiState.Loaded(listOf(device(id = "kid-1"))), onOpen = { opened = it })
         composeRule.onNodeWithTag(deviceCardTag("kid-1")).performClick()
         assertEquals("kid-1", opened)
-    }
-
-    @Test
-    fun linkButtonStartsLinking() {
-        var links = 0
-        show(DevicesUiState.Loaded(listOf(device())), onLink = { links++ })
-        composeRule.onNodeWithTag(DEVICES_LINK_TAG).performClick()
-        assertEquals(1, links)
     }
 }
