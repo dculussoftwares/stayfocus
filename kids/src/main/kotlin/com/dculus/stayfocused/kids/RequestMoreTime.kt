@@ -4,15 +4,11 @@ package com.dculus.stayfocused.kids
 
 import android.content.Context
 import android.content.pm.PackageManager
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.material3.Surface
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,15 +20,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenExtras
 import com.dculus.stayfocused.core.sync.REQUEST_MINUTES_OPTIONS
 import com.dculus.stayfocused.core.sync.UnlockRequestRepository
-import com.dculus.stayfocused.core.ui.components.WhiteButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import com.dculus.stayfocused.kids.monitoring.PendingRequestStore
 import com.dculus.stayfocused.kids.monitoring.ReportTargetStore
@@ -67,17 +64,20 @@ internal fun AskForMoreTime(
     onPick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
+    val colors = V5Theme.colors
+    val type = V5Theme.type
     Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap12),
+        modifier = modifier.fillMaxWidth().padding(top = V5Theme.spacing.gap12),
+        verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (stage) {
             AskStage.None -> {
-                WhiteButton(
+                PillButton(
                     text = stringResource(R.string.kids_ask_button, parent),
                     onClick = onAsk,
+                    variant = PillButtonVariant.Glass,
+                    size = PillButtonSize.Medium,
                     modifier = Modifier.fillMaxWidth().testTag(ASK_BUTTON_TAG),
                 )
             }
@@ -85,35 +85,22 @@ internal fun AskForMoreTime(
             AskStage.Pick -> {
                 Text(
                     stringResource(R.string.kids_ask_how_much),
-                    style = StayFocusedTheme.type.label,
-                    color = colors.secondary,
+                    style = type.label,
+                    color = colors.onGradient,
                     textAlign = TextAlign.Center,
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
+                    horizontalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap8),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     REQUEST_MINUTES_OPTIONS.forEach { mins ->
-                        Surface(
-                            modifier =
-                                Modifier
-                                    .weight(1f)
-                                    .height(60.dp)
-                                    .testTag(ASK_OPTION_TAG_PREFIX + mins)
-                                    .clickable(role = Role.Button) { onPick(mins) },
-                            shape = StayFocusedTheme.shapes.button,
-                            color = colors.panel,
-                            border = BorderStroke(1.dp, colors.hairline14),
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Text(
-                                    minutesLabel(mins),
-                                    style = StayFocusedTheme.type.numeric,
-                                    color = colors.text,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                        }
+                        PillButton(
+                            text = minutesLabel(mins),
+                            onClick = { onPick(mins) },
+                            variant = PillButtonVariant.Glass,
+                            size = PillButtonSize.Medium,
+                            modifier = Modifier.weight(1f).testTag(ASK_OPTION_TAG_PREFIX + mins),
+                        )
                     }
                 }
             }
@@ -121,19 +108,19 @@ internal fun AskForMoreTime(
             AskStage.Sent -> {
                 Column(
                     modifier = Modifier.testTag(ASK_SENT_TAG),
-                    verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
+                    verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap6),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
                         stringResource(R.string.kids_ask_sent, parent),
-                        style = StayFocusedTheme.type.bodyL,
-                        color = colors.text,
+                        style = type.bodyL.copy(fontWeight = FontWeight.SemiBold),
+                        color = colors.onGradient,
                         textAlign = TextAlign.Center,
                     )
                     Text(
                         stringResource(R.string.kids_ask_sent_hint),
-                        style = StayFocusedTheme.type.bodyS,
-                        color = colors.secondary,
+                        style = type.body,
+                        color = colors.onGradient,
                         textAlign = TextAlign.Center,
                     )
                 }

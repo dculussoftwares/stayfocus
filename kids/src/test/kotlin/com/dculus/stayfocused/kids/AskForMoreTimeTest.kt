@@ -9,7 +9,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +30,7 @@ class AskForMoreTimeTest {
         val picked = mutableListOf<Int>()
         composeRule.setContent {
             var stage by remember { mutableStateOf(AskStage.None) }
-            StayFocusedTheme {
+            V5Theme {
                 AskForMoreTime(
                     parent = "Asha",
                     stage = stage,
