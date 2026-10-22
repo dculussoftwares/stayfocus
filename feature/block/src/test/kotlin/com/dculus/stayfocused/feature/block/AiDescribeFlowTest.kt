@@ -8,10 +8,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.lifecycle.SavedStateHandle
 import com.dculus.stayfocused.core.model.AppInfo
 import com.dculus.stayfocused.core.model.BlockSource
@@ -130,7 +132,7 @@ class AiDescribeFlowTest {
         // Nothing is on until the user taps "Turn on block".
         assertTrue(runBlocking { blocks.observeByTarget(BlockTarget.ThisPhone).first() }.isEmpty())
 
-        composeRule.onNodeWithText("15m").performClick()
+        composeRule.onNodeWithTag(WIZARD_RULER_TAG).performSemanticsAction(SemanticsActions.SetProgress) { it(15f) }
         composeRule.onNodeWithText("Turn on block").performClick()
         composeRule.waitForIdle()
 

@@ -2,7 +2,6 @@
 <resources>
     <string name="block_title">Blocks</string>
 
-    <string name="block_this_phone">This phone</string>
     <string name="block_my_phone">My phone</string>
     <string name="block_new_block">New block</string>
     <string name="block_new_block_on">on %1$s</string>
@@ -113,19 +112,31 @@
     <string name="block_wizard_ai_change">Change</string>
     <string name="block_wizard_period_day">Per day</string>
     <string name="block_wizard_period_hour">Per hour</string>
-    <string name="block_wizard_cycle_use">USE FOR</string>
-    <string name="block_wizard_cycle_rest">THEN LOCKED</string>
     <string name="block_wizard_range_work">Work</string>
-    <string name="block_wizard_range_study">Study</string>
     <string name="block_wizard_range_night">Night</string>
-    <string name="block_wizard_range_custom">Custom</string>
-    <string name="block_wizard_range_pick">Pick times</string>
     <string name="block_wizard_picker_start">From</string>
     <string name="block_wizard_picker_end">To</string>
     <string name="block_wizard_picker_next">Next</string>
     <string name="block_wizard_picker_set">Set</string>
     <string name="block_wizard_picker_cancel">Cancel</string>
     <string name="block_wizard_picker_same_time">Start and end must differ</string>
-    <string name="block_wizard_saved">%1$s is on · %2$s</string>
+    <string name="block_wizard_sent">Block sent to %1$s</string>
+    <string name="block_wizard_seg_use">Use for %1$dm</string>
+    <string name="block_wizard_seg_rest">Then lock %1$s</string>
+    <string name="block_wizard_sub_limit">allowed per day</string>
+    <string name="block_wizard_sub_limit_hour">allowed per hour</string>
+    <string name="block_wizard_sub_use">open before it locks</string>
+    <string name="block_wizard_sub_rest">locked, then it opens again</string>
+    <string name="block_wizard_sub_now">blocked from now</string>
+    <string name="block_wizard_ruler_limit">Allowed minutes</string>
+    <string name="block_wizard_ruler_use">Minutes open before it locks</string>
+    <string name="block_wizard_ruler_rest">Minutes locked</string>
+    <string name="block_wizard_ruler_now">Minutes blocked from now</string>
+    <string name="block_wizard_blocked_from">Blocked from</string>
+    <string name="block_wizard_range_school">School</string>
+    <string name="block_wizard_range_dinner">Dinner</string>
+    <string name="block_wizard_range_custom_link">Custom · Pick times</string>
+    <string name="block_wizard_repeat_on">Repeat on</string>
+    <string name="block_wizard_summary">Summary</string>
     <string name="block_wizard_save_failed">Couldn\'t turn on the block. Try again.</string>
 </resources>

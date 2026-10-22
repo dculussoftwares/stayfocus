@@ -88,7 +88,21 @@ data class WizardUiState(
             return draft.apps.map { byPkg[it] ?: fallbackAppLabel(it) }
         }
 
-    val summary: String get() = BlockSummary.sentence(draft, appLabels)
+    val summary: String get() = BlockSummary.sentenceV5(draft, appLabels)
+}
+
+/** The four schedule presets of step 3: Work 09:00–17:00, School 08:00–15:00, Night 22:00–07:00, Dinner 19:00–20:30. */
+enum class SchedulePreset(
+    val rangeText: String,
+    val weekdays: Boolean,
+) {
+    Work("09:00–17:00", weekdays = true),
+    School("08:00–15:00", weekdays = true),
+    Night("22:00–07:00", weekdays = false),
+    Dinner("19:00–20:30", weekdays = false),
+    ;
+
+    val range: TimeRange get() = TimeRange.parse(rangeText)
 }
 
 sealed interface WizardEvent {
@@ -433,6 +447,15 @@ class WizardViewModel
         fun selectCycleEdit(edit: CycleEdit) = mutableState.update { it.copy(cycleEdit = edit) }
 
         fun setRange(range: TimeRange) = updateDraft { copy(range = range) }
+
+        /** A schedule preset card: sets the range, and Mon–Fri too for Work and School (V5_SPEC §5). */
+        fun pickSchedulePreset(preset: SchedulePreset) =
+            updateDraft {
+                copy(range = preset.range, days = if (preset.weekdays) DaysOfWeek.WEEKDAYS else days)
+            }
+
+        /** The day chips of v5 report the whole new set (they keep at least one day on). */
+        fun setDays(days: DaysOfWeek) = updateDraft { copy(days = days) }
 
         fun toggleDay(day: DayOfWeek) = updateDraft { copy(days = DaysOfWeek(days.mask xor (1 shl (day.value - 1)))) }
 

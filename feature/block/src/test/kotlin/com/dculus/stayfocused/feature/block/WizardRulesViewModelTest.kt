@@ -69,12 +69,16 @@ class WizardRulesViewModelTest {
     fun summaryFollowsTheDraft() {
         val vm = viewModel()
         vm.toRules(BlockType.LIMIT)
-        assertEquals("Lock Instagram and YouTube after 30 min a day, on weekdays.", vm.state.value.summary)
+        assertEquals(
+            "Instagram and YouTube can be used 30 min a day, Mon–Fri. After that they lock until midnight.",
+            vm.state.value.summary,
+        )
         vm.setPeriod(LimitPeriod.HOURLY)
         vm.setMins(15)
         vm.toggleDay(DayOfWeek.SATURDAY)
         assertEquals(
-            "Lock Instagram and YouTube after 15 min an hour, on Mon, Tue, Wed, Thu, Fri, Sat.",
+            "Instagram and YouTube can be used 15 min an hour, Mon, Tue, Wed, Thu, Fri, Sat. " +
+                "After that they lock until the next hour.",
             vm.state.value.summary,
         )
     }
@@ -85,7 +89,10 @@ class WizardRulesViewModelTest {
         vm.toRules(BlockType.LIMIT)
         vm.toggleApp(pkg("reddit"))
         vm.toggleApp(pkg("x"))
-        assertEquals("Lock Instagram, YouTube +2 after 30 min a day, on weekdays.", vm.state.value.summary)
+        assertEquals(
+            "Instagram, YouTube and 2 more can be used 30 min a day, Mon–Fri. After that they lock until midnight.",
+            vm.state.value.summary,
+        )
     }
 
     @Test
@@ -114,6 +121,26 @@ class WizardRulesViewModelTest {
         assertTrue(DayOfWeek.SUNDAY in vm.state.value.draft.days)
         vm.toggleDay(DayOfWeek.SUNDAY)
         assertEquals(DaysOfWeek.WEEKDAYS, vm.state.value.draft.days)
+    }
+
+    @Test
+    fun schedulePresetsSetTheRangeAndOnlyWorkAndSchoolSetWeekdays() {
+        val vm = viewModel()
+        vm.toRules(BlockType.SCHEDULE)
+        vm.setDays(DaysOfWeek.ALL)
+        vm.pickSchedulePreset(SchedulePreset.Dinner)
+        assertEquals(TimeRange.parse("19:00–20:30"), vm.state.value.draft.range)
+        assertEquals(DaysOfWeek.ALL, vm.state.value.draft.days)
+        vm.pickSchedulePreset(SchedulePreset.School)
+        assertEquals(TimeRange.parse("08:00–15:00"), vm.state.value.draft.range)
+        assertEquals(DaysOfWeek.WEEKDAYS, vm.state.value.draft.days)
+        vm.setDays(DaysOfWeek.WEEKENDS)
+        vm.pickSchedulePreset(SchedulePreset.Work)
+        assertEquals(TimeRange.parse("09:00–17:00"), vm.state.value.draft.range)
+        assertEquals(DaysOfWeek.WEEKDAYS, vm.state.value.draft.days)
+        vm.setDays(DaysOfWeek.WEEKENDS)
+        vm.pickSchedulePreset(SchedulePreset.Night)
+        assertEquals(DaysOfWeek.WEEKENDS, vm.state.value.draft.days)
     }
 
     @Test

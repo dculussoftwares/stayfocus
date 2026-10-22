@@ -6,6 +6,8 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.DaysOfWeek
+import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
@@ -69,6 +71,62 @@ class WizardScreenshotTest {
                 step = WIZARD_STEP_APPS,
                 apps = catalog,
                 draft = BlockDraft(apps = linkedSetOf("com.instagram.android", "com.zhiliaoapp.musically")),
+            ),
+        )
+
+    private val twoApps = linkedSetOf("com.instagram.android", "com.zhiliaoapp.musically")
+
+    @Test
+    fun rulesCycle() =
+        shot(
+            "WizardRulesCycle",
+            WizardUiState(
+                ready = true,
+                step = WIZARD_STEP_RULES,
+                apps = catalog,
+                draft = BlockDraft(type = BlockType.CYCLE, apps = twoApps, use = 10, rest = 30, days = DaysOfWeek.ALL),
+            ),
+        )
+
+    @Test
+    fun rulesSchedule() =
+        shot(
+            "WizardRulesSchedule",
+            WizardUiState(
+                ready = true,
+                step = WIZARD_STEP_RULES,
+                apps = catalog,
+                draft =
+                    BlockDraft(
+                        type = BlockType.SCHEDULE,
+                        apps = twoApps,
+                        range = TimeRange.parse("22:00–07:00"),
+                        days = DaysOfWeek.ALL,
+                    ),
+            ),
+        )
+
+    @Test
+    fun rulesLimit() =
+        shot(
+            "WizardRulesLimit",
+            WizardUiState(
+                ready = true,
+                step = WIZARD_STEP_RULES,
+                apps = catalog,
+                draft = BlockDraft(type = BlockType.LIMIT, apps = twoApps, mins = 45),
+            ),
+        )
+
+    @Test
+    fun rulesNow() =
+        shot(
+            "WizardRulesNow",
+            WizardUiState(
+                ready = true,
+                step = WIZARD_STEP_RULES,
+                apps = catalog,
+                draft = BlockDraft(type = BlockType.NOW, apps = twoApps, now = 90),
             ),
         )
 }
