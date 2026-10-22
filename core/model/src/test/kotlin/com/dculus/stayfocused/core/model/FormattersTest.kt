@@ -98,4 +98,12 @@ class FormattersTest {
             ) to "on Mon, Tue, Wed, Thu, Fri, Sat",
         ).forEach { (d, e) -> assertEquals(e, daysSummary(d)) }
     }
+
+    @Test
+    fun v5BigValue() {
+        assertEquals(V5BigValue("45", "min"), v5BigValue(45))
+        assertEquals(V5BigValue("1:30", "h"), v5BigValue(90))
+        assertEquals(V5BigValue("1:05", "h"), v5BigValue(65))
+        assertEquals(V5BigValue("2", "h"), v5BigValue(120))
+    }
 }

@@ -28,9 +28,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.v5Duration
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
 import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
 import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
 import timber.log.Timber
@@ -188,7 +188,7 @@ internal fun HomeScreen(
                 ActiveBlocksCard(state.blocks, actions.onSetBlockEnabled, destinations.onOpenBlock)
             }
         }
-        SfBottomSheet(visible = sheetVisible, onDismiss = { sheetVisible = false }) {
+        V5BottomSheet(visible = sheetVisible, onDismiss = { sheetVisible = false }) {
             BreakSheetContent(
                 mins = mins,
                 onMinsChange = { mins = it },

@@ -62,11 +62,10 @@
     <string name="home_blocks_empty_title">No blocks yet</string>
     <string name="home_blocks_empty_body">Tap New block to start one for this phone.</string>
 
-    <!-- Take a break sheet (the v2 sheet stays until M12-08) -->
+    <!-- Take a break sheet (v5) -->
     <string name="break_sheet_title">Take a break</string>
-    <string name="break_sheet_hint">DRAG THE DIAL</string>
-    <!-- PROVISIONAL COPY: the handoff names four demo apps, but a break locks every app except calls, messages and settings. -->
-    <string name="break_sheet_note">Apps stay locked until the timer ends. Your phone, messages and settings stay available.</string>
+    <string name="break_sheet_subtitle">Every distracting app locks. Calls and messages still work.</string>
+    <string name="break_sheet_ruler">Break length</string>
     <string name="break_sheet_start">Start %1$s break</string>
 
     <!-- Toasts -->
