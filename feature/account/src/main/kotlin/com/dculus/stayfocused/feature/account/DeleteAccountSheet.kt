@@ -3,7 +3,7 @@ package com.dculus.stayfocused.feature.account
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -15,12 +15,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.ui.components.GhostButton
-import com.dculus.stayfocused.core.ui.components.OutlineButton
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
-import com.dculus.stayfocused.core.ui.components.SfTextField
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.v5.components.V5TextField
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 
 internal const val DELETE_CONFIRM_TAG = "account_delete_confirm"
 internal const val DELETE_CANCEL_TAG = "account_delete_cancel"
@@ -40,71 +40,92 @@ internal fun DeleteAccountSheet(
     onPassword: (String) -> Unit,
     onGoogle: () -> Unit,
 ) {
-    SfBottomSheet(visible = state.step != DeleteStep.Hidden, onDismiss = onCancel) {
-        val colors = StayFocusedTheme.colors
-        val type = StayFocusedTheme.type
-        Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    V5BottomSheet(visible = state.step != DeleteStep.Hidden, onDismiss = onCancel) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (state.step == DeleteStep.Reauth) {
-                Text(stringResource(R.string.account_reauth_title), style = type.displayM, color = colors.text)
-                Text(stringResource(R.string.account_reauth_body), style = type.body, color = colors.secondary)
+                Text(
+                    stringResource(R.string.account_reauth_title),
+                    style = V5Theme.type.heading,
+                    color = V5Theme.colors.ink,
+                )
+                Text(
+                    stringResource(R.string.account_reauth_body),
+                    style = V5Theme.type.body,
+                    color = V5Theme.colors.textSecondary,
+                )
                 if (state.usesPassword) {
                     var password by rememberSaveable { mutableStateOf("") }
-                    SfTextField(
+                    V5TextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = stringResource(R.string.account_reauth_password),
+                        placeholder = stringResource(R.string.account_reauth_password),
                         isPassword = true,
-                        keyboardType = KeyboardType.Password,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                         enabled = !state.working,
                         error = state.error?.takeIf { it == DeleteError.WrongPassword }?.let { errorText(it) },
                         modifier = Modifier.testTag(DELETE_PASSWORD_TAG),
                     )
                     OtherError(state)
-                    PrimaryButton(
-                        text = stringResource(R.string.account_reauth_continue),
-                        onClick = { onPassword(password) },
-                        enabled = password.isNotEmpty() && !state.working,
+                    PillButton(
+                        stringResource(R.string.account_reauth_continue),
+                        {
+                            onPassword(password)
+                        },
+                        Modifier.fillMaxWidth().testTag(DELETE_REAUTH_TAG),
+                        enabled =
+                            password.isNotEmpty() && !state.working,
                         loading = state.working,
-                        modifier = Modifier.fillMaxWidth().testTag(DELETE_REAUTH_TAG),
                     )
                 } else {
                     OtherError(state)
-                    PrimaryButton(
-                        text = stringResource(R.string.account_reauth_google),
-                        onClick = onGoogle,
+                    PillButton(
+                        stringResource(R.string.account_reauth_google),
+                        onGoogle,
+                        Modifier.fillMaxWidth().testTag(DELETE_GOOGLE_TAG),
                         enabled = !state.working,
                         loading = state.working,
-                        modifier = Modifier.fillMaxWidth().testTag(DELETE_GOOGLE_TAG),
                     )
                 }
             } else {
-                Text(stringResource(R.string.account_delete_title), style = type.displayM, color = colors.text)
-                Text(stringResource(R.string.account_delete_body), style = type.body, color = colors.secondary)
+                Text(
+                    stringResource(R.string.account_delete_title),
+                    style = V5Theme.type.heading,
+                    color = V5Theme.colors.ink,
+                )
+                Text(
+                    stringResource(R.string.account_delete_body),
+                    style = V5Theme.type.body,
+                    color = V5Theme.colors.textSecondary,
+                )
                 OtherError(state)
                 // The account is already gone when the local erase failed: nothing is left to confirm.
                 if (state.error != DeleteError.LocalWipe) {
-                    PrimaryButton(
-                        text = stringResource(R.string.account_delete_confirm),
-                        onClick = onConfirm,
+                    PillButton(
+                        stringResource(R.string.account_delete_confirm),
+                        onConfirm,
+                        Modifier.fillMaxWidth().testTag(DELETE_CONFIRM_TAG),
                         enabled = !state.working,
                         loading = state.working,
-                        modifier = Modifier.fillMaxWidth().testTag(DELETE_CONFIRM_TAG),
                     )
                 }
             }
             if (state.step == DeleteStep.Reauth) {
-                OutlineButton(
-                    text = stringResource(R.string.account_delete_cancel),
-                    onClick = onCancel,
+                PillButton(
+                    stringResource(R.string.account_delete_cancel),
+                    onCancel,
+                    Modifier.fillMaxWidth().testTag(DELETE_CANCEL_TAG),
+                    PillButtonVariant.Secondary,
+                    PillButtonSize.Sheet,
                     enabled = !state.working,
-                    modifier = Modifier.fillMaxWidth().testTag(DELETE_CANCEL_TAG),
                 )
             } else {
-                GhostButton(
-                    text = stringResource(R.string.account_delete_cancel),
-                    onClick = onCancel,
+                PillButton(
+                    stringResource(R.string.account_delete_cancel),
+                    onCancel,
+                    Modifier.fillMaxWidth().testTag(DELETE_CANCEL_TAG),
+                    PillButtonVariant.Text,
+                    PillButtonSize.Medium,
                     enabled = !state.working,
-                    modifier = Modifier.fillMaxWidth().testTag(DELETE_CANCEL_TAG),
                 )
             }
         }
@@ -115,7 +136,7 @@ internal fun DeleteAccountSheet(
 private fun OtherError(state: DeleteUiState) {
     val error = state.error ?: return
     if (error == DeleteError.WrongPassword && state.usesPassword) return
-    Text(errorText(error), style = StayFocusedTheme.type.bodyS, color = StayFocusedTheme.colors.alertText)
+    Text(errorText(error), style = V5Theme.type.body, color = V5Theme.colors.error)
 }
 
 @Composable
