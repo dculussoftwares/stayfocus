@@ -6,11 +6,12 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,17 +20,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -38,10 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -49,21 +50,22 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.BlockDraft
-import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DialConfig
 import com.dculus.stayfocused.core.model.DialConfigs
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.durationLabel
-import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.sync.AiReport
 import com.dculus.stayfocused.core.ui.components.DayChips
 import com.dculus.stayfocused.core.ui.components.DialPresets
@@ -72,12 +74,26 @@ import com.dculus.stayfocused.core.ui.components.PrimaryButton
 import com.dculus.stayfocused.core.ui.components.RotaryDial
 import com.dculus.stayfocused.core.ui.components.SegmentedTabs
 import com.dculus.stayfocused.core.ui.components.SfBottomSheet
-import com.dculus.stayfocused.core.ui.icon.AppIcon
-import com.dculus.stayfocused.core.ui.theme.StayFocusedColors
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
+import com.dculus.stayfocused.core.ui.v5.components.GlowCard
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.v5.components.StatusTag
+import com.dculus.stayfocused.core.ui.v5.components.StatusTagKind
+import com.dculus.stayfocused.core.ui.v5.components.TargetTag
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradient
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 import java.time.DayOfWeek
 
 const val WIZARD_BACK_TAG = "wizard_back"
+const val WIZARD_CLOSE_TAG = "wizard_close"
+const val WIZARD_TARGET_TAG = "wizard_target"
 const val WIZARD_CTA_TAG = "wizard_cta"
 const val WIZARD_DESCRIBE_TAG = "wizard_describe"
 const val WIZARD_RULES_TAG = "wizard_rules"
@@ -101,11 +117,12 @@ fun wizardAppTag(pkg: String): String = "wizard_app_$pkg"
 /** Callbacks of the wizard; grouped so the screen stays a stateless function of [WizardUiState]. */
 data class WizardActions(
     val onBack: () -> Unit = {},
+    val onClose: () -> Unit = {},
     val onPickType: (BlockType) -> Unit = {},
     val onToggleApp: (String) -> Unit = {},
     val onNext: () -> Unit = {},
     val onDescribe: () -> Unit = {},
-    val onSelectTarget: (BlockTarget) -> Unit = {},
+    val onFlipTarget: () -> Unit = {},
     val onPeriod: (LimitPeriod) -> Unit = {},
     val onMins: (Int) -> Unit = {},
     val onNow: (Int) -> Unit = {},
@@ -119,21 +136,18 @@ data class WizardActions(
 )
 
 private val WizardTypes = BlockType.entries
+private val ScreenPadding = 14.dp
+private val TypeTileHeight = 178.dp
+private val TypeTileRadius = 32.dp
+private val AppTileRadius = 28.dp
+private val RingWidth = 3.dp
 
-private fun BlockType.chipColor(c: StayFocusedColors): Color =
+private fun BlockType.gradient(): V5Gradient =
     when (this) {
-        BlockType.LIMIT -> c.appTints[0]
-        BlockType.CYCLE -> c.accent
-        BlockType.SCHEDULE -> c.appTints[6]
-        BlockType.NOW -> c.warning
-    }
-
-private fun BlockType.chipRes(): Int =
-    when (this) {
-        BlockType.LIMIT -> R.string.block_template_code_limit
-        BlockType.CYCLE -> R.string.block_template_code_cycle
-        BlockType.SCHEDULE -> R.string.block_template_code_schedule
-        BlockType.NOW -> R.string.block_wizard_chip_now
+        BlockType.LIMIT -> V5Gradients.orange
+        BlockType.CYCLE -> V5Gradients.typeCycle
+        BlockType.SCHEDULE -> V5Gradients.typeSchedule
+        BlockType.NOW -> V5Gradients.typeNow
     }
 
 private fun BlockType.nameRes(): Int =
@@ -152,54 +166,52 @@ private fun BlockType.descRes(): Int =
         BlockType.NOW -> R.string.block_wizard_type_now_desc
     }
 
-private fun BlockType.step3TitleRes(): Int =
-    when (this) {
-        BlockType.LIMIT -> R.string.block_wizard_step3_limit
-        BlockType.CYCLE -> R.string.block_wizard_step3_cycle
-        BlockType.SCHEDULE -> R.string.block_wizard_step3_schedule
-        BlockType.NOW -> R.string.block_wizard_step3_now
-    }
-
+/** The block wizard (v5, V5_SPEC §5): steps 1 and 2 are v5; the rules of step 3 follow in M12-11. */
 @Composable
 fun WizardScreen(
     state: WizardUiState,
     actions: WizardActions,
     modifier: Modifier = Modifier,
 ) {
-    val c = StayFocusedTheme.colors
-    val spacing = StayFocusedTheme.spacing
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmReport by remember { mutableStateOf(false) }
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .background(c.background)
-                .padding(start = spacing.screen, end = spacing.screen, top = 10.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(spacing.screen),
-    ) {
-        WizardHeader(state.step, actions.onBack)
-        // An existing block cannot move to another phone.
-        if (!state.editing) TargetPills(state.targets, state.draft.target, actions.onSelectTarget)
-        Box(Modifier.weight(1f)) {
-            if (state.ready) {
-                when (state.step) {
-                    WIZARD_STEP_TYPE -> TypeStep(state.draft.type, state.aiAvailable, actions)
-                    WIZARD_STEP_APPS -> AppsStep(state, actions.onToggleApp)
-                    else -> RulesStep(state, actions, onReport = { confirmReport = true })
+    V5Screen(darkContent = false, modifier = modifier) {
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .v5StatusBarPadding(extra = 10.dp)
+                    .v5NavigationBarPadding(),
+            verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap12),
+        ) {
+            WizardTopBar(actions.onBack, actions.onClose)
+            WizardTitle(state, actions.onFlipTarget)
+            if (state.step == WIZARD_STEP_RULES && state.draft.fromAi) {
+                AiDraftBanner(state.draft, actions.onChangeType, onReport = { confirmReport = true })
+            }
+            Box(Modifier.weight(1f)) {
+                if (state.ready) {
+                    when (state.step) {
+                        WIZARD_STEP_TYPE -> TypeStep(state, actions)
+                        WIZARD_STEP_APPS -> AppsStep(state, actions)
+                        else -> RulesStep(state, actions)
+                    }
                 }
             }
-        }
-        PrimaryButton(
-            text = ctaLabel(state),
-            onClick = actions.onNext,
-            modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
-            enabled = state.ready,
-        )
-        if (state.editing && state.step == WIZARD_STEP_RULES && !state.saving) {
-            DeleteButton(onClick = { confirmDelete = true })
+            if (state.step == WIZARD_STEP_RULES) {
+                PillButton(
+                    text = ctaLabel(state),
+                    onClick = actions.onNext,
+                    modifier = Modifier.padding(horizontal = ScreenPadding).fillMaxWidth().testTag(WIZARD_CTA_TAG),
+                    enabled = state.ready && !state.saving,
+                )
+                // v5-extra: M13-03 (block edit and delete)
+                if (state.editing && !state.saving) DeleteButton(onClick = { confirmDelete = true })
+                Spacer(Modifier.height(8.dp))
+            }
         }
     }
+    // v5-extra: M13-03 (delete confirmation) and the AI report, still on the v2 sheet
     SfBottomSheet(visible = confirmDelete, onDismiss = { confirmDelete = false }) {
         DeleteSheetContent(
             onDelete = {
@@ -342,7 +354,11 @@ private fun ctaLabel(state: WizardUiState): String =
         }
 
         WIZARD_STEP_APPS -> {
-            pluralStringResource(R.plurals.block_wizard_cta_continue_apps, state.selectedCount, state.selectedCount)
+            if (state.selectedCount == 0) {
+                stringResource(R.string.block_wizard_pick_one_app)
+            } else {
+                pluralStringResource(R.plurals.block_wizard_cta_continue_apps, state.selectedCount, state.selectedCount)
+            }
         }
 
         else -> {
@@ -350,273 +366,355 @@ private fun ctaLabel(state: WizardUiState): String =
         }
     }
 
+/** Back (one step earlier, or close on step 1) and close, two 46 dp round buttons. */
 @Composable
-private fun WizardHeader(
-    step: Int,
+private fun WizardTopBar(
     onBack: () -> Unit,
+    onClose: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
-    val backLabel = stringResource(R.string.block_wizard_back)
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        val shape = RoundedCornerShape(14.dp)
-        Box(
-            modifier =
-                Modifier
-                    .size(42.dp)
-                    .clip(shape)
-                    .background(c.panel)
-                    .border(1.dp, c.hairline10, shape)
-                    .testTag(WIZARD_BACK_TAG)
-                    .clickable(role = Role.Button, onClick = onBack)
-                    .semantics { contentDescription = backLabel },
-            contentAlignment = Alignment.Center,
-        ) {
-            Text("←", style = StayFocusedTheme.type.title, color = c.text)
-        }
-        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            for (i in WIZARD_STEP_TYPE..WIZARD_STEP_RULES) {
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(4.dp)
-                        .clip(RoundedCornerShape(2.dp))
-                        .background(if (i <= step) c.accent else c.panel),
-                )
-            }
-        }
-        Row {
-            Text(
-                stringResource(R.string.block_wizard_step, step),
-                style = StayFocusedTheme.type.label,
-                color = c.accent,
-            )
-            Text(
-                stringResource(R.string.block_wizard_step_total),
-                style = StayFocusedTheme.type.label,
-                color = c.tertiary,
-            )
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = ScreenPadding),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RoundIconButton(
+            icon = V5Icons.back,
+            contentDescription = stringResource(R.string.block_wizard_back),
+            onClick = onBack,
+            modifier = Modifier.testTag(WIZARD_BACK_TAG),
+        )
+        RoundIconButton(
+            icon = V5Icons.close,
+            contentDescription = stringResource(R.string.block_wizard_close),
+            onClick = onClose,
+            modifier = Modifier.testTag(WIZARD_CLOSE_TAG),
+        )
     }
 }
 
+/** Step title with the red target tag, and the "Step n of 3" line. */
 @Composable
-private fun TargetPills(
-    targets: List<WizardTargetUi>,
-    selected: BlockTarget,
-    onSelect: (BlockTarget) -> Unit,
+private fun WizardTitle(
+    state: WizardUiState,
+    onFlipTarget: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
-    Row(
-        modifier = Modifier.horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    val c = V5Theme.colors
+    val titleRes =
+        when (state.step) {
+            WIZARD_STEP_TYPE -> R.string.block_wizard_step1_title
+            WIZARD_STEP_APPS -> R.string.block_wizard_step2_title
+            else -> R.string.block_wizard_step3_title
+        }
+    val targetName =
+        state.targets
+            .firstOrNull { it.target == state.draft.target }
+            ?.device
+            ?.name
+            ?: stringResource(R.string.block_my_phone)
+    Column(
+        modifier =
+            Modifier.fillMaxWidth().padding(
+                start = ScreenPadding + 6.dp,
+                end = ScreenPadding + 6.dp,
+                top = 4.dp,
+            ),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        MonoLabel(stringResource(R.string.block_wizard_on), Modifier.padding(end = 2.dp))
-        targets.forEach { t ->
-            val on = t.target == selected
-            val shape = RoundedCornerShape(10.dp)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = t.device?.name ?: stringResource(R.string.block_this_phone),
-                style = StayFocusedTheme.type.bodyS,
-                color = if (on) c.onAccent else c.secondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier =
-                    Modifier
-                        .height(32.dp)
-                        .widthIn(max = 160.dp)
-                        .alpha(if (t.enabled) 1f else 0.4f)
-                        .clip(shape)
-                        .background(if (on) c.text else Color.Transparent)
-                        .border(1.dp, if (on) c.text else c.hairline14, shape)
-                        .selectable(
-                            selected = on,
-                            enabled = t.enabled,
-                            role = Role.RadioButton,
-                            onClick = { onSelect(t.target) },
-                        ).padding(horizontal = 12.dp, vertical = 7.dp),
+                stringResource(titleRes),
+                style = V5Theme.type.heading.copy(fontSize = 30.sp, letterSpacing = (-0.01).em),
+                color = c.ink,
+            )
+            // An existing block cannot move to another phone, so its tag is only a label.
+            TargetTag(
+                name = targetName,
+                modifier = Modifier.testTag(WIZARD_TARGET_TAG),
+                onClick = if (state.editing) null else onFlipTarget,
             )
         }
+        Text(
+            stringResource(R.string.block_wizard_step_hint, state.step),
+            style = V5Theme.type.body.copy(fontSize = 14.sp),
+            color = c.textSecondary,
+        )
     }
 }
 
 @Composable
 private fun TypeStep(
-    selected: BlockType,
-    aiAvailable: Boolean,
+    state: WizardUiState,
     actions: WizardActions,
 ) {
-    val c = StayFocusedTheme.colors
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        item {
-            Text(
-                stringResource(R.string.block_wizard_step1_title),
-                style = StayFocusedTheme.type.display,
-                color = c.text,
-            )
-        }
-        if (aiAvailable) {
-            item {
-                val shape = RoundedCornerShape(16.dp)
-                Row(
-                    modifier =
-                        Modifier
-                            .padding(bottom = 4.dp)
-                            .fillMaxWidth()
-                            .clip(shape)
-                            .background(c.accent.copy(alpha = 0.06f))
-                            .border(1.dp, c.accent.copy(alpha = 0.4f), shape)
-                            .testTag(WIZARD_DESCRIBE_TAG)
-                            .clickable(role = Role.Button, onClick = actions.onDescribe)
-                            .padding(horizontal = 14.dp, vertical = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        stringResource(R.string.block_ai_badge),
-                        style = StayFocusedTheme.type.labelS,
-                        color = c.onAccent,
-                        modifier =
-                            Modifier
-                                .clip(
-                                    RoundedCornerShape(5.dp),
-                                ).background(c.accent)
-                                .padding(horizontal = 6.dp, vertical = 3.dp),
-                    )
-                    Text(
-                        stringResource(R.string.block_wizard_describe),
-                        style = StayFocusedTheme.type.body,
-                        color = c.text,
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        // The selection ring is drawn 6 dp outside its tile: keep room for it inside the list's clip.
+        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, top = 6.dp, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(WizardTypes.chunked(2), key = { it.first().name }) { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { type ->
+                    TypeTile(
+                        type = type,
+                        selected = type == state.draft.type,
+                        onClick = { actions.onPickType(type) },
                         modifier = Modifier.weight(1f),
                     )
-                    Text("→", color = c.accent)
                 }
             }
         }
-        items(WizardTypes, key = { it.name }) { type ->
-            TypeCard(type, selected = type == selected) { actions.onPickType(type) }
+        item {
+            PillButton(
+                text = ctaLabel(state),
+                onClick = actions.onNext,
+                modifier = Modifier.padding(top = 8.dp).fillMaxWidth().testTag(WIZARD_CTA_TAG),
+                enabled = state.ready,
+            )
+        }
+        if (state.aiAvailable) {
+            item {
+                val c = V5Theme.colors
+                Row(
+                    modifier =
+                        Modifier
+                            .padding(top = 2.dp)
+                            .fillMaxWidth()
+                            .heightIn(min = V5Theme.spacing.minTouchTarget)
+                            .testTag(WIZARD_DESCRIBE_TAG)
+                            .clickable(role = Role.Button, onClick = actions.onDescribe),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(V5Icons.sparkle, contentDescription = null, tint = c.orange, modifier = Modifier.size(15.dp))
+                    Text(
+                        stringResource(R.string.block_wizard_describe),
+                        style = V5Theme.type.label.copy(fontSize = 15.sp),
+                        color = c.ink,
+                    )
+                }
+            }
         }
     }
 }
 
+/** A 178 dp gradient tile; the selected one shows a white dot and a 3 dp ink ring after a 3 dp gap. */
 @Composable
-private fun TypeCard(
+private fun TypeTile(
     type: BlockType,
     selected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(20.dp)
-    Row(
+    val c = V5Theme.colors
+    Box(
         modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(c.panel)
-                .border(BorderStroke(1.5.dp, if (selected) c.accent else c.hairline06), shape)
-                .testTag(wizardTypeTag(type))
-                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
-                .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            modifier
+                .height(TypeTileHeight)
+                .drawBehind {
+                    if (!selected) return@drawBehind
+                    val outset = (RingWidth * 1.5f).toPx()
+                    drawRoundRect(
+                        color = c.ink,
+                        topLeft = Offset(-outset, -outset),
+                        size = Size(size.width + outset * 2, size.height + outset * 2),
+                        cornerRadius = CornerRadius(TypeTileRadius.toPx() + outset),
+                        style = Stroke(width = RingWidth.toPx()),
+                    )
+                },
     ) {
-        Box(
-            Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(type.chipColor(c)),
-            contentAlignment = Alignment.Center,
+        GlowCard(
+            gradient = type.gradient(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .testTag(wizardTypeTag(type))
+                    .semantics { this.selected = selected },
+            radius = TypeTileRadius,
+            padding = 16.dp,
+            onClick = onClick,
         ) {
-            Text(stringResource(type.chipRes()), style = StayFocusedTheme.type.labelS, color = c.onAccent)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Box(
+                    Modifier
+                        .size(30.dp)
+                        .background(if (selected) c.onGradient else Color.Transparent, CircleShape)
+                        .border(2.dp, c.onGradient, CircleShape),
+                )
+            }
+            Spacer(Modifier.weight(1f))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(type.nameRes()),
+                    style =
+                        V5Theme.type.body.copy(
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 21.sp,
+                        ),
+                    color = c.onGradient,
+                )
+                Text(
+                    stringResource(type.descRes()),
+                    style =
+                        V5Theme.type.body.copy(
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            lineHeight = 17.sp,
+                        ),
+                    color = c.onGradient,
+                )
+            }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(type.nameRes()), style = StayFocusedTheme.type.title, color = c.text)
-            Text(stringResource(type.descRes()), style = StayFocusedTheme.type.bodyS, color = c.secondary)
-        }
-        Text("→", color = c.tertiary)
     }
 }
 
 @Composable
 private fun AppsStep(
     state: WizardUiState,
-    onToggle: (String) -> Unit,
+    actions: WizardActions,
 ) {
-    val c = StayFocusedTheme.colors
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Text(
-                stringResource(R.string.block_wizard_step2_title),
-                style = StayFocusedTheme.type.display,
-                color = c.text,
-            )
-            Text(
-                stringResource(R.string.block_wizard_selected, state.selectedCount).uppercase(),
-                style = StayFocusedTheme.type.label,
-                color = c.accent,
-                modifier = Modifier.padding(bottom = 4.dp),
-            )
-        }
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            items(state.apps, key = { it.pkg }) { app ->
-                AppTile(app, selected = app.pkg in state.draft.apps) { onToggle(app.pkg) }
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = 40.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(state.apps.chunked(APP_COLUMNS), key = { it.first().pkg }) { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { app ->
+                    AppTile(
+                        app = app,
+                        selected = app.pkg in state.draft.apps,
+                        onToggle = { actions.onToggleApp(app.pkg) },
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+                repeat(APP_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
             }
+        }
+        item {
+            PillButton(
+                text = ctaLabel(state),
+                onClick = actions.onNext,
+                modifier = Modifier.padding(top = 10.dp).fillMaxWidth().testTag(WIZARD_CTA_TAG),
+                enabled = state.ready && state.selectedCount > 0,
+            )
         }
     }
 }
 
+private const val APP_COLUMNS = 3
+
+/** A white 112 dp tile: 48 dp icon and name; a selected one has a 2 dp inner ink ring and a check badge. */
 @Composable
 private fun AppTile(
     app: TargetApp,
     selected: Boolean,
     onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(18.dp)
+    val c = V5Theme.colors
+    val shape = RoundedCornerShape(AppTileRadius)
     Box(
         modifier =
-            Modifier
+            modifier
+                .heightIn(min = 112.dp)
                 .clip(shape)
-                .background(if (selected) c.accent.copy(alpha = 0.1f) else c.panel)
-                .border(1.5.dp, if (selected) c.accent else c.hairline06, shape)
+                .background(c.surface)
+                .then(if (selected) Modifier.border(2.dp, c.ink, shape) else Modifier)
                 .testTag(wizardAppTag(app.pkg))
                 .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onToggle() }),
+        contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 14.dp, bottom = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            AppIcon(app.pkg, label = app.label, size = 44.dp)
+            AppIconTile(app.pkg, size = 48.dp, label = app.label)
             Text(
                 app.label,
-                style = StayFocusedTheme.type.bodyS,
-                color = c.text,
+                style = V5Theme.type.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                color = c.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
             )
-            Text(formatMinutes(app.todayMins), style = StayFocusedTheme.type.labelS, color = c.secondary)
         }
-        Box(
-            modifier =
-                Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp)
-                    .size(16.dp)
-                    .clip(RoundedCornerShape(5.dp))
-                    .background(if (selected) c.accent else Color.Transparent)
-                    .border(1.dp, if (selected) c.accent else c.hairline14, RoundedCornerShape(5.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (selected) Text("✓", color = c.onAccent, style = StayFocusedTheme.type.labelS)
+        if (selected) {
+            Box(
+                modifier =
+                    Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(10.dp)
+                        .size(22.dp)
+                        .background(c.ink, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(V5Icons.checkBold, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(12.dp))
+            }
         }
     }
+}
+
+/** The "AI draft" banner above the rules (V5_SPEC §5); filled by the AI flow through `BlockDraft.fromAi` / `aiNote`. */
+@Composable
+private fun AiDraftBanner(
+    draft: BlockDraft,
+    onChange: () -> Unit,
+    onReport: () -> Unit,
+) {
+    val c = V5Theme.colors
+    Column(
+        modifier =
+            Modifier
+                .padding(horizontal = ScreenPadding)
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(24.dp))
+                .background(c.surface)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .testTag(WIZARD_AI_BANNER_TAG),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            StatusTag(StatusTagKind.AiDraft)
+            Text(
+                stringResource(R.string.block_wizard_ai_banner),
+                style = V5Theme.type.body.copy(fontSize = 14.sp),
+                color = c.textTertiary,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        // v5-extra: M13-03 (the AI's restatement, "Change" and "Report a bad result")
+        if (draft.aiNote.isNotBlank()) {
+            Text(draft.aiNote, style = V5Theme.type.body.copy(fontSize = 14.sp), color = c.textSecondary)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            BannerAction(stringResource(R.string.block_wizard_ai_change), onChange)
+            BannerAction(stringResource(R.string.block_report_action), onReport, Modifier.testTag(WIZARD_REPORT_TAG))
+        }
+    }
+}
+
+@Composable
+private fun BannerAction(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Text(
+        text,
+        style = V5Theme.type.label,
+        color = V5Theme.colors.ink,
+        modifier =
+            modifier
+                .heightIn(min = V5Theme.spacing.minTouchTarget)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(vertical = 14.dp),
+    )
 }
 
 private val RangePresets =
@@ -631,20 +729,18 @@ private val RangePresets =
 private fun RulesStep(
     state: WizardUiState,
     actions: WizardActions,
-    onReport: () -> Unit,
 ) {
     val c = StayFocusedTheme.colors
     val draft = state.draft
     Column(
-        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).testTag(WIZARD_RULES_TAG),
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = ScreenPadding)
+                .testTag(WIZARD_RULES_TAG),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(
-            stringResource(if (draft.fromAi) R.string.block_wizard_step3_ai else draft.type.step3TitleRes()),
-            style = StayFocusedTheme.type.displayL,
-            color = c.text,
-        )
-        if (draft.fromAi) AiDraftBanner(draft, actions.onChangeType, onReport)
         when (draft.type) {
             BlockType.LIMIT -> {
                 SegmentedTabs(
@@ -692,64 +788,6 @@ private fun RulesStep(
                     .dashedBorder(c.hairline14, 16.dp)
                     .padding(horizontal = 16.dp, vertical = 14.dp)
                     .testTag(WIZARD_SUMMARY_TAG),
-        )
-    }
-}
-
-/** The "AI DRAFT" banner above the rules; filled by the AI flow (M9-05) through `BlockDraft.fromAi` / `aiNote`. */
-@Composable
-private fun AiDraftBanner(
-    draft: BlockDraft,
-    onChange: () -> Unit,
-    onReport: () -> Unit,
-) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(18.dp)
-    Column(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .clip(shape)
-                .background(c.accent.copy(alpha = 0.08f))
-                .border(1.dp, c.accent.copy(alpha = 0.3f), shape)
-                .padding(14.dp)
-                .testTag(WIZARD_AI_BANNER_TAG),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                stringResource(R.string.block_wizard_ai_draft),
-                style = StayFocusedTheme.type.labelS,
-                color = c.onAccent,
-                modifier =
-                    Modifier
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(c.accent)
-                        .padding(horizontal = 7.dp, vertical = 3.dp),
-            )
-            Text(stringResource(draft.type.nameRes()), style = StayFocusedTheme.type.bodyS, color = c.text)
-            Spacer(Modifier.weight(1f))
-            Text(
-                stringResource(R.string.block_wizard_ai_change),
-                style = StayFocusedTheme.type.bodyS,
-                color = c.accent,
-                modifier = Modifier.clickable(role = Role.Button, onClick = onChange).padding(vertical = 8.dp),
-            )
-        }
-        Text(
-            draft.aiNote.ifBlank { stringResource(R.string.block_wizard_ai_note_default) },
-            style = StayFocusedTheme.type.bodyS,
-            color = c.secondary,
-        )
-        Text(
-            stringResource(R.string.block_report_action),
-            style = StayFocusedTheme.type.bodyS,
-            color = c.secondary,
-            modifier =
-                Modifier
-                    .testTag(WIZARD_REPORT_TAG)
-                    .clickable(role = Role.Button, onClick = onReport)
-                    .padding(vertical = 8.dp),
         )
     }
 }

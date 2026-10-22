@@ -101,6 +101,9 @@ sealed interface WizardEvent {
     /** Continue was pressed on step 2 with no app selected. */
     data object PickAtLeastOneApp : WizardEvent
 
+    /** The target tag was tapped but no child phone is linked: toast "Link a child's phone first". */
+    data object NoLinkedPhone : WizardEvent
+
     /** Saving failed; the wizard stays open so nothing is lost. */
     data object SaveFailed : WizardEvent
 
@@ -266,11 +269,21 @@ class WizardViewModel
             }
         }
 
-        /** Picking a type is selecting it and moving on to the apps. */
+        /** Picking a type only selects it; "Continue" moves on to the apps. */
         fun pickType(type: BlockType) {
-            mutableState.update {
-                it.copy(draft = it.draft.copy(type = type), step = WIZARD_STEP_APPS, cycleEdit = CycleEdit.USE)
+            mutableState.update { it.copy(draft = it.draft.copy(type = type), cycleEdit = CycleEdit.USE) }
+        }
+
+        /** The red target tag: switches to the next phone, or says there is none to switch to. */
+        fun flipTarget() {
+            val s = mutableState.value
+            val pills = s.targets.filter { it.enabled }
+            if (pills.size < 2) {
+                emit(WizardEvent.NoLinkedPhone)
+                return
             }
+            val index = pills.indexOfFirst { it.target == s.draft.target }
+            selectTarget(pills[(index + 1) % pills.size].target)
         }
 
         fun toggleApp(pkg: String) {
@@ -459,6 +472,8 @@ class WizardViewModel
                 emit(WizardEvent.Close)
             }
         }
+
+        fun close() = emit(WizardEvent.Close)
 
         fun describeWithAi() = emit(WizardEvent.DescribeWithAi)
 

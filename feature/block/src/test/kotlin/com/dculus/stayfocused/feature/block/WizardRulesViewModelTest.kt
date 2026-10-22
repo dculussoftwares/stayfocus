@@ -62,6 +62,7 @@ class WizardRulesViewModelTest {
     private fun WizardViewModel.toRules(type: BlockType) {
         pickType(type)
         next()
+        next()
     }
 
     @Test

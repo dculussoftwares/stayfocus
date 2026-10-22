@@ -26,7 +26,6 @@ import androidx.navigation.compose.composable
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockWizard
-import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -201,6 +200,7 @@ internal fun BlockWizardRoute(
     val currentSaved by rememberUpdatedState(onFinish)
     val toast = rememberToastController()
     val pickOneApp = stringResource(R.string.block_wizard_pick_one_app)
+    val linkFirst = stringResource(R.string.block_wizard_link_first)
     val saveFailed = stringResource(R.string.block_wizard_save_failed)
     val deleted = stringResource(R.string.block_deleted)
     val updateFailed = stringResource(R.string.block_wizard_update_failed)
@@ -221,6 +221,10 @@ internal fun BlockWizardRoute(
 
                 WizardEvent.PickAtLeastOneApp -> {
                     toast.show(pickOneApp)
+                }
+
+                WizardEvent.NoLinkedPhone -> {
+                    toast.show(linkFirst)
                 }
 
                 WizardEvent.SaveFailed -> {
@@ -265,11 +269,12 @@ internal fun BlockWizardRoute(
         remember(viewModel) {
             WizardActions(
                 onBack = viewModel::back,
+                onClose = viewModel::close,
                 onPickType = viewModel::pickType,
                 onToggleApp = viewModel::toggleApp,
                 onNext = viewModel::next,
                 onDescribe = viewModel::describeWithAi,
-                onSelectTarget = viewModel::selectTarget,
+                onFlipTarget = viewModel::flipTarget,
                 onPeriod = viewModel::setPeriod,
                 onMins = viewModel::setMins,
                 onNow = viewModel::setNow,
@@ -284,7 +289,7 @@ internal fun BlockWizardRoute(
         }
     Box(Modifier.fillMaxSize()) {
         WizardScreen(state, actions)
-        SfToastHost(toast, bottomPadding = 96.dp)
+        V5ToastHost(toast, bottomOffset = 24.dp)
     }
 }
 

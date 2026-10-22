@@ -57,7 +57,7 @@ class WizardScreenTest {
                             onToggleApp = vm::toggleApp,
                             onNext = vm::next,
                             onDescribe = vm::describeWithAi,
-                            onSelectTarget = vm::selectTarget,
+                            onFlipTarget = vm::flipTarget,
                         ),
                     )
                 }
@@ -70,11 +70,14 @@ class WizardScreenTest {
         launch()
         composeRule.onNodeWithText("Continue").assertExists()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.LIMIT)).assertIsSelected()
-        composeRule.onNodeWithText("Rather just describe it?").assertExists()
+        composeRule.onNodeWithText("Rather describe it in words").assertExists()
 
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.SCHEDULE)).performClick()
+        composeRule.onNodeWithTag(wizardTypeTag(BlockType.SCHEDULE)).assertIsSelected()
+        composeRule.onNodeWithText("Step 1 of 3 · tap the red tag to switch phone").assertExists()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithText("Which apps?").assertExists()
-        composeRule.onNodeWithText("2 SELECTED").assertExists()
+        composeRule.onNodeWithText("Step 2 of 3 · tap the red tag to switch phone").assertExists()
         composeRule.onNodeWithText("Continue with 2 apps").assertExists()
 
         composeRule.onNodeWithTag(wizardAppTag(pkg("reddit"))).performClick()
@@ -82,7 +85,7 @@ class WizardScreenTest {
         composeRule.onNodeWithText("Continue with 3 apps").performClick()
 
         composeRule.onNodeWithTag(WIZARD_RULES_TAG).assertExists()
-        composeRule.onNodeWithText("When should it lock?").assertExists()
+        composeRule.onNodeWithText("Set the rule").assertExists()
         composeRule.onNodeWithText("Turn on block").assertExists()
     }
 
@@ -90,6 +93,7 @@ class WizardScreenTest {
     fun singularCtaForOneApp() {
         launch()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.NOW)).performClick()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithTag(wizardAppTag(pkg("instagram"))).performClick()
         composeRule.onNodeWithText("Continue with 1 app").assertExists()
     }
@@ -98,8 +102,9 @@ class WizardScreenTest {
     fun backReturnsToTheTypeStep() {
         launch()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.CYCLE)).performClick()
+        composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithTag(WIZARD_BACK_TAG).performClick()
-        composeRule.onNodeWithText("Rather just describe it?").assertExists()
+        composeRule.onNodeWithText("Rather describe it in words").assertExists()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.CYCLE)).assertIsSelected()
     }
 }
