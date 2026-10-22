@@ -60,7 +60,7 @@ fun KidsNavigation(
     val resources = LocalResources.current
     val toastScope = rememberCoroutineScope()
     val toast = remember { ToastController(toastScope) }
-    // v5 screens (Link, Consent) draw edge to edge; the others still sit inside the system bars (LegacyInsets).
+    // v5 screens (Link, Consent, Home) draw edge to edge; Permissions still sits inside the system bars (LegacyInsets).
     Box(modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
@@ -112,24 +112,22 @@ fun KidsNavigation(
                 )
             }
             composable<KidsHome> {
-                LegacyInsets {
-                    KidsHomeRoute(
-                        onDone = { outcome, parent ->
-                            // Unlinking by the child says so; a parent-side unlink just returns to the Link screen.
-                            if (outcome == HomeOutcome.Unlinked) {
-                                toast.show(resources.getString(R.string.kids_unlinked_toast, parent))
-                            }
-                            navController.navigate(KidsLink, navOptions { popUpTo<KidsHome> { inclusive = true } })
-                        },
-                    )
-                }
+                KidsHomeRoute(
+                    onDone = { outcome, parent ->
+                        // Unlinking by the child says so; a parent-side unlink just returns to the Link screen.
+                        if (outcome == HomeOutcome.Unlinked) {
+                            toast.show(resources.getString(R.string.kids_unlinked_toast, parent))
+                        }
+                        navController.navigate(KidsLink, navOptions { popUpTo<KidsHome> { inclusive = true } })
+                    },
+                )
             }
         }
         V5ToastHost(toast, bottomOffset = 24.dp)
     }
 }
 
-/** Not yet migrated to v5 (M13-06): the v2 background, inside the system bars. */
+/** Permissions is still the shared v2 screen until M12-06 migrates it: v2 background, inside the system bars. */
 @Composable
 private fun LegacyInsets(content: @Composable () -> Unit) {
     Box(Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).safeDrawingPadding()) { content() }

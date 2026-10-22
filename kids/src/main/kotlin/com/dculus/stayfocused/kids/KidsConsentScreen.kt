@@ -126,7 +126,6 @@ internal fun KidsConsentScreen(
                 )
             }
             state.error?.let { error ->
-                // v5-extra: M13-06 (shipped error messages, v5-styled)
                 Text(
                     stringResource(error.messageRes()),
                     style = type.body,
@@ -203,7 +202,6 @@ private fun Actions(
     onShowNewCode: () -> Unit,
     onRetry: () -> Unit,
 ) = Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-    // v5-extra: M13-06 (retry and "Show a new code" for the shipped error and expired states)
     if (state.code == null && state.error != null && state.error != ConsentError.Expired) {
         PillButton(
             text = stringResource(R.string.kids_link_retry),

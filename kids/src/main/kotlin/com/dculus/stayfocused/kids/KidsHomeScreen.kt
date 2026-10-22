@@ -1,7 +1,6 @@
 package com.dculus.stayfocused.kids
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,20 +20,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
-import com.dculus.stayfocused.core.ui.components.GhostButton
-import com.dculus.stayfocused.core.ui.components.MonoLabel
-import com.dculus.stayfocused.core.ui.components.OutlineButton
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
 import com.dculus.stayfocused.core.ui.components.daysLabel
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.v5.components.GlowCard
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.v5.components.V5Card
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 
 internal const val KIDS_HOME_UNLINK_TAG = "kids_home_unlink"
 internal const val KIDS_HOME_CONFIRM_TAG = "kids_home_unlink_confirm"
@@ -72,84 +76,103 @@ internal fun KidsHomeScreen(
     onKeep: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    val parent = state.parentName ?: stringResource(R.string.kids_parent_fallback)
-    Column(
-        modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = StayFocusedTheme.spacing.screen, vertical = StayFocusedTheme.spacing.gap8),
-        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap16),
-    ) {
-        NoticePreview(parent)
-        Text(
-            stringResource(R.string.kids_home_notice_caption).uppercase(),
-            style = type.labelS,
-            color = colors.tertiary,
-            modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
-        )
+    V5Screen(darkContent = false, modifier = modifier) {
+        val colors = V5Theme.colors
+        val type = V5Theme.type
+        val parent = state.parentName ?: stringResource(R.string.kids_parent_fallback)
         Column(
-            Modifier.padding(horizontal = StayFocusedTheme.spacing.gap6, vertical = StayFocusedTheme.spacing.gap6),
-            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .v5StatusBarPadding(extra = 14.dp)
+                .v5NavigationBarPadding(extra = 24.dp)
+                .padding(horizontal = V5Theme.spacing.gap14),
+            verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap14),
         ) {
-            MonoLabel(stringResource(R.string.kids_home_today))
+            TodayHero(state.todayMins)
+            NoticePreview(parent)
             Text(
-                state.todayMins?.let { duration(it) } ?: "",
-                style = type.displayXL.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.text,
-                modifier = Modifier.testTag(KIDS_HOME_TODAY_TAG),
+                stringResource(R.string.kids_home_notice_caption).uppercase(),
+                style = type.tag,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(horizontal = V5Theme.spacing.gap6),
             )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8)) {
-            MonoLabel(
-                stringResource(R.string.kids_home_rules, parent),
-                modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
+            Text(
+                stringResource(R.string.kids_home_rules, parent).uppercase(),
+                style = type.label,
+                color = colors.textSecondary,
+                modifier = Modifier.padding(start = V5Theme.spacing.gap6, top = V5Theme.spacing.gap6),
             )
             if (state.rules.isEmpty()) {
                 Text(
                     stringResource(R.string.kids_home_no_rules, parent),
-                    style = type.bodyS,
-                    color = colors.secondary,
-                    modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
+                    style = type.body,
+                    color = colors.textSecondary,
+                    modifier = Modifier.padding(start = V5Theme.spacing.gap6),
                 )
             }
             state.rules.forEach { RuleRow(it) }
-        }
-        state.error?.let { error ->
-            Text(
-                stringResource(
-                    if (error == UnlinkError.Network) R.string.kids_unlink_network else R.string.kids_unlink_failed,
-                ),
-                style = type.body,
-                color = colors.warning,
-                modifier = Modifier.testTag(KIDS_HOME_ERROR_TAG),
+            state.error?.let { error ->
+                Text(
+                    stringResource(
+                        if (error == UnlinkError.Network) R.string.kids_unlink_network else R.string.kids_unlink_failed,
+                    ),
+                    style = type.body,
+                    color = colors.error,
+                    modifier = Modifier.testTag(KIDS_HOME_ERROR_TAG),
+                )
+            }
+            PillButton(
+                text = stringResource(R.string.kids_home_unlink, parent),
+                onClick = onUnlink,
+                variant = PillButtonVariant.Secondary,
+                size = PillButtonSize.Medium,
+                enabled = !state.working,
+                loading = state.working,
+                modifier = Modifier.fillMaxWidth().testTag(KIDS_HOME_UNLINK_TAG),
             )
         }
-        GhostButton(
-            text = stringResource(R.string.kids_home_unlink, parent),
-            onClick = onUnlink,
-            enabled = !state.working,
-            loading = state.working,
-            modifier = Modifier.fillMaxWidth().testTag(KIDS_HOME_UNLINK_TAG),
-        )
-    }
-    SfBottomSheet(visible = state.confirming, onDismiss = onKeep) {
-        Column(
-            Modifier.fillMaxWidth().padding(StayFocusedTheme.spacing.gap22),
-            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap16),
-        ) {
-            Text(stringResource(R.string.kids_unlink_title, parent), style = type.displayS, color = colors.text)
-            Text(stringResource(R.string.kids_unlink_body, parent), style = type.body, color = colors.secondary)
-            OutlineButton(
+        V5BottomSheet(visible = state.confirming, onDismiss = onKeep) {
+            Text(stringResource(R.string.kids_unlink_title, parent), style = type.heading, color = colors.ink)
+            Text(stringResource(R.string.kids_unlink_body, parent), style = type.body, color = colors.textSecondary)
+            PillButton(
                 text = stringResource(R.string.kids_unlink_confirm),
                 onClick = onConfirm,
+                variant = PillButtonVariant.Secondary,
+                size = PillButtonSize.Sheet,
                 modifier = Modifier.fillMaxWidth().testTag(KIDS_HOME_CONFIRM_TAG),
             )
-            PrimaryButton(
+            PillButton(
                 text = stringResource(R.string.kids_unlink_keep),
                 onClick = onKeep,
+                size = PillButtonSize.Sheet,
                 modifier = Modifier.fillMaxWidth().testTag(KIDS_HOME_KEEP_TAG),
+            )
+        }
+    }
+}
+
+/** Pink hero with today's total as dot-matrix `h:mm`; TalkBack reads the same words as before ("1h 12m"). */
+@Composable
+private fun TodayHero(todayMins: Int?) {
+    GlowCard(
+        gradient = V5Gradients.pinkHero,
+        modifier = Modifier.fillMaxWidth(),
+        radius = 38.dp,
+        padding = 22.dp,
+    ) {
+        Text(
+            stringResource(R.string.kids_home_today).uppercase(),
+            style = V5Theme.type.label,
+            color = V5Theme.colors.onGradient,
+        )
+        if (todayMins != null) {
+            DotMatrixText(
+                text = "${todayMins / 60}:${(todayMins % 60).toString().padStart(2, '0')}",
+                contentDescription = duration(todayMins),
+                dotSize = 9.dp,
+                color = V5Theme.colors.onGradient,
+                modifier = Modifier.padding(top = 16.dp).testTag(KIDS_HOME_TODAY_TAG),
             )
         }
     }
@@ -158,50 +181,47 @@ internal fun KidsHomeScreen(
 /** What the always-on notification says, so the child can see what the parent's phone sees of this one. */
 @Composable
 private fun NoticePreview(parent: String) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(colors.track, StayFocusedTheme.shapes.card)
-            .border(1.dp, colors.hairline06, StayFocusedTheme.shapes.card)
-            .padding(horizontal = StayFocusedTheme.spacing.gap16, vertical = StayFocusedTheme.spacing.gap14),
-        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
-    ) {
+    val colors = V5Theme.colors
+    val type = V5Theme.type
+    V5Card(Modifier.fillMaxWidth(), padding = 16.dp) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
+            horizontalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(18.dp).background(colors.accent, StayFocusedTheme.shapes.chip),
+                Modifier.size(18.dp).background(colors.pink, V5Theme.shapes.tag),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(stringResource(R.string.kids_home_notice_badge), style = type.labelS, color = colors.onAccent)
+                Text(stringResource(R.string.kids_home_notice_badge), style = type.tag, color = colors.onGradient)
             }
-            Text(stringResource(R.string.kids_home_notice_app), style = type.bodyS, color = colors.secondary)
+            Text(stringResource(R.string.kids_home_notice_app), style = type.body, color = colors.textSecondary)
         }
         Text(
             stringResource(R.string.kids_home_notice_title, parent),
-            style = type.body.copy(fontWeight = FontWeight.Bold),
-            color = colors.text,
+            style = type.cardTitle,
+            color = colors.ink,
+            modifier = Modifier.padding(top = V5Theme.spacing.gap6),
         )
-        Text(stringResource(R.string.kids_home_notice_body, parent), style = type.bodyS, color = colors.secondary)
+        Text(
+            stringResource(R.string.kids_home_notice_body, parent),
+            style = type.body,
+            color = colors.textSecondary,
+            modifier = Modifier.padding(top = V5Theme.spacing.gap4),
+        )
     }
 }
 
+/** A rule the parent set, read-only: name and summary in a compact card. */
 @Composable
 private fun RuleRow(rule: KidsRule) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .background(colors.panel, StayFocusedTheme.shapes.input)
-            .padding(horizontal = StayFocusedTheme.spacing.gap16, vertical = StayFocusedTheme.spacing.gap14),
-        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
-    ) {
-        Text(rule.name, style = type.bodyL.copy(fontWeight = FontWeight.Bold), color = colors.text)
-        Text(ruleSummary(rule), style = type.bodyS, color = colors.secondary)
+    V5Card(Modifier.fillMaxWidth(), padding = 16.dp) {
+        Text(rule.name, style = V5Theme.type.cardTitle, color = V5Theme.colors.ink)
+        Text(
+            ruleSummary(rule),
+            style = V5Theme.type.body,
+            color = V5Theme.colors.textSecondary,
+            modifier = Modifier.padding(top = V5Theme.spacing.gap4),
+        )
     }
 }
 

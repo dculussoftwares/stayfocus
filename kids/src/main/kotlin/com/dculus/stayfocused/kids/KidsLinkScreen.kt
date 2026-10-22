@@ -106,7 +106,6 @@ internal fun KidsLinkScreen(
                 }
 
                 KidsLinkState.Failed -> {
-                    // v5-extra: M13-06 (no code could be made: shipped message and retry, v5-styled)
                     Text(
                         stringResource(R.string.kids_link_failed),
                         style = type.body.copy(fontWeight = FontWeight.Medium),

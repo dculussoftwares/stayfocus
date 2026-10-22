@@ -2,12 +2,13 @@ package com.dculus.stayfocused.kids
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,7 +30,7 @@ class KidsHomeScreenTest {
         onConfirm: () -> Unit = {},
         onKeep: () -> Unit = {},
     ) = composeRule.setContent {
-        StayFocusedTheme { KidsHomeScreen(state, onUnlink, onConfirm, onKeep) }
+        V5Theme { KidsHomeScreen(state, onUnlink, onConfirm, onKeep) }
     }
 
     private val ready =
@@ -49,7 +50,7 @@ class KidsHomeScreenTest {
         composeRule.onNodeWithText("This phone is managed by Asha").assertIsDisplayed()
         composeRule.onNodeWithText("Screen time and app use are shared with Asha.").assertIsDisplayed()
         composeRule.onNodeWithTag(KIDS_HOME_TODAY_TAG).assertIsDisplayed()
-        composeRule.onNodeWithText("1h 12m").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("1h 12m").assertIsDisplayed()
         composeRule.onNodeWithText("RULES SET BY ASHA").assertIsDisplayed()
         composeRule.onNodeWithText("Instagram").assertIsDisplayed()
         composeRule.onNodeWithText("30 min a day").assertIsDisplayed()
@@ -62,7 +63,7 @@ class KidsHomeScreenTest {
     fun withoutRulesItSaysSo() {
         show(ready.copy(rules = emptyList(), todayMins = 48))
         composeRule.onNodeWithText("Asha has not set any rules yet.").assertIsDisplayed()
-        composeRule.onNodeWithText("48m").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("48m").assertIsDisplayed()
     }
 
     @Test

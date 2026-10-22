@@ -109,7 +109,6 @@ fun BlockScreen(
                 modifier = Modifier.padding(top = 22.dp),
             )
             TimeLine(timeLine)
-            // v5-extra: M13-06 (reasons other than a cycle rest keep their shipped text in the rule-line slot)
             val ruleText =
                 if (reason == BlockReason.CYCLE_REST && cycleRule != null) {
                     stringResource(R.string.block_cycle_rule, cycleRule.use, cycleRule.rest, cycleRule.use)
@@ -130,7 +129,6 @@ fun BlockScreen(
                 variant = PillButtonVariant.White,
                 modifier = Modifier.fillMaxWidth(),
             )
-            // v5-extra: M13-06 (Kids "Ask for more time" slot, restyled there)
             extraActions()
         }
     }
@@ -164,7 +162,6 @@ private fun TimeLine(timeLine: BlockTimeLine) {
         }
 
         is BlockTimeLine.Until -> {
-            // v5-extra: M13-06 (fixed end time of schedule / now / timed lock blocks)
             Text(
                 stringResource(R.string.block_until, timeLine.clock),
                 style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
