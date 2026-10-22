@@ -1,5 +1,7 @@
 package com.dculus.stayfocused.feature.account
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -30,7 +32,9 @@ class DeleteAccountSheetTest {
         onPassword: (String) -> Unit = {},
         onGoogle: () -> Unit = {},
     ) = composeRule.setContent {
-        V5Theme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
+        CompositionLocalProvider(LocalInspectionMode provides true) {
+            V5Theme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
+        }
     }
 
     @Test
