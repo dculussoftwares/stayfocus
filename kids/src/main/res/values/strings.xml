@@ -10,26 +10,26 @@
     <!-- Shown in Android\'s Accessibility settings; overrides the phone app\'s text from :core:blocking. -->
     <string name="foreground_service_description">Stay Focused Kids sees which app is on your screen so it can block the apps your parent chose. It never reads messages, passwords or typing. Nothing is sold, and it is shared only with the parent you link.</string>
     <!-- Placeholder screens until the Link (QR), Consent and Home stories land. -->
-    <string name="kids_link_heading">Link to a\nparent\'s phone</string>
-    <string name="kids_link_body">On the parent\'s phone: Devices → Add device → Scan. No account needed here.</string>
-    <string name="kids_link_waiting">Waiting for scan · %1$s</string>
+    <string name="kids_link_title">Show this to\nyour parent</string>
+    <string name="kids_link_subtitle">They scan it from their phone.</string>
+    <string name="kids_link_expires">Code expires in %1$s</string>
     <string name="kids_link_qr_description">QR code for the parent to scan</string>
     <string name="kids_link_failed">Could not get a code. Check the connection and try again.</string>
     <string name="kids_link_retry">Try again</string>
-    <!-- Consent. Copy is from the prototype; the last four strings are new (error states). -->
-    <string name="kids_consent_heading">Let %1$s manage this phone?</string>
-    <string name="kids_consent_match">Match this code on %1$s\'s phone</string>
+    <!-- Link (show code) and Consent (allow parent): v5 copy; the error-state strings are shipped extras. -->
+    <string name="kids_consent_heading">Let %1$s manage\nthis phone?</string>
+    <string name="kids_consent_match">Check that %1$s\'s phone shows</string>
     <string name="kids_consent_can_do">%1$s will be able to</string>
     <string-array name="kids_consent_list">
-        <item>See screen time and the app that’s open</item>
-        <item>See battery and online status</item>
-        <item>Lock and unlock apps</item>
-        <item>Start focus sessions</item>
+        <item>See screen time and which app is open</item>
+        <item>Block apps and set time limits</item>
+        <item>Lock the phone for study time</item>
         <item>Answer your requests for more time</item>
     </string-array>
-    <string name="kids_consent_note">A notification always shows while this phone is managed. You can unlink anytime, and %1$s will be told.</string>
+    <string name="kids_consent_note">You can unlink anytime from this app. %1$s gets a notification if you do.</string>
     <string name="kids_consent_allow">Allow and link</string>
-    <string name="kids_consent_cancel">Cancel</string>
+    <string name="kids_consent_cancel">Not now</string>
+    <string name="kids_linked_toast">Linked to %1$s</string>
     <string name="kids_parent_fallback">your parent</string>
     <!-- Block screen: ask for more time (prototype "Kids: Blocked overlay"). -->
     <string name="kids_ask_button">Ask %1$s for more time</string>

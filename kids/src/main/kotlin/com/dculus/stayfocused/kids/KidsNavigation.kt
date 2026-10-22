@@ -32,11 +32,11 @@ import com.dculus.stayfocused.core.navigation.KidsHome
 import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.ui.components.BatteryGuidance
-import com.dculus.stayfocused.core.ui.components.SfToastHost
 import com.dculus.stayfocused.core.ui.components.ToastController
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
 import com.dculus.stayfocused.core.ui.theme.sfScreenExit
+import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
 import com.dculus.stayfocused.feature.onboarding.PermissionsCopy
 import com.dculus.stayfocused.feature.onboarding.PermissionsRoute
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
@@ -60,7 +60,8 @@ fun KidsNavigation(
     val resources = LocalResources.current
     val toastScope = rememberCoroutineScope()
     val toast = remember { ToastController(toastScope) }
-    Box(modifier.fillMaxSize().background(StayFocusedTheme.colors.background).safeDrawingPadding()) {
+    // v5 screens (Link, Consent) draw edge to edge; the others still sit inside the system bars (LegacyInsets).
+    Box(modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = startRoute,
@@ -71,20 +72,22 @@ fun KidsNavigation(
         ) {
             composable<KidsPermissions> {
                 val scope = rememberCoroutineScope()
-                KidsPermissionsRoute(
-                    onFinish = { incomplete ->
-                        scope.launch {
-                            // Setup only counts as done with all four on, so the next launch asks again otherwise.
-                            // The flag is stored before leaving, so a restart right after cannot show this again.
-                            if (!incomplete) onSetupComplete()
-                            navController.navigate(
-                                KidsLink,
-                                navOptions { popUpTo<KidsPermissions> { inclusive = true } },
-                            )
-                        }
-                    },
-                    viewModel = permissionsViewModel,
-                )
+                LegacyInsets {
+                    KidsPermissionsRoute(
+                        onFinish = { incomplete ->
+                            scope.launch {
+                                // Setup only counts as done with all four on, so the next launch asks again otherwise.
+                                // The flag is stored before leaving, so a restart right after cannot show this again.
+                                if (!incomplete) onSetupComplete()
+                                navController.navigate(
+                                    KidsLink,
+                                    navOptions { popUpTo<KidsPermissions> { inclusive = true } },
+                                )
+                            }
+                        },
+                        viewModel = permissionsViewModel,
+                    )
+                }
             }
             composable<KidsLink> {
                 KidsLinkRoute(
@@ -98,7 +101,8 @@ fun KidsNavigation(
             }
             composable<KidsConsent> {
                 KidsConsentRoute(
-                    onLink = {
+                    onLink = { parent ->
+                        toast.show(resources.getString(R.string.kids_linked_toast, parent))
                         navController.navigate(KidsHome, navOptions { popUpTo<KidsConsent> { inclusive = true } })
                     },
                     // Declined, or the code ran out: a fresh QR code, with no Consent screen left underneath.
@@ -108,19 +112,27 @@ fun KidsNavigation(
                 )
             }
             composable<KidsHome> {
-                KidsHomeRoute(
-                    onDone = { outcome, parent ->
-                        // Unlinking by the child says so; a parent-side unlink just returns to the Link screen.
-                        if (outcome == HomeOutcome.Unlinked) {
-                            toast.show(resources.getString(R.string.kids_unlinked_toast, parent))
-                        }
-                        navController.navigate(KidsLink, navOptions { popUpTo<KidsHome> { inclusive = true } })
-                    },
-                )
+                LegacyInsets {
+                    KidsHomeRoute(
+                        onDone = { outcome, parent ->
+                            // Unlinking by the child says so; a parent-side unlink just returns to the Link screen.
+                            if (outcome == HomeOutcome.Unlinked) {
+                                toast.show(resources.getString(R.string.kids_unlinked_toast, parent))
+                            }
+                            navController.navigate(KidsLink, navOptions { popUpTo<KidsHome> { inclusive = true } })
+                        },
+                    )
+                }
             }
         }
-        SfToastHost(toast, bottomPadding = 24.dp)
+        V5ToastHost(toast, bottomOffset = 24.dp)
     }
+}
+
+/** Not yet migrated to v5 (M13-06): the v2 background, inside the system bars. */
+@Composable
+private fun LegacyInsets(content: @Composable () -> Unit) {
+    Box(Modifier.fillMaxSize().background(StayFocusedTheme.colors.background).safeDrawingPadding()) { content() }
 }
 
 /** The shared system check with Kids words and the battery guidance (strongly recommended on a child's phone). */
