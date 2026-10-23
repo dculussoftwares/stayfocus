@@ -172,3 +172,7 @@ Acceptance criteria that need a device, an emulator image or a person. Tick them
 ## M11-09 Pill tab bar on a device
 - Check: `maestro test e2e/flows/smoke/navigation_tabs.yaml` and `./gradlew ciDevicesGroupDebugAndroidTest` pass with the new tab labels (Home, Blocks, Family, Insights); the last item on every tab scrolls above the floating bar on a gesture-nav and a 3-button-nav phone.
 - How: run both on an emulator or phone with a debug build; not run in the authoring session (no emulator available).
+
+## M12-19 v5 accessibility and performance
+- Check: TalkBack walk-through of all 24 v5 screens; font scale 1.3 and 2.0 on every screen (nothing clipped or unreachable); frame-time on Home and Insights on a mid-range emulator (JankStats log or `gfxinfo framestats`, janky frames noted in `docs/qa/v5-visual-review.md` section 4).
+- How: on an emulator or phone, Settings > Accessibility: turn on TalkBack and set Font size / Display size to the largest steps, then open each screen of `design/screens-v5/` in order. File an issue per finding. Also run the `e2e` workflow (Actions > e2e > Run workflow) on the PR branch to confirm the new `journeys/` flows; fix any flow that fails.
