@@ -22,10 +22,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import com.google.android.gms.common.moduleinstall.InstallStatusListener
 import com.google.android.gms.common.moduleinstall.ModuleInstall
 import com.google.android.gms.common.moduleinstall.ModuleInstallRequest
@@ -156,8 +157,8 @@ internal fun QrScannerPreview(
         if (!ready) {
             Text(
                 stringResource(R.string.link_scan_preparing),
-                style = StayFocusedTheme.type.bodyS,
-                color = StayFocusedTheme.colors.cameraPrompt,
+                style = V5Theme.type.body.copy(fontSize = 13.sp),
+                color = V5Theme.colors.onInkMuted,
                 textAlign = TextAlign.Center,
             )
         }

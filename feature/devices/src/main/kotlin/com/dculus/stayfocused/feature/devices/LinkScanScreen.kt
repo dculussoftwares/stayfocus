@@ -10,18 +10,19 @@ import android.os.SystemClock
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -34,22 +35,25 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.art.ScanFrame
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 import timber.log.Timber
 
 internal const val LINK_SCAN_VIEWFINDER_TAG = "link_scan_viewfinder"
@@ -164,41 +168,54 @@ internal fun LinkScanScreen(
     onOpenSettings: () -> Unit,
     onCodes: (List<String>) -> Unit,
     onCameraUnavailable: () -> Unit,
+    preview: @Composable (Modifier) -> Unit = { QrScannerPreview(onCodes, onCameraUnavailable, it) },
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    val density = LocalDensity.current
-    val statusBar = WindowInsets.statusBars.getTop(density).toFloat()
-    val navBar = WindowInsets.navigationBars.getBottom(density).toFloat()
-    Column(
-        Modifier
-            .fillMaxSize()
-            // The host pads for the system bars; paint them black too so the whole screen is the camera surface.
-            .drawBehind {
-                drawRect(colors.camera, Offset(0f, -statusBar), Size(size.width, statusBar))
-                drawRect(colors.camera, Offset(0f, size.height), Size(size.width, navBar))
-            }.background(colors.camera)
-            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(18.dp),
-    ) {
-        LinkBackButton(onBack = onBack, light = true)
+    V5Screen(darkContent = true, background = V5Gradients.scan.adaptive) {
+        val colors = V5Theme.colors
         Column(
-            Modifier.weight(1f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+            Modifier
+                .fillMaxSize()
+                // The prototype's 56 dp top padding includes its 46 dp fake status bar.
+                .v5StatusBarPadding(extra = 10.dp)
+                .v5NavigationBarPadding(extra = 40.dp)
+                .padding(horizontal = V5Theme.spacing.screenOnboarding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            RoundIconButton(
+                icon = V5Icons.back,
+                contentDescription = stringResource(R.string.link_back),
+                onClick = onBack,
+                dark = true,
+                modifier = Modifier.align(Alignment.Start).testTag(LINK_BACK_TAG),
+            )
             when (access) {
                 CameraAccess.Granted -> {
-                    Viewfinder(onCodes, onCameraUnavailable)
                     Text(
-                        stringResource(R.string.link_scan_prompt),
-                        style = type.bodyL,
-                        color = colors.cameraPrompt,
+                        stringResource(R.string.link_scan_title),
+                        style = V5Theme.type.title.copy(fontSize = 30.sp),
+                        color = colors.onGradient,
+                        modifier = Modifier.padding(top = 18.dp),
+                    )
+                    Text(
+                        stringResource(R.string.link_scan_body),
+                        style = V5Theme.type.body.copy(lineHeight = 21.75.sp),
+                        color = colors.onInkMuted,
                         textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 24.dp),
+                        modifier = Modifier.padding(top = 8.dp).widthIn(max = 290.dp),
+                    )
+                    Box(Modifier.padding(top = 40.dp).testTag(LINK_SCAN_VIEWFINDER_TAG).size(260.dp)) {
+                        preview(Modifier.fillMaxSize().padding(14.dp).clip(RoundedCornerShape(22.dp)))
+                        ScanFrame()
+                    }
+                    Spacer(Modifier.weight(1f))
+                    Text(
+                        stringResource(R.string.link_scan_looking),
+                        style = V5Theme.type.body.copy(fontSize = 14.sp),
+                        color = colors.onInkMuted,
                     )
                 }
 
+                // v5-extra: M13-05 (camera permission and unavailable states)
                 CameraAccess.NeedsRationale -> {
                     PermissionMessage(
                         title = stringResource(R.string.link_camera_title),
@@ -234,74 +251,39 @@ internal fun LinkScanScreen(
 }
 
 @Composable
-private fun PermissionMessage(
+private fun ColumnScope.PermissionMessage(
     title: String,
     body: String,
     cta: String?,
     ctaTag: String,
     onCta: () -> Unit,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
+    val colors = V5Theme.colors
     Column(
-        Modifier.padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(title, style = type.displayM, color = colors.text, textAlign = TextAlign.Center)
-        Text(body, style = type.body, color = colors.secondary, textAlign = TextAlign.Center)
-        if (cta != null) {
-            PrimaryButton(text = cta, onClick = onCta, modifier = Modifier.fillMaxWidth().testTag(ctaTag))
-        }
-    }
-}
-
-/** The 250 dp camera window with lime corner brackets. */
-@Composable
-private fun Viewfinder(
-    onCodes: (List<String>) -> Unit,
-    onUnavailable: () -> Unit,
-) {
-    val accent = StayFocusedTheme.colors.accent
-    val shape = RoundedCornerShape(10.dp)
-    Box(
-        Modifier
-            .testTag(LINK_SCAN_VIEWFINDER_TAG)
-            .size(250.dp)
-            .drawBehind {
-                val arm = 46.dp.toPx()
-                val width = 4.dp.toPx()
-                val radius = 18.dp.toPx()
-                val stroke = Stroke(width = width)
-                val half = width / 2
-
-                // Four corner brackets, each an L with one rounded outer corner.
-                fun bracket(
-                    x: Float,
-                    y: Float,
-                    dx: Float,
-                    dy: Float,
-                ) {
-                    val path =
-                        Path().apply {
-                            moveTo(x + dx * arm, y + dy * half)
-                            lineTo(x + dx * radius, y + dy * half)
-                            quadraticTo(x + dx * half, y + dy * half, x + dx * half, y + dy * radius)
-                            lineTo(x + dx * half, y + dy * arm)
-                        }
-                    drawPath(path, accent, style = stroke)
-                }
-                bracket(0f, 0f, 1f, 1f)
-                bracket(size.width, 0f, -1f, 1f)
-                bracket(0f, size.height, 1f, -1f)
-                bracket(size.width, size.height, -1f, -1f)
-            },
-    ) {
-        QrScannerPreview(
-            onCodes = onCodes,
-            onUnavailable = onUnavailable,
-            modifier = Modifier.fillMaxSize().padding(22.dp).clip(shape),
+        Text(
+            title,
+            style = V5Theme.type.title.copy(fontSize = 30.sp),
+            color = colors.onGradient,
+            textAlign = TextAlign.Center,
         )
+        Text(
+            body,
+            style = V5Theme.type.body.copy(lineHeight = 21.75.sp),
+            color = colors.onInkMuted,
+            textAlign = TextAlign.Center,
+        )
+        if (cta != null) {
+            PillButton(
+                text = cta,
+                onClick = onCta,
+                variant = PillButtonVariant.White,
+                modifier = Modifier.padding(top = 12.dp).testTag(ctaTag),
+            )
+        }
     }
 }
 
