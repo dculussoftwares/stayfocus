@@ -16,7 +16,8 @@ tags:
 - assertVisible: "Blocked.*"
 - assertVisible: "No data for this day.*"
 - tapOn: "Week"
-- assertVisible: "Day"
+# The day stepper exists only in Day mode, so its arrows vanish when Week is really selected.
+- assertNotVisible: "Next day"
 - tapOn: "Day"
 - assertVisible: "Next day"
 - assertVisible: "Today"
