@@ -69,14 +69,11 @@ import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.rulerReadout
 import com.dculus.stayfocused.core.model.v5Duration
 import com.dculus.stayfocused.core.sync.AiReport
-import com.dculus.stayfocused.core.ui.components.MonoLabel
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
 import com.dculus.stayfocused.core.ui.v5.components.DayChips
 import com.dculus.stayfocused.core.ui.v5.components.GlowCard
 import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
 import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
 import com.dculus.stayfocused.core.ui.v5.components.RulerLabels
 import com.dculus.stayfocused.core.ui.v5.components.SegmentedPill
@@ -87,6 +84,7 @@ import com.dculus.stayfocused.core.ui.v5.components.StatusTagKind
 import com.dculus.stayfocused.core.ui.v5.components.TargetTag
 import com.dculus.stayfocused.core.ui.v5.components.TickRuler
 import com.dculus.stayfocused.core.ui.v5.components.TickRulerColors
+import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
 import com.dculus.stayfocused.core.ui.v5.components.V5Card
 import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
 import com.dculus.stayfocused.core.ui.v5.theme.V5Gradient
@@ -209,8 +207,7 @@ fun WizardScreen(
             }
         }
     }
-    // v5-extra: M13-03 (delete confirmation) and the AI report, still on the v2 sheet
-    SfBottomSheet(visible = confirmDelete, onDismiss = { confirmDelete = false }) {
+    V5BottomSheet(visible = confirmDelete, onDismiss = { confirmDelete = false }) {
         DeleteSheetContent(
             onDelete = {
                 // A second tap while the sheet slides out must not delete twice.
@@ -222,7 +219,7 @@ fun WizardScreen(
             onKeep = { confirmDelete = false },
         )
     }
-    SfBottomSheet(visible = confirmReport, onDismiss = { confirmReport = false }) {
+    V5BottomSheet(visible = confirmReport, onDismiss = { confirmReport = false }) {
         ReportSheetContent(
             report = AiReport(state.aiSentence, state.aiOriginal ?: state.draft),
             sending = state.reporting,
@@ -246,70 +243,52 @@ private fun ColumnScope.ReportSheetContent(
     onSend: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
+    val c = V5Theme.colors
+    Text(stringResource(R.string.block_report_title), style = V5Theme.type.heading, color = c.ink)
+    Text(stringResource(R.string.block_report_body), style = V5Theme.type.body, color = c.textSecondary)
+    // Scrolls on its own so a long sentence never pushes "Send report" off the screen.
     Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(stringResource(R.string.block_report_title), style = StayFocusedTheme.type.display, color = c.text)
-        Text(stringResource(R.string.block_report_body), style = StayFocusedTheme.type.body, color = c.secondary)
-        // Scrolls on its own so a long sentence never pushes "Send report" off the screen.
-        Column(
-            modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            MonoLabel(stringResource(R.string.block_report_sentence_label))
-            Text(
-                report.sentence,
-                style = StayFocusedTheme.type.body,
-                color = c.text,
-                modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
-            )
-            MonoLabel(stringResource(R.string.block_report_draft_label))
-            Text(
-                report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
-                style = StayFocusedTheme.type.bodyS,
-                color = c.text,
-                modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
-            )
-        }
-        PrimaryButton(
-            text = stringResource(R.string.block_report_send),
-            onClick = onSend,
-            enabled = !sending,
-            modifier = Modifier.fillMaxWidth().testTag(WIZARD_REPORT_CONFIRM_TAG),
-        )
+        Text(stringResource(R.string.block_report_sentence_label), style = V5Theme.type.label, color = c.textSecondary)
         Text(
-            stringResource(R.string.block_report_cancel),
-            style = StayFocusedTheme.type.title,
-            color = c.text,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        role = Role.Button,
-                        onClick = onCancel,
-                    ).padding(vertical = 12.dp),
+            report.sentence,
+            style = V5Theme.type.body,
+            color = c.ink,
+            modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
+        )
+        Text(stringResource(R.string.block_report_draft_label), style = V5Theme.type.label, color = c.textSecondary)
+        Text(
+            report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
+            style = V5Theme.type.body.copy(fontSize = 13.sp),
+            color = c.ink,
+            modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
         )
     }
+    PillButton(
+        text = stringResource(R.string.block_report_send),
+        onClick = onSend,
+        enabled = !sending,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_REPORT_CONFIRM_TAG),
+    )
+    PillButton(
+        text = stringResource(R.string.block_report_cancel),
+        onClick = onCancel,
+        variant = PillButtonVariant.Text,
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
 private fun DeleteButton(onClick: () -> Unit) {
-    val c = StayFocusedTheme.colors
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Text(
-            stringResource(R.string.block_delete_action),
-            style = StayFocusedTheme.type.title,
-            color = c.alertText,
-            modifier =
-                Modifier
-                    .testTag(WIZARD_DELETE_TAG)
-                    .clickable(role = Role.Button, onClick = onClick)
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-        )
-    }
+    PillButton(
+        text = stringResource(R.string.block_delete_action),
+        onClick = onClick,
+        variant = PillButtonVariant.Text,
+        textColor = V5Theme.colors.destructive,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_TAG),
+    )
 }
 
 @Composable
@@ -317,31 +296,23 @@ private fun ColumnScope.DeleteSheetContent(
     onDelete: () -> Unit,
     onKeep: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
-    Column(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Text(stringResource(R.string.block_delete_title), style = StayFocusedTheme.type.display, color = c.text)
-        Text(stringResource(R.string.block_delete_body), style = StayFocusedTheme.type.body, color = c.secondary)
-        PrimaryButton(
-            text = stringResource(R.string.block_delete_confirm),
-            onClick = onDelete,
-            modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_CONFIRM_TAG),
-        )
-        Text(
-            stringResource(R.string.block_delete_keep),
-            style = StayFocusedTheme.type.title,
-            color = c.text,
-            textAlign = TextAlign.Center,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .testTag(WIZARD_DELETE_KEEP_TAG)
-                    .clickable(role = Role.Button, onClick = onKeep)
-                    .padding(vertical = 12.dp),
-        )
-    }
+    Text(stringResource(R.string.block_delete_title), style = V5Theme.type.heading, color = V5Theme.colors.ink)
+    Text(
+        stringResource(R.string.block_delete_body),
+        style = V5Theme.type.body,
+        color = V5Theme.colors.textSecondary,
+    )
+    PillButton(
+        text = stringResource(R.string.block_delete_confirm),
+        onClick = onDelete,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_CONFIRM_TAG),
+    )
+    PillButton(
+        text = stringResource(R.string.block_delete_keep),
+        onClick = onKeep,
+        variant = PillButtonVariant.Text,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_KEEP_TAG),
+    )
 }
 
 @Composable
@@ -686,7 +657,6 @@ private fun AiDraftBanner(
                 modifier = Modifier.weight(1f),
             )
         }
-        // v5-extra: M13-03 (the AI's restatement, "Change" and "Report a bad result")
         if (draft.aiNote.isNotBlank()) {
             Text(draft.aiNote, style = V5Theme.type.body.copy(fontSize = 14.sp), color = c.textSecondary)
         }
@@ -769,7 +739,7 @@ private fun RulesStep(
             modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
             enabled = state.ready && !state.saving,
         )
-        // v5-extra: M13-03 (per-hour limits, custom time range, block edit and delete)
+        // Per-hour limits: day / hour switch under the ruler card.
         if (draft.type == BlockType.LIMIT) {
             SegmentedPill(
                 options =
@@ -781,9 +751,6 @@ private fun RulesStep(
                 onSelect = { actions.onPeriod(if (it == 0) LimitPeriod.DAILY else LimitPeriod.HOURLY) },
                 size = SegmentedPillSize.Small,
             )
-        }
-        if (draft.type == BlockType.SCHEDULE) {
-            CustomRangeLink(draft.range, actions.onRange)
         }
         if (state.editing && !state.saving) DeleteButton(onClick = onDelete)
     }
@@ -803,7 +770,7 @@ private fun RuleCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (draft.type == BlockType.SCHEDULE) {
-                SchedulePicker(draft.range, actions.onPreset)
+                SchedulePicker(draft.range, actions.onPreset, actions.onRange)
             } else {
                 val cycleUse = state.cycleEdit == CycleEdit.USE
                 if (draft.type == BlockType.CYCLE) {
@@ -927,7 +894,9 @@ private fun RulerReadoutText(
 private fun SchedulePicker(
     range: TimeRange,
     onPreset: (SchedulePreset) -> Unit,
+    onRange: (TimeRange) -> Unit,
 ) {
+    var picking by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         SchedulePickerHeader(range)
         SchedulePreset.entries.chunked(2).forEach { pair ->
@@ -937,6 +906,50 @@ private fun SchedulePicker(
                 }
             }
         }
+        // v5 presets are four; the fifth, "Custom", opens the shipped from/to picker.
+        CustomCard(
+            selected = SchedulePreset.entries.none { range.format() == it.rangeText },
+            onClick = { picking = true },
+        )
+    }
+    if (picking) {
+        TimeRangePickerDialog(
+            initial = range,
+            onDismiss = { picking = false },
+            onConfirm = {
+                picking = false
+                onRange(it)
+            },
+        )
+    }
+}
+
+/** The fifth schedule preset: "Custom · Pick times", same glass card as the four presets. */
+@Composable
+private fun CustomCard(
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val c = V5Theme.colors
+    val shape = RoundedCornerShape(24.dp)
+    Box(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 52.dp)
+                .clip(shape)
+                .background(if (selected) c.surface else c.onGradient.copy(alpha = 0.18f))
+                .border(1.dp, c.onGradient.copy(alpha = 0.35f), shape)
+                .testTag(WIZARD_RANGE_CUSTOM_TAG)
+                .selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Text(
+            stringResource(R.string.block_wizard_range_custom_link),
+            style = V5Theme.type.label.copy(fontSize = 15.sp),
+            color = if (selected) c.ink else c.onGradient,
+        )
     }
 }
 
@@ -1010,35 +1023,3 @@ private fun SchedulePreset.nameRes(): Int =
         SchedulePreset.Night -> R.string.block_wizard_range_night
         SchedulePreset.Dinner -> R.string.block_wizard_range_dinner
     }
-
-/** v5-extra: M13-03. The shipped custom time picker, as a text link under the summary. */
-@Composable
-private fun CustomRangeLink(
-    range: TimeRange,
-    onRange: (TimeRange) -> Unit,
-) {
-    var picking by remember { mutableStateOf(false) }
-    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Text(
-            stringResource(R.string.block_wizard_range_custom_link),
-            style = V5Theme.type.label.copy(fontSize = 15.sp),
-            color = V5Theme.colors.ink,
-            modifier =
-                Modifier
-                    .testTag(WIZARD_RANGE_CUSTOM_TAG)
-                    .heightIn(min = V5Theme.spacing.minTouchTarget)
-                    .clickable(role = Role.Button, onClick = { picking = true })
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-        )
-    }
-    if (picking) {
-        TimeRangePickerDialog(
-            initial = range,
-            onDismiss = { picking = false },
-            onConfirm = {
-                picking = false
-                onRange(it)
-            },
-        )
-    }
-}

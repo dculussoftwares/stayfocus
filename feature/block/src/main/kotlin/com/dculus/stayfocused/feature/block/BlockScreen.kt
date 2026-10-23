@@ -130,11 +130,9 @@ fun BlockScreen(
                 )
             }
             item { NewBlockCard(targetName, state.aiAvailable, actions.onNewBlock, actions.onToggleAi) }
-            // v5-extra: M13-03 (AI describe panel stays inline until the describe screen lands)
             if (state.aiOpen) {
                 item { AiPanel(targetName, state.aiText, state.aiBusy, actions.onAiText, actions.onAiSubmit) }
             }
-            // v5-extra: M13-03 (All apps tab with quick lock)
             item {
                 SegmentedPill(
                     options =
@@ -156,7 +154,6 @@ fun BlockScreen(
                         actions.onSetEnabled(row.block.id, it)
                     }
                 }
-                // v5-extra: M13-03 (templates)
                 item {
                     Text(
                         stringResource(R.string.block_templates_header),
@@ -336,7 +333,6 @@ private fun BlockCard(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                // v5-extra: M13-03 (tap a block to edit or delete it)
                 Row(
                     modifier =
                         Modifier
@@ -431,7 +427,6 @@ internal fun ruleSentence(
     when (block.type) {
         BlockType.LIMIT -> {
             val mins = v5Duration(block.limitMins ?: 0)
-            // v5-extra: M13-03 (hourly limits)
             stringResource(
                 if (block.period == LimitPeriod.HOURLY) R.string.block_rule_limit_hourly else R.string.block_rule_limit,
                 mins,
