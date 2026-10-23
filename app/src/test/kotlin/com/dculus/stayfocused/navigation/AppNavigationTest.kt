@@ -32,6 +32,7 @@ import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.navigation.Account
 import com.dculus.stayfocused.core.navigation.Block
+import com.dculus.stayfocused.core.navigation.BlockDescribe
 import com.dculus.stayfocused.core.navigation.BlockWizard
 import com.dculus.stayfocused.core.navigation.Devices
 import com.dculus.stayfocused.core.navigation.Home
@@ -75,6 +76,7 @@ import com.dculus.stayfocused.core.usage.UsageRepository
 import com.dculus.stayfocused.feature.account.AccountViewModel
 import com.dculus.stayfocused.feature.block.AiDraftHandoff
 import com.dculus.stayfocused.feature.block.BlockViewModel
+import com.dculus.stayfocused.feature.block.DescribeViewModel
 import com.dculus.stayfocused.feature.block.TargetApp
 import com.dculus.stayfocused.feature.block.TargetAppsProvider
 import com.dculus.stayfocused.feature.block.WizardViewModel
@@ -150,8 +152,6 @@ class AppNavigationTest {
             FakeSettingsRepository(),
             FakeLockedAppsRepository(),
             idleUsage,
-            describer,
-            handoff,
             ParentDeviceBlocks(FakeAuthRepository(), FakeDeviceBlocksRepository()),
         )
 
@@ -224,6 +224,17 @@ class AppNavigationTest {
             reporter,
         )
 
+    private val describeViewModel =
+        DescribeViewModel(
+            SavedStateHandle(),
+            object : InstalledAppsRepository {
+                override fun observeLaunchableApps() = flowOf(emptyList<AppInfo>())
+            },
+            FakeLinkedDevicesRepository(),
+            describer,
+            handoff,
+        )
+
     private fun launch(startGraph: StartGraph = StartGraph.MAIN) {
         composeRule.setContent {
             navController = rememberNavController()
@@ -233,6 +244,7 @@ class AppNavigationTest {
                     navController = navController,
                     blockViewModel = { blockViewModel },
                     wizardViewModel = { wizardViewModel },
+                    describeViewModel = { describeViewModel },
                     insightsContent = { NavPlaceholderScreen(title = "Insights") },
                     homeViewModel = { homeViewModel },
                     signInViewModel = { signInViewModel },
@@ -372,13 +384,13 @@ class AppNavigationTest {
     }
 
     @Test
-    fun aiDescribeOpensTheBlockTab() {
+    fun aiDescribeOpensTheDescribeScreenWithoutTheTabBar() {
         launch()
         composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_ai_describe"))
         composeRule.onNodeWithTag("home_ai_describe").performClick()
         composeRule.waitForIdle()
-        assertTrue(currentIs(Block::class))
-        tab(MainTab.BLOCK).assertIsSelected()
+        assertTrue(currentIs(BlockDescribe::class))
+        assertTrue(!tabBarVisible())
     }
 
     @Test

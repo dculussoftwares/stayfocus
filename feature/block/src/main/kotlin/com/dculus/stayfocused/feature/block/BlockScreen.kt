@@ -69,20 +69,14 @@ import java.util.Locale
 
 fun blockRowTag(id: String): String = "block_row_$id"
 
-const val AI_CREATE_TAG = "block_ai_create"
 const val NEW_BLOCK_FAB_TAG = "block_new_fab"
 const val AI_FAB_TAG = "block_ai_fab"
-
-private val AiExamples =
-    listOf(R.string.block_ai_example_1, R.string.block_ai_example_2, R.string.block_ai_example_3)
 
 /** Callbacks of the Block tab; grouped so the screen stays a stateless function of [BlockUiState]. */
 data class BlockActions(
     val onSelectTarget: (BlockTarget) -> Unit = {},
     val onNewBlock: () -> Unit = {},
-    val onToggleAi: () -> Unit = {},
-    val onAiText: (String) -> Unit = {},
-    val onAiSubmit: () -> Unit = {},
+    val onDescribe: () -> Unit = {},
     val onSelectTab: (BlockTab) -> Unit = {},
     val onSetEnabled: (id: String, enabled: Boolean) -> Unit = { _, _ -> },
     val onEdit: (id: String) -> Unit = {},
@@ -129,10 +123,7 @@ fun BlockScreen(
                     onSelect = { actions.onSelectTarget(state.targets[it].target) },
                 )
             }
-            item { NewBlockCard(targetName, state.aiAvailable, actions.onNewBlock, actions.onToggleAi) }
-            if (state.aiOpen) {
-                item { AiPanel(targetName, state.aiText, state.aiBusy, actions.onAiText, actions.onAiSubmit) }
-            }
+            item { NewBlockCard(targetName, state.aiAvailable, actions.onNewBlock, actions.onDescribe) }
             item {
                 SegmentedPill(
                     options =
@@ -171,7 +162,7 @@ fun BlockScreen(
         }
         Fabs(
             aiAvailable = state.aiAvailable,
-            onAi = actions.onToggleAi,
+            onAi = actions.onDescribe,
             onNew = actions.onNewBlock,
             modifier = Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = tabBarPadding + 4.dp),
         )
@@ -478,78 +469,6 @@ private fun daysText(block: Block): String =
                 .joinToString(", ") { it.getDisplayName(TextStyle.SHORT, Locale.getDefault()) }
         }
     }
-
-/** The describe panel (only reachable once the AI flag is on): sentence, example chips and the CTA. */
-@Composable
-private fun AiPanel(
-    targetName: String,
-    text: String,
-    busy: Boolean,
-    onText: (String) -> Unit,
-    onSubmit: () -> Unit,
-) {
-    val c = V5Theme.colors
-    V5Card(Modifier.fillMaxWidth(), padding = 16.dp) {
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                stringResource(R.string.block_ai_intro, targetName),
-                style = V5Theme.type.body,
-                color = c.textSecondary,
-            )
-            val fieldShape = RoundedCornerShape(20.dp)
-            val placeholder = stringResource(R.string.block_ai_placeholder)
-            BasicTextField(
-                value = text,
-                onValueChange = onText,
-                minLines = 3,
-                textStyle = V5Theme.type.bodyL.copy(fontWeight = FontWeight.Normal, color = c.ink),
-                cursorBrush = SolidColor(c.ink),
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(fieldShape)
-                        .background(c.surfaceRaised)
-                        .padding(14.dp)
-                        .semantics { contentDescription = placeholder },
-                decorationBox = { inner ->
-                    if (text.isEmpty()) {
-                        Text(
-                            placeholder,
-                            style = V5Theme.type.bodyL.copy(fontWeight = FontWeight.Normal),
-                            color = c.textSecondary,
-                        )
-                    }
-                    inner()
-                },
-            )
-            LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                items(AiExamples) { res ->
-                    val label = stringResource(res)
-                    Text(
-                        label,
-                        style = V5Theme.type.label,
-                        color = c.ink,
-                        modifier =
-                            Modifier
-                                .heightIn(min = 48.dp)
-                                .clip(V5Theme.shapes.pill)
-                                .background(c.track)
-                                .clickable(role = Role.Button) { onText(label) }
-                                .padding(horizontal = 14.dp, vertical = 14.dp),
-                    )
-                }
-            }
-            PillButton(
-                text = stringResource(R.string.block_ai_create),
-                onClick = onSubmit,
-                variant = PillButtonVariant.Orange,
-                loading = busy,
-                loadingLabel = stringResource(R.string.block_ai_reading),
-                modifier = Modifier.fillMaxWidth().testTag(AI_CREATE_TAG),
-            )
-        }
-    }
-}
 
 @Composable
 private fun TemplateCard(

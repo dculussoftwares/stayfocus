@@ -31,14 +31,18 @@
     <string name="block_toast_on">Block is on</string>
     <string name="block_edit_description">Edit %1$s</string>
 
-    <string name="block_ai_intro">Say it the way you\'d say it. You\'ll check the result before it turns on for %1$s.</string>
-    <string name="block_ai_placeholder">Let me use Instagram for 10 minutes, then lock it for an hour</string>
-    <string name="block_ai_example_1">Instagram 10 min, then lock 1 hour</string>
-    <string name="block_ai_example_2">No YouTube on school days 8am–3pm</string>
-    <string name="block_ai_example_3">Social media 45 min a day</string>
-    <string name="block_ai_create">Create block</string>
-    <string name="block_ai_reading">READING YOUR REQUEST</string>
-    <string name="block_ai_describe_first">Describe the block first</string>
+    <string name="block_describe_title">Describe a block</string>
+    <string name="block_describe_hint">AI sets it up. Nothing turns on until you check it.</string>
+    <string name="block_ai_placeholder">e.g. Let me use Instagram for 10 minutes, then lock it for 30</string>
+    <string name="block_ai_example_1">Instagram 10 min, then lock it for 30</string>
+    <string name="block_ai_example_2">No TikTok or YouTube on school days 8–3</string>
+    <string name="block_ai_example_3">YouTube max 1 hour a day</string>
+    <string name="block_ai_example_4">Block Reddit for the next 2 hours</string>
+    <string name="block_ai_create">Build my block</string>
+    <string name="block_ai_reading">Reading your request</string>
+    <!-- v5-extra: M13-03 (inline error line when the draft could not be built) -->
+    <string name="block_describe_error">Couldn\'t read that. Check the wording and try again.</string>
+    <string name="block_describe_back">Back</string>
     <string name="block_report_action">Report a bad result</string>
     <string name="block_report_title">Report this result?</string>
     <string name="block_report_body">This is exactly what will be sent, together with your account ID and the time. Nothing else leaves your phone.</string>
