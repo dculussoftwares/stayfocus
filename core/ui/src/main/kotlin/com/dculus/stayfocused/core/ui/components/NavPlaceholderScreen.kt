@@ -53,16 +53,22 @@ fun NavPlaceholderScreen(
         contentPadding = PaddingValues(StayFocusedTheme.spacing.gap16),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { Text(text = title, style = StayFocusedTheme.type.display, color = StayFocusedTheme.colors.text) }
+        item { Text(text = title, style = StayFocusedTheme.type.title, color = StayFocusedTheme.colors.ink) }
         if (header != null) item { header() }
         items(actions) { action ->
-            OutlineButton(text = action.label, onClick = action.onClick, modifier = Modifier.fillMaxWidth())
+            PillButton(
+                text = action.label,
+                onClick = action.onClick,
+                modifier = Modifier.fillMaxWidth(),
+                variant = PillButtonVariant.Secondary,
+                size = PillButtonSize.Compact,
+            )
         }
         items(PLACEHOLDER_ROWS) { index ->
             Text(
                 text = stringResource(R.string.sf_placeholder_item, index),
                 style = StayFocusedTheme.type.body,
-                color = StayFocusedTheme.colors.secondary,
+                color = StayFocusedTheme.colors.textSecondary,
                 modifier = Modifier.padding(vertical = 8.dp),
             )
         }

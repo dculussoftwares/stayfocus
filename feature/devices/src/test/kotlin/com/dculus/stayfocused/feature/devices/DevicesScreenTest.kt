@@ -14,7 +14,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test

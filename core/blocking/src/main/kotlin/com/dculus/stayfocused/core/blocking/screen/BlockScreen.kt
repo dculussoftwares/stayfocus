@@ -23,16 +23,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.blocking.R
 import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.grainOverlay
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.grainOverlay
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 @StringRes
 fun reasonRes(reason: BlockReason): Int =
@@ -84,8 +84,8 @@ fun BlockScreen(
     val name = appLabel?.takeIf { it.isNotBlank() } ?: pkg.substringAfterLast('.')
     V5Screen(darkContent = true, modifier = modifier, background = V5Gradients.blocked.adaptive) {
         Box(gradientGrain)
-        val colors = V5Theme.colors
-        val type = V5Theme.type
+        val colors = StayFocusedTheme.colors
+        val type = StayFocusedTheme.type
         Column(
             modifier =
                 Modifier
@@ -136,7 +136,7 @@ fun BlockScreen(
 
 @Composable
 private fun TimeLine(timeLine: BlockTimeLine) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     when (timeLine) {
         BlockTimeLine.None -> {
             Unit
@@ -147,7 +147,7 @@ private fun TimeLine(timeLine: BlockTimeLine) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     stringResource(R.string.block_opens_again_in),
-                    style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                    style = StayFocusedTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
                     color = colors.onGradient,
                     modifier = Modifier.padding(top = 6.dp),
                 )
@@ -164,7 +164,7 @@ private fun TimeLine(timeLine: BlockTimeLine) {
         is BlockTimeLine.Until -> {
             Text(
                 stringResource(R.string.block_until, timeLine.clock),
-                style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                style = StayFocusedTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.onGradient,
                 modifier = Modifier.padding(top = 6.dp),
             )

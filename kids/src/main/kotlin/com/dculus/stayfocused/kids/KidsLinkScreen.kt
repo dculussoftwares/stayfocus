@@ -31,15 +31,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.grainOverlay
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.grainOverlay
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 /** Kids: show code. Shows the QR with the one-time token and moves on once the parent has scanned it. */
 @Composable
@@ -64,8 +64,8 @@ internal fun KidsLinkScreen(
 ) {
     V5Screen(darkContent = true, modifier = modifier, background = V5Gradients.kidsQr.adaptive) {
         Box(Modifier.fillMaxSize().grainOverlay())
-        val colors = V5Theme.colors
-        val type = V5Theme.type
+        val colors = StayFocusedTheme.colors
+        val type = StayFocusedTheme.type
         Column(
             Modifier
                 .fillMaxSize()
@@ -136,12 +136,12 @@ private fun QrCard(
     uri: String,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     val ink = colors.ink.toArgb()
     val light = Color.White.toArgb()
     val bitmap = remember(uri, ink, light) { QrCodes.bitmap(uri, ink, light) }
     val description = stringResource(R.string.kids_link_qr_description)
-    val shape = V5Theme.shapes.hero
+    val shape = StayFocusedTheme.shapes.hero
     val shadow = colors.ink.copy(alpha = 0.5f)
     Box(
         modifier

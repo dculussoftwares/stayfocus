@@ -27,16 +27,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.glow
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.glow
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 internal const val WELCOME_GET_STARTED_TAG = "welcome_get_started"
 internal const val WELCOME_CHILD_PHONE_TAG = "welcome_child_phone"
@@ -72,8 +72,8 @@ internal fun WelcomeScreen(
             ) {
                 Text(
                     text = stringResource(R.string.welcome_brand),
-                    style = V5Theme.type.label.copy(fontSize = 16.sp, letterSpacing = 0.02.sp),
-                    color = V5Theme.colors.onGradient,
+                    style = StayFocusedTheme.type.label.copy(fontSize = 16.sp, letterSpacing = 0.02.sp),
+                    color = StayFocusedTheme.colors.onGradient,
                 )
                 WelcomeCopy(Modifier.weight(1f))
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -90,7 +90,7 @@ internal fun WelcomeScreen(
                         variant = PillButtonVariant.Text,
                         size = PillButtonSize.Medium,
                         underline = true,
-                        textColor = V5Theme.colors.onGradient,
+                        textColor = StayFocusedTheme.colors.onGradient,
                         modifier = Modifier.testTag(WELCOME_CHILD_PHONE_TAG),
                     )
                 }
@@ -110,13 +110,18 @@ private fun WelcomeCopy(modifier: Modifier = Modifier) {
     ) {
         Text(
             text = stringResource(R.string.welcome_headline),
-            style = V5Theme.type.hero,
-            color = V5Theme.colors.onGradient,
+            style = StayFocusedTheme.type.hero,
+            color = StayFocusedTheme.colors.onGradient,
         )
         Text(
             text = stringResource(R.string.welcome_body),
-            style = V5Theme.type.bodyL.copy(fontWeight = FontWeight.Medium, lineHeight = 25.sp, fontSize = 18.sp),
-            color = V5Theme.colors.onGradient,
+            style =
+                StayFocusedTheme.type.bodyL.copy(
+                    fontWeight = FontWeight.Medium,
+                    lineHeight = 25.sp,
+                    fontSize = 18.sp,
+                ),
+            color = StayFocusedTheme.colors.onGradient,
             modifier = Modifier.widthIn(max = 290.dp),
         )
     }
@@ -124,16 +129,16 @@ private fun WelcomeCopy(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ChildPhoneSheetContent(onOpenKidsListing: () -> Unit) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             stringResource(R.string.welcome_sheet_title),
-            style = V5Theme.type.heading,
+            style = StayFocusedTheme.type.heading,
             color = colors.ink,
         )
         Text(
             stringResource(R.string.welcome_sheet_body),
-            style = V5Theme.type.body,
+            style = StayFocusedTheme.type.body,
             color = colors.textSecondary,
         )
         PillButton(

@@ -55,16 +55,16 @@ To re-render the PNGs: `scripts/design/capture-v5.mjs` (instructions in its head
 
 ## 2. Migration strategy (how every story works)
 
-**Strangler, screen by screen.** The v2 design system stays until the last story (M13-07) removes it, so `main` always
-builds and every screen keeps working.
+**Strangler, screen by screen** (done: every screen is v5 and M13-07 removed the v2 design system, so there is one).
 
-- The v5 design system lives in `:core:ui` under the package **`com.dculus.stayfocused.core.ui.v5`**
-  (`v5.theme`, `v5.components`, `v5.charts`, `v5.art`). Don't edit v2 files in `core.ui.theme` / `core.ui.components`
-  except to fix a bug.
-- A migrated screen wraps its content in **`V5Screen { }`** (M11-01). It provides `V5Theme` (tokens + a light Material 3
+- The design system lives in `:core:ui` under **`com.dculus.stayfocused.core.ui`**
+  (`theme`, `components`, `charts`, `art`, `icons`). During the migration it sat in a `.v5` sub-package; M13-07 moved
+  it to the final packages. `StayFocusedTheme` (formerly `V5Theme`) provides the tokens `StayFocusedTheme.colors /
+  .type / .shapes / .spacing`; other `V5*` names (`V5Screen`, `V5Colors`, ...) kept their prefix.
+- A screen wraps its content in **`V5Screen { }`** (M11-01). It provides `StayFocusedTheme` (tokens + a light Material 3
   `colorScheme` for any M3 widget), the `#EDEDEB` background, edge-to-edge insets and the status-bar icon colour
-  (white on the "dark" screens: welcome, scan, blocked, kids QR; ink elsewhere). Unmigrated screens keep the v2 theme
-  from the app root.
+  (white on the "dark" screens: welcome, scan, blocked, kids QR; ink elsewhere). The app roots also wrap the whole
+  tree in `StayFocusedTheme`.
 - Navigation routes, ViewModels, repositories and engine code stay. A screen story changes the Composables and the
   UI state they need; if the ViewModel lacks a value v5 shows, add it to the ViewModel (tests first).
 - **Extras rule.** If the shipped screen has an element v5 doesn't show, **don't delete the behaviour**. Keep it working,

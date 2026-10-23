@@ -22,11 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.dculus.stayfocused.core.ui.R
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import java.util.Locale
 
 const val BATTERY_GUIDANCE_SETTINGS_TAG = "battery_guidance_settings"
@@ -81,8 +77,8 @@ fun BatteryGuidance(
     family: OemFamily = OemFamily.fromManufacturer(Build.MANUFACTURER),
     appName: String? = null,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val context = LocalContext.current
     val name =
         remember(context, appName) {
@@ -126,7 +122,7 @@ fun BatteryGuidanceSheet(
     family: OemFamily = OemFamily.fromManufacturer(Build.MANUFACTURER),
     appName: String? = null,
 ) {
-    V5Theme {
+    StayFocusedTheme {
         V5BottomSheet(visible = visible, onDismiss = onDismiss, modifier = modifier) {
             Column(Modifier.fillMaxWidth().heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
                 BatteryGuidance(onOpenBatterySettings, onOpenGuide, family = family, appName = appName)
@@ -138,7 +134,7 @@ fun BatteryGuidanceSheet(
 @Preview(widthDp = 360, heightDp = 560)
 @Composable
 internal fun BatteryGuidancePreview() {
-    V5Theme {
+    StayFocusedTheme {
         Column(Modifier.padding(18.dp)) {
             BatteryGuidance(
                 onOpenBatterySettings = {},

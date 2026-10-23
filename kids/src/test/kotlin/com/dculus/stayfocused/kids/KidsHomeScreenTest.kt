@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,7 +30,7 @@ class KidsHomeScreenTest {
         onConfirm: () -> Unit = {},
         onKeep: () -> Unit = {},
     ) = composeRule.setContent {
-        V5Theme { KidsHomeScreen(state, onUnlink, onConfirm, onKeep) }
+        StayFocusedTheme { KidsHomeScreen(state, onUnlink, onConfirm, onKeep) }
     }
 
     private val ready =

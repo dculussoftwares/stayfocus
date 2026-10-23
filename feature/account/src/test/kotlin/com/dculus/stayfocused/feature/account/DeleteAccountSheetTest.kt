@@ -8,7 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
@@ -33,7 +33,7 @@ class DeleteAccountSheetTest {
         onGoogle: () -> Unit = {},
     ) = composeRule.setContent {
         CompositionLocalProvider(LocalInspectionMode provides true) {
-            V5Theme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
+            StayFocusedTheme { DeleteAccountSheet(state, onConfirm, onCancel, onPassword, onGoogle) }
         }
     }
 

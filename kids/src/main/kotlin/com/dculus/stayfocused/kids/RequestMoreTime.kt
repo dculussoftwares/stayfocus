@@ -26,10 +26,10 @@ import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenExtras
 import com.dculus.stayfocused.core.sync.REQUEST_MINUTES_OPTIONS
 import com.dculus.stayfocused.core.sync.UnlockRequestRepository
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.kids.monitoring.ParentLinkStore
 import com.dculus.stayfocused.kids.monitoring.PendingRequestStore
 import com.dculus.stayfocused.kids.monitoring.ReportTargetStore
@@ -64,11 +64,11 @@ internal fun AskForMoreTime(
     onPick: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     Column(
-        modifier = modifier.fillMaxWidth().padding(top = V5Theme.spacing.gap12),
-        verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap12),
+        modifier = modifier.fillMaxWidth().padding(top = StayFocusedTheme.spacing.gap12),
+        verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap12),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         when (stage) {
@@ -90,7 +90,7 @@ internal fun AskForMoreTime(
                     textAlign = TextAlign.Center,
                 )
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap8),
+                    horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     REQUEST_MINUTES_OPTIONS.forEach { mins ->
@@ -108,7 +108,7 @@ internal fun AskForMoreTime(
             AskStage.Sent -> {
                 Column(
                     modifier = Modifier.testTag(ASK_SENT_TAG),
-                    verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap6),
+                    verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap6),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(

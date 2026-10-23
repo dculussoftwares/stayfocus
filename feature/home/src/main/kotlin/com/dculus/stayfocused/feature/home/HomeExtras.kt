@@ -25,10 +25,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.formatMinutes
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.components.V5Toggle
 import com.dculus.stayfocused.core.ui.components.blockDetail
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.components.V5Toggle
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 internal const val HOME_STATS_CARD_TAG = "home_stats_card"
 internal const val HOME_MANAGE_TAG = "home_manage"
@@ -46,7 +46,7 @@ internal fun TodayStatsCard(
 ) {
     V5Card(modifier.fillMaxWidth().testTag(HOME_STATS_CARD_TAG), radius = 28.dp) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(averageLine(gauge), style = V5Theme.type.label, color = V5Theme.colors.textSecondary)
+            Text(averageLine(gauge), style = StayFocusedTheme.type.label, color = StayFocusedTheme.colors.textSecondary)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Stat(R.string.home_stat_launches, gauge.launches, Modifier.weight(1f))
                 Stat(R.string.home_stat_unlocks, gauge.unlocks, Modifier.weight(1f))
@@ -73,11 +73,15 @@ private fun Stat(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value.toString(), style = V5Theme.type.rule.copy(fontSize = 24.sp), color = V5Theme.colors.ink)
+        Text(
+            value.toString(),
+            style = StayFocusedTheme.type.rule.copy(fontSize = 24.sp),
+            color = StayFocusedTheme.colors.ink,
+        )
         Text(
             stringResource(label),
-            style = V5Theme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
-            color = V5Theme.colors.textSecondary,
+            style = StayFocusedTheme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+            color = StayFocusedTheme.colors.textSecondary,
         )
     }
 }
@@ -95,14 +99,14 @@ internal fun ActiveBlocksCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(R.string.home_blocks_title),
-                    style = V5Theme.type.label.copy(fontSize = 13.sp),
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.label.copy(fontSize = 13.sp),
+                    color = StayFocusedTheme.colors.textSecondary,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
                     stringResource(R.string.home_blocks_manage),
-                    style = V5Theme.type.label.copy(textDecoration = TextDecoration.Underline),
-                    color = V5Theme.colors.ink,
+                    style = StayFocusedTheme.type.label.copy(textDecoration = TextDecoration.Underline),
+                    color = StayFocusedTheme.colors.ink,
                     modifier =
                         Modifier
                             .testTag(HOME_MANAGE_TAG)
@@ -116,13 +120,13 @@ internal fun ActiveBlocksCard(
                 Column(Modifier.testTag(HOME_BLOCKS_EMPTY_TAG), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         stringResource(R.string.home_blocks_empty_title),
-                        style = V5Theme.type.bodyL,
-                        color = V5Theme.colors.ink,
+                        style = StayFocusedTheme.type.bodyL,
+                        color = StayFocusedTheme.colors.ink,
                     )
                     Text(
                         stringResource(R.string.home_blocks_empty_body),
-                        style = V5Theme.type.body,
-                        color = V5Theme.colors.textSecondary,
+                        style = StayFocusedTheme.type.body,
+                        color = StayFocusedTheme.colors.textSecondary,
                     )
                 }
             } else {
@@ -145,15 +149,15 @@ private fun BlockRow(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 row.block.name,
-                style = V5Theme.type.label.copy(fontSize = 15.sp),
-                color = V5Theme.colors.ink,
+                style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+                color = StayFocusedTheme.colors.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 blockDetail(row.block, row.appLabels),
-                style = V5Theme.type.body.copy(fontSize = 13.sp),
-                color = V5Theme.colors.textSecondary,
+                style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
+                color = StayFocusedTheme.colors.textSecondary,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )

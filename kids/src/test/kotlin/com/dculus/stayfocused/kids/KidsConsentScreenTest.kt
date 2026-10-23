@@ -6,7 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -28,7 +28,7 @@ class KidsConsentScreenTest {
         onCancel: () -> Unit = {},
         onShowNewCode: () -> Unit = {},
     ) = composeRule.setContent {
-        V5Theme { KidsConsentScreen(state, onAllow, onCancel, onShowNewCode) }
+        StayFocusedTheme { KidsConsentScreen(state, onAllow, onCancel, onShowNewCode) }
     }
 
     private val ready = KidsConsentUiState(code = "482913", parentName = "Asha")

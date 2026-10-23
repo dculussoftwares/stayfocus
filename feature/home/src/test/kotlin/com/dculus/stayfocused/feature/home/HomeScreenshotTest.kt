@@ -15,7 +15,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
@@ -34,13 +34,13 @@ class HomeScreenshotTest {
 
     private fun show(content: @Composable () -> Unit) {
         composeRule.setContent {
-            CompositionLocalProvider(LocalInspectionMode provides true) { V5Theme { content() } }
+            CompositionLocalProvider(LocalInspectionMode provides true) { StayFocusedTheme { content() } }
         }
     }
 
     @Test fun sheetContent() {
         show {
-            Box(Modifier.width(360.dp).background(V5Theme.colors.surfaceRaised).padding(18.dp)) {
+            Box(Modifier.width(360.dp).background(StayFocusedTheme.colors.surfaceRaised).padding(18.dp)) {
                 BreakSheetContent(mins = 30, onMinsChange = {}, onStart = {})
             }
         }

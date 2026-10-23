@@ -29,11 +29,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.LinkedDevice
 import com.dculus.stayfocused.core.model.UnlockRequest
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.OnlinePill
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.OnlinePill
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 internal const val HOME_LINK_PHONE_TAG = "home_link_phone"
 internal const val HOME_CHILD_CARD_TAG = "home_child_card"
@@ -45,7 +45,7 @@ internal fun ChildCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     GlowCard(
         V5Gradients.pinkCard,
         modifier.fillMaxWidth().testTag("$HOME_CHILD_CARD_TAG:${device.id}"),
@@ -57,7 +57,7 @@ internal fun ChildCard(
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     device.name,
-                    style = V5Theme.type.cardTitle,
+                    style = StayFocusedTheme.type.cardTitle,
                     color = white,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -98,13 +98,13 @@ private fun ChildStat(
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             label,
-            style = V5Theme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
-            color = V5Theme.colors.onGradient,
+            style = StayFocusedTheme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+            color = StayFocusedTheme.colors.onGradient,
         )
         Text(
             value,
-            style = V5Theme.type.rule.copy(fontSize = 24.sp, lineHeight = 28.sp),
-            color = V5Theme.colors.onGradient,
+            style = StayFocusedTheme.type.rule.copy(fontSize = 24.sp, lineHeight = 28.sp),
+            color = StayFocusedTheme.colors.onGradient,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -113,7 +113,7 @@ private fun ChildStat(
 
 @Composable
 private fun RequestRow(request: UnlockRequest) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Row(
         Modifier
             .fillMaxWidth()
@@ -125,7 +125,7 @@ private fun RequestRow(request: UnlockRequest) {
     ) {
         Text(
             stringResource(R.string.home_child_request, request.minutes, request.app),
-            style = V5Theme.type.label,
+            style = StayFocusedTheme.type.label,
             color = colors.ink,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -137,7 +137,7 @@ private fun RequestRow(request: UnlockRequest) {
         ) {
             Text(
                 stringResource(R.string.home_child_review),
-                style = V5Theme.type.label.copy(fontSize = 13.sp),
+                style = StayFocusedTheme.type.label.copy(fontSize = 13.sp),
                 color = colors.onGradient,
             )
         }
@@ -150,7 +150,7 @@ internal fun LinkChildRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     val shape = RoundedCornerShape(36.dp)
     Row(
         modifier
@@ -166,7 +166,7 @@ internal fun LinkChildRow(
     ) {
         Text(
             stringResource(R.string.home_link_child),
-            style = V5Theme.type.bodyL.copy(fontWeight = FontWeight.Medium),
+            style = StayFocusedTheme.type.bodyL.copy(fontWeight = FontWeight.Medium),
             color = colors.ink,
             modifier = Modifier.weight(1f),
         )

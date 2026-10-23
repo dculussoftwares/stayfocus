@@ -35,13 +35,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dculus.stayfocused.core.ui.v5.art.BreakArt
-import com.dculus.stayfocused.core.ui.v5.components.ActionTile
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.art.BreakArt
+import com.dculus.stayfocused.core.ui.components.ActionTile
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 internal const val HOME_NEW_BLOCK_TAG = "home_new_block"
 internal const val HOME_AI_DESCRIBE_TAG = "home_ai_describe"
@@ -101,7 +101,7 @@ private fun TiltedApp(
 
 @Composable
 private fun BoxScope.ActiveBlocksFooter(count: Int) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Column(
         Modifier
             .align(Alignment.BottomCenter)
@@ -115,12 +115,12 @@ private fun BoxScope.ActiveBlocksFooter(count: Int) {
     ) {
         Text(
             stringResource(R.string.home_active_blocks),
-            style = V5Theme.type.label.copy(fontSize = 15.sp),
+            style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
             color = colors.ink,
         )
         Text(
             stringResource(R.string.home_active_blocks_count, count),
-            style = V5Theme.type.body.copy(fontSize = 13.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
             color = colors.textSecondary,
         )
     }
@@ -154,8 +154,8 @@ private fun BreakTile(
                 BreakCountdown(breakUi)
                 Text(
                     stringResource(R.string.break_tile_end_early),
-                    style = V5Theme.type.label.copy(fontSize = 13.sp),
-                    color = V5Theme.colors.onGradient,
+                    style = StayFocusedTheme.type.label.copy(fontSize = 13.sp),
+                    color = StayFocusedTheme.colors.onGradient,
                 )
             }
         }
@@ -180,7 +180,7 @@ private fun BreakCountdown(breakUi: () -> BreakUi) {
         text = text,
         contentDescription = text,
         dotSize = 5.dp,
-        color = V5Theme.colors.onGradient,
+        color = StayFocusedTheme.colors.onGradient,
         modifier = Modifier.testTag(BREAK_COUNTDOWN_TAG),
     )
 }
@@ -191,7 +191,7 @@ internal fun AiPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     val shape = RoundedCornerShape(31.dp)
     val label = stringResource(R.string.home_ai_pill)
     Row(
@@ -216,7 +216,7 @@ internal fun AiPill(
         Icon(V5Icons.sparkleTwin, contentDescription = null, tint = colors.orange, modifier = Modifier.size(20.dp))
         Text(
             label,
-            style = V5Theme.type.body.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal),
+            style = StayFocusedTheme.type.body.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal),
             color = colors.textSecondary,
             modifier = Modifier.weight(1f),
         )

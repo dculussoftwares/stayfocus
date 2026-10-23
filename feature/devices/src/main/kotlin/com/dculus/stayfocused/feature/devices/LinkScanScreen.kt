@@ -44,16 +44,16 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.dculus.stayfocused.core.ui.v5.art.ScanFrame
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.art.ScanFrame
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 import timber.log.Timber
 
 internal const val LINK_SCAN_VIEWFINDER_TAG = "link_scan_viewfinder"
@@ -171,14 +171,14 @@ internal fun LinkScanScreen(
     preview: @Composable (Modifier) -> Unit = { QrScannerPreview(onCodes, onCameraUnavailable, it) },
 ) {
     V5Screen(darkContent = true, background = V5Gradients.scan.adaptive) {
-        val colors = V5Theme.colors
+        val colors = StayFocusedTheme.colors
         Column(
             Modifier
                 .fillMaxSize()
                 // The prototype's 56 dp top padding includes its 46 dp fake status bar.
                 .v5StatusBarPadding(extra = 10.dp)
                 .v5NavigationBarPadding(extra = 40.dp)
-                .padding(horizontal = V5Theme.spacing.screenOnboarding),
+                .padding(horizontal = StayFocusedTheme.spacing.screenOnboarding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             RoundIconButton(
@@ -192,13 +192,13 @@ internal fun LinkScanScreen(
                 CameraAccess.Granted -> {
                     Text(
                         stringResource(R.string.link_scan_title),
-                        style = V5Theme.type.title.copy(fontSize = 30.sp),
+                        style = StayFocusedTheme.type.title.copy(fontSize = 30.sp),
                         color = colors.onGradient,
                         modifier = Modifier.padding(top = 18.dp),
                     )
                     Text(
                         stringResource(R.string.link_scan_body),
-                        style = V5Theme.type.body.copy(lineHeight = 21.75.sp),
+                        style = StayFocusedTheme.type.body.copy(lineHeight = 21.75.sp),
                         color = colors.onInkMuted,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(top = 8.dp).widthIn(max = 290.dp),
@@ -210,7 +210,7 @@ internal fun LinkScanScreen(
                     Spacer(Modifier.weight(1f))
                     Text(
                         stringResource(R.string.link_scan_looking),
-                        style = V5Theme.type.body.copy(fontSize = 14.sp),
+                        style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
                         color = colors.onInkMuted,
                     )
                 }
@@ -257,7 +257,7 @@ private fun ColumnScope.PermissionMessage(
     ctaTag: String,
     onCta: () -> Unit,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Column(
         Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
@@ -265,13 +265,13 @@ private fun ColumnScope.PermissionMessage(
     ) {
         Text(
             title,
-            style = V5Theme.type.title.copy(fontSize = 30.sp),
+            style = StayFocusedTheme.type.title.copy(fontSize = 30.sp),
             color = colors.onGradient,
             textAlign = TextAlign.Center,
         )
         Text(
             body,
-            style = V5Theme.type.body.copy(lineHeight = 21.75.sp),
+            style = StayFocusedTheme.type.body.copy(lineHeight = 21.75.sp),
             color = colors.onInkMuted,
             textAlign = TextAlign.Center,
         )

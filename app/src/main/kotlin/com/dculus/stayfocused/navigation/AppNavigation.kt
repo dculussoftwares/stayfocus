@@ -26,18 +26,17 @@ import com.dculus.stayfocused.core.navigation.Home
 import com.dculus.stayfocused.core.navigation.LinkScan
 import com.dculus.stayfocused.core.navigation.MainGraph
 import com.dculus.stayfocused.core.navigation.OnboardingGraph
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.PillTab
+import com.dculus.stayfocused.core.ui.components.PillTabBar
 import com.dculus.stayfocused.core.ui.components.ToastController
+import com.dculus.stayfocused.core.ui.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.components.recordBackdrop
+import com.dculus.stayfocused.core.ui.components.rememberPillTabBarBackdrop
+import com.dculus.stayfocused.core.ui.components.rememberPillTabBarContentPadding
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
-import com.dculus.stayfocused.core.ui.theme.sfScreenExit
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.PillTab
-import com.dculus.stayfocused.core.ui.v5.components.PillTabBar
-import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
-import com.dculus.stayfocused.core.ui.v5.components.recordBackdrop
-import com.dculus.stayfocused.core.ui.v5.components.rememberPillTabBarBackdrop
-import com.dculus.stayfocused.core.ui.v5.components.rememberPillTabBarContentPadding
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.v5ScreenEnter
+import com.dculus.stayfocused.core.ui.theme.v5ScreenExit
 import com.dculus.stayfocused.feature.account.AccountViewModel
 import com.dculus.stayfocused.feature.account.accountScreen
 import com.dculus.stayfocused.feature.account.navigateToAccount
@@ -138,7 +137,7 @@ fun StayFocusedNavigation(
                 )
             }
         }
-        V5Theme {
+        StayFocusedTheme {
             V5ToastHost(toast, bottomOffset = if (showTabBar) TOAST_ABOVE_TAB_BAR else TOAST_ABOVE_NAV_BAR)
             if (showTabBar) {
                 PillTabBar(
@@ -176,8 +175,8 @@ private fun AppNavHost(
     showToast: (String) -> Unit,
 ) {
     val density = LocalDensity.current
-    val enter = remember(density) { sfScreenEnter(density) }
-    val exit = remember { sfScreenExit() }
+    val enter = remember(density) { v5ScreenEnter(density) }
+    val exit = remember { v5ScreenExit() }
     NavHost(
         navController = navController,
         startDestination = startGraph.route,

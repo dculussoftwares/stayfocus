@@ -22,11 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 const val ACCESSIBILITY_DISCLOSURE_AGREE_TAG = "accessibility_disclosure_agree"
 const val ACCESSIBILITY_DISCLOSURE_NO_TAG = "accessibility_disclosure_no"
@@ -60,9 +56,9 @@ fun AccessibilityDisclosure(
     onPrivacyPolicy: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    V5Theme {
-        val colors = V5Theme.colors
-        val type = V5Theme.type
+    StayFocusedTheme {
+        val colors = StayFocusedTheme.colors
+        val type = StayFocusedTheme.type
         V5BottomSheet(visible = visible, onDismiss = onDismiss, modifier = modifier, contentSpacing = 12.dp) {
             Column(
                 Modifier.fillMaxWidth().heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
@@ -117,7 +113,11 @@ private fun DisclosureSection(
     body: String,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = V5Theme.type.body.copy(fontWeight = FontWeight.Bold), color = V5Theme.colors.ink)
-        Text(body, style = V5Theme.type.body, color = V5Theme.colors.ink)
+        Text(
+            label,
+            style = StayFocusedTheme.type.body.copy(fontWeight = FontWeight.Bold),
+            color = StayFocusedTheme.colors.ink,
+        )
+        Text(body, style = StayFocusedTheme.type.body, color = StayFocusedTheme.colors.ink)
     }
 }

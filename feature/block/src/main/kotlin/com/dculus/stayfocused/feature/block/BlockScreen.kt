@@ -48,20 +48,20 @@ import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.v5Duration
-import com.dculus.stayfocused.core.ui.v5.charts.TickProgress
-import com.dculus.stayfocused.core.ui.v5.components.AppIconStack
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPill
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPillSize
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.components.V5Toggle
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.charts.TickProgress
+import com.dculus.stayfocused.core.ui.components.AppIconStack
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.SegmentedPill
+import com.dculus.stayfocused.core.ui.components.SegmentedPillSize
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.components.V5Toggle
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 import java.time.DayOfWeek
 import java.time.ZoneId
 import java.time.format.TextStyle
@@ -92,7 +92,7 @@ fun BlockScreen(
     modifier: Modifier = Modifier,
 ) {
     V5Screen(darkContent = false, modifier = modifier) {
-        val spacing = V5Theme.spacing
+        val spacing = StayFocusedTheme.spacing
         val myPhone = stringResource(R.string.block_my_phone)
         val targetName = state.selectedTarget.device?.name ?: myPhone
         val tabBarPadding = LocalTabBarPadding.current
@@ -111,8 +111,8 @@ fun BlockScreen(
             item {
                 Text(
                     stringResource(R.string.block_title),
-                    style = V5Theme.type.title,
-                    color = V5Theme.colors.ink,
+                    style = StayFocusedTheme.type.title,
+                    color = StayFocusedTheme.colors.ink,
                     modifier = Modifier.padding(horizontal = 6.dp),
                 )
             }
@@ -148,8 +148,8 @@ fun BlockScreen(
                 item {
                     Text(
                         stringResource(R.string.block_templates_header),
-                        style = V5Theme.type.label,
-                        color = V5Theme.colors.textSecondary,
+                        style = StayFocusedTheme.type.label,
+                        color = StayFocusedTheme.colors.textSecondary,
                         modifier = Modifier.padding(start = 8.dp, top = 10.dp),
                     )
                 }
@@ -177,7 +177,7 @@ private fun NewBlockCard(
     onNew: () -> Unit,
     onAi: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     GlowCard(V5Gradients.orangeCard, Modifier.fillMaxWidth(), padding = 0.dp) {
         Row(
             modifier =
@@ -191,12 +191,12 @@ private fun NewBlockCard(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     stringResource(R.string.block_new_block),
-                    style = V5Theme.type.heading.copy(lineHeight = 29.sp),
+                    style = StayFocusedTheme.type.heading.copy(lineHeight = 29.sp),
                     color = c.onGradient,
                 )
                 Text(
                     stringResource(R.string.block_new_block_on, targetName),
-                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                     color = c.onGradient,
                 )
             }
@@ -223,7 +223,7 @@ private fun NewBlockCard(
                 Icon(V5Icons.sparkle, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(17.dp))
                 Text(
                     stringResource(R.string.block_ai_cta),
-                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                     color = c.onGradient,
                 )
             }
@@ -241,8 +241,8 @@ private fun CountLine(blocks: List<BlockRowUi>) {
         }
     Text(
         text,
-        style = V5Theme.type.label,
-        color = V5Theme.colors.textSecondary,
+        style = StayFocusedTheme.type.label,
+        color = StayFocusedTheme.colors.textSecondary,
         modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 6.dp),
     )
 }
@@ -255,7 +255,7 @@ private fun Fabs(
     onNew: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         if (aiAvailable) {
             val describe = stringResource(R.string.block_ai_cta)
@@ -263,7 +263,7 @@ private fun Fabs(
                 modifier =
                     Modifier
                         .testTag(AI_FAB_TAG)
-                        .size(V5Theme.spacing.fabSize)
+                        .size(StayFocusedTheme.spacing.fabSize)
                         .shadow(
                             14.dp,
                             CircleShape,
@@ -278,12 +278,12 @@ private fun Fabs(
                 Icon(V5Icons.sparkle, contentDescription = null, tint = c.orange, modifier = Modifier.size(20.dp))
             }
         }
-        val pill = V5Theme.shapes.pill
+        val pill = StayFocusedTheme.shapes.pill
         Row(
             modifier =
                 Modifier
                     .testTag(NEW_BLOCK_FAB_TAG)
-                    .heightIn(min = V5Theme.spacing.fabSize)
+                    .heightIn(min = StayFocusedTheme.spacing.fabSize)
                     .shadow(
                         14.dp,
                         pill,
@@ -299,7 +299,7 @@ private fun Fabs(
             Icon(V5Icons.plusBold, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(18.dp))
             Text(
                 stringResource(R.string.block_new_block),
-                style = V5Theme.type.bodyL.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
+                style = StayFocusedTheme.type.bodyL.copy(fontSize = 16.sp, fontWeight = FontWeight.Bold),
                 color = c.onGradient,
             )
         }
@@ -313,7 +313,7 @@ private fun BlockCard(
     onEdit: () -> Unit,
     onToggle: (Boolean) -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val block = row.block
     val title = blockTitle(row.appLabels)
     val editLabel = stringResource(R.string.block_edit_description, title)
@@ -342,14 +342,14 @@ private fun BlockCard(
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                         Text(
                             title,
-                            style = V5Theme.type.bodyL.copy(fontSize = 16.sp),
+                            style = StayFocusedTheme.type.bodyL.copy(fontSize = 16.sp),
                             color = c.ink,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             stringResource(typeLabel(block.type)),
-                            style = V5Theme.type.body.copy(fontSize = 13.sp),
+                            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                             color = c.textSecondary,
                         )
                     }
@@ -362,7 +362,7 @@ private fun BlockCard(
             }
             Text(
                 ruleSentence(block, rememberZone()),
-                style = V5Theme.type.rule,
+                style = StayFocusedTheme.type.rule,
                 color = c.ink,
                 modifier = Modifier.clickable(onClickLabel = editLabel, role = Role.Button, onClick = onEdit),
             )
@@ -391,9 +391,9 @@ private fun Meter(
             contentDescription = stringResource(R.string.block_progress_description, usedText, maxText),
         )
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            val style = V5Theme.type.body.copy(fontSize = 13.sp)
-            Text(usedText, style = style, color = V5Theme.colors.textSecondary)
-            Text(maxText, style = style, color = V5Theme.colors.textSecondary)
+            val style = StayFocusedTheme.type.body.copy(fontSize = 13.sp)
+            Text(usedText, style = style, color = StayFocusedTheme.colors.textSecondary)
+            Text(maxText, style = style, color = StayFocusedTheme.colors.textSecondary)
         }
     }
 }
@@ -475,7 +475,7 @@ private fun TemplateCard(
     template: BlockTemplate,
     onClick: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val (name, desc) =
         when (template) {
             BlockTemplate.MINDFUL_SCROLLING -> {
@@ -512,14 +512,14 @@ private fun TemplateCard(
         onClick = onClick,
     ) {
         Column(Modifier.fillMaxWidth().weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom)) {
-            Text(code, style = V5Theme.type.tag, color = template.type.tint(c))
-            Text(name, style = V5Theme.type.cardTitle, color = c.ink)
-            Text(desc, style = V5Theme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
+            Text(code, style = StayFocusedTheme.type.tag, color = template.type.tint(c))
+            Text(name, style = StayFocusedTheme.type.cardTitle, color = c.ink)
+            Text(desc, style = StayFocusedTheme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
         }
     }
 }
 
-private fun BlockType.tint(c: com.dculus.stayfocused.core.ui.v5.theme.V5Colors): Color =
+private fun BlockType.tint(c: com.dculus.stayfocused.core.ui.theme.V5Colors): Color =
     when (this) {
         BlockType.LIMIT -> c.orange
         BlockType.CYCLE -> c.green

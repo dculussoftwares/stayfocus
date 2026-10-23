@@ -28,11 +28,11 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.v5Duration
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 import timber.log.Timber
 
 internal const val HOME_LIST_TAG = "home_list"

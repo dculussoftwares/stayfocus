@@ -58,15 +58,15 @@ import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_AGREE_
 import com.dculus.stayfocused.core.ui.components.ACCESSIBILITY_DISCLOSURE_NO_TAG
 import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosure
 import com.dculus.stayfocused.core.ui.components.AccessibilityDisclosureCopy
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -219,8 +219,8 @@ internal fun PermissionsScreen(
     copy: PermissionsCopy = PermissionsCopy(),
     footer: (@Composable () -> Unit)? = null,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val granted = permissions.grantedCount()
     val all = granted == PermissionRow.entries.size
     V5Screen(darkContent = false, modifier = modifier) {
@@ -298,13 +298,13 @@ private fun PermissionCard(
     on: Boolean,
     onAllow: () -> Unit,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val title = stringResource(row.title)
     Row(
         Modifier
             .fillMaxWidth()
-            .clip(V5Theme.shapes.card)
+            .clip(StayFocusedTheme.shapes.card)
             .background(colors.surface)
             .padding(16.dp),
         horizontalArrangement = Arrangement.spacedBy(14.dp),
@@ -380,17 +380,17 @@ internal fun RestrictedSettingsSheet(
     onOpenAppInfo: () -> Unit,
     onOpenAccessibility: () -> Unit,
 ) {
-    V5Theme {
+    StayFocusedTheme {
         V5BottomSheet(visible = visible, onDismiss = onDismiss) {
             Text(
                 stringResource(R.string.perms_restricted_title),
-                style = V5Theme.type.heading,
-                color = V5Theme.colors.ink,
+                style = StayFocusedTheme.type.heading,
+                color = StayFocusedTheme.colors.ink,
             )
             Text(
                 stringResource(R.string.perms_restricted_body),
-                style = V5Theme.type.body,
-                color = V5Theme.colors.textSecondary,
+                style = StayFocusedTheme.type.body,
+                color = StayFocusedTheme.colors.textSecondary,
             )
             PillButton(
                 text = stringResource(R.string.perms_restricted_open_app_info),

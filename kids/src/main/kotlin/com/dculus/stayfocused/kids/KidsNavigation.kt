@@ -34,14 +34,14 @@ import com.dculus.stayfocused.core.navigation.KidsHome
 import com.dculus.stayfocused.core.navigation.KidsLink
 import com.dculus.stayfocused.core.navigation.KidsPermissions
 import com.dculus.stayfocused.core.ui.components.BatteryGuidanceSheet
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.theme.sfScreenEnter
-import com.dculus.stayfocused.core.ui.theme.sfScreenExit
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.v5ScreenEnter
+import com.dculus.stayfocused.core.ui.theme.v5ScreenExit
 import com.dculus.stayfocused.feature.onboarding.PermissionsCopy
 import com.dculus.stayfocused.feature.onboarding.PermissionsRoute
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
@@ -62,8 +62,8 @@ fun KidsNavigation(
     permissionsViewModel: (@Composable () -> PermissionsViewModel)? = null,
 ) {
     val density = LocalDensity.current
-    val enter = remember(density) { sfScreenEnter(density) }
-    val exit = remember { sfScreenExit() }
+    val enter = remember(density) { v5ScreenEnter(density) }
+    val exit = remember { v5ScreenExit() }
     val resources = LocalResources.current
     val toastScope = rememberCoroutineScope()
     val toast = remember { ToastController(toastScope) }
@@ -155,8 +155,8 @@ private fun KidsPermissionsRoute(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(
                 stringResource(R.string.kids_battery_strong),
-                style = V5Theme.type.label,
-                color = V5Theme.colors.ink,
+                style = StayFocusedTheme.type.label,
+                color = StayFocusedTheme.colors.ink,
             )
             PillButton(
                 text = stringResource(com.dculus.stayfocused.core.ui.R.string.sf_battery_title, appName),

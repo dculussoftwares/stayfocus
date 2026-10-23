@@ -31,11 +31,11 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.RulerScales
 import com.dculus.stayfocused.core.model.v5BigValue
 import com.dculus.stayfocused.core.model.v5Duration
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.TickRuler
-import com.dculus.stayfocused.core.ui.v5.components.TickRulerColors
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.TickRuler
+import com.dculus.stayfocused.core.ui.components.TickRulerColors
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 internal const val BREAK_START_TAG = "home_break_start"
 
@@ -54,8 +54,8 @@ internal fun BreakSheetContent(
     onStart: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val big = v5BigValue(mins)
     val length = v5Duration(mins)
     Column(
@@ -114,12 +114,12 @@ private fun PresetChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Box(
         modifier
             // 48 dp (prototype 46): the minimum touch target.
             .heightIn(min = 48.dp)
-            .clip(V5Theme.shapes.pill)
+            .clip(StayFocusedTheme.shapes.pill)
             .background(if (selected) colors.ink else colors.surface)
             .clickable(role = Role.RadioButton, onClick = onClick)
             .semantics { this.selected = selected },
@@ -127,7 +127,7 @@ private fun PresetChip(
     ) {
         Text(
             label,
-            style = V5Theme.type.bodyL.copy(fontSize = 15.sp),
+            style = StayFocusedTheme.type.bodyL.copy(fontSize = 15.sp),
             color = if (selected) colors.onGradient else colors.ink,
             textAlign = TextAlign.Center,
             maxLines = 1,

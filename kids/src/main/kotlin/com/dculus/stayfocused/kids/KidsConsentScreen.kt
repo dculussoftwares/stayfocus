@@ -33,16 +33,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.V5Card
 import com.dculus.stayfocused.core.ui.components.formatLinkCode
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 internal const val KIDS_CONSENT_ALLOW_TAG = "kids_consent_allow"
 internal const val KIDS_CONSENT_CANCEL_TAG = "kids_consent_cancel"
@@ -90,8 +90,8 @@ internal fun KidsConsentScreen(
     modifier: Modifier = Modifier,
     onRetry: () -> Unit = {},
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val parent = state.parentName ?: stringResource(R.string.kids_parent_fallback)
     // Fills the screen when it fits and scrolls on short screens or at large font scales.
     BoxWithConstraints(modifier.fillMaxSize().v5StatusBarPadding()) {
@@ -144,7 +144,7 @@ private fun CodeCard(
     parent: String,
     code: String,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     V5Card(radius = 34.dp, padding = 0.dp, modifier = Modifier.fillMaxWidth()) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 24.dp),
@@ -153,7 +153,7 @@ private fun CodeCard(
         ) {
             Text(
                 stringResource(R.string.kids_consent_match, parent),
-                style = V5Theme.type.label.copy(fontWeight = FontWeight.Normal),
+                style = StayFocusedTheme.type.label.copy(fontWeight = FontWeight.Normal),
                 color = colors.textSecondary,
             )
             val shown = formatLinkCode(code)
@@ -169,7 +169,7 @@ private fun CodeCard(
 
 @Composable
 private fun AbilitiesCard(parent: String) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     V5Card(radius = 30.dp, padding = 0.dp, modifier = Modifier.fillMaxWidth()) {
         Column(
             Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 16.dp),
@@ -177,7 +177,7 @@ private fun AbilitiesCard(parent: String) {
         ) {
             Text(
                 stringResource(R.string.kids_consent_can_do, parent),
-                style = V5Theme.type.body.copy(fontWeight = FontWeight.SemiBold),
+                style = StayFocusedTheme.type.body.copy(fontWeight = FontWeight.SemiBold),
                 color = colors.ink,
             )
             stringArrayResource(R.array.kids_consent_list).forEach { item ->
@@ -185,7 +185,7 @@ private fun AbilitiesCard(parent: String) {
                     Box(Modifier.padding(top = 7.dp).size(6.dp).background(colors.pink, CircleShape))
                     Text(
                         item,
-                        style = V5Theme.type.body.copy(lineHeight = 20.25.sp),
+                        style = StayFocusedTheme.type.body.copy(lineHeight = 20.25.sp),
                         color = colors.ink,
                     )
                 }

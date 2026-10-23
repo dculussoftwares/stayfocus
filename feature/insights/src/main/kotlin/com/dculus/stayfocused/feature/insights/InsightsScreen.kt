@@ -31,21 +31,21 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.formatMinutes
-import com.dculus.stayfocused.core.ui.v5.charts.GlassBarChart
-import com.dculus.stayfocused.core.ui.v5.charts.UsageRow
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPill
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPillSize
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.charts.GlassBarChart
+import com.dculus.stayfocused.core.ui.charts.UsageRow
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.SegmentedPill
+import com.dculus.stayfocused.core.ui.components.SegmentedPillSize
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 @Composable
 internal fun InsightsRoute(viewModel: InsightsViewModel = hiltViewModel()) {
@@ -111,8 +111,8 @@ private fun Header(
     ) {
         Text(
             stringResource(R.string.insights_title),
-            style = V5Theme.type.title,
-            color = V5Theme.colors.ink,
+            style = StayFocusedTheme.type.title,
+            color = StayFocusedTheme.colors.ink,
             modifier = Modifier.semantics { heading() },
         )
         SegmentedPill(
@@ -153,8 +153,12 @@ private fun DayStepper(
             Modifier.semantics(mergeDescendants = true) {},
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(title, style = V5Theme.type.label, color = V5Theme.colors.ink)
-            Text(dayDateLabel(state.date), style = V5Theme.type.body, color = V5Theme.colors.textSecondary)
+            Text(title, style = StayFocusedTheme.type.label, color = StayFocusedTheme.colors.ink)
+            Text(
+                dayDateLabel(state.date),
+                style = StayFocusedTheme.type.body,
+                color = StayFocusedTheme.colors.textSecondary,
+            )
         }
         RoundIconButton(
             V5Icons.arrow,
@@ -170,7 +174,7 @@ private fun HeroCard(
     day: InsightsDay,
     isToday: Boolean,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     val label =
         when {
             day.range == InsightsRange.Week -> stringResource(R.string.insights_label_week)
@@ -178,7 +182,7 @@ private fun HeroCard(
             else -> stringResource(R.string.insights_metric_screen_time)
         }
     val (hours, minutes) = dayHeroParts(day.heroMins)
-    val unit = V5Theme.type.rule.copy(fontSize = 22.sp, fontWeight = FontWeight.Light)
+    val unit = StayFocusedTheme.type.rule.copy(fontSize = 22.sp, fontWeight = FontWeight.Light)
     val unitColor = colors.onGradient.copy(alpha = 0.8f)
     val averageLabel =
         if (day.range == InsightsRange.Day) {
@@ -192,11 +196,11 @@ private fun HeroCard(
             Modifier.clearAndSetSemantics { contentDescription = heroDescription },
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(label, style = V5Theme.type.label.copy(fontSize = 15.sp), color = colors.onGradient)
+            Text(label, style = StayFocusedTheme.type.label.copy(fontSize = 15.sp), color = colors.onGradient)
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     hours,
-                    style = V5Theme.type.displayL,
+                    style = StayFocusedTheme.type.displayL,
                     color = colors.onGradient,
                     modifier = Modifier.alignByBaseline(),
                 )
@@ -208,7 +212,7 @@ private fun HeroCard(
                 )
                 Text(
                     minutes,
-                    style = V5Theme.type.displayL,
+                    style = StayFocusedTheme.type.displayL,
                     color = colors.onGradient,
                     modifier = Modifier.padding(start = 6.dp).alignByBaseline(),
                 )
@@ -283,11 +287,11 @@ private fun CountTile(
     count: Int,
     caption: String,
     description: String,
-    gradient: com.dculus.stayfocused.core.ui.v5.theme.V5Gradient,
+    gradient: com.dculus.stayfocused.core.ui.theme.V5Gradient,
     dotSize: androidx.compose.ui.unit.Dp,
     modifier: Modifier = Modifier,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     GlowCard(
         gradient,
         modifier.fillMaxHeight().clearAndSetSemantics { contentDescription = description },
@@ -295,9 +299,9 @@ private fun CountTile(
         padding = 16.dp,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
-            Text(title, style = V5Theme.type.label.copy(fontSize = 15.sp), color = white)
+            Text(title, style = StayFocusedTheme.type.label.copy(fontSize = 15.sp), color = white)
             DotMatrixText(count.toString(), description, dotSize, white)
-            Text(caption, style = V5Theme.type.label.copy(fontSize = 13.sp), color = white)
+            Text(caption, style = StayFocusedTheme.type.label.copy(fontSize = 13.sp), color = white)
         }
     }
 }
@@ -324,8 +328,8 @@ private fun AppList(
             if (day.apps.isEmpty()) {
                 Text(
                     stringResource(R.string.insights_no_apps),
-                    style = V5Theme.type.body,
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.body,
+                    color = StayFocusedTheme.colors.textSecondary,
                     modifier = Modifier.padding(vertical = 10.dp),
                 )
             }
@@ -352,13 +356,13 @@ private fun EmptyDay() {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
                 stringResource(R.string.insights_empty_title),
-                style = V5Theme.type.bodyL,
-                color = V5Theme.colors.ink,
+                style = StayFocusedTheme.type.bodyL,
+                color = StayFocusedTheme.colors.ink,
             )
             Text(
                 stringResource(R.string.insights_empty_body),
-                style = V5Theme.type.body,
-                color = V5Theme.colors.textSecondary,
+                style = StayFocusedTheme.type.body,
+                color = StayFocusedTheme.colors.textSecondary,
             )
         }
     }

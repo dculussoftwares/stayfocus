@@ -26,16 +26,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.sync.LinkFailure
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.components.V5TextField
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.components.V5TextField
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 internal const val LINK_CONFIRM_CODE_TAG = "link_confirm_code"
 internal const val LINK_CONFIRM_NAME_TAG = "link_confirm_name"
@@ -89,7 +89,7 @@ internal fun LinkConfirmScreen(
     onRetry: () -> Unit,
 ) {
     V5Screen(darkContent = false) {
-        val colors = V5Theme.colors
+        val colors = StayFocusedTheme.colors
         // The parent's tap on "Codes match, link it": the claim is already held, so linking finishes when the child
         // taps Allow. Reset when the code changes (a retry).
         var confirmed by rememberSaveable { mutableStateOf(false) }
@@ -99,7 +99,7 @@ internal fun LinkConfirmScreen(
                 // The prototype's 56 dp top padding includes its 46 dp fake status bar.
                 .v5StatusBarPadding(extra = 10.dp)
                 .v5NavigationBarPadding(extra = 36.dp)
-                .padding(horizontal = V5Theme.spacing.screenOnboarding),
+                .padding(horizontal = StayFocusedTheme.spacing.screenOnboarding),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             RoundIconButton(
@@ -114,7 +114,7 @@ internal fun LinkConfirmScreen(
             ) {
                 Text(
                     stringResource(R.string.link_confirm_title),
-                    style = V5Theme.type.headline.copy(fontSize = 34.sp),
+                    style = StayFocusedTheme.type.headline.copy(fontSize = 34.sp),
                     color = colors.ink,
                     modifier = Modifier.padding(top = 8.dp),
                 )
@@ -175,11 +175,11 @@ private fun WaitingBody(
     name: String,
     onNameChange: (String) -> Unit,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(
             stringResource(R.string.link_confirm_subtitle),
-            style = V5Theme.type.body,
+            style = StayFocusedTheme.type.body,
             color = colors.textSecondary,
         )
         V5Card(
@@ -202,7 +202,7 @@ private fun WaitingBody(
         }
         Text(
             stringResource(R.string.link_confirm_name_label),
-            style = V5Theme.type.body.copy(fontSize = 14.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
             color = colors.textSecondary,
             modifier = Modifier.padding(start = 8.dp, top = 4.dp),
         )
@@ -214,7 +214,7 @@ private fun WaitingBody(
         )
         Text(
             stringResource(R.string.link_confirm_note),
-            style = V5Theme.type.body.copy(fontSize = 14.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
             color = colors.textSecondary,
             modifier = Modifier.padding(horizontal = 8.dp),
         )
@@ -227,8 +227,8 @@ private fun Failure(
     body: Int,
 ) {
     Column(Modifier.testTag(LINK_CONFIRM_ERROR_TAG), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(title), style = V5Theme.type.heading, color = V5Theme.colors.ink)
-        Text(stringResource(body), style = V5Theme.type.body, color = V5Theme.colors.textSecondary)
+        Text(stringResource(title), style = StayFocusedTheme.type.heading, color = StayFocusedTheme.colors.ink)
+        Text(stringResource(body), style = StayFocusedTheme.type.body, color = StayFocusedTheme.colors.textSecondary)
     }
 }
 

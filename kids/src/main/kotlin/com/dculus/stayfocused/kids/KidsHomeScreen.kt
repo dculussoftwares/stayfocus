@@ -26,19 +26,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.components.V5Card
 import com.dculus.stayfocused.core.ui.components.daysLabel
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 internal const val KIDS_HOME_UNLINK_TAG = "kids_home_unlink"
 internal const val KIDS_HOME_CONFIRM_TAG = "kids_home_unlink_confirm"
@@ -77,8 +77,8 @@ internal fun KidsHomeScreen(
     modifier: Modifier = Modifier,
 ) {
     V5Screen(darkContent = false, modifier = modifier) {
-        val colors = V5Theme.colors
-        val type = V5Theme.type
+        val colors = StayFocusedTheme.colors
+        val type = StayFocusedTheme.type
         val parent = state.parentName ?: stringResource(R.string.kids_parent_fallback)
         Column(
             Modifier
@@ -86,8 +86,8 @@ internal fun KidsHomeScreen(
                 .verticalScroll(rememberScrollState())
                 .v5StatusBarPadding(extra = 14.dp)
                 .v5NavigationBarPadding(extra = 24.dp)
-                .padding(horizontal = V5Theme.spacing.gap14),
-            verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap14),
+                .padding(horizontal = StayFocusedTheme.spacing.gap14),
+            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap14),
         ) {
             TodayHero(state.todayMins)
             NoticePreview(parent)
@@ -95,20 +95,20 @@ internal fun KidsHomeScreen(
                 stringResource(R.string.kids_home_notice_caption).uppercase(),
                 style = type.tag,
                 color = colors.textSecondary,
-                modifier = Modifier.padding(horizontal = V5Theme.spacing.gap6),
+                modifier = Modifier.padding(horizontal = StayFocusedTheme.spacing.gap6),
             )
             Text(
                 stringResource(R.string.kids_home_rules, parent).uppercase(),
                 style = type.label,
                 color = colors.textSecondary,
-                modifier = Modifier.padding(start = V5Theme.spacing.gap6, top = V5Theme.spacing.gap6),
+                modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6, top = StayFocusedTheme.spacing.gap6),
             )
             if (state.rules.isEmpty()) {
                 Text(
                     stringResource(R.string.kids_home_no_rules, parent),
                     style = type.body,
                     color = colors.textSecondary,
-                    modifier = Modifier.padding(start = V5Theme.spacing.gap6),
+                    modifier = Modifier.padding(start = StayFocusedTheme.spacing.gap6),
                 )
             }
             state.rules.forEach { RuleRow(it) }
@@ -163,15 +163,15 @@ private fun TodayHero(todayMins: Int?) {
     ) {
         Text(
             stringResource(R.string.kids_home_today).uppercase(),
-            style = V5Theme.type.label,
-            color = V5Theme.colors.onGradient,
+            style = StayFocusedTheme.type.label,
+            color = StayFocusedTheme.colors.onGradient,
         )
         if (todayMins != null) {
             DotMatrixText(
                 text = "${todayMins / 60}:${(todayMins % 60).toString().padStart(2, '0')}",
                 contentDescription = duration(todayMins),
                 dotSize = 9.dp,
-                color = V5Theme.colors.onGradient,
+                color = StayFocusedTheme.colors.onGradient,
                 modifier = Modifier.padding(top = 16.dp).testTag(KIDS_HOME_TODAY_TAG),
             )
         }
@@ -181,15 +181,15 @@ private fun TodayHero(todayMins: Int?) {
 /** What the always-on notification says, so the child can see what the parent's phone sees of this one. */
 @Composable
 private fun NoticePreview(parent: String) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     V5Card(Modifier.fillMaxWidth(), padding = 16.dp) {
         Row(
-            horizontalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap8),
+            horizontalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap8),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(18.dp).background(colors.pink, V5Theme.shapes.tag),
+                Modifier.size(18.dp).background(colors.pink, StayFocusedTheme.shapes.tag),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.kids_home_notice_badge), style = type.tag, color = colors.onGradient)
@@ -200,13 +200,13 @@ private fun NoticePreview(parent: String) {
             stringResource(R.string.kids_home_notice_title, parent),
             style = type.cardTitle,
             color = colors.ink,
-            modifier = Modifier.padding(top = V5Theme.spacing.gap6),
+            modifier = Modifier.padding(top = StayFocusedTheme.spacing.gap6),
         )
         Text(
             stringResource(R.string.kids_home_notice_body, parent),
             style = type.body,
             color = colors.textSecondary,
-            modifier = Modifier.padding(top = V5Theme.spacing.gap4),
+            modifier = Modifier.padding(top = StayFocusedTheme.spacing.gap4),
         )
     }
 }
@@ -215,12 +215,12 @@ private fun NoticePreview(parent: String) {
 @Composable
 private fun RuleRow(rule: KidsRule) {
     V5Card(Modifier.fillMaxWidth(), padding = 16.dp) {
-        Text(rule.name, style = V5Theme.type.cardTitle, color = V5Theme.colors.ink)
+        Text(rule.name, style = StayFocusedTheme.type.cardTitle, color = StayFocusedTheme.colors.ink)
         Text(
             ruleSummary(rule),
-            style = V5Theme.type.body,
-            color = V5Theme.colors.textSecondary,
-            modifier = Modifier.padding(top = V5Theme.spacing.gap4),
+            style = StayFocusedTheme.type.body,
+            color = StayFocusedTheme.colors.textSecondary,
+            modifier = Modifier.padding(top = StayFocusedTheme.spacing.gap4),
         )
     }
 }
