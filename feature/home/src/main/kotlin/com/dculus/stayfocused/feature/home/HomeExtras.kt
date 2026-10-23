@@ -34,10 +34,11 @@ internal const val HOME_STATS_CARD_TAG = "home_stats_card"
 internal const val HOME_MANAGE_TAG = "home_manage"
 internal const val HOME_BLOCKS_EMPTY_TAG = "home_blocks_empty"
 
-// Everything below is shipped Home content that the v5 prototype does not show. It keeps working, drawn with v5
-// components at the end of the screen; M13-08 decides its final form.
+// Final v5 form of the shipped Home content the prototype does not show (M13-08): two v5 cards after the child
+// cards, built from v5 components only. Kept (not removed) because no other screen shows the average line, the
+// launches/unlocks counts or the on/off switches next to the day's usage.
 
-/** v5-extra: M13-08. Today against the average, plus the launches and unlocks counts. */
+/** Today against the average, plus the launches and unlocks counts. */
 @Composable
 internal fun TodayStatsCard(
     gauge: GaugeUi.Ready,
@@ -81,7 +82,7 @@ private fun Stat(
     }
 }
 
-/** v5-extra: M13-08. This phone's blocks with their on/off switches and the "Manage" link. */
+/** This phone's blocks with their on/off switches and the "Manage" link. */
 @Composable
 internal fun ActiveBlocksCard(
     blocks: List<HomeBlockUi>,
