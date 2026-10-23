@@ -49,7 +49,7 @@ internal enum class NotificationStep { RequestRuntime, OpenSettings }
 class PermissionsViewModel
     @Inject
     constructor(
-        repository: PermissionsRepository,
+        private val repository: PermissionsRepository,
         private val settings: SettingsRepository,
         profile: AccountProfileRepository,
         private val clock: Clock,
@@ -67,6 +67,9 @@ class PermissionsViewModel
                 .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
         private var notificationRequests = 0
+
+        /** Android 13+ sideloaded installs must allow restricted settings before Accessibility can be turned on. */
+        internal fun needsRestrictedSettingsGuidance(): Boolean = repository.needsRestrictedSettingsGuidance()
 
         /**
          * The user tapped "Agree and open Settings": record when (Play consent record) and report whether it was

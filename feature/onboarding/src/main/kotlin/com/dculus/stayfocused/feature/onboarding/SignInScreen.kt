@@ -191,7 +191,6 @@ internal fun SignInScreen(
                             .semantics { liveRegion = LiveRegionMode.Polite },
                 )
             }
-            // v5-extra: M13-01 (shipped password reset; v5 shows no "Forgot password?")
             if (signIn) {
                 PillButton(
                     text = stringResource(R.string.auth_forgot),
@@ -213,7 +212,6 @@ internal fun SignInScreen(
                 modifier = Modifier.testTag(SIGN_IN_SUBMIT_TAG),
             )
             ModeSwitch(signIn = signIn, enabled = !state.busy, onClick = onToggleMode)
-            // v5-extra: M13-01 (shipped "Continue without an account" path)
             PillButton(
                 text = stringResource(R.string.auth_skip),
                 onClick = onSkip,

@@ -51,7 +51,7 @@ import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
-import com.dculus.stayfocused.core.ui.components.BatteryGuidance
+import com.dculus.stayfocused.core.ui.components.BatteryGuidanceSheet
 import com.dculus.stayfocused.core.ui.components.GhostButton
 import com.dculus.stayfocused.core.ui.components.LedDot
 import com.dculus.stayfocused.core.ui.components.MonoLabel
@@ -216,14 +216,12 @@ internal fun AccountRoute(
             )
         }
     }
-    SfBottomSheet(visible = batteryVisible, onDismiss = { batteryVisible = false }) {
-        Column(Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState())) {
-            BatteryGuidance(
-                onOpenBatterySettings = { context.open(PermissionIntents.batteryOptimizationSettings()) },
-                onOpenGuide = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(it))) },
-            )
-        }
-    }
+    BatteryGuidanceSheet(
+        visible = batteryVisible,
+        onDismiss = { batteryVisible = false },
+        onOpenBatterySettings = { context.open(PermissionIntents.batteryOptimizationSettings()) },
+        onOpenGuide = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(it))) },
+    )
     LicencesSheet(visible = licencesVisible, onDismiss = { licencesVisible = false })
 }
 

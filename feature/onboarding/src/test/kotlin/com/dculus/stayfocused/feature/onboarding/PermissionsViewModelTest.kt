@@ -26,6 +26,7 @@ import kotlin.test.assertEquals
 class PermissionsViewModelTest {
     private class FakePermissions(
         initial: Permissions = NONE,
+        private val restricted: Boolean = false,
     ) : PermissionsRepository {
         val state = MutableStateFlow(initial)
 
@@ -33,7 +34,7 @@ class PermissionsViewModelTest {
 
         override fun current(): Permissions = state.value
 
-        override fun needsRestrictedSettingsGuidance(): Boolean = false
+        override fun needsRestrictedSettingsGuidance(): Boolean = restricted
     }
 
     @Before
@@ -55,6 +56,18 @@ class PermissionsViewModelTest {
                 assertEquals(3, awaitItem().grantedCount())
             }
         }
+
+    @Test
+    fun restrictedSettingsGuidanceFollowsTheRepository() {
+        val viewModel =
+            PermissionsViewModel(
+                FakePermissions(restricted = true),
+                FakeSettingsRepository(),
+                FakeAccountProfileRepository(),
+                CLOCK,
+            )
+        assertEquals(true, viewModel.needsRestrictedSettingsGuidance())
+    }
 
     @Test
     fun batteryDoesNotCountTowardsTheFour() {

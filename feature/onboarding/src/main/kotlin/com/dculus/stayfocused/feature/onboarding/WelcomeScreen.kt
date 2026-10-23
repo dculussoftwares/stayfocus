@@ -97,7 +97,6 @@ internal fun WelcomeScreen(
             }
         }
     }
-    // v5-extra: M13-01 (the prototype jumps straight to the kids QR; the shipped path opens this sheet first)
     V5BottomSheet(visible = sheetVisible, onDismiss = { sheetVisible = false }) {
         ChildPhoneSheetContent(onOpenKidsListing)
     }
