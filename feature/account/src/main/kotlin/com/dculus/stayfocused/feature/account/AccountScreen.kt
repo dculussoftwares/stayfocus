@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -52,24 +53,17 @@ import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
 import com.dculus.stayfocused.core.ui.components.BatteryGuidanceSheet
-import com.dculus.stayfocused.core.ui.components.GhostButton
-import com.dculus.stayfocused.core.ui.components.LedDot
-import com.dculus.stayfocused.core.ui.components.MonoLabel
-import com.dculus.stayfocused.core.ui.components.OutlineButton
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.components.SfBottomSheet
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -182,7 +176,7 @@ internal fun AccountRoute(
         onPassword = viewModel::reauthenticateWithPassword,
         onGoogle = { viewModel.reauthenticateWithGoogle(context) },
     )
-    SfBottomSheet(visible = disclosureVisible, onDismiss = { disclosureVisible = false }) {
+    V5BottomSheet(visible = disclosureVisible, onDismiss = { disclosureVisible = false }) {
         // PROVISIONAL: M5-05 replaces this with the shared full disclosure.
         Column(
             Modifier
@@ -194,15 +188,15 @@ internal fun AccountRoute(
         ) {
             Text(
                 stringResource(R.string.account_disclosure_title),
-                style = StayFocusedTheme.type.displayM,
-                color = StayFocusedTheme.colors.text,
+                style = StayFocusedTheme.type.heading,
+                color = StayFocusedTheme.colors.ink,
             )
             Text(
                 stringResource(R.string.account_disclosure_body),
                 style = StayFocusedTheme.type.body,
-                color = StayFocusedTheme.colors.secondary,
+                color = StayFocusedTheme.colors.textSecondary,
             )
-            PrimaryButton(
+            PillButton(
                 text = stringResource(R.string.account_disclosure_agree),
                 onClick = {
                     disclosureVisible = false
@@ -210,9 +204,11 @@ internal fun AccountRoute(
                 },
                 modifier = Modifier.testTag(ACCOUNT_DISCLOSURE_AGREE_TAG),
             )
-            GhostButton(
+            PillButton(
                 text = stringResource(R.string.account_disclosure_no),
                 onClick = { disclosureVisible = false },
+                variant = PillButtonVariant.Text,
+                size = PillButtonSize.Compact,
             )
         }
     }
@@ -272,15 +268,19 @@ internal fun AccountScreen(
             val back = stringResource(R.string.account_back)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
                 RoundIconButton(V5Icons.back, back, onBack, Modifier.testTag(ACCOUNT_BACK_TAG))
-                Text(stringResource(R.string.account_title), style = V5Theme.type.title, color = V5Theme.colors.ink)
+                Text(
+                    stringResource(R.string.account_title),
+                    style = StayFocusedTheme.type.title,
+                    color = StayFocusedTheme.colors.ink,
+                )
             }
             if (state.authLoaded) V5ProfileHeader(state.user, onSignIn)
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     stringResource(R.string.account_system_check),
                     Modifier.padding(horizontal = 4.dp),
-                    style = V5Theme.type.label,
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.label,
+                    color = StayFocusedTheme.colors.textSecondary,
                 )
                 V5Card(Modifier.fillMaxWidth(), padding = 0.dp) {
                     HealthRow.entries.forEach { row -> V5HealthItem(row, state, onFix) }
@@ -289,8 +289,8 @@ internal fun AccountScreen(
             V5Card(Modifier.fillMaxWidth()) {
                 Text(
                     stringResource(R.string.account_oss_blurb),
-                    style = V5Theme.type.body,
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.body,
+                    color = StayFocusedTheme.colors.textSecondary,
                 )
                 V5LinkRow(stringResource(R.string.account_link_github)) { onOpenUrl(GITHUB_URL) }
                 V5LinkRow(stringResource(R.string.account_link_license)) { onOpenUrl(LICENSE_URL) }
@@ -299,8 +299,8 @@ internal fun AccountScreen(
                 if (version.isNotEmpty()) {
                     Text(
                         stringResource(R.string.account_version, version),
-                        style = V5Theme.type.label,
-                        color = V5Theme.colors.textSecondary,
+                        style = StayFocusedTheme.type.label,
+                        color = StayFocusedTheme.colors.textSecondary,
                     )
                 }
             }
@@ -325,7 +325,7 @@ internal fun AccountScreen(
                     Modifier.fillMaxWidth().testTag(ACCOUNT_DELETE_TAG),
                     PillButtonVariant.Text,
                     PillButtonSize.Medium,
-                    textColor = V5Theme.colors.destructive,
+                    textColor = StayFocusedTheme.colors.destructive,
                 )
             }
         }
@@ -341,30 +341,47 @@ private fun V5ProfileHeader(
         Row(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(64.dp).clip(RoundedCornerShape(26.dp)).background(
-                    if (user != null) V5Theme.colors.ink else V5Theme.colors.track,
+                    if (user != null) StayFocusedTheme.colors.ink else StayFocusedTheme.colors.track,
                 ),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     user?.initial() ?: "?",
-                    style = V5Theme.type.heading,
-                    color = if (user != null) V5Theme.colors.onGradient else V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.heading,
+                    color =
+                        if (user !=
+                            null
+                        ) {
+                            StayFocusedTheme.colors.onGradient
+                        } else {
+                            StayFocusedTheme.colors.textSecondary
+                        },
                 )
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 if (user != null) {
-                    Text(user.shownName() ?: "", style = V5Theme.type.cardTitle, color = V5Theme.colors.ink)
-                    user.email?.let { Text(it, style = V5Theme.type.body, color = V5Theme.colors.textSecondary) }
+                    Text(
+                        user.shownName() ?: "",
+                        style = StayFocusedTheme.type.cardTitle,
+                        color = StayFocusedTheme.colors.ink,
+                    )
+                    user.email?.let {
+                        Text(
+                            it,
+                            style = StayFocusedTheme.type.body,
+                            color = StayFocusedTheme.colors.textSecondary,
+                        )
+                    }
                 } else {
                     Text(
                         stringResource(R.string.account_not_signed_in),
-                        style = V5Theme.type.cardTitle,
-                        color = V5Theme.colors.ink,
+                        style = StayFocusedTheme.type.cardTitle,
+                        color = StayFocusedTheme.colors.ink,
                     )
                     Text(
                         stringResource(R.string.account_not_signed_in_hint),
-                        style = V5Theme.type.body,
-                        color = V5Theme.colors.textSecondary,
+                        style = StayFocusedTheme.type.body,
+                        color = StayFocusedTheme.colors.textSecondary,
                     )
                 }
             }
@@ -415,25 +432,25 @@ private fun V5HealthItem(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        LedDot(color = if (on) V5Theme.colors.success else V5Theme.colors.hairline, size = 8.dp, glow = on)
+        StatusDot(color = if (on) StayFocusedTheme.colors.success else StayFocusedTheme.colors.hairline, glow = on)
         Text(
             title,
             Modifier.weight(1f),
-            style = V5Theme.type.bodyL.copy(fontSize = 15.sp),
-            color = V5Theme.colors.ink,
+            style = StayFocusedTheme.type.bodyL.copy(fontSize = 15.sp),
+            color = StayFocusedTheme.colors.ink,
         )
         Box(
             Modifier
                 .testTag(healthTag(row))
                 .clip(RoundedCornerShape(22.dp))
-                .background(if (on) V5Theme.colors.onlineBackground else V5Theme.colors.ink)
+                .background(if (on) StayFocusedTheme.colors.onlineBackground else StayFocusedTheme.colors.ink)
                 .clickable(enabled = actionable, role = Role.Button) { onFix(row) }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
         ) {
             Text(
                 cta.uppercase(),
-                style = V5Theme.type.label.copy(fontSize = 12.sp),
-                color = if (on) V5Theme.colors.onlineText else V5Theme.colors.onGradient,
+                style = StayFocusedTheme.type.label.copy(fontSize = 12.sp),
+                color = if (on) StayFocusedTheme.colors.onlineText else StayFocusedTheme.colors.onGradient,
             )
         }
     }
@@ -452,8 +469,8 @@ private fun V5LinkRow(
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .padding(top = 10.dp),
-        style = V5Theme.type.bodyL.copy(fontSize = 15.sp),
-        color = V5Theme.colors.ink,
+        style = StayFocusedTheme.type.bodyL.copy(fontSize = 15.sp),
+        color = StayFocusedTheme.colors.ink,
     )
 }
 
@@ -462,7 +479,7 @@ internal fun LicencesSheet(
     visible: Boolean,
     onDismiss: () -> Unit,
 ) {
-    SfBottomSheet(visible = visible, onDismiss = onDismiss) {
+    V5BottomSheet(visible = visible, onDismiss = onDismiss) {
         Column(
             Modifier
                 .fillMaxWidth()
@@ -473,20 +490,25 @@ internal fun LicencesSheet(
         ) {
             Text(
                 stringResource(R.string.account_oss_title),
-                style = StayFocusedTheme.type.displayM,
-                color = StayFocusedTheme.colors.text,
+                style = StayFocusedTheme.type.heading,
+                color = StayFocusedTheme.colors.ink,
             )
             Text(
                 stringResource(R.string.account_oss_body),
                 style = StayFocusedTheme.type.body,
-                color = StayFocusedTheme.colors.secondary,
+                color = StayFocusedTheme.colors.textSecondary,
             )
             Text(
                 stringResource(R.string.account_oss_list),
                 style = StayFocusedTheme.type.body,
-                color = StayFocusedTheme.colors.text,
+                color = StayFocusedTheme.colors.ink,
             )
-            OutlineButton(text = stringResource(R.string.account_oss_close), onClick = onDismiss)
+            PillButton(
+                text = stringResource(R.string.account_oss_close),
+                onClick = onDismiss,
+                variant = PillButtonVariant.Secondary,
+                size = PillButtonSize.Compact,
+            )
         }
     }
 }

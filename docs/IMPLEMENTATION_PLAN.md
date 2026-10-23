@@ -1,7 +1,8 @@
 # Stay Focused: Phase 1 implementation plan
 
-This is the engineering plan for Phase 1 (v1.0). Product scope, screens and design tokens live in
-[`design_handoff_stay_focused_phase1/README.md`](../design_handoff_stay_focused_phase1/README.md). Read that first.
+This is the engineering plan for Phase 1 (v1.0). Product scope, screens and design tokens live in the v5 spec
+[`docs/design/V5_SPEC.md`](design/V5_SPEC.md) (source of truth: `design/Stay Focused v5.dc.html`). Read that first.
+`design_handoff_stay_focused_phase1/` is the v2 handoff, kept as history only (the v2 design system has been removed).
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
 **GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/stayfocus`. Every story is meant to be
@@ -29,7 +30,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Infrastructure | **Only Terraform, applied by GitHub Actions** (state in HCP Terraform), for GitHub (backlog, repo settings, Pages) and GCP/Firebase. Built phase by phase: each milestone's `infra` stories add only what it needs. See `docs/INFRASTRUCTURE.md` |
 | Backlog | Lives in `backlog/phase1/` as Markdown + front matter and is turned into issues by `infra/github`. Edit the files, not the issues |
 | Open source | GPL-3.0. Forks bring their own `google-services.json`; the app **must build and run without it** (Firebase features disabled) |
-| Fonts | Clash Display + Satoshi (Fontshare) bundled pending a license check for OSS redistribution; Geist Mono (OFL) |
+| Fonts | Urbanist (SIL OFL 1.1), bundled as a variable font; see `docs/FONTS.md` |
 | "Use, then rest" | The *use* window counts **foreground time only**. When used up, the app locks for *rest* minutes; the next open after that starts a new window |
 | Tests | JUnit4 + Turbine + MockK unit tests (JVM + Robolectric) with Kover coverage; Roborazzi screenshot tests; Compose UI / instrumented tests on Gradle Managed Devices (API 26 + 36); **Maestro** end-to-end flows; Firestore emulator tests for rules/functions; Jest for Functions |
 | Quality gates | **Pre-commit hooks** (gitleaks, ktlint, terraform fmt/tflint, actionlint, YAML) + pre-push (detekt, unit tests); **CI** (`ci-pass`): Spotless/ktlint, detekt, Android Lint, unit tests + coverage, screenshot tests, instrumented tests, build; **security**: CodeQL, dependency review, Dependabot, gitleaks, Trivy (IaC), zizmor (workflows); **CodeRabbit** review on every PR |
@@ -97,9 +98,9 @@ M1 ──┬── M2 ───────────────────�
 1. **Pick** a card in the board's `Ready` column (`python3 scripts/backlog/board.py ready`). Ready means every
    "Depends on" issue is closed. Assign yourself and move it: `python3 scripts/backlog/board.py status <N> "In progress"`.
 2. **Branch** from `main`: `m<N>/<issue-number>-<short-slug>` (e.g. `m1/27-room-schema`).
-3. **Read** the story's *Design reference*: the handoff README section and the prototype (open
-   `design_handoff_stay_focused_phase1/Stay Focused Phase 1 Prototype v2.dc.html` in Chrome; the left panel jumps to each flow).
-   Prototype logic (dial maths, AI prompt, summary sentences) is in the `<script>` block of that file.
+3. **Read** the story's *Design reference*: `docs/design/V5_SPEC.md` and the prototype (open
+   `design/Stay Focused v5.dc.html` in Chrome; renders are in `design/screens-v5/`).
+   Prototype logic (AI prompt, summary sentences) is in the `<script>` block of that file.
 4. **Build** only what the story's *Scope* says. List anything else as a follow-up (a new story file in `backlog/phase1/`).
 5. **Verify** locally with the *Definition of done* below, plus the story's acceptance criteria.
 6. **Open a PR** titled `[M<N>-<nn>] <story title>` with `Closes #<issue>`, what changed, how it was tested, the acceptance

@@ -15,12 +15,12 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.components.V5TextField
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.components.V5TextField
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 internal const val DELETE_CONFIRM_TAG = "account_delete_confirm"
 internal const val DELETE_CANCEL_TAG = "account_delete_cancel"
@@ -45,13 +45,13 @@ internal fun DeleteAccountSheet(
             if (state.step == DeleteStep.Reauth) {
                 Text(
                     stringResource(R.string.account_reauth_title),
-                    style = V5Theme.type.heading,
-                    color = V5Theme.colors.ink,
+                    style = StayFocusedTheme.type.heading,
+                    color = StayFocusedTheme.colors.ink,
                 )
                 Text(
                     stringResource(R.string.account_reauth_body),
-                    style = V5Theme.type.body,
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.body,
+                    color = StayFocusedTheme.colors.textSecondary,
                 )
                 if (state.usesPassword) {
                     var password by rememberSaveable { mutableStateOf("") }
@@ -89,13 +89,13 @@ internal fun DeleteAccountSheet(
             } else {
                 Text(
                     stringResource(R.string.account_delete_title),
-                    style = V5Theme.type.heading,
-                    color = V5Theme.colors.ink,
+                    style = StayFocusedTheme.type.heading,
+                    color = StayFocusedTheme.colors.ink,
                 )
                 Text(
                     stringResource(R.string.account_delete_body),
-                    style = V5Theme.type.body,
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.body,
+                    color = StayFocusedTheme.colors.textSecondary,
                 )
                 OtherError(state)
                 // The account is already gone when the local erase failed: nothing is left to confirm.
@@ -136,7 +136,7 @@ internal fun DeleteAccountSheet(
 private fun OtherError(state: DeleteUiState) {
     val error = state.error ?: return
     if (error == DeleteError.WrongPassword && state.usesPassword) return
-    Text(errorText(error), style = V5Theme.type.body, color = V5Theme.colors.error)
+    Text(errorText(error), style = StayFocusedTheme.type.body, color = StayFocusedTheme.colors.error)
 }
 
 @Composable

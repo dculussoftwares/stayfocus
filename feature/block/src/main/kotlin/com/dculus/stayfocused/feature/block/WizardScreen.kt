@@ -69,30 +69,30 @@ import com.dculus.stayfocused.core.model.TimeRange
 import com.dculus.stayfocused.core.model.rulerReadout
 import com.dculus.stayfocused.core.model.v5Duration
 import com.dculus.stayfocused.core.sync.AiReport
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.DayChips
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.RulerLabels
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPill
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPillSize
-import com.dculus.stayfocused.core.ui.v5.components.SegmentedPillStyle
-import com.dculus.stayfocused.core.ui.v5.components.StatusTag
-import com.dculus.stayfocused.core.ui.v5.components.StatusTagKind
-import com.dculus.stayfocused.core.ui.v5.components.TargetTag
-import com.dculus.stayfocused.core.ui.v5.components.TickRuler
-import com.dculus.stayfocused.core.ui.v5.components.TickRulerColors
-import com.dculus.stayfocused.core.ui.v5.components.V5BottomSheet
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradient
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.DayChips
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.RulerLabels
+import com.dculus.stayfocused.core.ui.components.SegmentedPill
+import com.dculus.stayfocused.core.ui.components.SegmentedPillSize
+import com.dculus.stayfocused.core.ui.components.SegmentedPillStyle
+import com.dculus.stayfocused.core.ui.components.StatusTag
+import com.dculus.stayfocused.core.ui.components.StatusTagKind
+import com.dculus.stayfocused.core.ui.components.TargetTag
+import com.dculus.stayfocused.core.ui.components.TickRuler
+import com.dculus.stayfocused.core.ui.components.TickRulerColors
+import com.dculus.stayfocused.core.ui.components.V5BottomSheet
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradient
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 import java.time.DayOfWeek
 
 const val WIZARD_BACK_TAG = "wizard_back"
@@ -189,7 +189,7 @@ fun WizardScreen(
                     .fillMaxSize()
                     .v5StatusBarPadding(extra = 10.dp)
                     .v5NavigationBarPadding(),
-            verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap12),
+            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap12),
         ) {
             WizardTopBar(actions.onBack, actions.onClose)
             WizardTitle(state, actions.onFlipTarget)
@@ -243,25 +243,33 @@ private fun ColumnScope.ReportSheetContent(
     onSend: () -> Unit,
     onCancel: () -> Unit,
 ) {
-    val c = V5Theme.colors
-    Text(stringResource(R.string.block_report_title), style = V5Theme.type.heading, color = c.ink)
-    Text(stringResource(R.string.block_report_body), style = V5Theme.type.body, color = c.textSecondary)
+    val c = StayFocusedTheme.colors
+    Text(stringResource(R.string.block_report_title), style = StayFocusedTheme.type.heading, color = c.ink)
+    Text(stringResource(R.string.block_report_body), style = StayFocusedTheme.type.body, color = c.textSecondary)
     // Scrolls on its own so a long sentence never pushes "Send report" off the screen.
     Column(
         modifier = Modifier.fillMaxWidth().heightIn(max = 260.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(stringResource(R.string.block_report_sentence_label), style = V5Theme.type.label, color = c.textSecondary)
+        Text(
+            stringResource(R.string.block_report_sentence_label),
+            style = StayFocusedTheme.type.label,
+            color = c.textSecondary,
+        )
         Text(
             report.sentence,
-            style = V5Theme.type.body,
+            style = StayFocusedTheme.type.body,
             color = c.ink,
             modifier = Modifier.testTag(WIZARD_REPORT_SENTENCE_TAG),
         )
-        Text(stringResource(R.string.block_report_draft_label), style = V5Theme.type.label, color = c.textSecondary)
+        Text(
+            stringResource(R.string.block_report_draft_label),
+            style = StayFocusedTheme.type.label,
+            color = c.textSecondary,
+        )
         Text(
             report.draftFields.entries.joinToString("\n") { (key, value) -> "$key: $value" },
-            style = V5Theme.type.body.copy(fontSize = 13.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
             color = c.ink,
             modifier = Modifier.testTag(WIZARD_REPORT_DRAFT_TAG),
         )
@@ -286,7 +294,7 @@ private fun DeleteButton(onClick: () -> Unit) {
         text = stringResource(R.string.block_delete_action),
         onClick = onClick,
         variant = PillButtonVariant.Text,
-        textColor = V5Theme.colors.destructive,
+        textColor = StayFocusedTheme.colors.destructive,
         modifier = Modifier.fillMaxWidth().testTag(WIZARD_DELETE_TAG),
     )
 }
@@ -296,11 +304,15 @@ private fun ColumnScope.DeleteSheetContent(
     onDelete: () -> Unit,
     onKeep: () -> Unit,
 ) {
-    Text(stringResource(R.string.block_delete_title), style = V5Theme.type.heading, color = V5Theme.colors.ink)
+    Text(
+        stringResource(R.string.block_delete_title),
+        style = StayFocusedTheme.type.heading,
+        color = StayFocusedTheme.colors.ink,
+    )
     Text(
         stringResource(R.string.block_delete_body),
-        style = V5Theme.type.body,
-        color = V5Theme.colors.textSecondary,
+        style = StayFocusedTheme.type.body,
+        color = StayFocusedTheme.colors.textSecondary,
     )
     PillButton(
         text = stringResource(R.string.block_delete_confirm),
@@ -367,7 +379,7 @@ private fun WizardTitle(
     state: WizardUiState,
     onFlipTarget: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val titleRes =
         when (state.step) {
             WIZARD_STEP_TYPE -> R.string.block_wizard_step1_title
@@ -395,7 +407,7 @@ private fun WizardTitle(
         ) {
             Text(
                 stringResource(titleRes),
-                style = V5Theme.type.heading.copy(fontSize = 30.sp, letterSpacing = (-0.01).em),
+                style = StayFocusedTheme.type.heading.copy(fontSize = 30.sp, letterSpacing = (-0.01).em),
                 color = c.ink,
             )
             // An existing block cannot move to another phone, so its tag is only a label.
@@ -407,7 +419,7 @@ private fun WizardTitle(
         }
         Text(
             stringResource(R.string.block_wizard_step_hint, state.step),
-            style = V5Theme.type.body.copy(fontSize = 14.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
             color = c.textSecondary,
         )
     }
@@ -446,13 +458,13 @@ private fun TypeStep(
         }
         if (state.aiAvailable) {
             item {
-                val c = V5Theme.colors
+                val c = StayFocusedTheme.colors
                 Row(
                     modifier =
                         Modifier
                             .padding(top = 2.dp)
                             .fillMaxWidth()
-                            .heightIn(min = V5Theme.spacing.minTouchTarget)
+                            .heightIn(min = StayFocusedTheme.spacing.minTouchTarget)
                             .testTag(WIZARD_DESCRIBE_TAG)
                             .clickable(role = Role.Button, onClick = actions.onDescribe),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
@@ -461,7 +473,7 @@ private fun TypeStep(
                     Icon(V5Icons.sparkle, contentDescription = null, tint = c.orange, modifier = Modifier.size(15.dp))
                     Text(
                         stringResource(R.string.block_wizard_describe),
-                        style = V5Theme.type.label.copy(fontSize = 15.sp),
+                        style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                         color = c.ink,
                     )
                 }
@@ -478,7 +490,7 @@ private fun TypeTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Box(
         modifier =
             modifier
@@ -519,7 +531,7 @@ private fun TypeTile(
                 Text(
                     stringResource(type.nameRes()),
                     style =
-                        V5Theme.type.body.copy(
+                        StayFocusedTheme.type.body.copy(
                             fontSize = 19.sp,
                             fontWeight = FontWeight.Medium,
                             lineHeight = 21.sp,
@@ -529,7 +541,7 @@ private fun TypeTile(
                 Text(
                     stringResource(type.descRes()),
                     style =
-                        V5Theme.type.body.copy(
+                        StayFocusedTheme.type.body.copy(
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             lineHeight = 17.sp,
@@ -585,7 +597,7 @@ private fun AppTile(
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(AppTileRadius)
     Box(
         modifier =
@@ -606,7 +618,7 @@ private fun AppTile(
             AppIconTile(app.pkg, size = 48.dp, label = app.label)
             Text(
                 app.label,
-                style = V5Theme.type.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                style = StayFocusedTheme.type.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
                 color = c.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -636,7 +648,7 @@ private fun AiDraftBanner(
     onChange: () -> Unit,
     onReport: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Column(
         modifier =
             Modifier
@@ -652,13 +664,13 @@ private fun AiDraftBanner(
             StatusTag(StatusTagKind.AiDraft)
             Text(
                 stringResource(R.string.block_wizard_ai_banner),
-                style = V5Theme.type.body.copy(fontSize = 14.sp),
+                style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
                 color = c.textTertiary,
                 modifier = Modifier.weight(1f),
             )
         }
         if (draft.aiNote.isNotBlank()) {
-            Text(draft.aiNote, style = V5Theme.type.body.copy(fontSize = 14.sp), color = c.textSecondary)
+            Text(draft.aiNote, style = StayFocusedTheme.type.body.copy(fontSize = 14.sp), color = c.textSecondary)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             BannerAction(stringResource(R.string.block_wizard_ai_change), onChange)
@@ -675,11 +687,11 @@ private fun BannerAction(
 ) {
     Text(
         text,
-        style = V5Theme.type.label,
-        color = V5Theme.colors.ink,
+        style = StayFocusedTheme.type.label,
+        color = StayFocusedTheme.colors.ink,
         modifier =
             modifier
-                .heightIn(min = V5Theme.spacing.minTouchTarget)
+                .heightIn(min = StayFocusedTheme.spacing.minTouchTarget)
                 .clickable(role = Role.Button, onClick = onClick)
                 .padding(vertical = 14.dp),
     )
@@ -708,8 +720,8 @@ private fun RulesStep(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         stringResource(R.string.block_wizard_repeat_on),
-                        style = V5Theme.type.label.copy(fontSize = 15.sp),
-                        color = V5Theme.colors.ink,
+                        style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+                        color = StayFocusedTheme.colors.ink,
                     )
                     DayChips(
                         selected = DayOfWeek.entries.filterTo(hashSetOf()) { it in draft.days },
@@ -722,13 +734,13 @@ private fun RulesStep(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
                     stringResource(R.string.block_wizard_summary),
-                    style = V5Theme.type.label.copy(fontSize = 13.sp),
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.label.copy(fontSize = 13.sp),
+                    color = StayFocusedTheme.colors.textSecondary,
                 )
                 Text(
                     state.summary,
-                    style = V5Theme.type.body.copy(fontSize = 19.sp, lineHeight = 26.sp),
-                    color = V5Theme.colors.ink,
+                    style = StayFocusedTheme.type.body.copy(fontSize = 19.sp, lineHeight = 26.sp),
+                    color = StayFocusedTheme.colors.ink,
                     modifier = Modifier.testTag(WIZARD_SUMMARY_TAG),
                 )
             }
@@ -865,26 +877,26 @@ private fun RulerReadoutText(
             Text(
                 readout.big,
                 style =
-                    V5Theme.type.body.copy(
+                    StayFocusedTheme.type.body.copy(
                         fontSize = 92.sp,
                         fontWeight = FontWeight.ExtraLight,
                         lineHeight = 88.sp,
                         letterSpacing = (-0.04).em,
                     ),
-                color = V5Theme.colors.onGradient,
+                color = StayFocusedTheme.colors.onGradient,
                 modifier = Modifier.alignByBaseline(),
             )
             Text(
                 readout.unit,
-                style = V5Theme.type.body.copy(fontSize = 24.sp, fontWeight = FontWeight.Light),
-                color = V5Theme.colors.onGradient,
+                style = StayFocusedTheme.type.body.copy(fontSize = 24.sp, fontWeight = FontWeight.Light),
+                color = StayFocusedTheme.colors.onGradient,
                 modifier = Modifier.alignByBaseline(),
             )
         }
         Text(
             stringResource(sub),
-            style = V5Theme.type.label.copy(fontSize = 15.sp),
-            color = V5Theme.colors.onGradient,
+            style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+            color = StayFocusedTheme.colors.onGradient,
         )
     }
 }
@@ -930,7 +942,7 @@ private fun CustomCard(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(24.dp)
     Box(
         modifier =
@@ -947,7 +959,7 @@ private fun CustomCard(
     ) {
         Text(
             stringResource(R.string.block_wizard_range_custom_link),
-            style = V5Theme.type.label.copy(fontSize = 15.sp),
+            style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
             color = if (selected) c.ink else c.onGradient,
         )
     }
@@ -958,11 +970,11 @@ private const val RANGE_SHRINK = 0.94f
 
 @Composable
 private fun SchedulePickerHeader(range: TimeRange) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
             stringResource(R.string.block_wizard_blocked_from),
-            style = V5Theme.type.label.copy(fontSize = 15.sp),
+            style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
             color = c.onGradient,
         )
         // 58 sp on one line; on a narrow screen or a large font scale it shrinks until the range fits.
@@ -970,7 +982,7 @@ private fun SchedulePickerHeader(range: TimeRange) {
         Text(
             range.format(),
             style =
-                V5Theme.type.body.copy(
+                StayFocusedTheme.type.body.copy(
                     fontSize = size.sp,
                     fontWeight = FontWeight.ExtraLight,
                     lineHeight = size.sp,
@@ -992,7 +1004,7 @@ private fun PresetCard(
     onPick: (SchedulePreset) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(24.dp)
     Column(
         modifier =
@@ -1007,10 +1019,14 @@ private fun PresetCard(
         verticalArrangement = Arrangement.Center,
     ) {
         val color = if (selected) c.ink else c.onGradient
-        Text(stringResource(preset.nameRes()), style = V5Theme.type.label.copy(fontSize = 15.sp), color = color)
+        Text(
+            stringResource(preset.nameRes()),
+            style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+            color = color,
+        )
         Text(
             preset.rangeText,
-            style = V5Theme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
             color = color,
         )
     }

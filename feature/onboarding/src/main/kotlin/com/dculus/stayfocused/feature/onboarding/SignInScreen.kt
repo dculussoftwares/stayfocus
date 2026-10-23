@@ -48,18 +48,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.V5TextField
-import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.V5TextField
+import com.dculus.stayfocused.core.ui.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 internal const val SIGN_IN_GOOGLE_TAG = "sign_in_google"
 internal const val SIGN_IN_EMAIL_TAG = "sign_in_email"
@@ -120,8 +120,8 @@ internal fun SignInScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
-    val type = V5Theme.type
+    val colors = StayFocusedTheme.colors
+    val type = StayFocusedTheme.type
     val signIn = state.mode == AuthMode.SignIn
     val error = state.error?.let { stringResource(it.messageRes()) }
     // Fills the screen when it fits and scrolls on short screens, with the keyboard up or at large font scales.
@@ -244,7 +244,7 @@ private fun ModeSwitch(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     val text =
         if (signIn) {
             AnnotatedString(stringResource(R.string.auth_switch_to_create))
@@ -260,14 +260,14 @@ private fun ModeSwitch(
     Box(
         Modifier
             .fillMaxWidth()
-            .defaultMinSize(minHeight = V5Theme.spacing.minTouchTarget)
+            .defaultMinSize(minHeight = StayFocusedTheme.spacing.minTouchTarget)
             .testTag(SIGN_IN_TOGGLE_TAG)
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text,
-            style = V5Theme.type.body.copy(fontSize = 14.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 14.sp),
             color = colors.textSecondary,
             textAlign = TextAlign.Center,
         )
@@ -279,8 +279,8 @@ private fun ModeSwitch(
 private fun GoogleMark() {
     Text(
         stringResource(R.string.auth_google_glyph),
-        style = V5Theme.type.bodyL.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
-        color = V5Theme.colors.google,
+        style = StayFocusedTheme.type.bodyL.copy(fontSize = 20.sp, fontWeight = FontWeight.Bold),
+        color = StayFocusedTheme.colors.google,
         // Decorative: the button label already says "Continue with Google".
         modifier = Modifier.clearAndSetSemantics {},
     )
@@ -288,7 +288,7 @@ private fun GoogleMark() {
 
 @Composable
 private fun OrDivider() {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Row(
         Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -297,7 +297,7 @@ private fun OrDivider() {
         Box(Modifier.weight(1f).height(1.dp).background(colors.hairline))
         Text(
             stringResource(R.string.auth_or_email),
-            style = V5Theme.type.body.copy(fontSize = 13.sp),
+            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
             color = colors.textSecondary,
         )
         Box(Modifier.weight(1f).height(1.dp).background(colors.hairline))

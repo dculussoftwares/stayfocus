@@ -10,7 +10,7 @@ import com.dculus.stayfocused.core.blocking.screen.BlockScreen
 import com.dculus.stayfocused.core.blocking.screen.BlockTimeLine
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test

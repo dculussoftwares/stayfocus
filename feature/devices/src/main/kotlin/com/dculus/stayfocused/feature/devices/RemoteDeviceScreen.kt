@@ -53,25 +53,25 @@ import com.dculus.stayfocused.core.model.mmss
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.sync.RemoteBlock
+import com.dculus.stayfocused.core.ui.charts.DotGrid
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.OnlinePill
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.StatusTag
+import com.dculus.stayfocused.core.ui.components.StatusTagKind
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.components.V5Toggle
 import com.dculus.stayfocused.core.ui.components.daysLabel
-import com.dculus.stayfocused.core.ui.v5.charts.DotGrid
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.OnlinePill
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.StatusTag
-import com.dculus.stayfocused.core.ui.v5.components.StatusTagKind
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.components.V5Toggle
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.util.Locale
@@ -204,7 +204,7 @@ private fun RemoteDeviceList(
     now: () -> Instant,
     actions: RemoteActions,
 ) {
-    val spacing = V5Theme.spacing
+    val spacing = StayFocusedTheme.spacing
     val ready = state as? RemoteUiState.Ready
     LazyColumn(
         Modifier.fillMaxSize().testTag(REMOTE_LIST_TAG),
@@ -238,7 +238,7 @@ private fun Header(
     ready: RemoteUiState.Ready?,
     onBack: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         RoundIconButton(V5Icons.back, stringResource(R.string.link_back), onBack, Modifier.testTag(LINK_BACK_TAG))
         if (ready != null) {
@@ -246,7 +246,7 @@ private fun Header(
             Column(Modifier.weight(1f)) {
                 Text(
                     device.name,
-                    style = V5Theme.type.cardTitle.copy(fontSize = 22.sp),
+                    style = StayFocusedTheme.type.cardTitle.copy(fontSize = 22.sp),
                     color = c.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -254,7 +254,7 @@ private fun Header(
                 subtitle(ready)?.let {
                     Text(
                         it,
-                        style = V5Theme.type.body.copy(fontSize = 13.sp),
+                        style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                         color = c.textSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -284,7 +284,7 @@ private const val HOUR_DOTS_MAX_MINS = 25
 
 @Composable
 private fun Hero(ready: RemoteUiState.Ready) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     val total = ready.todayMins ?: 0
     GlowCard(
         V5Gradients.pinkHero,
@@ -296,7 +296,7 @@ private fun Hero(ready: RemoteUiState.Ready) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text(stringResource(R.string.remote_hero_title), style = V5Theme.type.label, color = white)
+            Text(stringResource(R.string.remote_hero_title), style = StayFocusedTheme.type.label, color = white)
             Box(Modifier.height(56.dp), contentAlignment = Alignment.Center) {
                 DotMatrixText(clock(total), formatMinutes(total), dotSize = 8.dp, color = white)
             }
@@ -304,7 +304,7 @@ private fun Hero(ready: RemoteUiState.Ready) {
             if (using != null) {
                 Text(
                     stringResource(R.string.remote_hero_using, using),
-                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                     color = white,
                     textAlign = TextAlign.Center,
                 )
@@ -337,7 +337,7 @@ private fun AlertCard(
     deviceName: String,
     actions: RemoteActions,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val permission = alert.kind == TamperKind.PERMISSION_LOST
     val body =
         when (alert.kind) {
@@ -364,9 +364,13 @@ private fun AlertCard(
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (permission) StatusTag(StatusTagKind.ProtectionOff)
-                Text(agoText(alert.agoMins), style = V5Theme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
+                Text(
+                    agoText(alert.agoMins),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
+                    color = c.textSecondary,
+                )
             }
-            Text(body, style = V5Theme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp), color = c.ink)
+            Text(body, style = StayFocusedTheme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp), color = c.ink)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (permission) {
                     PillButton(
@@ -394,7 +398,7 @@ private fun RequestCard(
     deviceName: String,
     actions: RemoteActions,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val options =
         listOf(
             stringResource(R.string.remote_request_15) to 15,
@@ -408,13 +412,13 @@ private fun RequestCard(
                 StatusTag(StatusTagKind.Request)
                 Text(
                     agoText(request.agoMins),
-                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                     color = c.textSecondary,
                 )
             }
             Text(
                 stringResource(R.string.remote_request_body, deviceName, request.minutes, request.app),
-                style = V5Theme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp),
+                style = StayFocusedTheme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp),
                 color = c.ink,
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -451,7 +455,7 @@ private fun LockTile(
     actions: RemoteActions,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     V5Card(
         modifier.height(140.dp).testTag(REMOTE_LOCK_ALL_TAG),
         radius = 32.dp,
@@ -464,12 +468,12 @@ private fun LockTile(
             Column(Modifier.align(Alignment.BottomStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     stringResource(if (allLocked) R.string.remote_unlock_title else R.string.remote_lock_title),
-                    style = V5Theme.type.cardTitle.copy(fontSize = 18.sp),
+                    style = StayFocusedTheme.type.cardTitle.copy(fontSize = 18.sp),
                     color = c.onGradient,
                 )
                 Text(
                     stringResource(if (allLocked) R.string.remote_unlock_sub else R.string.remote_lock_sub),
-                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                     color = c.onInkMuted,
                 )
             }
@@ -486,7 +490,7 @@ private fun FocusTile(
     actions: RemoteActions,
     modifier: Modifier = Modifier,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     GlowCard(
         V5Gradients.orangeTile,
         modifier.height(140.dp).testTag(if (running) REMOTE_FOCUS_STOP_TAG else REMOTE_FOCUS_TAG),
@@ -499,7 +503,7 @@ private fun FocusTile(
             Column(Modifier.align(Alignment.BottomStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     stringResource(if (running) R.string.remote_focus_on else R.string.remote_focus_title),
-                    style = V5Theme.type.cardTitle.copy(fontSize = 18.sp),
+                    style = StayFocusedTheme.type.cardTitle.copy(fontSize = 18.sp),
                     color = white,
                 )
                 Text(
@@ -508,7 +512,7 @@ private fun FocusTile(
                     } else {
                         stringResource(R.string.remote_focus_sub)
                     },
-                    style = V5Theme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
                     color = white,
                     modifier = Modifier.testTag(REMOTE_FOCUS_LEFT_TAG),
                 )
@@ -567,8 +571,8 @@ private fun BlocksHeader(onNewBlock: () -> Unit) {
     ) {
         Text(
             stringResource(R.string.remote_blocks_title),
-            style = V5Theme.type.cardTitle,
-            color = V5Theme.colors.ink,
+            style = StayFocusedTheme.type.cardTitle,
+            color = StayFocusedTheme.colors.ink,
             modifier = Modifier.weight(1f),
         )
         CompactPill(
@@ -587,7 +591,7 @@ private fun BlockRow(
     block: RemoteBlock,
     actions: RemoteActions,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val name = block.rule.name
     V5Card(
         Modifier.fillMaxWidth().testTag(remoteBlockTag(block.rule.id)).alpha(if (block.enabled) 1f else 0.6f),
@@ -604,14 +608,14 @@ private fun BlockRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text(
                     name,
-                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                     color = c.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     ruleSummary(block.rule),
-                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                     color = c.textSecondary,
                 )
             }
@@ -655,7 +659,7 @@ private fun ruleSummary(rule: KidsRule): String =
 
 @Composable
 private fun AppsHeader(totalMins: Int) {
-    val style = V5Theme.type.tag
+    val style = StayFocusedTheme.type.tag
     Row(
         Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -663,9 +667,9 @@ private fun AppsHeader(totalMins: Int) {
         Text(
             stringResource(R.string.remote_today_header, formatMinutes(totalMins).uppercase()),
             style = style,
-            color = V5Theme.colors.textSecondary,
+            color = StayFocusedTheme.colors.textSecondary,
         )
-        Text(stringResource(R.string.remote_lock_header), style = style, color = V5Theme.colors.textSecondary)
+        Text(stringResource(R.string.remote_lock_header), style = style, color = StayFocusedTheme.colors.textSecondary)
     }
 }
 
@@ -674,7 +678,7 @@ private fun AppRow(
     app: RemoteAppRow,
     actions: RemoteActions,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     V5Card(Modifier.fillMaxWidth().testTag("remote_app_${app.pkg}"), radius = 28.dp, padding = 0.dp) {
         Row(
             Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -686,7 +690,7 @@ private fun AppRow(
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                     Text(
                         app.label,
-                        style = V5Theme.type.label.copy(fontSize = 15.sp),
+                        style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
                         color = c.ink,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -694,7 +698,7 @@ private fun AppRow(
                     )
                     Text(
                         formatMinutes(app.mins),
-                        style = V5Theme.type.body.copy(fontSize = 13.sp),
+                        style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                         color = c.textSecondary,
                     )
                 }
@@ -729,7 +733,7 @@ private fun UnlinkButton(
         variant = PillButtonVariant.Text,
         size = PillButtonSize.Medium,
         enabled = !busy,
-        textColor = V5Theme.colors.destructive,
+        textColor = StayFocusedTheme.colors.destructive,
     )
 }
 
@@ -743,11 +747,11 @@ private fun CompactPill(
     height: androidx.compose.ui.unit.Dp = 46.dp,
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(height / 2)
     Box(
         modifier
-            .sizeIn(minHeight = V5Theme.spacing.minTouchTarget)
+            .sizeIn(minHeight = StayFocusedTheme.spacing.minTouchTarget)
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -765,7 +769,7 @@ private fun CompactPill(
             }
             Text(
                 text,
-                style = V5Theme.type.label,
+                style = StayFocusedTheme.type.label,
                 color = if (dark) c.onGradient else c.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

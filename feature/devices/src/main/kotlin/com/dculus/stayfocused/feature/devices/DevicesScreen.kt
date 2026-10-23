@@ -40,16 +40,16 @@ import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.UnlockRequestStatus
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.model.hasDerivedOfflineAlert
-import com.dculus.stayfocused.core.ui.v5.art.LinkArt
-import com.dculus.stayfocused.core.ui.v5.charts.HourTicks
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
-import com.dculus.stayfocused.core.ui.v5.components.OnlinePill
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.art.LinkArt
+import com.dculus.stayfocused.core.ui.charts.HourTicks
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.OnlinePill
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 
 internal const val DEVICES_LIST_TAG = "devices_list"
 internal const val DEVICES_LINK_TAG = "devices_link"
@@ -78,7 +78,7 @@ internal fun DevicesScreen(
     onOpenDevice: (String) -> Unit,
 ) {
     V5Screen(darkContent = false) {
-        val spacing = V5Theme.spacing
+        val spacing = StayFocusedTheme.spacing
         val devices = (state as? DevicesUiState.Loaded)?.devices.orEmpty()
         LazyColumn(
             Modifier.fillMaxSize().testTag(DEVICES_LIST_TAG),
@@ -94,11 +94,15 @@ internal fun DevicesScreen(
         ) {
             item {
                 Column(Modifier.padding(horizontal = 6.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(stringResource(R.string.devices_title), style = V5Theme.type.title, color = V5Theme.colors.ink)
+                    Text(
+                        stringResource(R.string.devices_title),
+                        style = StayFocusedTheme.type.title,
+                        color = StayFocusedTheme.colors.ink,
+                    )
                     Text(
                         stringResource(R.string.devices_subtitle),
-                        style = V5Theme.type.body.copy(fontSize = 15.sp),
-                        color = V5Theme.colors.textSecondary,
+                        style = StayFocusedTheme.type.body.copy(fontSize = 15.sp),
+                        color = StayFocusedTheme.colors.textSecondary,
                     )
                 }
             }
@@ -109,8 +113,8 @@ internal fun DevicesScreen(
             item {
                 Text(
                     stringResource(R.string.devices_link_helper),
-                    style = V5Theme.type.body.copy(lineHeight = 22.sp),
-                    color = V5Theme.colors.textSecondary,
+                    style = StayFocusedTheme.type.body.copy(lineHeight = 22.sp),
+                    color = StayFocusedTheme.colors.textSecondary,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
             }
@@ -123,7 +127,7 @@ private fun ThisPhoneRow(
     model: String,
     linked: Int,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val shape = RoundedCornerShape(16.dp)
     Row(
         Modifier
@@ -137,7 +141,7 @@ private fun ThisPhoneRow(
         Box(Modifier.size(8.dp).background(c.ink, CircleShape).clearAndSetSemantics { })
         Text(
             stringResource(R.string.devices_this_phone, model.uppercase(), linked),
-            style = V5Theme.type.tag,
+            style = StayFocusedTheme.type.tag,
             color = c.textSecondary,
         )
     }
@@ -148,7 +152,7 @@ internal fun DeviceCard(
     device: LinkedDevice,
     onClick: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val attention = deviceAttentionLine(device)
     V5Card(
         Modifier.fillMaxWidth().testTag(deviceCardTag(device.id)),
@@ -160,7 +164,7 @@ internal fun DeviceCard(
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         device.name,
-                        style = V5Theme.type.cardTitle,
+                        style = StayFocusedTheme.type.cardTitle,
                         color = c.ink,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -168,7 +172,7 @@ internal fun DeviceCard(
                     deviceSubtitle(device)?.let {
                         Text(
                             it,
-                            style = V5Theme.type.body.copy(fontSize = 13.sp),
+                            style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                             color = c.textSecondary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -181,7 +185,7 @@ internal fun DeviceCard(
                         lastSeenText(device.lastSeen)?.let {
                             Text(
                                 it,
-                                style = V5Theme.type.tag,
+                                style = StayFocusedTheme.type.tag,
                                 color = c.textSecondary,
                                 modifier = Modifier.testTag(DEVICES_LAST_SEEN_TAG),
                             )
@@ -201,7 +205,7 @@ internal fun DeviceCard(
                     Box(Modifier.size(8.dp).background(c.red, CircleShape).clearAndSetSemantics { })
                     Text(
                         attention,
-                        style = V5Theme.type.label,
+                        style = StayFocusedTheme.type.label,
                         color = c.destructive,
                         modifier = Modifier.testTag(DEVICES_ALERT_TAG),
                     )
@@ -231,10 +235,10 @@ private fun Stat(
     value: String,
     modifier: Modifier = Modifier,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = V5Theme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
-        Text(value, style = V5Theme.type.rule, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, style = StayFocusedTheme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
+        Text(value, style = StayFocusedTheme.type.rule, color = c.ink, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -287,7 +291,7 @@ private fun LinkTile(onClick: () -> Unit) {
         Box(Modifier.fillMaxSize()) {
             Text(
                 stringResource(R.string.devices_link_title),
-                style = V5Theme.type.cardTitle.copy(fontSize = 22.sp),
+                style = StayFocusedTheme.type.cardTitle.copy(fontSize = 22.sp),
                 modifier = Modifier.padding(20.dp),
             )
             Box(
@@ -295,13 +299,13 @@ private fun LinkTile(onClick: () -> Unit) {
                     .align(Alignment.TopEnd)
                     .padding(16.dp)
                     .size(50.dp)
-                    .background(V5Theme.colors.surface, CircleShape),
+                    .background(StayFocusedTheme.colors.surface, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     V5Icons.plus,
                     contentDescription = null,
-                    tint = V5Theme.colors.ink,
+                    tint = StayFocusedTheme.colors.ink,
                     modifier = Modifier.size(19.dp),
                 )
             }
@@ -316,13 +320,13 @@ private fun EmptyDevices() {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 stringResource(R.string.devices_empty_title),
-                style = V5Theme.type.cardTitle,
-                color = V5Theme.colors.ink,
+                style = StayFocusedTheme.type.cardTitle,
+                color = StayFocusedTheme.colors.ink,
             )
             Text(
                 stringResource(R.string.devices_empty_body),
-                style = V5Theme.type.body,
-                color = V5Theme.colors.textSecondary,
+                style = StayFocusedTheme.type.body,
+                color = StayFocusedTheme.colors.textSecondary,
                 textAlign = TextAlign.Start,
             )
         }

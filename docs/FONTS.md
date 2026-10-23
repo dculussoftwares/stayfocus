@@ -1,40 +1,18 @@
 # Fonts
 
-| Role | Design font | Licence | In the repo? | Bundled fallback |
-|---|---|---|---|---|
-| Display | Clash Display 600 | ITF Free Font License | No | Space Grotesk (OFL) |
-| Body | Satoshi 400/500/700/800 | ITF Free Font License | No | Plus Jakarta Sans (OFL) |
-| Labels, numbers | Geist Mono 500/600/700 | SIL OFL 1.1 | Yes | n/a |
-| v5 (all text) | Urbanist 200-700 (variable `wght` 100-900) | SIL OFL 1.1 | Yes, `core/ui/src/main/res/font/urbanist.ttf` | n/a |
+| Role | Font | Licence | In the repo? |
+|---|---|---|---|
+| All text (display, body, labels, numbers) | Urbanist 200-700 (variable `wght` 100-900) | SIL OFL 1.1 | Yes, `core/ui/src/main/res/font/urbanist.ttf` |
 
-## Licence finding (M1-04)
+The design system (`com.dculus.stayfocused.core.ui`, spec in [`docs/design/V5_SPEC.md`](design/V5_SPEC.md)) uses a single
+family, **Urbanist** by Corey Hu, from [Google Fonts](https://fonts.google.com/specimen/Urbanist) (SIL OFL 1.1, so it can
+live in this repo). It is bundled as the variable font `core/ui/src/main/res/font/urbanist.ttf` and loaded at weights 200,
+300, 400, 500, 600 and 700 by `UrbanistFontFamily`. Nothing is downloaded at runtime and there is no fallback, so
+screenshots and devices render the same. The licence is `docs/licenses/Urbanist-OFL.txt`.
 
-Clash Display and Satoshi are Fontshare "closed source" fonts under the
-[ITF Free Font License](https://www.fontshare.com/licenses/itf-ffl) (see also the
-[Fontshare FAQ](https://www.fontshare.com/faq)). They are free to use in apps and products, including
-commercially, but the licence **does not allow redistributing the font files** themselves. Committing them to a
-public GPL-3.0 repository would be redistribution, so **they are not in the repo**. Only Fontshare's "open source"
-fonts are OFL and redistributable; these two are not. Other public repos that committed ITF fonts were asked to remove
-them, e.g. [kollektiv-mc/Kollektiv#40](https://github.com/kollektiv-mc/Kollektiv/issues/40).
+## History
 
-The licence page is rendered with JavaScript and could not be read automatically in full, so a maintainer should read it
-once and confirm this summary. Embedding the fonts in a released APK/AAB is ordinary app use under the licence; that is a
-release-pipeline decision for a later story.
-
-## What the build does
-
-- The OFL substitutes and Geist Mono are bundled in `core/ui/src/main/res/font/` (variable fonts). Their licences are in
-  `docs/licenses/`.
-- `scripts/dev/fetch-fonts.sh` downloads Clash Display and Satoshi into the ignored
-  `core/ui/src/main/assets/fonts/`. At runtime `loadFontFamilies()` uses them when all files are present and
-  otherwise falls back to the substitutes. The project builds and tests (including screenshots) without them.
-- Screenshot baselines are recorded with the substitutes, so CI is deterministic.
-
-## v5 redesign: Urbanist (M11-01)
-
-The v5 design system (`com.dculus.stayfocused.core.ui.v5`) uses a single family, **Urbanist** by Corey Hu, from
-[Google Fonts](https://fonts.google.com/specimen/Urbanist) (SIL OFL 1.1, so it can live in this repo). It is bundled as
-the variable font `core/ui/src/main/res/font/urbanist.ttf` (`wght` 100-900) and loaded at weights 200, 300, 400, 500, 600
-and 700 by `UrbanistFontFamily`. Nothing is downloaded at runtime and there is no fallback, so screenshots and devices
-render the same. The licence is `docs/licenses/Urbanist-OFL.txt`. The fonts in the table above stay until the v2 design
-system is removed (M13-07).
+The v2 design used Clash Display and Satoshi (Fontshare, ITF Free Font License, which does not allow redistributing the
+font files) with Space Grotesk and Plus Jakarta Sans (OFL) as bundled stand-ins, plus Geist Mono. All of them, the
+`scripts/dev/fetch-fonts.sh` download script and their licence texts were removed together with the v2 design system
+(M13-07).

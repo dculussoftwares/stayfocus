@@ -4,8 +4,8 @@ Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a compan
 
 **Before you write code, read:**
 1. `docs/IMPLEMENTATION_PLAN.md`: decisions, module map, workflow, definition of done, conventions.
-2. `design_handoff_stay_focused_phase1/README.md`: screens, behaviour, design tokens (high fidelity, copy is final).
-   For the v5 redesign (M11–M13): `docs/design/V5_SPEC.md` and `design/Stay Focused v5.dc.html` instead; v5 wins over v2.
+2. `docs/design/V5_SPEC.md` and `design/Stay Focused v5.dc.html`: screens, behaviour, design tokens (high fidelity, copy is final).
+   `design_handoff_stay_focused_phase1/` is the superseded v2 handoff, kept as history only.
 3. The GitHub issue you're working on. Each story lists its scope, acceptance criteria and dependencies.
 
 **Rules**

@@ -34,16 +34,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.components.TargetTag
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
-import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
-import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.components.TargetTag
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
 
 const val DESCRIBE_FIELD_TAG = "block_describe_field"
 const val DESCRIBE_BUILD_TAG = "block_describe_build"
@@ -79,7 +79,7 @@ fun DescribeScreen(
     modifier: Modifier = Modifier,
 ) {
     V5Screen(darkContent = false, modifier = modifier) {
-        val c = V5Theme.colors
+        val c = StayFocusedTheme.colors
         Column(
             modifier =
                 Modifier
@@ -88,7 +88,7 @@ fun DescribeScreen(
                     .v5NavigationBarPadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = ScreenPadding),
-            verticalArrangement = Arrangement.spacedBy(V5Theme.spacing.gap12),
+            verticalArrangement = Arrangement.spacedBy(StayFocusedTheme.spacing.gap12),
         ) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 RoundIconButton(
@@ -110,12 +110,12 @@ fun DescribeScreen(
             ) {
                 Text(
                     stringResource(R.string.block_describe_title),
-                    style = V5Theme.type.heading.copy(fontSize = 30.sp, letterSpacing = (-0.01).em),
+                    style = StayFocusedTheme.type.heading.copy(fontSize = 30.sp, letterSpacing = (-0.01).em),
                     color = c.ink,
                 )
                 Text(
                     stringResource(R.string.block_describe_hint),
-                    style = V5Theme.type.body,
+                    style = StayFocusedTheme.type.body,
                     color = c.textSecondary,
                 )
             }
@@ -125,7 +125,7 @@ fun DescribeScreen(
             if (state.error) {
                 Text(
                     stringResource(R.string.block_describe_error),
-                    style = V5Theme.type.body,
+                    style = StayFocusedTheme.type.body,
                     color = c.error,
                     modifier = Modifier.padding(horizontal = 6.dp).testTag(DESCRIBE_ERROR_TAG),
                 )
@@ -138,12 +138,12 @@ fun DescribeScreen(
                     val label = stringResource(res)
                     Text(
                         label,
-                        style = V5Theme.type.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
+                        style = StayFocusedTheme.type.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Medium),
                         color = c.ink,
                         modifier =
                             Modifier
                                 .heightIn(min = 48.dp)
-                                .clip(V5Theme.shapes.pill)
+                                .clip(StayFocusedTheme.shapes.pill)
                                 .background(c.surface)
                                 .clickable(role = Role.Button) { actions.onText(label) }
                                 .padding(horizontal = 14.dp, vertical = 14.dp),
@@ -177,9 +177,9 @@ private fun DescribeField(
     text: String,
     onText: (String) -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val placeholder = stringResource(R.string.block_ai_placeholder)
-    val style = V5Theme.type.heading.copy(fontSize = 21.sp, fontWeight = FontWeight.Light, lineHeight = 28.sp)
+    val style = StayFocusedTheme.type.heading.copy(fontSize = 21.sp, fontWeight = FontWeight.Light, lineHeight = 28.sp)
     BasicTextField(
         value = text,
         onValueChange = { onText(it.take(MAX_SENTENCE)) },

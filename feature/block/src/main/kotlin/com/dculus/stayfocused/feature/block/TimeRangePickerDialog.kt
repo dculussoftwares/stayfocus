@@ -29,10 +29,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.dculus.stayfocused.core.model.TimeRange
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import java.time.LocalTime
 
 const val TIME_PICKER_TAG = "wizard_time_picker"
@@ -49,7 +49,7 @@ fun TimeRangePickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (TimeRange) -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val startState = rememberTimePickerState(initial.start.hour, initial.start.minute, is24Hour = true)
     val endState = rememberTimePickerState(initial.end.hour, initial.end.minute, is24Hour = true)
     var editingEnd by remember { mutableStateOf(false) }
@@ -86,14 +86,14 @@ fun TimeRangePickerDialog(
                 stringResource(
                     if (editingEnd) R.string.block_wizard_picker_end else R.string.block_wizard_picker_start,
                 ),
-                style = V5Theme.type.label,
+                style = StayFocusedTheme.type.label,
                 color = c.textSecondary,
             )
             TimePicker(state = if (editingEnd) endState else startState, colors = colors)
             if (same) {
                 Text(
                     stringResource(R.string.block_wizard_picker_same_time),
-                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                     color = c.destructive,
                 )
             }

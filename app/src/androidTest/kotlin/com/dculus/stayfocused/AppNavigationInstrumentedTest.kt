@@ -13,8 +13,8 @@ import androidx.test.core.app.ActivityScenario
 import com.dculus.stayfocused.core.data.repository.SettingsRepository
 import com.dculus.stayfocused.core.testing.ScenarioCleanupRule
 import com.dculus.stayfocused.core.testing.ScreenshotOnFailureRule
-import com.dculus.stayfocused.core.ui.v5.components.V5_TAB_BAR_TAG
-import com.dculus.stayfocused.core.ui.v5.components.v5TabTag
+import com.dculus.stayfocused.core.ui.components.V5_TAB_BAR_TAG
+import com.dculus.stayfocused.core.ui.components.v5TabTag
 import com.dculus.stayfocused.navigation.MainTab
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest

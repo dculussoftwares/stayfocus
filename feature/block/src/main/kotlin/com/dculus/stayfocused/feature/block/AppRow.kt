@@ -26,10 +26,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.formatMinutes
-import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
-import com.dculus.stayfocused.core.ui.v5.components.V5Card
-import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.components.AppIconTile
+import com.dculus.stayfocused.core.ui.components.V5Card
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Screen
 
 /** One launchable app: "{time} · {n} OPENS" and the LOCK / LOCKED pill. */
 @Composable
@@ -37,7 +37,7 @@ internal fun AppRow(
     app: AppRowUi,
     onToggle: () -> Unit,
 ) {
-    val c = V5Theme.colors
+    val c = StayFocusedTheme.colors
     val pillDescription =
         stringResource(
             if (app.locked) R.string.block_app_unlock_description else R.string.block_app_lock_description,
@@ -52,14 +52,14 @@ internal fun AppRow(
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     app.label,
-                    style = V5Theme.type.bodyL,
+                    style = StayFocusedTheme.type.bodyL,
                     color = c.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
                     stringResource(R.string.block_app_line, formatMinutes(app.mins), app.opens),
-                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    style = StayFocusedTheme.type.body.copy(fontSize = 13.sp),
                     color = c.textSecondary,
                 )
             }
@@ -74,11 +74,11 @@ internal fun AppRow(
             ) {
                 Text(
                     stringResource(if (app.locked) R.string.block_app_locked else R.string.block_app_lock),
-                    style = V5Theme.type.label,
+                    style = StayFocusedTheme.type.label,
                     color = if (app.locked) c.surface else c.ink,
                     modifier =
                         Modifier
-                            .clip(V5Theme.shapes.pill)
+                            .clip(StayFocusedTheme.shapes.pill)
                             .background(if (app.locked) c.ink else c.track)
                             .padding(horizontal = 16.dp, vertical = 8.dp),
                 )

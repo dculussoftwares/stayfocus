@@ -65,9 +65,9 @@ import com.dculus.stayfocused.core.testing.FakeLockedAppsRepository
 import com.dculus.stayfocused.core.testing.FakeSettingsRepository
 import com.dculus.stayfocused.core.ui.components.NavPlaceholderScreen
 import com.dculus.stayfocused.core.ui.components.SF_PLACEHOLDER_LIST_TAG
+import com.dculus.stayfocused.core.ui.components.V5_TAB_BAR_TAG
+import com.dculus.stayfocused.core.ui.components.v5TabTag
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.v5.components.V5_TAB_BAR_TAG
-import com.dculus.stayfocused.core.ui.v5.components.v5TabTag
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import com.dculus.stayfocused.core.usage.InstalledAppsRepository
 import com.dculus.stayfocused.core.usage.UsageAccess

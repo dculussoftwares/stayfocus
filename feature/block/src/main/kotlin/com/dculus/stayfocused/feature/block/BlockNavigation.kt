@@ -28,7 +28,7 @@ import com.dculus.stayfocused.core.navigation.Block
 import com.dculus.stayfocused.core.navigation.BlockDescribe
 import com.dculus.stayfocused.core.navigation.BlockWizard
 import com.dculus.stayfocused.core.ui.components.ToastController
-import com.dculus.stayfocused.core.ui.v5.components.V5ToastHost
+import com.dculus.stayfocused.core.ui.components.V5ToastHost
 import kotlinx.coroutines.flow.MutableStateFlow
 
 fun NavController.navigateToBlock(navOptions: NavOptions? = null) = navigate(Block, navOptions)

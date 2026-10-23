@@ -1,6 +1,6 @@
 package com.dculus.stayfocused.feature.insights
 
-import com.dculus.stayfocused.core.ui.v5.charts.GlassBarMode
+import com.dculus.stayfocused.core.ui.charts.GlassBarMode
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import java.time.LocalDate

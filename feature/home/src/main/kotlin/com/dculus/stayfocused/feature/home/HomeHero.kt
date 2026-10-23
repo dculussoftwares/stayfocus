@@ -38,17 +38,17 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.GoalNote
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.model.v5Duration
-import com.dculus.stayfocused.core.ui.v5.charts.DotGrid
-import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.v5.components.GlassTile
-import com.dculus.stayfocused.core.ui.v5.components.GlowCard
-import com.dculus.stayfocused.core.ui.v5.components.PillButton
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
-import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
-import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
-import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
-import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.charts.DotGrid
+import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.GlassTile
+import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.PillButton
+import com.dculus.stayfocused.core.ui.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.icons.V5Icons
+import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 internal const val HOME_AVATAR_TAG = "home_avatar"
 internal const val HOME_BELL_TAG = "home_bell"
@@ -70,7 +70,7 @@ internal fun HomeHeader(
     onBell: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = V5Theme.colors
+    val colors = StayFocusedTheme.colors
     Row(
         modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, bottom = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -80,8 +80,10 @@ internal fun HomeHeader(
         Box(
             Modifier
                 .testTag(HOME_AVATAR_TAG)
-                .sizeIn(minWidth = V5Theme.spacing.minTouchTarget, minHeight = V5Theme.spacing.minTouchTarget)
-                .clip(CircleShape)
+                .sizeIn(
+                    minWidth = StayFocusedTheme.spacing.minTouchTarget,
+                    minHeight = StayFocusedTheme.spacing.minTouchTarget,
+                ).clip(CircleShape)
                 .clickable(role = Role.Button, onClick = onAvatar)
                 .semantics { contentDescription = avatarDescription },
             contentAlignment = Alignment.Center,
@@ -91,7 +93,7 @@ internal fun HomeHeader(
                 if (initial != null) {
                     Text(
                         initial,
-                        style = V5Theme.type.bodyL.copy(fontSize = 17.sp),
+                        style = StayFocusedTheme.type.bodyL.copy(fontSize = 17.sp),
                         color = colors.ink,
                         modifier = Modifier.clearAndSetSemantics { },
                     )
@@ -103,7 +105,7 @@ internal fun HomeHeader(
         Column(Modifier.weight(1f)) {
             Text(
                 header.dateLabel,
-                style = V5Theme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                style = StayFocusedTheme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
                 color = colors.textSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -111,7 +113,7 @@ internal fun HomeHeader(
             Text(
                 header.firstName?.let { stringResource(R.string.home_greeting_named, it) }
                     ?: stringResource(R.string.home_greeting),
-                style = V5Theme.type.cardTitle.copy(fontSize = 21.sp),
+                style = StayFocusedTheme.type.cardTitle.copy(fontSize = 21.sp),
                 color = colors.ink,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -168,8 +170,8 @@ internal fun HomeHero(
         ) {
             Text(
                 stringResource(R.string.home_hero_title),
-                style = V5Theme.type.label,
-                color = V5Theme.colors.onGradient,
+                style = StayFocusedTheme.type.label,
+                color = StayFocusedTheme.colors.onGradient,
             )
             when (gauge) {
                 is GaugeUi.Ready -> HeroReady(gauge, onOpenInsights)
@@ -184,7 +186,7 @@ private fun HeroReady(
     gauge: GaugeUi.Ready,
     onOpenInsights: () -> Unit,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     val note = goalNoteText(gauge)
     Column(
         Modifier.fillMaxWidth(),
@@ -199,7 +201,12 @@ private fun HeroReady(
                 color = white,
             )
         }
-        Text(note, style = V5Theme.type.bodyL.copy(fontSize = 15.sp), color = white, textAlign = TextAlign.Center)
+        Text(
+            note,
+            style = StayFocusedTheme.type.bodyL.copy(fontSize = 15.sp),
+            color = white,
+            textAlign = TextAlign.Center,
+        )
         DotGrid(
             values = gauge.hourlyMins,
             max = DOT_GRID_MAX_MINS,
@@ -234,7 +241,7 @@ private fun BlockedTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     GlassTile(
         modifier.testTag(HOME_BLOCKED_TILE_TAG),
         onClick = onClick,
@@ -247,7 +254,7 @@ private fun BlockedTile(
             TileValue(count.toString(), stringResource(R.string.home_blocked_unit))
             Text(
                 stringResource(R.string.home_blocked_caption),
-                style = V5Theme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                style = StayFocusedTheme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
                 color = white,
             )
         }
@@ -260,7 +267,7 @@ private fun MostUsedTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     GlassTile(
         modifier.testTag(HOME_MOST_USED_TILE_TAG),
         onClick = onClick,
@@ -276,14 +283,14 @@ private fun MostUsedTile(
                         ?.firstOrNull()
                         ?.uppercase()
                         .orEmpty(),
-                    style = V5Theme.type.label.copy(fontWeight = FontWeight.Bold),
+                    style = StayFocusedTheme.type.label.copy(fontWeight = FontWeight.Bold),
                     color = white,
                 )
             }
             TileValue((mostUsed?.mins ?: 0).toString(), stringResource(R.string.home_most_used_unit))
             Text(
                 mostUsed?.label.orEmpty(),
-                style = V5Theme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
+                style = StayFocusedTheme.type.label.copy(fontSize = 13.sp, fontWeight = FontWeight.Medium),
                 color = white,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -302,7 +309,7 @@ private fun TileHeader(
             Modifier.size(34.dp).background(Color.White.copy(alpha = 0.25f), CircleShape),
             contentAlignment = Alignment.Center,
         ) { icon() }
-        Text(label, style = V5Theme.type.label, color = V5Theme.colors.onGradient, maxLines = 1)
+        Text(label, style = StayFocusedTheme.type.label, color = StayFocusedTheme.colors.onGradient, maxLines = 1)
     }
 }
 
@@ -312,15 +319,15 @@ private fun TileValue(
     unit: String,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
-        DotMatrixText(value, contentDescription = value, dotSize = 5.dp, color = V5Theme.colors.onGradient)
-        Text(unit, style = V5Theme.type.label, color = V5Theme.colors.onGradient)
+        DotMatrixText(value, contentDescription = value, dotSize = 5.dp, color = StayFocusedTheme.colors.onGradient)
+        Text(unit, style = StayFocusedTheme.type.label, color = StayFocusedTheme.colors.onGradient)
     }
 }
 
 /** Usage access is off: nothing to measure. Keeps the shipped prompt (copy unchanged). */
 @Composable
 private fun HeroNoAccess(onAllowUsageAccess: () -> Unit) {
-    val white = V5Theme.colors.onGradient
+    val white = StayFocusedTheme.colors.onGradient
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -328,13 +335,13 @@ private fun HeroNoAccess(onAllowUsageAccess: () -> Unit) {
     ) {
         Text(
             stringResource(R.string.home_usage_off_title),
-            style = V5Theme.type.cardTitle,
+            style = StayFocusedTheme.type.cardTitle,
             color = white,
             textAlign = TextAlign.Center,
         )
         Text(
             stringResource(R.string.home_usage_off_body),
-            style = V5Theme.type.body,
+            style = StayFocusedTheme.type.body,
             color = white,
             textAlign = TextAlign.Center,
         )
