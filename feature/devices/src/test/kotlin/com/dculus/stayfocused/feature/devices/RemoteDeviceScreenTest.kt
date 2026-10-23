@@ -1,6 +1,5 @@
 package com.dculus.stayfocused.feature.devices
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
@@ -21,7 +20,6 @@ import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.sync.RemoteBlock
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.github.takahirom.roborazzi.captureRoboImage
 import org.junit.Rule
 import org.junit.Test
@@ -65,7 +63,13 @@ class RemoteDeviceScreenTest {
         blocks: List<RemoteBlock> = this.blocks,
         apps: List<RemoteAppRow> = this.apps,
     ) = RemoteUiState.Ready(
-        device = device(online = online).copy(focusEndsAt = focusEndsAt, lastSeen = now.minusSeconds(3 * 3600L)),
+        device =
+            device(online = online).copy(
+                model = "Pixel 7a",
+                hourlyMins = List(24) { if (it in 15..21) 20 else 0 },
+                focusEndsAt = focusEndsAt,
+                lastSeen = now.minusSeconds(3 * 3600L),
+            ),
         alerts = alerts,
         requests = requests,
         blocks = blocks,
@@ -78,31 +82,34 @@ class RemoteDeviceScreenTest {
         actions: RemoteActions = RemoteActions(),
     ) = composeRule.setContent {
         CompositionLocalProvider(LocalInspectionMode provides true) {
-            StayFocusedTheme {
-                Box(Modifier.width(360.dp).height(1400.dp).background(StayFocusedTheme.colors.background)) {
-                    RemoteDeviceScreen(state, { now }, actions)
-                }
+            Box(Modifier.width(360.dp).height(1400.dp)) {
+                RemoteDeviceScreen(state, { now }, actions)
             }
         }
     }
 
-    private val accessibilityAlert = RemoteAlertCard("a1", TamperKind.PERMISSION_LOST, "accessibility", "10:42")
+    private val accessibilityAlert =
+        RemoteAlertCard("a1", TamperKind.PERMISSION_LOST, "accessibility", "10:42", agoMins = 4)
     private val askForMore = RemoteRequestCard("r1", "Instagram", 15, 2)
 
     @Test
     fun onlineHeaderShowsBatteryAppAndTodaysTotal() {
         show(ready())
         composeRule.onNodeWithText("Aarav's phone").assertIsDisplayed()
-        composeRule.onNodeWithText("ONLINE · 64% · USING YOUTUBE").assertIsDisplayed()
-        composeRule.onNodeWithText("TODAY · 2H 27M").assertIsDisplayed()
-        composeRule.onNodeWithText("New block for Aarav's phone").assertIsDisplayed()
+        composeRule.onNodeWithText("Pixel 7a · 64% battery").assertIsDisplayed()
+        composeRule.onNodeWithText("Online").assertIsDisplayed()
+        composeRule.onNodeWithText("Screen time today").assertIsDisplayed()
+        composeRule.onNodeWithText("Using YouTube now").assertIsDisplayed()
+        composeRule.onNodeWithText("Blocks on this phone").assertIsDisplayed()
+        composeRule.onNodeWithText("New block").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteOnline.png")
     }
 
     @Test
     fun offlineHeaderHidesTheAppInUse() {
         show(ready(online = false))
-        composeRule.onNodeWithText("OFFLINE · 64% · LAST SEEN 3 H AGO").assertIsDisplayed()
+        composeRule.onNodeWithText("Pixel 7a · 64% battery · Last seen 3 h ago").assertIsDisplayed()
+        composeRule.onNodeWithText("Using YouTube now").assertDoesNotExist()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteOffline.png")
     }
 
@@ -114,8 +121,12 @@ class RemoteDeviceScreenTest {
             ready(alerts = listOf(accessibilityAlert)),
             RemoteActions(onRemind = { reminded += it }, onDismiss = { dismissed += it }),
         )
-        composeRule.onNodeWithText("Accessibility turned off · 10:42").assertIsDisplayed()
-        composeRule.onNodeWithText("Blocking is paused on this phone until it's back on.").assertIsDisplayed()
+        composeRule.onNodeWithText("Protection off").assertIsDisplayed()
+        composeRule.onNodeWithText("4 min ago").assertIsDisplayed()
+        composeRule
+            .onNodeWithText("Accessibility was turned off on Aarav's phone. Blocks are paused until it's back on.")
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Send reminder").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteAlert.png")
         composeRule.onNodeWithTag(REMOTE_REMIND_TAG).performClick()
         composeRule.onNodeWithTag(REMOTE_DISMISS_TAG).performClick()
@@ -125,8 +136,8 @@ class RemoteDeviceScreenTest {
 
     @Test
     fun anAlertThatIsNotAPermissionOnlyOffersDismiss() {
-        show(ready(alerts = listOf(RemoteAlertCard("a2", TamperKind.UNLINKED, null, "09:00"))))
-        composeRule.onNodeWithText("Phone was unlinked · 09:00").assertIsDisplayed()
+        show(ready(alerts = listOf(RemoteAlertCard("a2", TamperKind.UNLINKED, null, "09:00", agoMins = 90))))
+        composeRule.onNodeWithText("Phone was unlinked").assertIsDisplayed()
         composeRule.onNodeWithTag(REMOTE_REMIND_TAG).assertDoesNotExist()
     }
 
@@ -134,37 +145,63 @@ class RemoteDeviceScreenTest {
     fun unlockRequestCardOffersFourChoices() {
         val decisions = mutableListOf<Int>()
         show(ready(requests = listOf(askForMore)), RemoteActions(onDecide = { _, mins -> decisions += mins }))
-        composeRule.onNodeWithText("REQUEST · 2 MIN AGO").assertIsDisplayed()
-        composeRule.onNodeWithText("15 more minutes of Instagram?").assertIsDisplayed()
+        composeRule.onNodeWithText("Request").assertIsDisplayed()
+        composeRule.onNodeWithText("2 min ago").assertIsDisplayed()
+        composeRule.onNodeWithText("Aarav's phone wants 15 more minutes on Instagram.").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteRequest.png")
-        listOf("15m", "30m", "1h", "NO").forEach { composeRule.onNodeWithText(it).performClick() }
+        listOf("15m", "30m", "1h", "No").forEach { composeRule.onNodeWithText(it).performClick() }
         assertEquals(listOf(15, 30, 60, 0), decisions)
     }
 
     @Test
-    fun idleFocusCardStartsASession() {
+    fun idleFocusTileStartsAnOfficialTwentyFiveMinuteSessionAndTheExtrasStartMore() {
         val started = mutableListOf<Int>()
         show(ready(), RemoteActions(onStartFocus = { started += it }))
-        composeRule.onNodeWithText("START A FOCUS SESSION").assertIsDisplayed()
-        listOf(25, 50, 90).forEach { composeRule.onNodeWithTag(remoteFocusTag(it)).performClick() }
+        composeRule.onNodeWithText("Focus 25 min").assertIsDisplayed()
+        composeRule.onNodeWithText("Start a study session").assertIsDisplayed()
+        composeRule.onNodeWithTag(REMOTE_FOCUS_TAG).performClick()
+        listOf(50, 90).forEach { composeRule.onNodeWithTag(remoteFocusTag(it)).performClick() }
         assertEquals(listOf(25, 50, 90), started)
     }
 
     @Test
-    fun runningFocusCardShowsTheCountdownAndStops() {
+    fun runningFocusTileShowsTheCountdownAndStops() {
         var stops = 0
         show(ready(focusEndsAt = now.plusSeconds(12 * 60 + 5)), RemoteActions(onStopFocus = { stops++ }))
-        composeRule.onNodeWithText("FOCUS SESSION RUNNING").assertIsDisplayed()
-        composeRule.onNodeWithText("12:05").assertIsDisplayed()
+        composeRule.onNodeWithText("Focus is on").assertIsDisplayed()
+        composeRule.onNodeWithText("12:05 left · tap to stop").assertIsDisplayed()
+        composeRule.onNodeWithTag(remoteFocusTag(50)).assertDoesNotExist()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteFocusRunning.png")
         composeRule.onNodeWithTag(REMOTE_FOCUS_STOP_TAG).performClick()
         assertEquals(1, stops)
     }
 
     @Test
-    fun aFocusSessionThatAlreadyEndedShowsTheStartButtonsAgain() {
+    fun aFocusSessionThatAlreadyEndedShowsTheStartTileAgain() {
         show(ready(focusEndsAt = now.minusSeconds(5)))
-        composeRule.onNodeWithText("START A FOCUS SESSION").assertIsDisplayed()
+        composeRule.onNodeWithText("Focus 25 min").assertIsDisplayed()
+    }
+
+    @Test
+    fun lockTileLocksEveryApp() {
+        var locks = 0
+        show(ready(), RemoteActions(onLockAll = { locks++ }))
+        composeRule.onNodeWithText("Lock all apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Calls still work").assertIsDisplayed()
+        composeRule.onNodeWithTag(REMOTE_LOCK_ALL_TAG).performClick()
+        assertEquals(1, locks)
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteLocks.png")
+    }
+
+    @Test
+    fun lockTileOfAnAllLockedPhoneUnlocks() {
+        var unlocks = 0
+        val locked = ready().let { it.copy(device = it.device.copy(allLocked = true)) }
+        show(locked, RemoteActions(onUnlockAll = { unlocks++ }))
+        composeRule.onNodeWithText("Unlock apps").assertIsDisplayed()
+        composeRule.onNodeWithText("Everything is locked now").assertIsDisplayed()
+        composeRule.onNodeWithTag(REMOTE_LOCK_ALL_TAG).performClick()
+        assertEquals(1, unlocks)
     }
 
     @Test
@@ -187,7 +224,6 @@ class RemoteDeviceScreenTest {
         composeRule.onNodeWithTag(remoteLockTag("a.yt")).performClick()
         composeRule.onNodeWithTag(remoteLockTag("a.ig")).performClick()
         assertEquals(listOf("a.yt" to true, "a.ig" to false), locks)
-        composeRule.onRoot().captureRoboImage("src/test/screenshots/RemoteLocks.png")
     }
 
     @Test

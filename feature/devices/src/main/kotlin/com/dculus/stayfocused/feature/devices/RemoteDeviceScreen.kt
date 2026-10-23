@@ -3,7 +3,6 @@
 package com.dculus.stayfocused.feature.devices
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,9 +14,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -30,22 +31,21 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.TamperKind
 import com.dculus.stayfocused.core.model.formatMinutes
@@ -53,18 +53,32 @@ import com.dculus.stayfocused.core.model.mmss
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.sync.RemoteBlock
-import com.dculus.stayfocused.core.ui.components.IconTile
-import com.dculus.stayfocused.core.ui.components.LedDot
-import com.dculus.stayfocused.core.ui.components.SfToggle
-import com.dculus.stayfocused.core.ui.components.TypeChip
 import com.dculus.stayfocused.core.ui.components.daysLabel
-import com.dculus.stayfocused.core.ui.icon.AppIcon
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.charts.DotGrid
+import com.dculus.stayfocused.core.ui.v5.components.AppIconTile
+import com.dculus.stayfocused.core.ui.v5.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.v5.components.GlowCard
 import com.dculus.stayfocused.core.ui.v5.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.v5.components.OnlinePill
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.v5.components.StatusTag
+import com.dculus.stayfocused.core.ui.v5.components.StatusTagKind
+import com.dculus.stayfocused.core.ui.v5.components.V5Card
+import com.dculus.stayfocused.core.ui.v5.components.V5Toggle
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Gradients
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import kotlinx.coroutines.delay
 import java.time.Instant
+import java.util.Locale
 
 internal const val REMOTE_LIST_TAG = "remote_list"
+internal const val REMOTE_HERO_TAG = "remote_hero"
+internal const val REMOTE_LOCK_ALL_TAG = "remote_lock_all"
 internal const val REMOTE_STATUS_TAG = "remote_status"
 internal const val REMOTE_ALERT_TAG = "remote_alert"
 internal const val REMOTE_REMIND_TAG = "remote_remind"
@@ -93,6 +107,8 @@ internal data class RemoteActions(
     val onStopFocus: () -> Unit = {},
     val onBlockEnabled: (blockId: String, enabled: Boolean) -> Unit = { _, _ -> },
     val onNewBlock: () -> Unit = {},
+    val onLockAll: () -> Unit = {},
+    val onUnlockAll: () -> Unit = {},
     val onLock: (app: RemoteAppRow, locked: Boolean) -> Unit = { _, _ -> },
     val onUnlink: () -> Unit = {},
 )
@@ -142,6 +158,8 @@ internal fun RemoteDeviceRoute(
                 onStopFocus = viewModel::stopFocus,
                 onBlockEnabled = viewModel::setBlockEnabled,
                 onNewBlock = { ready?.let { onNewBlock(it.device.id) } },
+                onLockAll = viewModel::lockAll,
+                onUnlockAll = viewModel::unlockAll,
                 onLock = { app, locked -> viewModel.setLocked(app.label, app.pkg, locked) },
                 onUnlink = viewModel::unlink,
             ),
@@ -152,22 +170,33 @@ private fun RemoteEvent.text(r: android.content.res.Resources): String =
     when (this) {
         is RemoteEvent.AppLocked -> r.getString(R.string.remote_toast_locked, app, device)
         is RemoteEvent.AppUnlocked -> r.getString(R.string.remote_toast_unlocked, app, device)
+        is RemoteEvent.AllLocked -> r.getString(R.string.remote_toast_all_locked, device)
+        RemoteEvent.AllUnlocked -> r.getString(R.string.remote_toast_all_unlocked)
         is RemoteEvent.FocusStarted -> r.getString(R.string.remote_toast_focus, device)
+        is RemoteEvent.FocusStopped -> r.getString(R.string.remote_toast_focus_stopped)
         is RemoteEvent.Reminded -> r.getString(R.string.remote_toast_reminded, device)
         is RemoteEvent.Offline -> r.getString(R.string.remote_toast_offline, device)
         is RemoteEvent.Failed -> r.getString(R.string.remote_toast_failed, device)
-        is RemoteEvent.RequestApproved -> r.getString(R.string.remote_toast_approved, label, app)
+        is RemoteEvent.RequestApproved -> r.getString(R.string.remote_toast_approved, device, minutesText(r, mins))
         RemoteEvent.RequestDenied -> r.getString(R.string.remote_toast_denied)
-        is RemoteEvent.Unlinked -> r.getString(R.string.remote_toast_unlinked, device)
+        is RemoteEvent.Unlinked -> r.getString(R.string.remote_toast_unlinked)
         is RemoteEvent.UnlinkFailed -> r.getString(R.string.remote_toast_unlink_failed, device)
     }
+
+/** Prototype `fm`: "30 min", "1h", "1h 30m". */
+private fun minutesText(
+    r: android.content.res.Resources,
+    mins: Int,
+): String = if (mins < 60) r.getString(R.string.remote_minutes, mins) else formatMinutes(mins).replace(" 0m", "")
 
 @Composable
 internal fun RemoteDeviceScreen(
     state: RemoteUiState,
     now: () -> Instant,
     actions: RemoteActions,
-) = CompositionLocalProvider(LocalNow provides now) { RemoteDeviceList(state, now, actions) }
+) = CompositionLocalProvider(LocalNow provides now) {
+    V5Screen(darkContent = false) { RemoteDeviceList(state, now, actions) }
+}
 
 @Composable
 private fun RemoteDeviceList(
@@ -175,34 +204,32 @@ private fun RemoteDeviceList(
     now: () -> Instant,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
+    val spacing = V5Theme.spacing
     val ready = state as? RemoteUiState.Ready
     LazyColumn(
-        Modifier.fillMaxSize().background(c.background).testTag(REMOTE_LIST_TAG),
+        Modifier.fillMaxSize().testTag(REMOTE_LIST_TAG),
         contentPadding =
             PaddingValues(
-                start = 18.dp,
-                end = 18.dp,
-                top = 6.dp,
-                bottom =
-                    24.dp + LocalTabBarPadding.current,
+                start = spacing.screenTabs,
+                end = spacing.screenTabs,
+                // The prototype's 56 dp top padding includes its 46 dp fake status bar.
+                top = 10.dp,
+                bottom = 40.dp + LocalTabBarPadding.current,
             ),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(spacing.gap10),
     ) {
         item { Header(ready, actions.onBack) }
         if (ready == null) return@LazyColumn
-        items(ready.alerts, key = { "alert_${it.id}" }) { AlertCard(it, actions) }
-        items(ready.requests, key = { "request_${it.id}" }) { RequestCard(it, actions) }
-        item { FocusCard(ready.device.focusEndsAt, now, actions) }
-        item { SectionRow(stringResource(R.string.remote_blocks_header), null) }
+        item { Hero(ready) }
+        items(ready.alerts, key = { "alert_${it.id}" }) { AlertCard(it, ready.device.name, actions) }
+        items(ready.requests, key = { "request_${it.id}" }) { RequestCard(it, ready.device.name, actions) }
+        item { Tiles(ready.device.allLocked, ready.device.focusEndsAt, now, actions) }
+        // v5-extra: M13-05 (focus 50 and 90 minutes)
+        item { ExtraFocusRow(ready.device.focusEndsAt, now, actions) }
+        item { BlocksHeader(actions.onNewBlock) }
         items(ready.blocks, key = { "block_${it.rule.id}" }) { BlockRow(it, actions) }
-        item { NewBlockButton(ready.device.name, actions.onNewBlock) }
-        item {
-            SectionRow(
-                stringResource(R.string.remote_today_header, formatMinutes(ready.todayMins ?: 0).uppercase()),
-                stringResource(R.string.remote_lock_header),
-            )
-        }
+        // v5-extra: M13-05 (per-app lock list)
+        item { AppsHeader(ready.todayMins ?: 0) }
         items(ready.apps, key = { "app_${it.pkg}" }) { AppRow(it, actions) }
         item { UnlinkButton(ready.unlinking, actions.onUnlink) }
     }
@@ -213,167 +240,153 @@ private fun Header(
     ready: RemoteUiState.Ready?,
     onBack: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
+    val c = V5Theme.colors
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        LinkBackButton(onBack, light = false)
+        RoundIconButton(V5Icons.back, stringResource(R.string.link_back), onBack, Modifier.testTag(LINK_BACK_TAG))
         if (ready != null) {
             val device = ready.device
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(Modifier.weight(1f)) {
                 Text(
                     device.name,
-                    style = StayFocusedTheme.type.title.copy(fontSize = 22.sp),
-                    color = c.text,
+                    style = V5Theme.type.cardTitle.copy(fontSize = 22.sp),
+                    color = c.ink,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val tone = if (device.online) c.accent else c.tertiary
-                    LedDot(color = tone, pulse = device.online)
+                subtitle(ready)?.let {
                     Text(
-                        statusLine(ready),
-                        style = StayFocusedTheme.type.label.copy(fontSize = 10.5.sp, fontWeight = FontWeight.Medium),
-                        color = tone,
+                        it,
+                        style = V5Theme.type.body.copy(fontSize = 13.sp),
+                        color = c.textSecondary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.testTag(REMOTE_STATUS_TAG),
                     )
                 }
             }
+            OnlinePill(online = device.online)
         }
     }
 }
 
-/** "ONLINE · 64% · USING YOUTUBE"; an offline phone shows no app but when it was last seen. */
+/** "Pixel 7a · 74% battery"; an offline phone also says when it was last seen (v5-extra: M13-05). */
 @Composable
-private fun statusLine(ready: RemoteUiState.Ready): String {
+private fun subtitle(ready: RemoteUiState.Ready): String? {
     val device = ready.device
-    val parts =
-        mutableListOf(
-            stringResource(if (device.online) R.string.remote_status_online else R.string.remote_status_offline),
-        )
-    device.battery?.let { parts += "$it%" }
-    if (device.online) device.currentApp?.let { parts += stringResource(R.string.remote_status_using, it) }
+    val parts = mutableListOf<String>()
+    if (device.model.isNotBlank()) parts += device.model
+    device.battery?.let { parts += stringResource(R.string.remote_battery, it) }
     if (!device.online) lastSeenText(device.lastSeen)?.let { parts += it }
-    return parts.joinToString(" · ").uppercase()
+    return parts.takeIf { it.isNotEmpty() }?.joinToString(" · ")
 }
+
+private fun clock(mins: Int) = String.format(Locale.ROOT, "%d:%02d", mins / 60, mins % 60)
+
+private const val HOUR_DOTS_MAX_MINS = 25
+
+@Composable
+private fun Hero(ready: RemoteUiState.Ready) {
+    val white = V5Theme.colors.onGradient
+    val total = ready.todayMins ?: 0
+    GlowCard(
+        V5Gradients.pinkHero,
+        Modifier.fillMaxWidth().testTag(REMOTE_HERO_TAG),
+        padding = 0.dp,
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 20.dp, bottom = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text(stringResource(R.string.remote_hero_title), style = V5Theme.type.label, color = white)
+            Box(Modifier.height(56.dp), contentAlignment = Alignment.Center) {
+                DotMatrixText(clock(total), formatMinutes(total), dotSize = 8.dp, color = white)
+            }
+            val using = ready.device.currentApp?.takeIf { ready.device.online }
+            if (using != null) {
+                Text(
+                    stringResource(R.string.remote_hero_using, using),
+                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    color = white,
+                    textAlign = TextAlign.Center,
+                )
+            }
+            ready.device.hourlyMins?.let {
+                DotGrid(
+                    values = it,
+                    max = HOUR_DOTS_MAX_MINS,
+                    color = white,
+                    contentDescription = stringResource(R.string.remote_dots_description),
+                    modifier = Modifier.padding(horizontal = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun agoText(mins: Long): String =
+    when {
+        mins < 1 -> stringResource(R.string.remote_ago_now)
+        mins < 60 -> stringResource(R.string.remote_ago_min, mins)
+        mins < 24 * 60 -> stringResource(R.string.remote_ago_hour, mins / 60)
+        else -> stringResource(R.string.remote_ago_day, mins / (24 * 60))
+    }
 
 @Composable
 private fun AlertCard(
     alert: RemoteAlertCard,
+    deviceName: String,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(20.dp)
-    val title =
-        stringResource(
-            R.string.remote_alert_title,
-            when (alert.kind) {
-                TamperKind.PERMISSION_LOST -> {
-                    stringResource(
-                        if (alert.permission.equals("accessibility", ignoreCase = true)) {
-                            R.string.devices_alert_accessibility
-                        } else {
-                            R.string.devices_alert_permission
-                        },
-                    )
-                }
-
-                TamperKind.UNLINKED -> {
-                    stringResource(R.string.devices_alert_unlinked)
-                }
-
-                TamperKind.OFFLINE -> {
-                    stringResource(R.string.devices_alert_offline)
-                }
-            },
-            alert.time,
-        )
-    Column(
-        Modifier
-            .testTag(REMOTE_ALERT_TAG)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(c.alert.copy(alpha = 0.10f))
-            .border(1.dp, c.alert.copy(alpha = 0.35f), shape)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.Top) {
-            Box(
-                Modifier
-                    .padding(
-                        top = 6.dp,
-                    ).size(8.dp)
-                    .background(c.alert, RoundedCornerShape(4.dp))
-                    .clearAndSetSemantics { },
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(
-                    title,
-                    style = StayFocusedTheme.type.body.copy(fontSize = 14.5.sp, fontWeight = FontWeight.ExtraBold),
-                    color = c.alertText,
-                )
-                if (alert.kind == TamperKind.PERMISSION_LOST) {
-                    Text(
-                        stringResource(R.string.remote_alert_body),
-                        style = StayFocusedTheme.type.body.copy(fontSize = 13.sp, lineHeight = 19.sp),
-                        color = c.cameraPrompt,
-                    )
-                }
-            }
-        }
-        Row(Modifier.padding(start = 18.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (alert.kind == TamperKind.PERMISSION_LOST) {
-                SmallButton(
-                    stringResource(R.string.remote_alert_remind),
-                    background = c.alert,
-                    content = c.onAccent,
-                    onClick = { actions.onRemind(alert) },
-                    modifier = Modifier.testTag(REMOTE_REMIND_TAG),
+    val c = V5Theme.colors
+    val permission = alert.kind == TamperKind.PERMISSION_LOST
+    val body =
+        when (alert.kind) {
+            TamperKind.PERMISSION_LOST -> {
+                stringResource(
+                    if (alert.permission.equals("accessibility", ignoreCase = true)) {
+                        R.string.remote_alert_accessibility
+                    } else {
+                        R.string.remote_alert_permission
+                    },
+                    deviceName,
                 )
             }
-            SmallButton(
-                stringResource(R.string.remote_alert_dismiss),
-                background = Color.Transparent,
-                content = c.cameraPrompt,
-                onClick = { actions.onDismiss(alert) },
-                modifier = Modifier.testTag(REMOTE_DISMISS_TAG),
-            )
-        }
-    }
-}
 
-@Composable
-private fun SmallButton(
-    text: String,
-    background: Color,
-    content: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier
-            .height(48.dp)
-            .clip(RoundedCornerShape(10.dp))
-            .clickable(role = Role.Button, onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Box(
-            Modifier
-                .height(34.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(background)
-                .padding(horizontal = 14.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                text,
-                style = StayFocusedTheme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.ExtraBold),
-                color = content,
-            )
+            // v5-extra: M13-05 (the other alert kinds keep their shipped line)
+            TamperKind.UNLINKED -> {
+                stringResource(R.string.devices_alert_unlinked)
+            }
+
+            TamperKind.OFFLINE -> {
+                stringResource(R.string.devices_alert_offline)
+            }
+        }
+    V5Card(Modifier.fillMaxWidth().testTag(REMOTE_ALERT_TAG), radius = 30.dp, padding = 16.dp) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (permission) StatusTag(StatusTagKind.ProtectionOff)
+                Text(agoText(alert.agoMins), style = V5Theme.type.body.copy(fontSize = 13.sp), color = c.textSecondary)
+            }
+            Text(body, style = V5Theme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp), color = c.ink)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (permission) {
+                    PillButton(
+                        stringResource(R.string.remote_alert_remind),
+                        onClick = { actions.onRemind(alert) },
+                        modifier = Modifier.weight(1f).testTag(REMOTE_REMIND_TAG),
+                        size = PillButtonSize.Compact,
+                    )
+                }
+                PillButton(
+                    stringResource(R.string.remote_alert_dismiss),
+                    onClick = { actions.onDismiss(alert) },
+                    modifier = Modifier.weight(1f).testTag(REMOTE_DISMISS_TAG),
+                    variant = PillButtonVariant.Secondary,
+                    size = PillButtonSize.Compact,
+                )
+            }
         }
     }
 }
@@ -381,16 +394,10 @@ private fun SmallButton(
 @Composable
 private fun RequestCard(
     request: RemoteRequestCard,
+    deviceName: String,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(20.dp)
-    val ago =
-        if (request.agoMins >= 60) {
-            stringResource(R.string.remote_request_ago_hour, request.agoMins / 60)
-        } else {
-            stringResource(R.string.remote_request_ago_min, request.agoMins)
-        }
+    val c = V5Theme.colors
     val options =
         listOf(
             stringResource(R.string.remote_request_15) to 15,
@@ -398,45 +405,28 @@ private fun RequestCard(
             stringResource(R.string.remote_request_60) to 60,
             stringResource(R.string.remote_request_no) to 0,
         )
-    Column(
-        Modifier
-            .testTag(REMOTE_REQUEST_TAG)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(c.warning.copy(alpha = 0.10f))
-            .border(1.dp, c.warning.copy(alpha = 0.35f), shape)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+    V5Card(Modifier.fillMaxWidth().testTag(REMOTE_REQUEST_TAG), radius = 30.dp, padding = 16.dp) {
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                StatusTag(StatusTagKind.Request)
+                Text(
+                    agoText(request.agoMins),
+                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    color = c.textSecondary,
+                )
+            }
             Text(
-                ago,
-                style = StayFocusedTheme.type.label.copy(fontSize = 10.sp, fontWeight = FontWeight.SemiBold),
-                color = c.warning,
+                stringResource(R.string.remote_request_body, deviceName, request.minutes, request.app),
+                style = V5Theme.type.body.copy(fontSize = 16.sp, lineHeight = 22.sp),
+                color = c.ink,
             )
-            Text(
-                stringResource(R.string.remote_request_question, request.minutes, request.app),
-                style = StayFocusedTheme.type.body.copy(fontSize = 15.sp, fontWeight = FontWeight.ExtraBold),
-                color = c.text,
-            )
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            options.forEach { (label, mins) ->
-                val allow = mins > 0
-                Box(
-                    Modifier
-                        .weight(1f)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(if (allow) c.warning else Color.Transparent)
-                        .then(if (allow) Modifier else Modifier.border(1.dp, c.hairline14, RoundedCornerShape(12.dp)))
-                        .clickable(role = Role.Button) { actions.onDecide(request, mins) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                options.forEach { (label, mins) ->
+                    CompactPill(
                         label,
-                        style = StayFocusedTheme.type.label.copy(fontSize = 12.sp, fontWeight = FontWeight.Bold),
-                        color = if (allow) c.onAccent else c.text,
+                        onClick = { actions.onDecide(request, mins) },
+                        modifier = Modifier.weight(1f),
+                        dark = mins > 0,
                     )
                 }
             }
@@ -445,12 +435,97 @@ private fun RequestCard(
 }
 
 @Composable
-private fun FocusCard(
+private fun Tiles(
+    allLocked: Boolean,
     endsAt: Instant?,
     now: () -> Instant,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
+    val leftMs = focusLeftMs(endsAt, now)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        LockTile(allLocked, actions, Modifier.weight(1f))
+        FocusTile(leftMs > 0, leftMs, actions, Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun LockTile(
+    allLocked: Boolean,
+    actions: RemoteActions,
+    modifier: Modifier = Modifier,
+) {
+    val c = V5Theme.colors
+    V5Card(
+        modifier.height(140.dp).testTag(REMOTE_LOCK_ALL_TAG),
+        radius = 32.dp,
+        containerColor = c.ink,
+        padding = 16.dp,
+        onClick = if (allLocked) actions.onUnlockAll else actions.onLockAll,
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            Icon(V5Icons.lock, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(24.dp))
+            Column(Modifier.align(Alignment.BottomStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(if (allLocked) R.string.remote_unlock_title else R.string.remote_lock_title),
+                    style = V5Theme.type.cardTitle.copy(fontSize = 18.sp),
+                    color = c.onGradient,
+                )
+                Text(
+                    stringResource(if (allLocked) R.string.remote_unlock_sub else R.string.remote_lock_sub),
+                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    color = c.onInkMuted,
+                )
+            }
+        }
+    }
+}
+
+private const val FOCUS_DEFAULT_MINS = 25
+
+@Composable
+private fun FocusTile(
+    running: Boolean,
+    leftMs: Long,
+    actions: RemoteActions,
+    modifier: Modifier = Modifier,
+) {
+    val white = V5Theme.colors.onGradient
+    GlowCard(
+        V5Gradients.orangeTile,
+        modifier.height(140.dp).testTag(if (running) REMOTE_FOCUS_STOP_TAG else REMOTE_FOCUS_TAG),
+        radius = 32.dp,
+        padding = 16.dp,
+        onClick = if (running) actions.onStopFocus else ({ actions.onStartFocus(FOCUS_DEFAULT_MINS) }),
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            Icon(V5Icons.timer, contentDescription = null, tint = white, modifier = Modifier.size(24.dp))
+            Column(Modifier.align(Alignment.BottomStart), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    stringResource(if (running) R.string.remote_focus_on else R.string.remote_focus_title),
+                    style = V5Theme.type.cardTitle.copy(fontSize = 18.sp),
+                    color = white,
+                )
+                Text(
+                    if (running) {
+                        stringResource(R.string.remote_focus_left, mmss(leftMs))
+                    } else {
+                        stringResource(R.string.remote_focus_sub)
+                    },
+                    style = V5Theme.type.body.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
+                    color = white,
+                    modifier = Modifier.testTag(REMOTE_FOCUS_LEFT_TAG),
+                )
+            }
+        }
+    }
+}
+
+/** Milliseconds left of the focus session, re-read every second while one runs; 0 when none runs. */
+@Composable
+private fun focusLeftMs(
+    endsAt: Instant?,
+    now: () -> Instant,
+): Long {
     val inspecting = LocalInspectionMode.current
     val clock by rememberUpdatedState(now)
     val current by produceState(clock(), endsAt) {
@@ -460,113 +535,53 @@ private fun FocusCard(
             value = clock()
         }
     }
-    val leftMs = endsAt?.let { it.toEpochMilli() - current.toEpochMilli() } ?: 0L
-    val running = leftMs > 0
-    val shape = RoundedCornerShape(22.dp)
-    Column(
-        Modifier
-            .testTag(REMOTE_FOCUS_TAG)
-            .fillMaxWidth()
-            .clip(shape)
-            .background(if (running) c.accent else c.panel)
-            .border(1.dp, c.hairline06, shape)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text(
-                stringResource(if (running) R.string.remote_focus_running else R.string.remote_focus_idle),
-                style = StayFocusedTheme.type.label.copy(fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold),
-                color = if (running) c.onAccent else c.text,
+    return endsAt?.let { it.toEpochMilli() - current.toEpochMilli() }?.coerceAtLeast(0) ?: 0L
+}
+
+@Composable
+private fun ExtraFocusRow(
+    endsAt: Instant?,
+    now: () -> Instant,
+    actions: RemoteActions,
+) {
+    if (focusLeftMs(endsAt, now) > 0) return
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        listOf(
+            stringResource(R.string.remote_focus_50) to 50,
+            stringResource(R.string.remote_focus_90) to 90,
+        ).forEach { (label, mins) ->
+            PillButton(
+                label,
+                onClick = { actions.onStartFocus(mins) },
+                modifier = Modifier.weight(1f).testTag(remoteFocusTag(mins)),
+                variant = PillButtonVariant.White,
+                size = PillButtonSize.Compact,
             )
-            if (running) {
-                Box(
-                    Modifier
-                        .testTag(REMOTE_FOCUS_STOP_TAG)
-                        .height(48.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable(role = Role.Button, onClick = actions.onStopFocus),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Box(
-                        Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .border(1.5.dp, c.onAccent, RoundedCornerShape(10.dp))
-                            .padding(horizontal = 12.dp, vertical = 5.dp),
-                    ) {
-                        Text(
-                            stringResource(R.string.remote_focus_stop),
-                            style =
-                                StayFocusedTheme.type.body.copy(
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.ExtraBold,
-                                ),
-                            color = c.onAccent,
-                        )
-                    }
-                }
-            }
-        }
-        if (running) {
-            Text(
-                mmss(leftMs),
-                style =
-                    StayFocusedTheme.type.label.copy(
-                        fontSize = 44.sp,
-                        lineHeight = 44.sp,
-                        fontWeight = FontWeight.Bold,
-                    ),
-                color = c.onAccent,
-                modifier = Modifier.testTag(REMOTE_FOCUS_LEFT_TAG),
-            )
-        } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(
-                    stringResource(R.string.remote_focus_25) to 25,
-                    stringResource(R.string.remote_focus_50) to 50,
-                    stringResource(R.string.remote_focus_90) to 90,
-                ).forEach { (label, mins) ->
-                    val shapeBtn = RoundedCornerShape(14.dp)
-                    Box(
-                        Modifier
-                            .weight(1f)
-                            .testTag(remoteFocusTag(mins))
-                            .height(48.dp)
-                            .clip(shapeBtn)
-                            .background(c.background)
-                            .border(1.dp, c.hairline14, shapeBtn)
-                            .clickable(role = Role.Button) { actions.onStartFocus(mins) },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text(
-                            label,
-                            style = StayFocusedTheme.type.label.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-                            color = c.text,
-                        )
-                    }
-                }
-            }
         }
     }
 }
 
 @Composable
-private fun SectionRow(
-    start: String,
-    end: String?,
-) {
-    val c = StayFocusedTheme.colors
-    val style = StayFocusedTheme.type.label.copy(fontSize = 10.5.sp, fontWeight = FontWeight.SemiBold)
+private fun BlocksHeader(onNewBlock: () -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(start = 4.dp, end = 4.dp, top = 6.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 10.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(start, style = style, color = c.secondary)
-        if (end != null) Text(end, style = style, color = c.secondary)
+        Text(
+            stringResource(R.string.remote_blocks_title),
+            style = V5Theme.type.cardTitle,
+            color = V5Theme.colors.ink,
+            modifier = Modifier.weight(1f),
+        )
+        CompactPill(
+            stringResource(R.string.remote_new_block),
+            onClick = onNewBlock,
+            modifier = Modifier.testTag(REMOTE_NEW_BLOCK_TAG),
+            dark = true,
+            height = 40.dp,
+            icon = V5Icons.plus,
+        )
     }
 }
 
@@ -575,49 +590,43 @@ private fun BlockRow(
     block: RemoteBlock,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(20.dp)
+    val c = V5Theme.colors
     val name = block.rule.name
-    Row(
-        Modifier
-            .testTag(remoteBlockTag(block.rule.id))
-            .fillMaxWidth()
-            .clip(shape)
-            .background(c.panel)
-            .border(1.dp, c.hairline06, shape)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    V5Card(
+        Modifier.fillMaxWidth().testTag(remoteBlockTag(block.rule.id)).alpha(if (block.enabled) 1f else 0.6f),
+        radius = 28.dp,
+        padding = 0.dp,
     ) {
-        TypeChip(block.rule.type.toBlockType(), dimmed = !block.enabled)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(
-                name,
-                style = StayFocusedTheme.type.body.copy(fontSize = 15.sp, fontWeight = FontWeight.Bold),
-                color = c.text,
-            )
-            Text(
-                ruleSummary(block.rule),
-                style = StayFocusedTheme.type.body.copy(fontSize = 12.5.sp, lineHeight = 17.sp),
-                color = c.secondary,
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // The rule names no packages, so the tile shows the block's first letter.
+            AppIconTile(block.rule.id, 34.dp, label = name)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(
+                    name,
+                    style = V5Theme.type.label.copy(fontSize = 15.sp),
+                    color = c.ink,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    ruleSummary(block.rule),
+                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    color = c.textSecondary,
+                )
+            }
+            val label = stringResource(R.string.remote_block_toggle, name)
+            V5Toggle(
+                checked = block.enabled,
+                onCheckedChange = { actions.onBlockEnabled(block.rule.id, it) },
+                modifier = Modifier.semantics { contentDescription = label },
             )
         }
-        val label = stringResource(R.string.remote_block_toggle, name)
-        SfToggle(
-            checked = block.enabled,
-            onCheckedChange = { actions.onBlockEnabled(block.rule.id, it) },
-            modifier = Modifier.semantics { contentDescription = label },
-        )
     }
 }
-
-private fun KidsRuleType.toBlockType(): BlockType =
-    when (this) {
-        KidsRuleType.Limit -> BlockType.LIMIT
-        KidsRuleType.Cycle -> BlockType.CYCLE
-        KidsRuleType.Schedule -> BlockType.SCHEDULE
-        KidsRuleType.Now -> BlockType.NOW
-    }
 
 @Composable
 private fun ruleSummary(rule: KidsRule): String =
@@ -648,28 +657,18 @@ private fun ruleSummary(rule: KidsRule): String =
     }
 
 @Composable
-private fun NewBlockButton(
-    name: String,
-    onClick: () -> Unit,
-) {
-    val c = StayFocusedTheme.colors
+private fun AppsHeader(totalMins: Int) {
+    val style = V5Theme.type.tag
     Row(
-        Modifier
-            .testTag(REMOTE_NEW_BLOCK_TAG)
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(c.accent)
-            .clickable(role = Role.Button, onClick = onClick),
-        horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterHorizontally),
-        verticalAlignment = Alignment.CenterVertically,
+        Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp, top = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        IconTile { Text("+", color = c.accent, style = StayFocusedTheme.type.body.copy(fontSize = 16.sp)) }
         Text(
-            stringResource(R.string.remote_new_block, name),
-            style = StayFocusedTheme.type.body.copy(fontSize = 15.sp, fontWeight = FontWeight.Black),
-            color = c.onAccent,
+            stringResource(R.string.remote_today_header, formatMinutes(totalMins).uppercase()),
+            style = style,
+            color = V5Theme.colors.textSecondary,
         )
+        Text(stringResource(R.string.remote_lock_header), style = style, color = V5Theme.colors.textSecondary)
     }
 }
 
@@ -678,55 +677,46 @@ private fun AppRow(
     app: RemoteAppRow,
     actions: RemoteActions,
 ) {
-    val c = StayFocusedTheme.colors
-    Row(
-        Modifier
-            .testTag("remote_app_${app.pkg}")
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(c.panel)
-            .padding(horizontal = 14.dp, vertical = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        AppIcon(pkg = app.pkg, label = app.label, size = 38.dp)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    app.label,
-                    style = StayFocusedTheme.type.body.copy(fontSize = 14.5.sp, fontWeight = FontWeight.Bold),
-                    color = c.text,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f),
-                )
-                Text(
-                    formatMinutes(app.mins),
-                    style = StayFocusedTheme.type.label.copy(fontSize = 11.5.sp, fontWeight = FontWeight.SemiBold),
-                    color = c.secondary,
-                )
+    val c = V5Theme.colors
+    V5Card(Modifier.fillMaxWidth().testTag("remote_app_${app.pkg}"), radius = 28.dp, padding = 0.dp) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AppIconTile(app.pkg, 38.dp, label = app.label)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        app.label,
+                        style = V5Theme.type.label.copy(fontSize = 15.sp),
+                        color = c.ink,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        formatMinutes(app.mins),
+                        style = V5Theme.type.body.copy(fontSize = 13.sp),
+                        color = c.textSecondary,
+                    )
+                }
+                Box(Modifier.fillMaxWidth().height(3.dp).background(c.track, RoundedCornerShape(2.dp))) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth(app.fraction)
+                            .height(3.dp)
+                            .background(if (app.locked) c.red else c.orange, RoundedCornerShape(2.dp)),
+                    )
+                }
             }
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(3.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(c.track),
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth(app.fraction)
-                        .height(3.dp)
-                        .background(if (app.locked) c.alert else c.accent),
-                )
-            }
+            val label = stringResource(R.string.remote_lock_toggle, app.label)
+            V5Toggle(
+                checked = app.locked,
+                onCheckedChange = { actions.onLock(app, it) },
+                modifier = Modifier.testTag(remoteLockTag(app.pkg)).semantics { contentDescription = label },
+            )
         }
-        val label = stringResource(R.string.remote_lock_toggle, app.label)
-        SfToggle(
-            checked = app.locked,
-            onCheckedChange = { actions.onLock(app, it) },
-            modifier = Modifier.testTag(remoteLockTag(app.pkg)).semantics { contentDescription = label },
-        )
     }
 }
 
@@ -735,23 +725,54 @@ private fun UnlinkButton(
     busy: Boolean,
     onClick: () -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(16.dp)
+    PillButton(
+        stringResource(R.string.remote_unlink),
+        onClick = onClick,
+        modifier = Modifier.padding(top = 6.dp).testTag(REMOTE_UNLINK_TAG),
+        variant = PillButtonVariant.Text,
+        size = PillButtonSize.Medium,
+        enabled = !busy,
+        textColor = V5Theme.colors.destructive,
+    )
+}
+
+/** A pill with 14 dp side padding: the shared [PillButton] pads 24 dp, too much for four in a row. */
+@Composable
+private fun CompactPill(
+    text: String,
+    onClick: () -> Unit,
+    dark: Boolean,
+    modifier: Modifier = Modifier,
+    height: androidx.compose.ui.unit.Dp = 46.dp,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+) {
+    val c = V5Theme.colors
+    val shape = RoundedCornerShape(height / 2)
     Box(
-        Modifier
-            .testTag(REMOTE_UNLINK_TAG)
-            .fillMaxWidth()
-            .padding(top = 4.dp)
-            .height(50.dp)
-            .clip(shape)
-            .border(1.dp, c.alert.copy(alpha = 0.3f), shape)
-            .clickable(enabled = !busy, role = Role.Button, onClick = onClick),
+        modifier
+            .sizeIn(minHeight = V5Theme.spacing.minTouchTarget)
+            .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            stringResource(R.string.remote_unlink),
-            style = StayFocusedTheme.type.body.copy(fontSize = 14.sp, fontWeight = FontWeight.Bold),
-            color = if (busy) c.tertiary else c.alertText,
-        )
+        Row(
+            Modifier
+                .height(height)
+                .clip(shape)
+                .background(if (dark) c.ink else c.track)
+                .padding(horizontal = 14.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Icon(icon, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(13.dp))
+            }
+            Text(
+                text,
+                style = V5Theme.type.label,
+                color = if (dark) c.onGradient else c.ink,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
     }
 }

@@ -155,6 +155,7 @@ class RemoteDeviceViewModelTest {
             val ready = viewModel().ready()
             assertEquals("08:42", ready.alerts.single().time)
             assertEquals(2, ready.requests.single().agoMins)
+            assertEquals(108, ready.alerts.single().agoMins)
         }
 
     @Test
@@ -265,7 +266,7 @@ class RemoteDeviceViewModelTest {
             val card = viewModel.ready().requests.single()
             viewModel.messages.test {
                 viewModel.decide(card, 30)
-                assertEquals(RemoteEvent.RequestApproved("30m", card.app), awaitItem())
+                assertEquals(RemoteEvent.RequestApproved("Aarav's phone", 30), awaitItem())
             }
             assertEquals(listOf(card.id to 30), decisions.decisions)
         }
@@ -292,7 +293,7 @@ class RemoteDeviceViewModelTest {
             val card = viewModel.ready().requests.single()
             viewModel.messages.test {
                 viewModel.decide(card, 15)
-                assertEquals(RemoteEvent.RequestApproved("15m", card.app), awaitItem())
+                assertEquals(RemoteEvent.RequestApproved("Aarav's phone", 15), awaitItem())
                 assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
             }
         }
@@ -324,6 +325,7 @@ class RemoteDeviceViewModelTest {
             viewModel.ready()
             viewModel.messages.test {
                 viewModel.stopFocus()
+                assertEquals(RemoteEvent.FocusStopped("Aarav's phone"), awaitItem())
                 assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
             }
         }
@@ -336,9 +338,11 @@ class RemoteDeviceViewModelTest {
             viewModel.ready()
             viewModel.messages.test {
                 viewModel.lockAll()
+                assertEquals(RemoteEvent.AllLocked("Aarav's phone"), awaitItem())
                 assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
                 commands.rejectSends = true
                 viewModel.unlockAll()
+                assertEquals(RemoteEvent.AllUnlocked, awaitItem())
                 assertEquals(RemoteEvent.Failed("Aarav's phone"), awaitItem())
             }
         }
