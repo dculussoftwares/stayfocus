@@ -320,7 +320,6 @@ private fun TileValue(
 /** Usage access is off: nothing to measure. Keeps the shipped prompt (copy unchanged). */
 @Composable
 private fun HeroNoAccess(onAllowUsageAccess: () -> Unit) {
-    // v5-extra: M13-08 (the prototype always has usage data)
     val white = V5Theme.colors.onGradient
     Column(
         Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),

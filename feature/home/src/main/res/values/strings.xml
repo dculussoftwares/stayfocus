@@ -43,7 +43,7 @@
     <string name="home_child_battery_value">%1$d%%</string>
     <string name="home_link_child">Link a child\'s phone</string>
 
-    <!-- v5-extra: M13-08. Shipped Home items that v5 does not show; copy unchanged. -->
+    <!-- Shipped Home items that v5 does not show (stats card, active blocks); copy unchanged. -->
     <string name="home_stat_launches">LAUNCHES</string>
     <string name="home_stat_unlocks">UNLOCKS</string>
     <string name="home_gauge_over">▲ %1$s over your %2$s avg</string>

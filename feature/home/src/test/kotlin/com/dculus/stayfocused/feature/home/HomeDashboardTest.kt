@@ -209,7 +209,6 @@ class HomeDashboardTest {
         assertEquals(listOf("link"), taps.log)
     }
 
-    // v5-extra: M13-08 content still works.
     @Test fun extrasKeepTheAverageStatsAndBlockSwitches() {
         show(homeState(blocks = typicalBlocks))
         composeRule.onNodeWithTag(HOME_LIST_TAG).performScrollToNode(hasContentDescription("Work hours"))

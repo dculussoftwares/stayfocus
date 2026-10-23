@@ -182,7 +182,7 @@ internal fun HomeScreen(
                     ChildCard(device, onClick = { destinations.onOpenDevice(device.id) })
                 }
             }
-            // v5-extra: M13-08 (shipped Home content the prototype does not show)
+            // Shipped Home content the prototype does not show: today vs average, launches/unlocks, block switches.
             (state.gauge as? GaugeUi.Ready)?.let { gauge -> item(key = "stats") { TodayStatsCard(gauge) } }
             item(key = "blocks") {
                 ActiveBlocksCard(state.blocks, actions.onSetBlockEnabled, destinations.onOpenBlock)
