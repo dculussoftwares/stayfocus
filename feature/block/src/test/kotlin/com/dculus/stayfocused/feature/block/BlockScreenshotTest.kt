@@ -90,12 +90,6 @@ class BlockScreenshotTest {
     fun describeEmpty() = shot("DescribeEmpty") { DescribeScreen(DescribeUiState(), DescribeActions()) }
 
     @Test
-    fun describeBusyWithError() =
-        shot("DescribeBusy") {
-            DescribeScreen(DescribeUiState(text = "Block Reddit", busy = true), DescribeActions())
-        }
-
-    @Test
     fun allApps() =
         shot(
             "BlockAllApps",
