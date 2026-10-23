@@ -26,11 +26,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.dculus.stayfocused.core.model.TimeRange
-import com.dculus.stayfocused.core.ui.components.GhostButton
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonSize
+import com.dculus.stayfocused.core.ui.v5.components.PillButtonVariant
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
 import java.time.LocalTime
 
 const val TIME_PICKER_TAG = "wizard_time_picker"
@@ -47,34 +49,34 @@ fun TimeRangePickerDialog(
     onDismiss: () -> Unit,
     onConfirm: (TimeRange) -> Unit,
 ) {
-    val c = StayFocusedTheme.colors
+    val c = V5Theme.colors
     val startState = rememberTimePickerState(initial.start.hour, initial.start.minute, is24Hour = true)
     val endState = rememberTimePickerState(initial.end.hour, initial.end.minute, is24Hour = true)
     var editingEnd by remember { mutableStateOf(false) }
     val start = LocalTime.of(startState.hour, startState.minute)
     val end = LocalTime.of(endState.hour, endState.minute)
     val same = editingEnd && start == end
-    val shape = RoundedCornerShape(28.dp)
+    val shape = RoundedCornerShape(36.dp)
     val colors =
         TimePickerDefaults.colors(
-            clockDialColor = c.panel,
-            clockDialSelectedContentColor = c.onAccent,
-            clockDialUnselectedContentColor = c.text,
-            selectorColor = c.accent,
-            containerColor = c.background,
-            periodSelectorBorderColor = c.hairline14,
-            timeSelectorSelectedContainerColor = c.accent.copy(alpha = 0.16f),
-            timeSelectorUnselectedContainerColor = c.panel,
-            timeSelectorSelectedContentColor = c.accent,
-            timeSelectorUnselectedContentColor = c.text,
+            clockDialColor = c.track,
+            clockDialSelectedContentColor = c.onGradient,
+            clockDialUnselectedContentColor = c.ink,
+            selectorColor = c.orange,
+            containerColor = c.surfaceRaised,
+            periodSelectorBorderColor = c.hairline,
+            timeSelectorSelectedContainerColor = c.orange.copy(alpha = 0.16f),
+            timeSelectorUnselectedContainerColor = c.track,
+            timeSelectorSelectedContentColor = c.orange,
+            timeSelectorUnselectedContentColor = c.ink,
         )
     Dialog(onDismissRequest = onDismiss) {
         Column(
             modifier =
                 Modifier
                     .clip(shape)
-                    .background(c.background)
-                    .border(1.dp, c.hairline10, shape)
+                    .background(c.surfaceRaised)
+                    .border(1.dp, c.hairline, shape)
                     .padding(20.dp)
                     .testTag(TIME_PICKER_TAG),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,27 +86,29 @@ fun TimeRangePickerDialog(
                 stringResource(
                     if (editingEnd) R.string.block_wizard_picker_end else R.string.block_wizard_picker_start,
                 ),
-                style = StayFocusedTheme.type.label,
-                color = c.secondary,
+                style = V5Theme.type.label,
+                color = c.textSecondary,
             )
             TimePicker(state = if (editingEnd) endState else startState, colors = colors)
             if (same) {
                 Text(
                     stringResource(R.string.block_wizard_picker_same_time),
-                    style = StayFocusedTheme.type.bodyS,
-                    color = c.warning,
+                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                    color = c.destructive,
                 )
             }
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                GhostButton(
+                PillButton(
                     text = stringResource(R.string.block_wizard_picker_cancel),
                     onClick = onDismiss,
+                    variant = PillButtonVariant.Secondary,
+                    size = PillButtonSize.Sheet,
                     modifier = Modifier.weight(1f),
                 )
-                PrimaryButton(
+                PillButton(
                     text =
                         stringResource(
                             if (editingEnd) R.string.block_wizard_picker_set else R.string.block_wizard_picker_next,
@@ -116,6 +120,7 @@ fun TimeRangePickerDialog(
                             onConfirm(TimeRange(start, end))
                         }
                     },
+                    size = PillButtonSize.Sheet,
                     modifier = Modifier.weight(1f).testTag(TIME_PICKER_CONFIRM_TAG),
                     enabled = !same,
                 )
