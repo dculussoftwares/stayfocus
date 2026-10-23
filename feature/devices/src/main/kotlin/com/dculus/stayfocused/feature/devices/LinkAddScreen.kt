@@ -2,34 +2,30 @@
 
 package com.dculus.stayfocused.feature.devices
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dculus.stayfocused.core.ui.components.PrimaryButton
-import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.v5.components.PillButton
+import com.dculus.stayfocused.core.ui.v5.components.RoundIconButton
+import com.dculus.stayfocused.core.ui.v5.components.V5Card
+import com.dculus.stayfocused.core.ui.v5.icons.V5Icons
+import com.dculus.stayfocused.core.ui.v5.theme.V5Screen
+import com.dculus.stayfocused.core.ui.v5.theme.V5Theme
+import com.dculus.stayfocused.core.ui.v5.theme.v5NavigationBarPadding
+import com.dculus.stayfocused.core.ui.v5.theme.v5StatusBarPadding
 
 internal const val LINK_ADD_SCAN_TAG = "link_add_scan"
 internal const val LINK_ADD_SIGN_IN_TAG = "link_add_sign_in"
@@ -53,86 +49,81 @@ internal fun LinkAddScreen(
     onScan: () -> Unit,
     onSignIn: () -> Unit,
 ) {
-    val colors = StayFocusedTheme.colors
-    val type = StayFocusedTheme.type
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(colors.background)
-            .padding(start = 18.dp, end = 18.dp, top = 10.dp, bottom = 20.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        LinkBackButton(onBack = onBack, light = false)
-        when (state) {
-            LinkAddState.Loading -> {
-                Unit
-            }
-
-            LinkAddState.SignedOut -> {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.link_signin_title), style = type.displayL, color = colors.text)
-                    Text(stringResource(R.string.link_signin_body), style = type.body, color = colors.secondary)
+    V5Screen(darkContent = false) {
+        val colors = V5Theme.colors
+        Column(
+            Modifier
+                .fillMaxSize()
+                .v5StatusBarPadding(extra = 10.dp)
+                .v5NavigationBarPadding(extra = 36.dp)
+                .padding(horizontal = V5Theme.spacing.screenOnboarding),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            RoundIconButton(
+                icon = V5Icons.back,
+                contentDescription = stringResource(R.string.link_back),
+                onClick = onBack,
+                modifier = Modifier.testTag(LINK_BACK_TAG),
+            )
+            when (state) {
+                LinkAddState.Loading -> {
+                    Unit
                 }
-                PrimaryButton(
-                    text = stringResource(R.string.link_signin_cta),
-                    onClick = onSignIn,
-                    modifier = Modifier.fillMaxWidth().testTag(LINK_ADD_SIGN_IN_TAG),
-                )
-            }
 
-            LinkAddState.SignedIn -> {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.link_add_heading), style = type.displayL, color = colors.text)
-                    Text(stringResource(R.string.link_add_body), style = type.body, color = colors.secondary)
+                LinkAddState.SignedOut -> {
+                    Title(stringResource(R.string.link_signin_title))
+                    Body(stringResource(R.string.link_signin_body))
+                    PillButton(
+                        text = stringResource(R.string.link_signin_cta),
+                        onClick = onSignIn,
+                        modifier = Modifier.fillMaxWidth().testTag(LINK_ADD_SIGN_IN_TAG),
+                    )
                 }
-                val label = stringResource(R.string.link_add_scan_title)
-                Row(
-                    Modifier
-                        .testTag(LINK_ADD_SCAN_TAG)
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(24.dp))
-                        .background(colors.accent)
-                        .clickable(role = Role.Button, onClick = onScan)
-                        .padding(20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(label, style = type.title, color = colors.onAccent)
-                        Text(
-                            stringResource(R.string.link_add_scan_subtitle),
-                            style = type.bodyS.copy(fontWeight = FontWeight.SemiBold),
-                            color = colors.onAccent.copy(alpha = 0.7f),
-                        )
+
+                LinkAddState.SignedIn -> {
+                    Title(stringResource(R.string.link_add_heading))
+                    Body(stringResource(R.string.link_add_body))
+                    V5Card(
+                        modifier = Modifier.fillMaxWidth().testTag(LINK_ADD_SCAN_TAG),
+                        onClick = onScan,
+                        onClickLabel = stringResource(R.string.link_add_scan_title),
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    stringResource(R.string.link_add_scan_title),
+                                    style = V5Theme.type.body.copy(fontSize = 17.sp),
+                                    color = colors.ink,
+                                )
+                                Text(
+                                    stringResource(R.string.link_add_scan_subtitle),
+                                    style = V5Theme.type.body.copy(fontSize = 13.sp),
+                                    color = colors.textSecondary,
+                                )
+                            }
+                            Icon(V5Icons.arrow, contentDescription = null, tint = colors.ink)
+                        }
                     }
-                    Text("→", style = type.title.copy(fontSize = 22.sp), color = colors.onAccent)
                 }
             }
         }
     }
 }
 
-/** The 42 dp rounded back tile used on sub-screens. [light] is the translucent variant over the camera. */
 @Composable
-internal fun LinkBackButton(
-    onBack: () -> Unit,
-    light: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    val colors = StayFocusedTheme.colors
-    val back = stringResource(R.string.link_back)
-    val shape = RoundedCornerShape(14.dp)
-    Box(
-        modifier
-            .testTag(LINK_BACK_TAG)
-            .size(42.dp)
-            .clip(shape)
-            .background(if (light) colors.text.copy(alpha = 0.1f) else colors.panel)
-            .then(if (light) Modifier else Modifier.border(1.dp, colors.hairline10, shape))
-            .clickable(onClickLabel = back, role = Role.Button, onClick = onBack)
-            .semantics { contentDescription = back },
-        contentAlignment = Alignment.Center,
-    ) {
-        Text("←", color = colors.text, style = StayFocusedTheme.type.bodyL)
-    }
+private fun Title(text: String) {
+    Text(
+        text,
+        style = V5Theme.type.headline.copy(fontSize = 34.sp),
+        color = V5Theme.colors.ink,
+        modifier = Modifier.padding(top = 8.dp),
+    )
+}
+
+@Composable
+private fun Body(text: String) {
+    Text(text, style = V5Theme.type.body.copy(fontSize = 15.sp), color = V5Theme.colors.textSecondary)
 }

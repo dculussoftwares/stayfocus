@@ -102,10 +102,8 @@ internal fun DevicesScreen(
                     )
                 }
             }
-            // v5-extra: M13-05 (this phone row)
             item { ThisPhoneRow(thisPhoneModel, devices.size) }
             items(devices, key = { it.id }) { device -> DeviceCard(device) { onOpenDevice(device.id) } }
-            // v5-extra: M13-05 (empty state)
             if (state is DevicesUiState.Loaded && devices.isEmpty()) item { EmptyDevices() }
             item { LinkTile(onLinkPhone) }
             item {
@@ -179,7 +177,6 @@ internal fun DeviceCard(
                 }
                 Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     OnlinePill(online = device.online)
-                    // v5-extra: M13-05 (last seen of an offline phone)
                     if (!device.online) {
                         lastSeenText(device.lastSeen)?.let {
                             Text(
@@ -264,10 +261,7 @@ internal fun deviceSubtitle(device: LinkedDevice): String? {
     }
 }
 
-/**
- * "1 request waiting · Protection is off", or null when there is nothing to flag. The unlinked and offline lines are
- * v5-extra: M13-05.
- */
+/** "1 request waiting · Protection is off", or null when there is nothing to flag. */
 @Composable
 internal fun deviceAttentionLine(device: LinkedDevice): String? {
     val parts = mutableListOf<String>()

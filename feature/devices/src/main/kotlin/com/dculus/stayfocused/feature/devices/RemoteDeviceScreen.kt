@@ -224,11 +224,9 @@ private fun RemoteDeviceList(
         items(ready.alerts, key = { "alert_${it.id}" }) { AlertCard(it, ready.device.name, actions) }
         items(ready.requests, key = { "request_${it.id}" }) { RequestCard(it, ready.device.name, actions) }
         item { Tiles(ready.device.allLocked, ready.device.focusEndsAt, now, actions) }
-        // v5-extra: M13-05 (focus 50 and 90 minutes)
         item { ExtraFocusRow(ready.device.focusEndsAt, now, actions) }
         item { BlocksHeader(actions.onNewBlock) }
         items(ready.blocks, key = { "block_${it.rule.id}" }) { BlockRow(it, actions) }
-        // v5-extra: M13-05 (per-app lock list)
         item { AppsHeader(ready.todayMins ?: 0) }
         items(ready.apps, key = { "app_${it.pkg}" }) { AppRow(it, actions) }
         item { UnlinkButton(ready.unlinking, actions.onUnlink) }
@@ -269,7 +267,7 @@ private fun Header(
     }
 }
 
-/** "Pixel 7a · 74% battery"; an offline phone also says when it was last seen (v5-extra: M13-05). */
+/** "Pixel 7a · 74% battery"; an offline phone also says when it was last seen. */
 @Composable
 private fun subtitle(ready: RemoteUiState.Ready): String? {
     val device = ready.device
@@ -354,7 +352,6 @@ private fun AlertCard(
                 )
             }
 
-            // v5-extra: M13-05 (the other alert kinds keep their shipped line)
             TamperKind.UNLINKED -> {
                 stringResource(R.string.devices_alert_unlinked)
             }
