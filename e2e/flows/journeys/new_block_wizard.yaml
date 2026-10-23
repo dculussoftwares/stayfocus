@@ -1,4 +1,4 @@
-# M12-19: new block through the wizard, v5 steps 1-3: type -> apps -> rule card with its summary.
+# M12-19: new block through the wizard, v5 steps 1-3: type -> apps -> rule card; Turn on block creates it.
 appId: com.dculus.stayfocused
 tags:
   - journey
@@ -12,6 +12,7 @@ tags:
 - tapOn: "New block"
 - assertVisible: "What should it do?"
 - tapOn: "Use, then lock"
+- tapOn: "Continue"
 - assertVisible: "Which apps?"
 # Any launcher app of the emulator image will do; the first one that is listed gets ticked.
 - tapOn:
@@ -21,3 +22,5 @@ tags:
 - assertVisible: "Repeat on"
 - assertVisible: "Summary"
 - assertVisible: "Turn on block"
+- tapOn: "Turn on block"
+- assertVisible: "Block is on"

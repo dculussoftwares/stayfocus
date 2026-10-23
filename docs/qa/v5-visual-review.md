@@ -22,7 +22,7 @@ renders; sample data differ (the render uses fixture data, e.g. `HomeTypicalDay`
 | 01 | `01-welcome.png` | `feature/onboarding/src/test/screenshots/Welcome.png` | yes | Same copy, gradient and button. Render is taller (no frame). Accepted. |
 | 02 | `02-sign-up.png` | `feature/onboarding/src/test/screenshots/SignUp.png` | no | Copy and layout per M12-05 PR. Accepted. |
 | 03 | `03-permissions.png` | `feature/onboarding/src/test/screenshots/Permissions.png` (+ `PermissionsAllSet.png`) | no | Per M12-06 PR. Accepted. |
-| 04 | `04-accessibility-disclosure.png` | `feature/onboarding/src/test/screenshots/` has no dedicated baseline (sheet is covered by the instrumented/Compose test of M12-06) | no | **Follow-up F1**: add a Roborazzi baseline for the disclosure sheet so the 24th screen has a committed render. |
+| 04 | `04-accessibility-disclosure.png` | no render baseline exists. `PermissionsScreenTest` (`disclosureShowsTheFinalCopyAndAgreeReports`, `disclosureNoThanksNeverAgrees`) checks copy and behaviour of `PhoneAccessibilityDisclosure`, not its look | no | Look not compared. **Follow-up F1**: add a Roborazzi render test for `PhoneAccessibilityDisclosure` and compare it with the reference. |
 | 05 | `05-home.png` | `feature/home/src/test/screenshots/HomeTypicalDay.png` | yes | Hero, dot grid, tiles identical in structure. Extras below the tiles (AI pill, child card, average card, block toggles) are not in the reference: **extra** (M13-08). Sample tiles differ: accepted. |
 | 06 | `06-take-a-break-sheet.png` | `feature/home/src/test/screenshots/BreakSheet.png` | no | Per M12-08 PR. Accepted. |
 | 07 | `07-break-running.png` | `feature/home/src/test/screenshots/HomeBreakRunning.png` | no | Per M12-08 PR. Accepted. |
@@ -50,7 +50,7 @@ Nothing was fixed in code in this PR: every difference seen is a documented extr
 ## 2. Contrast report (V5_SPEC section 8, question 3)
 
 WCAG 2.x relative luminance, computed from the token values in `V5Colors.kt`. AA needs 4.5:1 for normal text, 3:1 for
-large text (>= 18 sp, or >= 14 sp bold) and for UI components.
+large text (WCAG: 18 pt regular or 14 pt bold, i.e. at least 24 sp or 18.7 sp bold at font scale 1, taking 1 sp = 1 CSS px) and for UI components.
 
 | Pair | Ratio | AA normal | AA large |
 |---|---|---|---|
@@ -77,7 +77,7 @@ large text (>= 18 sp, or >= 14 sp bold) and for UI components.
 
 Findings:
 1. White 13-15 sp text on `orange` (3.08), the pink card family (2.7-4.1), the "Take a break" tile (2.27) and the orange
-   gold glow (1.66) is below AA for normal text. Large text (headlines, dot countdowns, 18 sp+) passes on `orange` and
+   gold glow (1.66) is below AA for normal text. Large text (headlines and dot countdowns, 24 sp and up) passes on `orange` and
    `pink` only.
 2. The worst spots are the Welcome subtitle and "This is my child's phone" link where the gradient reaches `orangeGold`
    (1.66), the "Take a break" tile caption (2.27) and the child-card labels ("Today", "Using now", "Battery" at 60%
@@ -86,7 +86,7 @@ Findings:
 
 **Decision requested from a maintainer** (not made here, it changes the design): keep the design as is (default in the
 spec), or (a) darken the text-bearing orange to about `#D94A00` (white 4.5:1), (b) switch small text on orange/pink/gold
-surfaces to `ink`, or (c) keep white only for text of 18 sp and up. Option (b) needs no new colour. Until the decision,
+surfaces to `ink`, or (c) keep white only for text of 24 sp and up (or 18.7 sp bold). Option (b) needs no new colour. Until the decision,
 no colour or text-colour code was changed.
 
 ## 3. Accessibility
@@ -117,8 +117,18 @@ gate under 5 minutes):
 |---|---|
 | Onboarding to Home | `journeys/onboarding_to_home.yaml` |
 | New block via the wizard | `journeys/new_block_wizard.yaml` |
-| Describe with AI (on-device fallback, CI has no Firebase config) | `journeys/describe_with_ai.yaml` |
+| Describe with AI (on-device fallback) | **not covered, see finding F3** |
 | Break start and end | `journeys/break_start_end.yaml` (smoke has `smoke/take_a_break.yaml`) |
 | Insights Day and Week | `journeys/insights_day_week.yaml` |
 
 Existing smoke flows (`smoke/*`) are unchanged and still match the v5 copy.
+
+The flows were run on the CI emulator (`e2e` workflow on this branch). That run showed:
+- **F3 (finding, follow-up):** the "Describe a block" entry points (Home pill, Blocks "New block" card, wizard "Rather
+  describe it in words") are shown only when `AppSettings.aiEnabled` is true, and nothing in the app sets it
+  (`setAiEnabled` has no caller outside tests; `HomeViewModel.initialState` also hard-codes `aiAvailable = false`). A user
+  therefore never reaches Describe with AI, and no journey can drive it. Needs a decision: a settings toggle (Account) or
+  default on. Once an entry point exists, add `journeys/describe_with_ai.yaml` (type a sentence, assert the wizard rule card
+  and the "Check the details, then turn it on." banner; CI has no Firebase config so it exercises the on-device parser).
+- Insights on a fresh emulator has no usage data, so the hero card is replaced by "No data for this day"; the flow asserts
+  that state and the Day/Week switch, not the hero numbers.
