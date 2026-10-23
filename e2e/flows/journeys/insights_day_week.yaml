@@ -1,0 +1,24 @@
+# M12-19: Insights opens on Day, switches to Week and back; both hero labels show.
+appId: com.dculus.stayfocused
+tags:
+  - journey
+---
+- launchApp:
+    clearState: true
+- tapOn: "Get started"
+- tapOn: "Continue without an account"
+- tapOn: "Continue for now"
+- tapOn: "Insights"
+# A fresh emulator has no usage data, so the hero card is replaced by the empty state; the tiles always show.
+- assertVisible: "Day"
+- assertVisible: "Week"
+- assertVisible: "Unlocks.*"
+- assertVisible: "Blocked.*"
+- assertVisible: "No data for this day.*"
+- tapOn: "Week"
+# The day stepper exists only in Day mode, so its arrows vanish when Week is really selected.
+- assertNotVisible: "Next day"
+- tapOn: "Day"
+- assertVisible: "Next day"
+- assertVisible: "Today"
+- assertVisible: "No data for this day.*"

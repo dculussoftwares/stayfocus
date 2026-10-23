@@ -1,0 +1,18 @@
+# M12-19: Take a break sheet (1h preset) -> running break card -> end early; Home returns to normal.
+appId: com.dculus.stayfocused
+tags:
+  - journey
+---
+- launchApp:
+    clearState: true
+- tapOn: "Get started"
+- tapOn: "Continue without an account"
+- tapOn: "Continue for now"
+- tapOn: "Take a break"
+- assertVisible: "Start 30 min break"
+- tapOn: "1h"
+- tapOn: "Start 1h break"
+- assertVisible: "Tap to end early"
+- tapOn: "Tap to end early"
+- assertVisible: "Break ended"
+- assertVisible: "Screen time today"

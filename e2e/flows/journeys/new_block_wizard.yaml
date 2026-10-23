@@ -1,0 +1,26 @@
+# M12-19: new block through the wizard, v5 steps 1-3: type -> apps -> rule card; Turn on block creates it.
+appId: com.dculus.stayfocused
+tags:
+  - journey
+---
+- launchApp:
+    clearState: true
+- tapOn: "Get started"
+- tapOn: "Continue without an account"
+- tapOn: "Continue for now"
+- tapOn: "Blocks"
+- tapOn: "New block"
+- assertVisible: "What should it do?"
+- tapOn: "Use, then lock"
+- tapOn: "Continue"
+- assertVisible: "Which apps?"
+# Any launcher app of the emulator image will do; the first one that is listed gets ticked.
+- tapOn:
+    text: "Chrome|Clock|Camera|Contacts|Phone|Messages|Settings|Calendar|Files"
+- tapOn: "Continue.*"
+- assertVisible: "Set the rule"
+- assertVisible: "Repeat on"
+- assertVisible: "Summary"
+- assertVisible: "Turn on block"
+- tapOn: "Turn on block"
+- assertVisible: "Block is on"

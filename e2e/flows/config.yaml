@@ -2,3 +2,4 @@
 # Helper flows that other flows call with runFlow live in e2e/flows/_shared/ and are not listed, so they never run alone.
 flows:
   - "smoke/*"
+  - "journeys/*"

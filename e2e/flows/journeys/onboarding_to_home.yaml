@@ -1,0 +1,16 @@
+# M12-19: first run, v5 onboarding: Welcome -> Sign-up (skipped) -> Permissions (skipped) -> Home.
+appId: com.dculus.stayfocused
+tags:
+  - journey
+---
+- launchApp:
+    clearState: true
+- assertVisible: "Take back your time."
+- assertVisible: "This is my child's phone"
+- tapOn: "Get started"
+- assertVisible: "Continue with Google"
+- tapOn: "Continue without an account"
+- assertVisible: "Allow"
+- tapOn: "Continue for now"
+- assertVisible: "Screen time today"
+- assertVisible: "Take a break"
