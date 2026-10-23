@@ -16,18 +16,18 @@
   "dependencies": {
     "firebase-admin": "^14.5.0",
     "firebase-functions": "^7.4.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.19.0",
     "esbuild": "^0.28.2",
-    "eslint": "^10.12.0",
-    "firebase-tools": "^15.33.0",
+    "eslint": "^10.13.0",
+    "firebase-tools": "^15.34.0",
     "jest": "^30.5.2",
-    "ts-jest": "^29.4.14",
+    "ts-jest": "^29.4.15",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.71.1"
+    "typescript-eslint": "^8.71.2"
   }
 }
