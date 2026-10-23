@@ -209,7 +209,7 @@ class WizardViewModelTest {
             val vm = viewModel()
             vm.events.test {
                 vm.describeWithAi()
-                assertEquals(WizardEvent.DescribeWithAi, awaitItem())
+                assertEquals(WizardEvent.DescribeWithAi(target = null), awaitItem())
             }
         }
 

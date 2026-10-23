@@ -74,8 +74,6 @@ class CreateBlockFlowTest {
                 settings,
                 FakeLockedAppsRepository(),
                 FakeUsageRepository(),
-                FakeBlockDescriber(),
-                AiDraftHandoff(),
                 noDeviceBlocks(),
             )
         composeRule.setContent {

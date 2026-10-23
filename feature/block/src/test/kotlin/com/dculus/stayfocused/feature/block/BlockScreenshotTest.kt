@@ -81,6 +81,15 @@ class BlockScreenshotTest {
     }
 
     @Test
+    fun describe() =
+        shot("DescribeFilled") {
+            DescribeScreen(DescribeUiState(text = "Instagram 10 min, then lock it for 30"), DescribeActions())
+        }
+
+    @Test
+    fun describeEmpty() = shot("DescribeEmpty") { DescribeScreen(DescribeUiState(), DescribeActions()) }
+
+    @Test
     fun allApps() =
         shot(
             "BlockAllApps",

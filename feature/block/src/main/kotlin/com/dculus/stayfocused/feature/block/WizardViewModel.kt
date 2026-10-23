@@ -110,7 +110,9 @@ sealed interface WizardEvent {
     data object Close : WizardEvent
 
     /** "Rather just describe it?": go to the Block tab in AI mode. */
-    data object DescribeWithAi : WizardEvent
+    data class DescribeWithAi(
+        val target: String?,
+    ) : WizardEvent
 
     /** Continue was pressed on step 2 with no app selected. */
     data object PickAtLeastOneApp : WizardEvent
@@ -498,7 +500,8 @@ class WizardViewModel
 
         fun close() = emit(WizardEvent.Close)
 
-        fun describeWithAi() = emit(WizardEvent.DescribeWithAi)
+        fun describeWithAi() =
+            emit(WizardEvent.DescribeWithAi((mutableState.value.draft.target as? BlockTarget.Device)?.deviceId))
 
         private fun emit(event: WizardEvent) {
             viewModelScope.launch { eventChannel.send(event) }

@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -37,7 +38,7 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/** Sentence, draft, edit, turn on: the describe flow through the real Block tab, wizard and ViewModels. */
+/** Sentence, draft, edit, turn on: the describe flow through the real describe screen, wizard and ViewModels. */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34], qualifiers = "w360dp-h780dp-xxhdpi")
 class AiDescribeFlowTest {
@@ -51,34 +52,29 @@ class AiDescribeFlowTest {
 
     @Suppress("LongMethod")
     private fun launch() {
-        runBlocking { settings.setAiEnabled(true) }
         val installed =
             object : InstalledAppsRepository {
                 override fun observeLaunchableApps(): Flow<List<AppInfo>> =
                     flowOf(listOf(AppInfo(pkg("instagram"), "Instagram"), AppInfo(pkg("youtube"), "YouTube")))
             }
-        val blockVm =
-            BlockViewModel(
-                blocks,
-                FakeLinkedDevicesRepository(),
+        val describeVm =
+            DescribeViewModel(
+                SavedStateHandle(),
                 installed,
-                settings,
-                FakeLockedAppsRepository(),
-                FakeUsageRepository(),
+                FakeLinkedDevicesRepository(),
                 FakeBlockDescriber(),
                 handoff,
-                noDeviceBlocks(),
             )
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 StayFocusedTheme {
                     var wizard by remember { mutableStateOf<WizardViewModel?>(null) }
-                    LaunchedEffect(blockVm) {
-                        blockVm.events.collect { event ->
-                            if (event is BlockEvent.OpenWizard) {
+                    LaunchedEffect(describeVm) {
+                        describeVm.events.collect { event ->
+                            if (event is DescribeEvent.OpenWizard) {
                                 wizard =
                                     WizardViewModel(
-                                        SavedStateHandle(mapOf("prefill" to event.prefill)),
+                                        SavedStateHandle(mapOf("prefill" to AI_PREFILL)),
                                         FakeTargetApps(defaultApps()),
                                         FakeLinkedDevicesRepository(),
                                         settings,
@@ -93,14 +89,10 @@ class AiDescribeFlowTest {
                     }
                     val vm = wizard
                     if (vm == null) {
-                        val state by blockVm.state.collectAsState()
-                        BlockScreen(
+                        val state by describeVm.state.collectAsState()
+                        DescribeScreen(
                             state,
-                            BlockActions(
-                                onToggleAi = blockVm::toggleAi,
-                                onAiText = blockVm::setAiText,
-                                onAiSubmit = blockVm::submitAi,
-                            ),
+                            DescribeActions(onText = describeVm::setText, onBuild = describeVm::build),
                         )
                     } else {
                         val state by vm.state.collectAsState()
@@ -122,9 +114,8 @@ class AiDescribeFlowTest {
     @Test
     fun sentenceDraftEditTurnOn() {
         launch()
-        composeRule.onNodeWithText("Or describe it in words").performClick()
-        composeRule.onNodeWithText("Social media 45 min a day").performClick()
-        composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
+        composeRule.onNodeWithText("YouTube max 1 hour a day").performClick()
+        composeRule.onNodeWithTag(DESCRIBE_BUILD_TAG).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithText("Set the rule").assertExists()
@@ -143,20 +134,17 @@ class AiDescribeFlowTest {
     }
 
     @Test
-    fun emptyTextShowsNoWizard() {
+    fun buildStaysDisabledWithoutTextAndShowsNoWizard() {
         launch()
-        composeRule.onNodeWithText("Or describe it in words").performClick()
-        composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
-        composeRule.waitForIdle()
+        composeRule.onNodeWithTag(DESCRIBE_BUILD_TAG).assertIsNotEnabled()
         composeRule.onNodeWithText("Set the rule").assertDoesNotExist()
     }
 
     @Test
     fun reportOpensAConfirmSheetShowingExactlyWhatIsSent() {
         launch()
-        composeRule.onNodeWithText("Or describe it in words").performClick()
-        composeRule.onNodeWithText("Social media 45 min a day").performClick()
-        composeRule.onNodeWithTag(AI_CREATE_TAG).performClick()
+        composeRule.onNodeWithText("YouTube max 1 hour a day").performClick()
+        composeRule.onNodeWithTag(DESCRIBE_BUILD_TAG).performClick()
         composeRule.waitForIdle()
 
         composeRule.onNodeWithTag(WIZARD_REPORT_TAG).performClick()
@@ -166,6 +154,6 @@ class AiDescribeFlowTest {
         composeRule.waitForIdle()
 
         val report = reporter.reports.single()
-        assertEquals("Social media 45 min a day", report.sentence)
+        assertEquals("YouTube max 1 hour a day", report.sentence)
     }
 }

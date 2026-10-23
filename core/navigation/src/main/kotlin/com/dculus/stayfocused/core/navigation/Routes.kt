@@ -55,6 +55,12 @@ data class BlockWizard(
     val blockId: String? = null,
 )
 
+/** "Describe a block" (AI) screen; [target] is the child device id the block is for (null = this phone). */
+@Serializable
+data class BlockDescribe(
+    val target: String? = null,
+)
+
 @Serializable
 data object LinkAdd
 
