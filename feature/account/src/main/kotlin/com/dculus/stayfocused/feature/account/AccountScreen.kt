@@ -432,12 +432,7 @@ private fun V5HealthItem(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(
-            Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(if (on) StayFocusedTheme.colors.success else StayFocusedTheme.colors.hairline),
-        )
+        StatusDot(color = if (on) StayFocusedTheme.colors.success else StayFocusedTheme.colors.hairline, glow = on)
         Text(
             title,
             Modifier.weight(1f),
