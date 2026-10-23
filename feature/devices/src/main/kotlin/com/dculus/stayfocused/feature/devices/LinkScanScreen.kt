@@ -215,7 +215,6 @@ internal fun LinkScanScreen(
                     )
                 }
 
-                // v5-extra: M13-05 (camera permission and unavailable states)
                 CameraAccess.NeedsRationale -> {
                     PermissionMessage(
                         title = stringResource(R.string.link_camera_title),

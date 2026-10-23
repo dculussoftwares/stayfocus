@@ -127,7 +127,6 @@ internal fun LinkConfirmScreen(
                         WaitingBody(state.code, name, onNameChange)
                     }
 
-                    // v5-extra: M13-05 (declined, expired, used and network states)
                     LinkConfirmState.Declined -> {
                         Failure(R.string.link_confirm_declined_title, R.string.link_confirm_declined_body)
                     }
@@ -144,7 +143,6 @@ internal fun LinkConfirmScreen(
                         text = stringResource(R.string.link_confirm_cta),
                         onClick = { confirmed = true },
                         loading = confirmed,
-                        // v5-extra: M13-05 (waiting for the child to tap Allow)
                         loadingLabel = stringResource(R.string.link_confirm_waiting),
                         modifier = Modifier.testTag(if (confirmed) LINK_CONFIRM_WAITING_TAG else LINK_CONFIRM_LINK_TAG),
                     )
