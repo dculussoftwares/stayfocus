@@ -62,12 +62,12 @@ fun TimeRangePickerDialog(
             clockDialColor = c.track,
             clockDialSelectedContentColor = c.onGradient,
             clockDialUnselectedContentColor = c.ink,
-            selectorColor = c.orange,
+            selectorColor = c.green,
             containerColor = c.surfaceRaised,
             periodSelectorBorderColor = c.hairline,
-            timeSelectorSelectedContainerColor = c.orange.copy(alpha = 0.16f),
+            timeSelectorSelectedContainerColor = c.green.copy(alpha = 0.16f),
             timeSelectorUnselectedContainerColor = c.track,
-            timeSelectorSelectedContentColor = c.orange,
+            timeSelectorSelectedContentColor = c.green,
             timeSelectorUnselectedContentColor = c.ink,
         )
     Dialog(onDismissRequest = onDismiss) {

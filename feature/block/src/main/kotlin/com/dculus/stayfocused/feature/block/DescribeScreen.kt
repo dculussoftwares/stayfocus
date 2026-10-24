@@ -154,7 +154,7 @@ fun DescribeScreen(
             PillButton(
                 text = stringResource(R.string.block_ai_create),
                 onClick = actions.onBuild,
-                variant = PillButtonVariant.Orange,
+                variant = PillButtonVariant.Primary,
                 enabled = state.canBuild,
                 loading = state.busy,
                 loadingLabel = stringResource(R.string.block_ai_reading),
