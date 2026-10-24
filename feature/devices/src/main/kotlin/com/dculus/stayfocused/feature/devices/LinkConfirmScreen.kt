@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.sync.LinkFailure
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.RoundIconButton
 import com.dculus.stayfocused.core.ui.components.V5Card
@@ -192,10 +192,10 @@ private fun WaitingBody(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val grouped = code.chunked(3).joinToString(" ")
-                DotMatrixText(
+                Numeral(
                     text = grouped,
                     contentDescription = code.toList().joinToString(" "),
-                    dotSize = 5.dp,
+                    fontSize = 45.sp,
                     color = colors.ink,
                 )
             }

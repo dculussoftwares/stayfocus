@@ -283,7 +283,7 @@ internal fun deviceAttentionLine(device: LinkedDevice): String? {
 @Composable
 private fun LinkTile(onClick: () -> Unit) {
     GlowCard(
-        V5Gradients.pinkLink,
+        V5Gradients.brand,
         Modifier.fillMaxWidth().height(236.dp).testTag(DEVICES_LINK_TAG),
         padding = 0.dp,
         onClick = onClick,
