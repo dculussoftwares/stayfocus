@@ -38,10 +38,11 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.GoalNote
 import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.model.v5Duration
-import com.dculus.stayfocused.core.ui.charts.DotGrid
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.charts.SmoothAreaChart
+import com.dculus.stayfocused.core.ui.charts.dayAxisLabels
 import com.dculus.stayfocused.core.ui.components.GlassTile
 import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonSize
 import com.dculus.stayfocused.core.ui.components.PillButtonVariant
@@ -57,8 +58,8 @@ internal const val HOME_BLOCKED_TILE_TAG = "home_blocked_tile"
 internal const val HOME_MOST_USED_TILE_TAG = "home_most_used_tile"
 internal const val HOME_ALLOW_USAGE_TAG = "home_allow_usage"
 
-/** Hero dot grid: 6 rows, a column is full at 20 min of use in the hour. */
-private const val DOT_GRID_MAX_MINS = 20
+/** Hero chart: an hour peaks at 20 min of use. */
+private const val AREA_CHART_MAX_MINS = 20
 
 /** Avatar, date, greeting and the bell (hidden while no phone is linked). */
 @Composable
@@ -149,7 +150,7 @@ private fun PersonGlyph(color: Color) {
     }
 }
 
-/** The violet hero card: today's screen time, goal note, hour dots and the two glass tiles. */
+/** The brand-gradient hero card: today's screen time, goal note, hourly area chart and the two glass tiles. */
 @Composable
 internal fun HomeHero(
     gauge: GaugeUi,
@@ -158,7 +159,7 @@ internal fun HomeHero(
     modifier: Modifier = Modifier,
 ) {
     GlowCard(
-        V5Gradients.violet,
+        V5Gradients.brand,
         modifier.fillMaxWidth().testTag(HOME_HERO_TAG),
         radius = 38.dp,
         padding = 14.dp,
@@ -194,10 +195,10 @@ private fun HeroReady(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.height(56.dp), contentAlignment = Alignment.Center) {
-            DotMatrixText(
+            Numeral(
                 text = clockMins(gauge.totalMins),
                 contentDescription = formatMinutes(gauge.totalMins),
-                dotSize = 8.dp,
+                fontSize = 72.sp,
                 color = white,
             )
         }
@@ -207,10 +208,10 @@ private fun HeroReady(
             color = white,
             textAlign = TextAlign.Center,
         )
-        DotGrid(
+        SmoothAreaChart(
             values = gauge.hourlyMins,
-            max = DOT_GRID_MAX_MINS,
-            color = white,
+            max = AREA_CHART_MAX_MINS,
+            axisLabels = dayAxisLabels(),
             contentDescription = stringResource(R.string.home_dots_description),
             modifier = Modifier.padding(start = 6.dp, end = 6.dp, top = 2.dp),
             highlightIndex = gauge.currentHour,
@@ -319,7 +320,7 @@ private fun TileValue(
     unit: String,
 ) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Bottom) {
-        DotMatrixText(value, contentDescription = value, dotSize = 5.dp, color = StayFocusedTheme.colors.onGradient)
+        Numeral(value, contentDescription = value, fontSize = 45.sp, color = StayFocusedTheme.colors.onGradient)
         Text(unit, style = StayFocusedTheme.type.label, color = StayFocusedTheme.colors.onGradient)
     }
 }

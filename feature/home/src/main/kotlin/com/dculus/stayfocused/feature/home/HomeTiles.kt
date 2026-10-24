@@ -38,7 +38,8 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.art.BreakArt
 import com.dculus.stayfocused.core.ui.components.ActionTile
 import com.dculus.stayfocused.core.ui.components.AppIconTile
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.DescribeRow
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
@@ -49,7 +50,7 @@ internal const val BREAK_IDLE_CARD_TAG = "home_break_idle_card"
 internal const val BREAK_ACTIVE_CARD_TAG = "home_break_active_card"
 internal const val BREAK_COUNTDOWN_TAG = "home_break_countdown"
 
-/** "Block apps" (raised) next to "Take a break" (orange glow). */
+/** "Block apps" (raised) next to "Take a break" (brand gradient). */
 @Composable
 internal fun HomeTiles(
     state: HomeUiState,
@@ -144,7 +145,7 @@ private fun BreakTile(
             title = stringResource(R.string.break_tile_running_title),
             onClick = onEnd,
             modifier = modifier.testTag(BREAK_ACTIVE_CARD_TAG),
-            gradient = V5Gradients.breakTile,
+            gradient = V5Gradients.brand,
             showPlus = false,
         ) {
             Column(
@@ -164,7 +165,7 @@ private fun BreakTile(
             title = stringResource(R.string.break_tile_idle_title),
             onClick = onOpenSheet,
             modifier = modifier.testTag(BREAK_IDLE_CARD_TAG),
-            gradient = V5Gradients.breakTile,
+            gradient = V5Gradients.brand,
             contentDescription = stringResource(R.string.break_tile_idle_description),
         ) {
             BreakArt(lengthMins, Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp).fillMaxWidth())
@@ -176,10 +177,10 @@ private fun BreakTile(
 @Composable
 private fun BreakCountdown(breakUi: () -> BreakUi) {
     val text = (breakUi() as? BreakUi.Active)?.let { paddedMmss(it.remainingMs) }.orEmpty()
-    DotMatrixText(
+    Numeral(
         text = text,
         contentDescription = text,
-        dotSize = 5.dp,
+        fontSize = 45.sp,
         color = StayFocusedTheme.colors.onGradient,
         modifier = Modifier.testTag(BREAK_COUNTDOWN_TAG),
     )
@@ -191,37 +192,5 @@ internal fun AiPill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = StayFocusedTheme.colors
-    val shape = RoundedCornerShape(31.dp)
-    val label = stringResource(R.string.home_ai_pill)
-    Row(
-        modifier
-            .testTag(HOME_AI_DESCRIBE_TAG)
-            .fillMaxWidth()
-            .height(62.dp)
-            .shadow(
-                10.dp,
-                shape,
-                clip = false,
-                ambientColor = colors.ink.copy(alpha = 0.4f),
-                spotColor = colors.ink.copy(alpha = 0.4f),
-            ).clip(shape)
-            .background(colors.surface)
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = label }
-            .padding(start = 18.dp, end = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(V5Icons.sparkleTwin, contentDescription = null, tint = colors.orange, modifier = Modifier.size(20.dp))
-        Text(
-            label,
-            style = StayFocusedTheme.type.body.copy(fontSize = 16.sp, fontWeight = FontWeight.Normal),
-            color = colors.textSecondary,
-            modifier = Modifier.weight(1f),
-        )
-        Box(Modifier.size(46.dp).background(colors.ink, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(V5Icons.arrow, contentDescription = null, tint = colors.onGradient, modifier = Modifier.size(18.dp))
-        }
-    }
+    DescribeRow(stringResource(R.string.home_ai_pill), onClick, modifier.testTag(HOME_AI_DESCRIBE_TAG))
 }
