@@ -94,3 +94,26 @@ internal fun barStyle(
         mode == GlassBarMode.Week || value > BAR_HIGH_MINUTES -> BarStyle.High
         else -> BarStyle.Low
     }
+
+internal const val AREA_CHART_HEIGHT_DP = 72f
+internal const val AREA_CHART_BASELINE_INSET_DP = 4f
+internal const val AREA_CHART_HEADROOM_DP = 10f
+
+/**
+ * Y position (dp, from the top) of [value] in a 72 dp [SmoothAreaChart]: 4 dp above the baseline at 0, and
+ * `height - 14` dp higher at [max], so the top 10 dp stays free. Values are clamped to 0..[max].
+ */
+internal fun areaChartY(
+    value: Int,
+    max: Int,
+): Float =
+    AREA_CHART_HEIGHT_DP - AREA_CHART_BASELINE_INSET_DP -
+        clampedFraction(value.toFloat(), max.toFloat()) *
+        (AREA_CHART_HEIGHT_DP - AREA_CHART_BASELINE_INSET_DP - AREA_CHART_HEADROOM_DP)
+
+/** X position of point [index] of [count] evenly spaced across [width]; a single point sits at 0. */
+internal fun areaChartX(
+    index: Int,
+    count: Int,
+    width: Float,
+): Float = if (count <= 1) 0f else index * width / (count - 1)

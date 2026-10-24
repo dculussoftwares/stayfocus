@@ -157,17 +157,23 @@ private fun solid(
 object V5Gradients {
     private val c = V5Colors()
 
+    /**
+     * v6 `BrandGradient`: `radial-gradient(80% 70% at 75% 15%, #9CCB4A 0%, transparent 70%), #2F9A3C`. The only
+     * gradient on cards; text on it is always white.
+     */
+    val brand = solid(c.green, glow(0.75f, 0.15f, 0.8f, 0.7f, c.greenGlow))
+
     val welcome =
         solid(
-            c.orange,
-            glow(0.8f, 0.75f, 0.7f, 0.5f, c.orangeGold),
-            glow(0.1f, 0.2f, 0.9f, 0.7f, c.orangeGlowDeep),
+            c.green,
+            glow(0.8f, 0.75f, 0.7f, 0.5f, c.greenLight),
+            glow(0.1f, 0.2f, 0.9f, 0.7f, c.greenFresh),
         )
     val blocked =
         solid(
-            c.orange,
-            glow(0.5f, 0.4f, 0.6f, 0.4f, c.orangeGlowDeep, end = 0.75f),
-            glow(0.5f, 1f, 0.8f, 0.5f, c.orangeGold),
+            c.green,
+            glow(0.5f, 0.4f, 0.6f, 0.4f, c.greenFresh, end = 0.75f),
+            glow(0.5f, 1f, 0.8f, 0.5f, c.greenGlow),
         )
 
     /** Time-limit type tile and the wizard step-3 card. */
@@ -238,8 +244,8 @@ object V5Gradients {
             ),
             listOf(glow(0.5f, 0f, 0.7f, 0.5f, Color.White.copy(alpha = 0.3f))),
         )
-    val kidsQr = solid(c.pink, glow(0.5f, 0.45f, 0.7f, 0.45f, c.pinkGlow, end = 0.75f))
-    val scan = solid(c.scanBackground, glow(0.5f, 0.48f, 0.6f, 0.4f, c.pink.copy(alpha = 0.35f)))
+    val kidsQr = solid(c.green, glow(0.5f, 0.45f, 0.7f, 0.45f, c.greenGlow, end = 0.75f))
+    val scan = solid(c.scanBackground, glow(0.5f, 0.48f, 0.6f, 0.4f, c.green.copy(alpha = 0.4f)))
 
     /** Wizard type tiles (`TYPES[].bg`). The time-limit tile is [orange]. */
     val typeCycle = solid(c.green, glow(0.75f, 0.15f, 0.8f, 0.7f, c.greenGlow))
@@ -248,6 +254,7 @@ object V5Gradients {
 
     val all: Map<String, V5Gradient> =
         mapOf(
+            "brand" to brand,
             "welcome" to welcome,
             "blocked" to blocked,
             "orange" to orange,

@@ -16,15 +16,15 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.R
 
 @OptIn(ExperimentalTextApi::class)
-private fun urbanist(weight: Int) =
+private fun plusJakartaSans(weight: Int) =
     Font(
-        resId = R.font.urbanist,
+        resId = R.font.plus_jakarta_sans,
         weight = FontWeight(weight),
         variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
     )
 
-/** Urbanist (SIL OFL 1.1), bundled variable font; the weights the design uses. */
-val UrbanistFontFamily: FontFamily = FontFamily(listOf(200, 300, 400, 500, 600, 700).map(::urbanist))
+/** Plus Jakarta Sans (SIL OFL 1.1), bundled variable font (`wght` 200-800); the weights the design uses. */
+val PlusJakartaSansFontFamily: FontFamily = FontFamily(listOf(200, 300, 400, 500, 600, 700, 800).map(::plusJakartaSans))
 
 /** Type scale of V5_SPEC §3. Where the spec gives a range (34–36, 20–22, …) the lower bound is the base style. */
 @Immutable
@@ -55,7 +55,7 @@ data class V5Type(
     val tag: TextStyle,
 )
 
-fun v5Type(family: FontFamily = UrbanistFontFamily): V5Type {
+fun v5Type(family: FontFamily = PlusJakartaSansFontFamily): V5Type {
     fun style(
         size: Int,
         weight: Int,

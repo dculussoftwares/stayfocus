@@ -31,8 +31,8 @@ import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.components.DotMatrixText
 import com.dculus.stayfocused.core.ui.components.Numerals
+import com.dculus.stayfocused.core.ui.theme.PlusJakartaSansFontFamily
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.UrbanistFontFamily
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 /**
@@ -69,7 +69,7 @@ fun BreakArt(
                 color = Color.White,
                 style =
                     TextStyle(
-                        fontFamily = UrbanistFontFamily,
+                        fontFamily = PlusJakartaSansFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false),

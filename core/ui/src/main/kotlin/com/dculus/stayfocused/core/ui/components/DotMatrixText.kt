@@ -26,14 +26,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import com.dculus.stayfocused.core.ui.theme.PlusJakartaSansFontFamily
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.UrbanistFontFamily
 
 private const val THIN_FONT_SCALE = 9
 
 /**
  * Key numbers (screen time, counts, countdowns, the 6-digit link code) as 5 × 7 dot glyphs with dot pitch [dotSize]
- * (circles of radius .34 × [dotSize]); or, with [Numerals.Thin], as light Urbanist text at 9 × [dotSize].
+ * (circles of radius .34 × [dotSize]); or, with [Numerals.Thin], as light Plus Jakarta Sans text at 9 × [dotSize].
  *
  * Intrinsic size is the glyph width × 7 [dotSize]. Digits all have the same advance, so a running countdown keeps a
  * fixed width per glyph and doesn't jitter. Supports 0–9, `:` and space (2 cells); other characters are skipped.
@@ -85,7 +85,7 @@ private fun ThinNumerals(
         color = color,
         style =
             TextStyle(
-                fontFamily = UrbanistFontFamily,
+                fontFamily = PlusJakartaSansFontFamily,
                 fontWeight = FontWeight.ExtraLight,
                 fontSize = fontSize,
                 lineHeight = fontSize,

@@ -75,7 +75,7 @@ class V5TokensTest {
             gradient.brush(Size(390f, 844f))
             gradient.brush(Size(0f, 0f))
         }
-        assertEquals(16, V5Gradients.all.size)
+        assertEquals(17, V5Gradients.all.size)
     }
 
     @Test
@@ -87,9 +87,9 @@ class V5TokensTest {
     }
 
     @Test
-    fun `welcome gradient has the two prototype layers over orange`() {
+    fun `welcome gradient has the two prototype layers over green`() {
         val g = V5Gradients.welcome
-        assertEquals(V5GradientBase.Solid(V5Colors().orange), g.base)
+        assertEquals(V5GradientBase.Solid(V5Colors().green), g.base)
         assertEquals(2, g.layers.size)
         assertEquals(0.8f, g.layers[0].cx, 0f)
         assertEquals(0.5f, g.layers[0].ry, 0f)

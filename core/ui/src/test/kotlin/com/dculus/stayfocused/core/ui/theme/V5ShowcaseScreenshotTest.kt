@@ -51,6 +51,17 @@ class V5ShowcaseScreenshotTest {
     }
 
     @Test
+    @Config(qualifiers = "w411dp-h520dp-mdpi")
+    fun v5ShowcaseComponents() {
+        composeRule.setContent {
+            CompositionLocalProvider(LocalInspectionMode provides true) {
+                V5Screen(darkContent = false) { V5ShowcaseComponents() }
+            }
+        }
+        composeRule.onRoot().captureRoboImage("src/test/screenshots/v5/V5ShowcaseComponents.png")
+    }
+
+    @Test
     fun upperRadialLayerIsDrawnOverTheBase() {
         composeRule.setContent {
             Box(Modifier.size(200.dp, 400.dp).background(V5Gradients.pinkHero.adaptive))

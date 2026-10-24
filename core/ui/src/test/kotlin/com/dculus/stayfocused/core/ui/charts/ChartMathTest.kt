@@ -30,6 +30,25 @@ class ChartMathTest {
     }
 
     @Test
+    fun areaChartYLeavesHeadroomAndBaselineInset() {
+        // 72 dp chart: 0 sits 4 dp above the bottom, max 14 dp below the top edge's full span (top 10 dp free).
+        assertEquals(68f, areaChartY(0, 20), 0f)
+        assertEquals(10f, areaChartY(20, 20), 0f)
+        assertEquals(39f, areaChartY(10, 20), 0f)
+        assertEquals(10f, areaChartY(99, 20), 0f)
+        assertEquals(68f, areaChartY(-5, 20), 0f)
+        assertEquals(68f, areaChartY(5, 0), 0f)
+    }
+
+    @Test
+    fun areaChartXSpreadsPointsEvenly() {
+        assertEquals(0f, areaChartX(0, 24, 230f), 0f)
+        assertEquals(230f, areaChartX(23, 24, 230f), 0f)
+        assertEquals(100f, areaChartX(1, 3, 200f), 0f)
+        assertEquals(0f, areaChartX(0, 1, 200f), 0f)
+    }
+
+    @Test
     fun progressTicksLightProportionally() {
         assertEquals(0, (0 until TICK_PROGRESS_COUNT).count { isProgressTickLit(it, 0f) })
         assertEquals(20, (0 until TICK_PROGRESS_COUNT).count { isProgressTickLit(it, 0.5f) })

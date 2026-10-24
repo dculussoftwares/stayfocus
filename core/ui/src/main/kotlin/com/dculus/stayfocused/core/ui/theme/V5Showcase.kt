@@ -25,6 +25,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.dculus.stayfocused.core.ui.charts.ChartSamples
+import com.dculus.stayfocused.core.ui.charts.SmoothAreaChart
+import com.dculus.stayfocused.core.ui.components.OnlinePill
+import com.dculus.stayfocused.core.ui.components.SoftPill
 
 private fun V5Colors.swatches(): List<Pair<String, Color>> =
     listOf(
@@ -58,6 +62,10 @@ private fun V5Colors.swatches(): List<Pair<String, Color>> =
         "pinkText" to pinkText,
         "green" to green,
         "greenGlow" to greenGlow,
+        "greenFresh" to greenFresh,
+        "greenLight" to greenLight,
+        "greenScanLine" to greenScanLine,
+        "greenLabel" to greenLabel,
         "success" to success,
         "online" to online,
         "onlineBackground" to onlineBackground,
@@ -99,6 +107,7 @@ fun V5Showcase(modifier: Modifier = Modifier) {
     ) {
         V5ShowcaseTokens()
         V5ShowcaseGradients()
+        V5ShowcaseComponents()
     }
 }
 
@@ -122,9 +131,9 @@ internal fun V5ShowcaseTokens() {
             }
         }
         Text("Weights", style = StayFocusedTheme.type.title, color = colors.ink)
-        listOf(200, 300, 400, 500, 600, 700).forEach { weight ->
+        listOf(200, 300, 400, 500, 600, 700, 800).forEach { weight ->
             Text(
-                "Urbanist $weight, take back your time",
+                "Plus Jakarta Sans $weight, take back your time",
                 style = StayFocusedTheme.type.heading.copy(fontWeight = FontWeight(weight)),
                 color = colors.ink,
             )
@@ -159,6 +168,55 @@ internal fun V5ShowcaseGradients() {
                 }
                 repeat(2 - row.size) { Box(Modifier.weight(1f)) }
             }
+        }
+    }
+}
+
+/** v6 components: [SoftPill] and [SmoothAreaChart] on [V5Gradients.brand] (own Roborazzi baseline). */
+@Composable
+internal fun V5ShowcaseComponents() {
+    val colors = StayFocusedTheme.colors
+    Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Text("SoftPill", style = StayFocusedTheme.type.title, color = colors.ink)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            SoftPill("My phone")
+            SoftPill("Aarav's phone")
+            OnlinePill()
+        }
+        Text("SmoothAreaChart", style = StayFocusedTheme.type.title, color = colors.ink)
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .glow(V5Gradients.brand, StayFocusedTheme.shapes.card)
+                    .padding(horizontal = 22.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("Screen time today", style = StayFocusedTheme.type.bodyL, color = colors.onGradient)
+            SmoothAreaChart(
+                values = ChartSamples.meHourly,
+                max = 20,
+                axisLabels = ChartSamples.dayAxis,
+                contentDescription = "Screen time by hour, peak 19 min at 9 PM",
+                highlightIndex = ChartSamples.ME_HIGHLIGHT_HOUR,
+            )
+        }
+        Column(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .glow(V5Gradients.brand, StayFocusedTheme.shapes.card)
+                    .padding(horizontal = 22.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("This week", style = StayFocusedTheme.type.bodyL, color = colors.onGradient)
+            SmoothAreaChart(
+                values = ChartSamples.week,
+                max = 240,
+                axisLabels = ChartSamples.weekAxis,
+                contentDescription = "Screen time by day, peak 3 h 40 min on Saturday",
+                highlightIndex = 6,
+            )
         }
     }
 }

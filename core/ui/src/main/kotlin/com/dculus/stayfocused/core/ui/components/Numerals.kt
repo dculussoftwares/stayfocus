@@ -5,6 +5,6 @@ enum class Numerals {
     /** 5 × 7 dot glyphs. */
     Dots,
 
-    /** Urbanist ExtraLight at 9 × the dot size, letter spacing -.03 em. */
+    /** Plus Jakarta Sans ExtraLight at 9 × the dot size, letter spacing -.03 em. */
     Thin,
 }
