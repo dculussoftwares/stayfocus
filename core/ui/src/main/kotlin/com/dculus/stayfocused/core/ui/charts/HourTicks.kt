@@ -53,7 +53,7 @@ internal fun hourLabel(
 
 /**
  * Child's usage between 06:00 and 23:59: three 2 dp ticks per hour (54 in all), each `max(3, v / 25 × 34)` dp tall
- * (capped at 34 dp) and pink when that hour has any usage, hairline otherwise, with axis labels 6 AM / 12 PM / 6 PM /
+ * (capped at 34 dp) and green when that hour has any usage, hairline otherwise, with axis labels 6 AM / 12 PM / 6 PM /
  * 11 PM below. [hourlyMins] holds minutes per hour of day (index 0..23; hours 0–5 are not drawn, missing hours are 0).
  * [contentDescription] is the caller's TalkBack summary (e.g. "Screen time by hour, peak 19 min at 9 PM").
  */
@@ -69,7 +69,7 @@ fun HourTicks(
         remember(minutes) { minutes.flatMap { m -> List(HOUR_TICKS_PER_HOUR) { hourTickHeightDp(m).dp } } }
     val tickColors =
         remember(minutes, colors) {
-            minutes.flatMap { m -> List(HOUR_TICKS_PER_HOUR) { if (m > 0) colors.pink else colors.hairline } }
+            minutes.flatMap { m -> List(HOUR_TICKS_PER_HOUR) { if (m > 0) colors.green else colors.hairline } }
         }
     val context = LocalContext.current
     val configuration = LocalConfiguration.current

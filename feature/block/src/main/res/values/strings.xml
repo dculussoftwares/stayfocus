@@ -79,7 +79,7 @@
 
     <!-- Block wizard -->
     <string name="block_wizard_back">Back</string>
-    <string name="block_wizard_step_hint">Step %1$d of 3 · tap the red tag to switch phone</string>
+    <string name="block_wizard_step_hint">Step %1$d of 3 · tap the green tag to switch phone</string>
     <string name="block_wizard_step1_title">What should it do?</string>
     <string name="block_wizard_describe">Rather describe it in words</string>
     <string name="block_wizard_close">Close</string>

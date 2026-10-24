@@ -40,7 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -147,15 +147,6 @@ private val ScreenPadding = 14.dp
 private val TypeTileHeight = 178.dp
 private val TypeTileRadius = 32.dp
 private val AppTileRadius = 28.dp
-private val RingWidth = 3.dp
-
-private fun BlockType.gradient(): V5Gradient =
-    when (this) {
-        BlockType.LIMIT -> V5Gradients.orange
-        BlockType.CYCLE -> V5Gradients.typeCycle
-        BlockType.SCHEDULE -> V5Gradients.typeSchedule
-        BlockType.NOW -> V5Gradients.typeNow
-    }
 
 private fun BlockType.nameRes(): Int =
     when (this) {
@@ -470,7 +461,7 @@ private fun TypeStep(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(V5Icons.sparkle, contentDescription = null, tint = c.orange, modifier = Modifier.size(15.dp))
+                    Icon(V5Icons.sparkle, contentDescription = null, tint = c.green, modifier = Modifier.size(15.dp))
                     Text(
                         stringResource(R.string.block_wizard_describe),
                         style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
@@ -482,7 +473,7 @@ private fun TypeStep(
     }
 }
 
-/** A 178 dp gradient tile; the selected one shows a white dot and a 3 dp ink ring after a 3 dp gap. */
+/** A 178 dp tile: white with ink text, or [V5Gradients.brand] with white text and a green shadow when selected. */
 @Composable
 private fun TypeTile(
     type: BlockType,
@@ -491,64 +482,74 @@ private fun TypeTile(
     modifier: Modifier = Modifier,
 ) {
     val c = StayFocusedTheme.colors
+    val textColor = if (selected) c.onGradient else c.ink
+    val tileModifier =
+        Modifier
+            .fillMaxSize()
+            .testTag(wizardTypeTag(type))
+            .semantics { this.selected = selected }
+    val content: @Composable ColumnScope.() -> Unit = {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Box(
+                Modifier
+                    .size(30.dp)
+                    .background(if (selected) c.onGradient else Color.Transparent, CircleShape)
+                    .border(2.dp, textColor, CircleShape),
+            )
+        }
+        Spacer(Modifier.weight(1f))
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                stringResource(type.nameRes()),
+                style =
+                    StayFocusedTheme.type.body.copy(
+                        fontSize = 19.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 21.sp,
+                    ),
+                color = textColor,
+            )
+            Text(
+                stringResource(type.descRes()),
+                style =
+                    StayFocusedTheme.type.body.copy(
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium,
+                        lineHeight = 17.sp,
+                    ),
+                color = textColor,
+            )
+        }
+    }
     Box(
         modifier =
             modifier
                 .height(TypeTileHeight)
-                .drawBehind {
-                    if (!selected) return@drawBehind
-                    val outset = (RingWidth * 1.5f).toPx()
-                    drawRoundRect(
-                        color = c.ink,
-                        topLeft = Offset(-outset, -outset),
-                        size = Size(size.width + outset * 2, size.height + outset * 2),
-                        cornerRadius = CornerRadius(TypeTileRadius.toPx() + outset),
-                        style = Stroke(width = RingWidth.toPx()),
-                    )
-                },
+                .then(
+                    if (selected) {
+                        Modifier.shadow(
+                            14.dp,
+                            RoundedCornerShape(TypeTileRadius),
+                            clip = false,
+                            ambientColor = c.green.copy(alpha = 0.6f),
+                            spotColor = c.green.copy(alpha = 0.6f),
+                        )
+                    } else {
+                        Modifier
+                    },
+                ),
     ) {
-        GlowCard(
-            gradient = type.gradient(),
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .testTag(wizardTypeTag(type))
-                    .semantics { this.selected = selected },
-            radius = TypeTileRadius,
-            padding = 16.dp,
-            onClick = onClick,
-        ) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Box(
-                    Modifier
-                        .size(30.dp)
-                        .background(if (selected) c.onGradient else Color.Transparent, CircleShape)
-                        .border(2.dp, c.onGradient, CircleShape),
-                )
-            }
-            Spacer(Modifier.weight(1f))
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(type.nameRes()),
-                    style =
-                        StayFocusedTheme.type.body.copy(
-                            fontSize = 19.sp,
-                            fontWeight = FontWeight.Medium,
-                            lineHeight = 21.sp,
-                        ),
-                    color = c.onGradient,
-                )
-                Text(
-                    stringResource(type.descRes()),
-                    style =
-                        StayFocusedTheme.type.body.copy(
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.Medium,
-                            lineHeight = 17.sp,
-                        ),
-                    color = c.onGradient,
-                )
-            }
+        if (selected) {
+            GlowCard(
+                V5Gradients.brand,
+                tileModifier,
+                radius = TypeTileRadius,
+                padding = 16.dp,
+                onClick = onClick,
+                content = content,
+            )
+        } else {
+            V5Card(tileModifier, radius = TypeTileRadius, padding = 16.dp, onClick = onClick, content = content)
         }
     }
 }
@@ -775,7 +776,7 @@ private fun RuleCard(
 ) {
     val draft = state.draft
     GlowCard(
-        gradient = draft.type.gradient(),
+        gradient = V5Gradients.brand,
         modifier = Modifier.fillMaxWidth(),
         radius = 36.dp,
         padding = 18.dp,

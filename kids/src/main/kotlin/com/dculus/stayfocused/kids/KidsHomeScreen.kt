@@ -21,13 +21,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
 import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonSize
 import com.dculus.stayfocused.core.ui.components.PillButtonVariant
@@ -156,7 +157,7 @@ internal fun KidsHomeScreen(
 @Composable
 private fun TodayHero(todayMins: Int?) {
     GlowCard(
-        gradient = V5Gradients.pinkHero,
+        gradient = V5Gradients.brand,
         modifier = Modifier.fillMaxWidth(),
         radius = 38.dp,
         padding = 22.dp,
@@ -167,10 +168,10 @@ private fun TodayHero(todayMins: Int?) {
             color = StayFocusedTheme.colors.onGradient,
         )
         if (todayMins != null) {
-            DotMatrixText(
+            Numeral(
                 text = "${todayMins / 60}:${(todayMins % 60).toString().padStart(2, '0')}",
                 contentDescription = duration(todayMins),
-                dotSize = 9.dp,
+                fontSize = 81.sp,
                 color = StayFocusedTheme.colors.onGradient,
                 modifier = Modifier.padding(top = 16.dp).testTag(KIDS_HOME_TODAY_TAG),
             )
@@ -189,7 +190,7 @@ private fun NoticePreview(parent: String) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(18.dp).background(colors.pink, StayFocusedTheme.shapes.tag),
+                Modifier.size(18.dp).background(colors.green, StayFocusedTheme.shapes.tag),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(stringResource(R.string.kids_home_notice_badge), style = type.tag, color = colors.onGradient)

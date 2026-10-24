@@ -123,6 +123,6 @@ private fun DrawScope.drawDashedArc(
 @Composable
 internal fun LinkArtPreview() {
     StayFocusedTheme {
-        Box(Modifier.background(V5Gradients.pinkLink.adaptive).padding(35.dp)) { LinkArt() }
+        Box(Modifier.background(V5Gradients.kidsQr.adaptive).padding(35.dp)) { LinkArt() }
     }
 }

@@ -18,15 +18,22 @@ class ChartMathTest {
     }
 
     @Test
-    fun dotGridLitCountMatchesPrototype() {
-        // Prototype: round(min(1, v / max) × rows), ME_H with max 20 and 6 rows.
-        assertEquals(0, dotGridLitCount(0, 20, 6))
-        assertEquals(1, dotGridLitCount(4, 20, 6))
-        assertEquals(3, dotGridLitCount(9, 20, 6))
-        assertEquals(6, dotGridLitCount(19, 20, 6))
-        assertEquals(6, dotGridLitCount(500, 20, 6))
-        assertEquals(0, dotGridLitCount(-4, 20, 6))
-        assertEquals(0, dotGridLitCount(5, 0, 6))
+    fun areaChartYLeavesHeadroomAndBaselineInset() {
+        // 72 dp chart: 0 sits 4 dp above the bottom, max 14 dp below the top edge's full span (top 10 dp free).
+        assertEquals(68f, areaChartY(0, 20), 0f)
+        assertEquals(10f, areaChartY(20, 20), 0f)
+        assertEquals(39f, areaChartY(10, 20), 0f)
+        assertEquals(10f, areaChartY(99, 20), 0f)
+        assertEquals(68f, areaChartY(-5, 20), 0f)
+        assertEquals(68f, areaChartY(5, 0), 0f)
+    }
+
+    @Test
+    fun areaChartXSpreadsPointsEvenly() {
+        assertEquals(0f, areaChartX(0, 24, 230f), 0f)
+        assertEquals(230f, areaChartX(23, 24, 230f), 0f)
+        assertEquals(100f, areaChartX(1, 3, 200f), 0f)
+        assertEquals(0f, areaChartX(0, 1, 200f), 0f)
     }
 
     @Test
@@ -64,44 +71,5 @@ class ChartMathTest {
         assertEquals(34f, hourTickHeightDp(400), 0f)
         assertEquals(12 / 25f * 34f, hourTickHeightDp(12), 0.001f)
         assertEquals(3f, hourTickHeightDp(-5), 0f)
-    }
-
-    @Test
-    fun dayBarsHaveAMinimumHeightButZeroStaysEmpty() {
-        assertEquals(0f, barFraction(0, 20, GlassBarMode.Day), 0f)
-        assertEquals(0.08f, barFraction(1, 20, GlassBarMode.Day), 0f)
-        assertEquals(0.5f, barFraction(10, 20, GlassBarMode.Day), 0f)
-        assertEquals(1f, barFraction(500, 20, GlassBarMode.Day), 0f)
-        assertEquals(0f, barFraction(5, 0, GlassBarMode.Day), 0f)
-        assertEquals(0f, barFraction(5, -3, GlassBarMode.Day), 0f)
-    }
-
-    @Test
-    fun weekBarsAreProportionalAndClamped() {
-        assertEquals(182 / 240f, barFraction(182, 240, GlassBarMode.Week), 0.0001f)
-        assertEquals(1f, barFraction(300, 240, GlassBarMode.Week), 0f)
-        assertEquals(0f, barFraction(0, 240, GlassBarMode.Week), 0f)
-        assertEquals(0f, barFraction(10, 0, GlassBarMode.Week), 0f)
-    }
-
-    @Test
-    fun averageLineIsCappedAtNinetySixPercent() {
-        assertEquals(153 / 24f / 20f, averageLineFraction(153 / 24f, 20), 0.0001f)
-        assertEquals(0.96f, averageLineFraction(400f, 20), 0f)
-        assertEquals(0f, averageLineFraction(0f, 20), 0f)
-        assertEquals(0f, averageLineFraction(5f, 0), 0f)
-    }
-
-    @Test
-    fun barStyleFollowsThePrototype() {
-        assertEquals(BarStyle.Current, barStyle(21, 14, 21, GlassBarMode.Day))
-        assertEquals(BarStyle.Current, barStyle(21, 0, 21, GlassBarMode.Day))
-        assertEquals(BarStyle.High, barStyle(17, 18, 21, GlassBarMode.Day))
-        assertEquals(BarStyle.Low, barStyle(11, 7, 21, GlassBarMode.Day))
-        assertEquals(BarStyle.High, barStyle(12, 15, 21, GlassBarMode.Day))
-        assertEquals(BarStyle.High, barStyle(0, 13, null, GlassBarMode.Day))
-        assertEquals(BarStyle.Low, barStyle(0, 12, null, GlassBarMode.Day))
-        assertEquals(BarStyle.High, barStyle(2, 0, 6, GlassBarMode.Week))
-        assertEquals(BarStyle.Current, barStyle(6, 153, 6, GlassBarMode.Week))
     }
 }

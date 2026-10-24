@@ -125,8 +125,8 @@ internal fun HomeRoute(
 }
 
 /**
- * The Home tab (v5): header, violet hero, "Block apps" and "Take a break" tiles, the AI pill and a card per linked
- * phone. [breakUi] is a lambda so only the break tile reads the per-second countdown.
+ * The Home tab (v5): header, brand-gradient hero, "Block apps" and "Take a break" tiles, the AI pill and a card per
+ * linked phone. [breakUi] is a lambda so only the break tile reads the per-second countdown.
  */
 @Composable
 internal fun HomeScreen(

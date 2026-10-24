@@ -8,6 +8,7 @@
     <string name="insights_unit_hours">h</string>
     <string name="insights_unit_minutes">m</string>
     <string name="insights_avg_per_hour">%1$dm/h</string>
+    <string name="insights_avg_chip">Avg %1$s</string>
     <string name="insights_hero_description">%1$s: %2$s</string>
     <string name="insights_axis_12am">12 AM</string>
     <string name="insights_axis_6am">6 AM</string>

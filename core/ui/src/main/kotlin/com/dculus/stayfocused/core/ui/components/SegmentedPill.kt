@@ -122,7 +122,7 @@ internal fun SegmentedPillPreview() {
         SegmentedPill(listOf("Aarav's phone", "Mine"), selectedIndex = 1, onSelect = {})
         SegmentedPill(listOf("Day", "Week", "Month"), selectedIndex = 1, onSelect = {}, size = SegmentedPillSize.Medium)
         SegmentedPill(listOf("Day", "Week"), selectedIndex = 0, onSelect = {}, size = SegmentedPillSize.Small)
-        Box(Modifier.background(V5Gradients.violet.adaptive).padding(12.dp)) {
+        Box(Modifier.background(V5Gradients.brand.adaptive).padding(12.dp)) {
             SegmentedPill(
                 listOf("Day", "Week"),
                 selectedIndex = 1,

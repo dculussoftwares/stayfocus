@@ -5,12 +5,8 @@ package com.dculus.stayfocused.core.ui.charts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,25 +43,16 @@ private fun ChartPreviewSurface(content: @Composable () -> Unit) {
     }
 }
 
-/** Stand-in for the Insights card's headline row, so the "Avg" pill (drawn above the bars) has room. */
-@Composable
-private fun InsightsHeadline() {
-    Column {
-        Text("Screen time today", style = StayFocusedTheme.type.bodyL, color = StayFocusedTheme.colors.onGradient)
-        Spacer(Modifier.height(80.dp))
-    }
-}
-
-/** Home hero (05-home.png): the violet card with the dot grid of `ME_H`. */
+/** Home hero (v6): the brand card with the day's [SmoothAreaChart]. */
 @Preview(widthDp = 390, heightDp = 260)
 @Composable
-internal fun HomeDotGridPreview() {
+internal fun HomeAreaChartPreview() {
     ChartPreviewSurface {
-        ChartCard(V5Gradients.violet.adaptive) {
-            DotGrid(
+        ChartCard(V5Gradients.brand.adaptive) {
+            SmoothAreaChart(
                 values = ChartSamples.meHourly,
                 max = 20,
-                color = StayFocusedTheme.colors.onGradient,
+                axisLabels = ChartSamples.dayAxis,
                 contentDescription = "Screen time by hour, peak 19 min at 9 PM",
                 highlightIndex = ChartSamples.ME_HIGHLIGHT_HOUR,
             )
@@ -73,16 +60,16 @@ internal fun HomeDotGridPreview() {
     }
 }
 
-/** Family child hero (17-family.png): the pink card with the dot grid of `KID_H` and the hour ticks. */
+/** Family child hero (v6): the brand card with the child's area chart, and the hour ticks. */
 @Preview(widthDp = 390, heightDp = 400)
 @Composable
 internal fun ChildHourTicksPreview() {
     ChartPreviewSurface {
-        ChartCard(V5Gradients.pinkHero.adaptive) {
-            DotGrid(
+        ChartCard(V5Gradients.brand.adaptive) {
+            SmoothAreaChart(
                 values = ChartSamples.kidHourly,
                 max = 25,
-                color = StayFocusedTheme.colors.onGradient,
+                axisLabels = ChartSamples.dayAxis,
                 contentDescription = "Screen time by hour, peak 25 min at 5 PM",
                 highlightIndex = ChartSamples.ME_HIGHLIGHT_HOUR,
             )
@@ -93,43 +80,27 @@ internal fun ChildHourTicksPreview() {
     }
 }
 
-/** Insights, day (21-insights-day.png). */
+/** Insights (v6): day (24 hourly points) and week (7 daily points, today highlighted). */
 @Preview(widthDp = 390, heightDp = 400)
 @Composable
-internal fun InsightsDayChartPreview() {
+internal fun InsightsAreaChartPreview() {
     ChartPreviewSurface {
-        ChartCard(V5Gradients.violet.adaptive) {
-            InsightsHeadline()
-            GlassBarChart(
+        ChartCard(V5Gradients.brand.adaptive) {
+            SmoothAreaChart(
                 values = ChartSamples.meHourly,
                 max = 20,
-                average = ChartSamples.meHourly.sum() / 24f,
-                averageLabel = "6m/h",
                 axisLabels = ChartSamples.dayAxis,
                 contentDescription = "Screen time by hour, peak 19 min at 9 PM",
                 highlightIndex = ChartSamples.ME_HIGHLIGHT_HOUR,
-                mode = GlassBarMode.Day,
             )
         }
-    }
-}
-
-/** Insights, week (22-insights-week.png). */
-@Preview(widthDp = 390, heightDp = 400)
-@Composable
-internal fun InsightsWeekChartPreview() {
-    ChartPreviewSurface {
-        ChartCard(V5Gradients.violet.adaptive) {
-            InsightsHeadline()
-            GlassBarChart(
+        ChartCard(V5Gradients.brand.adaptive) {
+            SmoothAreaChart(
                 values = ChartSamples.week,
                 max = 240,
-                average = ChartSamples.week.sum() / 7f,
-                averageLabel = "2h 56m",
                 axisLabels = ChartSamples.weekAxis,
                 contentDescription = "Screen time by day, peak 3 h 40 min on Saturday",
                 highlightIndex = 6,
-                mode = GlassBarMode.Week,
             )
         }
     }
@@ -165,42 +136,29 @@ internal fun UsageRowsPreview() {
 }
 
 /** Empty data and values above `max` must render clamped, without crashing. */
-@Preview(widthDp = 390, heightDp = 1060)
+@Preview(widthDp = 390, heightDp = 700)
 @Composable
 internal fun ChartEdgeCasesPreview() {
     ChartPreviewSurface {
-        ChartCard(V5Gradients.violet.adaptive) {
-            DotGrid(
+        ChartCard(V5Gradients.brand.adaptive) {
+            SmoothAreaChart(
                 List(24) { 0 },
                 max = 20,
-                color = StayFocusedTheme.colors.onGradient,
-                contentDescription = "No screen time",
-            )
-            DotGrid(
-                listOf(99, 20, -3, 5),
-                modifier = Modifier.width(80.dp),
-                max = 0,
-                color = StayFocusedTheme.colors.onGradient,
-                contentDescription = "Nothing to scale",
-            )
-            InsightsHeadline()
-            GlassBarChart(
-                values = List(24) { 0 },
-                max = 20,
-                average = 0f,
-                averageLabel = "0m/h",
                 axisLabels = ChartSamples.dayAxis,
                 contentDescription = "No screen time",
             )
-            InsightsHeadline()
-            GlassBarChart(
-                values = listOf(500, 30, 0, 12),
+            SmoothAreaChart(
+                listOf(500, 30, 0, 12),
                 max = 20,
-                average = 400f,
-                averageLabel = "9m/h",
                 axisLabels = ChartSamples.dayAxis,
                 contentDescription = "Values above the maximum",
                 highlightIndex = 0,
+            )
+            SmoothAreaChart(
+                listOf(99, 20, -3, 5),
+                max = 0,
+                axisLabels = listOf("a"),
+                contentDescription = "Nothing to scale",
             )
         }
         ChartCard(SolidColor(StayFocusedTheme.colors.surface)) {

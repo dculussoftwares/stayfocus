@@ -42,17 +42,11 @@ sealed interface V5GradientBase {
     data class Solid(
         val color: Color,
     ) : V5GradientBase
-
-    /** CSS `linear-gradient(180deg, ...)`, top to bottom. */
-    @Immutable
-    data class Vertical(
-        val stops: List<V5GradientStop>,
-    ) : V5GradientBase
 }
 
 /**
  * A CSS stack of radial layers over a base. [layers] follow CSS order: the first one is drawn on top.
- * Supported depth: two layers over a solid base, one over a vertical gradient.
+ * Supported depth: two layers over a solid base.
  */
 @Immutable
 class V5Gradient(
@@ -60,8 +54,7 @@ class V5Gradient(
     val layers: List<V5RadialLayer> = emptyList(),
 ) {
     init {
-        val maxLayers = if (base is V5GradientBase.Solid) 2 else 1
-        require(layers.size <= maxLayers) { "At most $maxLayers radial layers over this base" }
+        require(layers.size <= 2) { "At most 2 radial layers over the solid base" }
     }
 
     /** Brush that follows whatever size it is drawn at. */
@@ -76,15 +69,12 @@ class V5Gradient(
     private fun shaderFor(size: Size): Shader {
         val w = size.width.coerceAtLeast(1f)
         val h = size.height.coerceAtLeast(1f)
-        // A solid base is folded into the bottom layer, so two layers need a single ComposeShader (no nesting).
-        val solid = (base as? V5GradientBase.Solid)?.color
-        val bottomLayer = if (solid != null) layers.lastOrNull() else null
+        // The solid base is folded into the bottom layer, so two layers need a single ComposeShader (no nesting).
+        val solid = (base as V5GradientBase.Solid).color
+        val bottomLayer = layers.lastOrNull()
         val bottom: Shader =
-            when {
-                bottomLayer != null -> bottomLayer.toShader(w, h, over = solid)
-                solid != null -> linear(h, listOf(V5GradientStop(0f, solid), V5GradientStop(1f, solid)))
-                else -> linear(h, (base as V5GradientBase.Vertical).stops)
-            }
+            bottomLayer?.toShader(w, h, over = solid)
+                ?: linear(h, listOf(V5GradientStop(0f, solid), V5GradientStop(1f, solid)))
         val above = if (bottomLayer != null) layers.dropLast(1) else layers
         return above.foldRight(bottom) { layer, acc ->
             ComposeShader(acc, layer.toShader(w, h, over = null), PorterDuff.Mode.SRC_OVER)
@@ -157,112 +147,36 @@ private fun solid(
 object V5Gradients {
     private val c = V5Colors()
 
+    /**
+     * v6 `BrandGradient`: `radial-gradient(80% 70% at 75% 15%, #9CCB4A 0%, transparent 70%), #2F9A3C`. The only
+     * gradient on cards; text on it is always white.
+     */
+    val brand = solid(c.green, glow(0.75f, 0.15f, 0.8f, 0.7f, c.greenGlow))
+
     val welcome =
         solid(
-            c.orange,
-            glow(0.8f, 0.75f, 0.7f, 0.5f, c.orangeGold),
-            glow(0.1f, 0.2f, 0.9f, 0.7f, c.orangeGlowDeep),
+            c.green,
+            glow(0.8f, 0.75f, 0.7f, 0.5f, c.greenLight),
+            glow(0.1f, 0.2f, 0.9f, 0.7f, c.greenFresh),
         )
     val blocked =
         solid(
-            c.orange,
-            glow(0.5f, 0.4f, 0.6f, 0.4f, c.orangeGlowDeep, end = 0.75f),
-            glow(0.5f, 1f, 0.8f, 0.5f, c.orangeGold),
+            c.green,
+            glow(0.5f, 0.4f, 0.6f, 0.4f, c.greenFresh, end = 0.75f),
+            glow(0.5f, 1f, 0.8f, 0.5f, c.greenGlow),
         )
 
-    /** Time-limit type tile and the wizard step-3 card. */
-    val orange = solid(c.orange, glow(0.25f, 0.2f, 0.8f, 0.7f, c.orangeGlow))
+    /** Kids "Show this to your parent". */
+    val kidsQr = solid(c.green, glow(0.5f, 0.45f, 0.7f, 0.45f, c.greenGlow, end = 0.75f))
 
-    /** Home "Unlocks" tile. */
-    val orangeCard = solid(c.orange, glow(0.85f, 0.2f, 0.6f, 0.7f, c.orangeGlow))
-
-    /** Home "Focus" tile. */
-    val orangeTile = solid(c.orange, glow(0.3f, 0.2f, 0.7f, 0.6f, c.orangeGlow))
-    val orangeButton = solid(c.orange, glow(0.2f, 0f, 0.7f, 1.2f, c.orangeGlow))
-    val breakTile =
-        V5Gradient(
-            V5GradientBase.Solid(c.orange),
-            listOf(
-                V5RadialLayer(
-                    0.5f,
-                    0.6f,
-                    0.5f,
-                    0.42f,
-                    listOf(
-                        V5GradientStop(0f, c.orange),
-                        V5GradientStop(0.45f, c.orangeGlowDeep),
-                        V5GradientStop(1f, c.orangeSoft),
-                    ),
-                ),
-            ),
-        )
-    val violet = solid(c.violet, glow(0.75f, 0.15f, 0.8f, 0.7f, c.violetGlow))
-    val pinkCard =
-        solid(
-            c.pink,
-            V5RadialLayer(
-                0.9f,
-                0.4f,
-                0.7f,
-                0.9f,
-                listOf(
-                    V5GradientStop(0f, c.pink),
-                    V5GradientStop(0.55f, c.pinkMid),
-                    V5GradientStop(1f, c.pinkSoft),
-                ),
-            ),
-        )
-    val pinkLink =
-        solid(
-            c.pink,
-            V5RadialLayer(
-                0.5f,
-                0.58f,
-                0.5f,
-                0.45f,
-                listOf(
-                    V5GradientStop(0f, c.pink),
-                    V5GradientStop(0.5f, c.pinkGlow),
-                    V5GradientStop(1f, c.pinkRose),
-                ),
-            ),
-        )
-    val pinkHero =
-        V5Gradient(
-            V5GradientBase.Vertical(
-                listOf(
-                    V5GradientStop(0f, c.pinkTint),
-                    V5GradientStop(0.6f, c.pink),
-                    V5GradientStop(1f, c.pinkDeep),
-                ),
-            ),
-            listOf(glow(0.5f, 0f, 0.7f, 0.5f, Color.White.copy(alpha = 0.3f))),
-        )
-    val kidsQr = solid(c.pink, glow(0.5f, 0.45f, 0.7f, 0.45f, c.pinkGlow, end = 0.75f))
-    val scan = solid(c.scanBackground, glow(0.5f, 0.48f, 0.6f, 0.4f, c.pink.copy(alpha = 0.35f)))
-
-    /** Wizard type tiles (`TYPES[].bg`). The time-limit tile is [orange]. */
-    val typeCycle = solid(c.green, glow(0.75f, 0.15f, 0.8f, 0.7f, c.greenGlow))
-    val typeSchedule = solid(c.pink, glow(0.25f, 0.15f, 0.8f, 0.7f, c.pinkGlowLight))
-    val typeNow = solid(c.ink, glow(0.75f, 0.15f, 0.8f, 0.7f, c.inkGlow))
+    val scan = solid(c.scanBackground, glow(0.5f, 0.48f, 0.6f, 0.4f, c.green.copy(alpha = 0.4f)))
 
     val all: Map<String, V5Gradient> =
         mapOf(
+            "brand" to brand,
             "welcome" to welcome,
             "blocked" to blocked,
-            "orange" to orange,
-            "orangeCard" to orangeCard,
-            "orangeTile" to orangeTile,
-            "orangeButton" to orangeButton,
-            "breakTile" to breakTile,
-            "violet" to violet,
-            "pinkCard" to pinkCard,
-            "pinkLink" to pinkLink,
-            "pinkHero" to pinkHero,
             "kidsQr" to kidsQr,
             "scan" to scan,
-            "typeCycle" to typeCycle,
-            "typeSchedule" to typeSchedule,
-            "typeNow" to typeNow,
         )
 }

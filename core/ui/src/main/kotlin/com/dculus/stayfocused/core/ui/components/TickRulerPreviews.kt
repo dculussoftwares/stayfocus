@@ -38,7 +38,7 @@ internal fun TickRulerWizardPreview() {
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(36.dp))
-                        .background(V5Gradients.typeCycle.adaptive)
+                        .background(V5Gradients.brand.adaptive)
                         .padding(18.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp),
             ) {
@@ -74,7 +74,7 @@ internal fun TickRulerWizardPreview() {
     }
 }
 
-/** Break sheet (06-take-a-break-sheet.png): the ruler at 30 min, passed orange, ahead grey, current ink. */
+/** Break sheet (06-take-a-break-sheet.png): the ruler at 30 min, passed green, ahead grey, current ink. */
 @Preview(widthDp = 390, heightDp = 300)
 @Composable
 internal fun TickRulerBreakSheetPreview() {
@@ -116,7 +116,7 @@ internal fun TickRulerBreakSheetPreview() {
 internal fun TickRulerEdgesPreview() {
     StayFocusedTheme {
         Column(
-            modifier = Modifier.background(V5Gradients.typeNow.adaptive).padding(18.dp),
+            modifier = Modifier.background(V5Gradients.brand.adaptive).padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             listOf(RulerScales.Now.min, 255, RulerScales.Now.max).forEach { v ->

@@ -44,7 +44,7 @@ internal val BREAK_PRESETS = listOf(15, 30, 60, 90)
 
 /**
  * Body of the v5 "Take a break" sheet (`06-take-a-break-sheet.png`): title and subtitle, the big value with its unit,
- * the break-coloured [TickRuler] (5 to 120 min, step 5), four presets and the orange start button.
+ * the break-coloured [TickRuler] (5 to 120 min, step 5), four presets and the solid ink start button.
  * Put it inside a `V5BottomSheet`.
  */
 @Composable
@@ -101,7 +101,7 @@ internal fun BreakSheetContent(
         PillButton(
             text = stringResource(R.string.break_sheet_start, length),
             onClick = onStart,
-            variant = PillButtonVariant.Orange,
+            variant = PillButtonVariant.Primary,
             modifier = Modifier.fillMaxWidth().testTag(BREAK_START_TAG),
         )
     }

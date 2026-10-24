@@ -50,17 +50,17 @@ import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.v5Duration
 import com.dculus.stayfocused.core.ui.charts.TickProgress
 import com.dculus.stayfocused.core.ui.components.AppIconStack
-import com.dculus.stayfocused.core.ui.components.GlowCard
+import com.dculus.stayfocused.core.ui.components.DescribeRow
 import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonVariant
 import com.dculus.stayfocused.core.ui.components.SegmentedPill
 import com.dculus.stayfocused.core.ui.components.SegmentedPillSize
+import com.dculus.stayfocused.core.ui.components.SoftPill
 import com.dculus.stayfocused.core.ui.components.V5Card
 import com.dculus.stayfocused.core.ui.components.V5Toggle
 import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.theme.V5Screen
 import java.time.DayOfWeek
 import java.time.ZoneId
@@ -123,7 +123,10 @@ fun BlockScreen(
                     onSelect = { actions.onSelectTarget(state.targets[it].target) },
                 )
             }
-            item { NewBlockCard(targetName, state.aiAvailable, actions.onNewBlock, actions.onDescribe) }
+            item { NewBlockCard(targetName, actions.onNewBlock) }
+            if (state.aiAvailable) {
+                item { DescribeRow(stringResource(R.string.block_ai_cta), actions.onDescribe) }
+            }
             item {
                 SegmentedPill(
                     options =
@@ -169,64 +172,41 @@ fun BlockScreen(
     }
 }
 
-/** Orange "New block / on {target}" card with the glass "Or describe it in words" row (prototype 168–176). */
+/** White "New block / on {target}" card: title and [SoftPill] on the left, a 56 dp ink plus button on the right. */
 @Composable
 private fun NewBlockCard(
     targetName: String,
-    aiAvailable: Boolean,
     onNew: () -> Unit,
-    onAi: () -> Unit,
 ) {
     val c = StayFocusedTheme.colors
-    GlowCard(V5Gradients.orangeCard, Modifier.fillMaxWidth(), padding = 0.dp) {
-        Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable(role = Role.Button, onClick = onNew)
-                    .padding(start = 18.dp, end = 18.dp, top = 20.dp, bottom = 18.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.Top,
-        ) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    stringResource(R.string.block_new_block),
-                    style = StayFocusedTheme.type.heading.copy(lineHeight = 29.sp),
-                    color = c.onGradient,
-                )
-                Text(
-                    stringResource(R.string.block_new_block_on, targetName),
-                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
-                    color = c.onGradient,
-                )
-            }
-            Box(Modifier.size(54.dp).clip(CircleShape).background(c.surface), contentAlignment = Alignment.Center) {
-                Icon(V5Icons.plus, contentDescription = null, tint = c.ink, modifier = Modifier.size(20.dp))
-            }
+    val shape = RoundedCornerShape(32.dp)
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .shadow(
+                    12.dp,
+                    shape,
+                    clip = false,
+                    ambientColor = c.ink.copy(alpha = 0.45f),
+                    spotColor = c.ink.copy(alpha = 0.45f),
+                ).clip(shape)
+                .background(c.surface)
+                .clickable(role = Role.Button, onClick = onNew)
+                .padding(18.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Text(
+                stringResource(R.string.block_new_block),
+                style = StayFocusedTheme.type.heading.copy(fontSize = 26.sp, lineHeight = 27.sp),
+                color = c.ink,
+            )
+            SoftPill(stringResource(R.string.block_new_block_on, targetName))
         }
-        if (aiAvailable) {
-            val glass = RoundedCornerShape(26.dp)
-            Row(
-                modifier =
-                    Modifier
-                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-                        .fillMaxWidth()
-                        .heightIn(min = 52.dp)
-                        .clip(glass)
-                        .background(c.onGradient.copy(alpha = 0.2f))
-                        .border(1.dp, c.onGradient.copy(alpha = 0.35f), glass)
-                        .clickable(role = Role.Button, onClick = onAi)
-                        .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(V5Icons.sparkle, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(17.dp))
-                Text(
-                    stringResource(R.string.block_ai_cta),
-                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
-                    color = c.onGradient,
-                )
-            }
+        Box(Modifier.size(56.dp).clip(CircleShape).background(c.ink), contentAlignment = Alignment.Center) {
+            Icon(V5Icons.plus, contentDescription = null, tint = c.onGradient, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -247,7 +227,7 @@ private fun CountLine(blocks: List<BlockRowUi>) {
     )
 }
 
-/** AI sparkle FAB (white) and the orange "New block" pill, floating above the tab bar (prototype 464–469). */
+/** AI sparkle FAB (white) and the green "New block" pill, floating above the tab bar (prototype 464–469). */
 @Composable
 private fun Fabs(
     aiAvailable: Boolean,
@@ -275,7 +255,7 @@ private fun Fabs(
                         .semantics { contentDescription = describe },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(V5Icons.sparkle, contentDescription = null, tint = c.orange, modifier = Modifier.size(20.dp))
+                Icon(V5Icons.sparkle, contentDescription = null, tint = c.green, modifier = Modifier.size(20.dp))
             }
         }
         val pill = StayFocusedTheme.shapes.pill
@@ -287,10 +267,10 @@ private fun Fabs(
                     .shadow(
                         14.dp,
                         pill,
-                        ambientColor = c.orange.copy(alpha = 0.6f),
-                        spotColor = c.orange.copy(alpha = 0.6f),
+                        ambientColor = c.green.copy(alpha = 0.6f),
+                        spotColor = c.green.copy(alpha = 0.6f),
                     ).clip(pill)
-                    .background(c.orange)
+                    .background(c.green)
                     .clickable(role = Role.Button, onClick = onNew)
                     .padding(start = 18.dp, end = 22.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -521,9 +501,9 @@ private fun TemplateCard(
 
 private fun BlockType.tint(c: com.dculus.stayfocused.core.ui.theme.V5Colors): Color =
     when (this) {
-        BlockType.LIMIT -> c.orange
+        BlockType.LIMIT -> c.green
         BlockType.CYCLE -> c.green
-        BlockType.SCHEDULE -> c.pink
+        BlockType.SCHEDULE -> c.green
         BlockType.NOW -> c.ink
     }
 

@@ -1,6 +1,5 @@
 package com.dculus.stayfocused.feature.insights
 
-import com.dculus.stayfocused.core.ui.charts.GlassBarMode
 import com.dculus.stayfocused.core.usage.AppUsageStat
 import com.dculus.stayfocused.core.usage.DayUsageStats
 import java.time.LocalDate
@@ -68,15 +67,13 @@ internal data class InsightsDay(
     /** Bar values in minutes: 24 hours, or 7 days ending today. */
     val values: List<Int>,
     val chartMax: Int,
-    /** Dashed average line, in the unit of [values]: minutes per hour (day) or per day (week). */
+    /** Average, shown in the chip, in the unit of [values]: minutes per hour (day) or per day (week). */
     val average: Float,
     val highlightIndex: Int?,
     /** Week: the weekday letters. Day: empty, the screen draws its hour labels from resources. */
     val axisLabels: List<String>,
     val apps: List<RankedApp>,
-) {
-    val mode: GlassBarMode get() = if (range == InsightsRange.Day) GlassBarMode.Day else GlassBarMode.Week
-}
+)
 
 internal fun dayHeroParts(mins: Int): Pair<String, String> =
     (mins / 60).toString() to (mins % 60).toString().padStart(2, '0')

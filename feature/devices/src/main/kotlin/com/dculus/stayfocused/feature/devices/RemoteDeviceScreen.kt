@@ -53,11 +53,12 @@ import com.dculus.stayfocused.core.model.mmss
 import com.dculus.stayfocused.core.sync.KidsRule
 import com.dculus.stayfocused.core.sync.KidsRuleType
 import com.dculus.stayfocused.core.sync.RemoteBlock
-import com.dculus.stayfocused.core.ui.charts.DotGrid
+import com.dculus.stayfocused.core.ui.charts.SmoothAreaChart
+import com.dculus.stayfocused.core.ui.charts.dayAxisLabels
 import com.dculus.stayfocused.core.ui.components.AppIconTile
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
 import com.dculus.stayfocused.core.ui.components.GlowCard
 import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.OnlinePill
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonSize
@@ -280,14 +281,14 @@ private fun subtitle(ready: RemoteUiState.Ready): String? {
 
 private fun clock(mins: Int) = String.format(Locale.ROOT, "%d:%02d", mins / 60, mins % 60)
 
-private const val HOUR_DOTS_MAX_MINS = 25
+private const val HOUR_CHART_MAX_MINS = 25
 
 @Composable
 private fun Hero(ready: RemoteUiState.Ready) {
     val white = StayFocusedTheme.colors.onGradient
     val total = ready.todayMins ?: 0
     GlowCard(
-        V5Gradients.pinkHero,
+        V5Gradients.brand,
         Modifier.fillMaxWidth().testTag(REMOTE_HERO_TAG),
         padding = 0.dp,
     ) {
@@ -298,7 +299,7 @@ private fun Hero(ready: RemoteUiState.Ready) {
         ) {
             Text(stringResource(R.string.remote_hero_title), style = StayFocusedTheme.type.label, color = white)
             Box(Modifier.height(56.dp), contentAlignment = Alignment.Center) {
-                DotMatrixText(clock(total), formatMinutes(total), dotSize = 8.dp, color = white)
+                Numeral(clock(total), formatMinutes(total), fontSize = 72.sp, color = white)
             }
             val using = ready.device.currentApp?.takeIf { ready.device.online }
             if (using != null) {
@@ -310,12 +311,18 @@ private fun Hero(ready: RemoteUiState.Ready) {
                 )
             }
             ready.device.hourlyMins?.let {
-                DotGrid(
+                SmoothAreaChart(
                     values = it,
-                    max = HOUR_DOTS_MAX_MINS,
-                    color = white,
+                    max = HOUR_CHART_MAX_MINS,
+                    axisLabels = dayAxisLabels(),
                     contentDescription = stringResource(R.string.remote_dots_description),
                     modifier = Modifier.padding(horizontal = 6.dp),
+                    highlightIndex =
+                        remember {
+                            java.time.LocalTime
+                                .now()
+                                .hour
+                        },
                 )
             }
         }
@@ -492,7 +499,7 @@ private fun FocusTile(
 ) {
     val white = StayFocusedTheme.colors.onGradient
     GlowCard(
-        V5Gradients.orangeTile,
+        V5Gradients.brand,
         modifier.height(140.dp).testTag(if (running) REMOTE_FOCUS_STOP_TAG else REMOTE_FOCUS_TAG),
         radius = 32.dp,
         padding = 16.dp,
@@ -707,7 +714,7 @@ private fun AppRow(
                         Modifier
                             .fillMaxWidth(app.fraction)
                             .height(3.dp)
-                            .background(if (app.locked) c.red else c.orange, RoundedCornerShape(2.dp)),
+                            .background(if (app.locked) c.red else c.green, RoundedCornerShape(2.dp)),
                     )
                 }
             }

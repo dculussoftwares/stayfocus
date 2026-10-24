@@ -47,7 +47,7 @@ internal const val SCAN_STATIC_FRACTION = 0.35f
 
 /**
  * The scanner overlay (prototype lines 391–395 and `scanLine`): a 260 dp square with four white corner brackets
- * (44 dp, 3 dp stroke, 22 dp outer radius) and a 2 dp scan line with a pink glow that moves between 14 % and 84 % of
+ * (44 dp, 3 dp stroke, 22 dp outer radius) and a 2 dp scan line with a green glow that moves between 14 % and 84 % of
  * the height and back (2.4 s, ease-in-out). The line rests at [SCAN_STATIC_FRACTION] when animations are off.
  * Decorative: hidden from TalkBack (the screen's "Looking for a code…" says what is happening).
  */
@@ -68,7 +68,7 @@ fun ScanFrame(
     Canvas(modifier.clearAndSetSemantics { }.wrapContentSize().size(260.dp)) {
         val dp = density
         drawBrackets(bracketColor, dp)
-        drawScanLine(position, dp, colors.pink, colors.pinkScan)
+        drawScanLine(position, dp, colors.green, colors.greenScanLine)
     }
 }
 

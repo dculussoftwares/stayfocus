@@ -72,11 +72,11 @@ data class TickRulerColors(
             return TickRulerColors(passed = c, ahead = c, current = c)
         }
 
-        /** Break sheet: passed orange, ahead `#C9CBCF`, current ink. */
+        /** Break sheet: passed green, ahead `#C9CBCF`, current ink. */
         @Composable
         fun breakSheet(): TickRulerColors =
             TickRulerColors(
-                passed = StayFocusedTheme.colors.orange,
+                passed = StayFocusedTheme.colors.green,
                 ahead = Color(0xFFC9CBCF),
                 current = StayFocusedTheme.colors.ink,
             )

@@ -30,7 +30,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Infrastructure | **Only Terraform, applied by GitHub Actions** (state in HCP Terraform), for GitHub (backlog, repo settings, Pages) and GCP/Firebase. Built phase by phase: each milestone's `infra` stories add only what it needs. See `docs/INFRASTRUCTURE.md` |
 | Backlog | Lives in `backlog/phase1/` as Markdown + front matter and is turned into issues by `infra/github`. Edit the files, not the issues |
 | Open source | GPL-3.0. Forks bring their own `google-services.json`; the app **must build and run without it** (Firebase features disabled) |
-| Fonts | Urbanist (SIL OFL 1.1), bundled as a variable font; see `docs/FONTS.md` |
+| Fonts | Plus Jakarta Sans (SIL OFL 1.1), bundled as a variable font; see `docs/FONTS.md` |
 | "Use, then rest" | The *use* window counts **foreground time only**. When used up, the app locks for *rest* minutes; the next open after that starts a new window |
 | Tests | JUnit4 + Turbine + MockK unit tests (JVM + Robolectric) with Kover coverage; Roborazzi screenshot tests; Compose UI / instrumented tests on Gradle Managed Devices (API 26 + 36); **Maestro** end-to-end flows; Firestore emulator tests for rules/functions; Jest for Functions |
 | Quality gates | **Pre-commit hooks** (gitleaks, ktlint, terraform fmt/tflint, actionlint, YAML) + pre-push (detekt, unit tests); **CI** (`ci-pass`): Spotless/ktlint, detekt, Android Lint, unit tests + coverage, screenshot tests, instrumented tests, build; **security**: CodeQL, dependency review, Dependabot, gitleaks, Trivy (IaC), zizmor (workflows); **CodeRabbit** review on every PR |

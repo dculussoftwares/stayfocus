@@ -90,7 +90,7 @@ class V5CardsBehaviourTest {
         composeRule.setContent {
             StayFocusedTheme {
                 GlowCard(
-                    V5Gradients.violet,
+                    V5Gradients.brand,
                     Modifier.testTag("glow"),
                     onClick = {},
                     contentDescription = "Open insights",
@@ -147,7 +147,7 @@ class V5CardsBehaviourTest {
                     "Take a\nbreak",
                     onClick = {},
                     modifier = Modifier.testTag("tile").width(170.dp),
-                    gradient = V5Gradients.breakTile,
+                    gradient = V5Gradients.brand,
                 )
             }
         }

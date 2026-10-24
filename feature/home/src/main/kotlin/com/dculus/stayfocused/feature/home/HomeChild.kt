@@ -38,7 +38,7 @@ import com.dculus.stayfocused.core.ui.theme.V5Gradients
 internal const val HOME_LINK_PHONE_TAG = "home_link_phone"
 internal const val HOME_CHILD_CARD_TAG = "home_child_card"
 
-/** Pink card of one linked phone: name, online pill, today / using now / battery and the open request. */
+/** Brand-gradient card of one linked phone: name, online pill, today / using now / battery and the open request. */
 @Composable
 internal fun ChildCard(
     device: LinkedDevice,
@@ -47,7 +47,7 @@ internal fun ChildCard(
 ) {
     val white = StayFocusedTheme.colors.onGradient
     GlowCard(
-        V5Gradients.pinkCard,
+        V5Gradients.brand,
         modifier.fillMaxWidth().testTag("$HOME_CHILD_CARD_TAG:${device.id}"),
         radius = 36.dp,
         padding = 18.dp,
@@ -63,7 +63,7 @@ internal fun ChildCard(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f),
                 )
-                OnlinePill(online = device.online, onPink = true)
+                OnlinePill(online = device.online, onCard = true)
             }
             val none = stringResource(R.string.home_child_none)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -170,7 +170,7 @@ internal fun LinkChildRow(
             color = colors.ink,
             modifier = Modifier.weight(1f),
         )
-        Box(Modifier.size(50.dp).background(colors.pink, CircleShape), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(50.dp).background(colors.green, CircleShape), contentAlignment = Alignment.Center) {
             Icon(V5Icons.plus, contentDescription = null, tint = colors.onGradient, modifier = Modifier.size(18.dp))
         }
     }

@@ -27,7 +27,7 @@ private val BAR_HEIGHT = 4.dp
 
 /**
  * One row of the "most used apps" ranking: [icon] (a 38 dp `AppIconTile`), [name] (15 / 600) with [timeText] on its
- * right in secondary colour, and a 4 dp bar below — ink on a track — filled to [fraction] of the row's width (clamped
+ * right in secondary colour, and a 4 dp bar below — green on a track — filled to [fraction] of the row's width (clamped
  * to 0..1, NaN counts as 0). The row reads as "name, time" to TalkBack: the icon's own semantics are dropped so the
  * name isn't read twice; the bar is decorative.
  */
@@ -64,7 +64,7 @@ fun UsageRow(
                     .background(colors.track),
             ) {
                 if (shown > 0f) {
-                    Box(Modifier.fillMaxWidth(shown).height(BAR_HEIGHT).background(colors.ink))
+                    Box(Modifier.fillMaxWidth(shown).height(BAR_HEIGHT).background(colors.green))
                 }
             }
         }

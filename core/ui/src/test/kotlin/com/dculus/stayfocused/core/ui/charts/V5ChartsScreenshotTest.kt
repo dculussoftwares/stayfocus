@@ -31,7 +31,7 @@ class V5ChartsScreenshotTest {
 
     @Test
     @Config(qualifiers = "w390dp-h260dp-xxhdpi")
-    fun homeDotGrid() = capture("HomeDotGrid") { HomeDotGridPreview() }
+    fun homeArea() = capture("HomeArea") { HomeAreaChartPreview() }
 
     @Test
     @Config(qualifiers = "w390dp-h400dp-xxhdpi")
@@ -39,11 +39,7 @@ class V5ChartsScreenshotTest {
 
     @Test
     @Config(qualifiers = "w390dp-h400dp-xxhdpi")
-    fun insightsDay() = capture("InsightsDay") { InsightsDayChartPreview() }
-
-    @Test
-    @Config(qualifiers = "w390dp-h400dp-xxhdpi")
-    fun insightsWeek() = capture("InsightsWeek") { InsightsWeekChartPreview() }
+    fun insightsDay() = capture("InsightsArea") { InsightsAreaChartPreview() }
 
     @Test
     @Config(qualifiers = "w390dp-h420dp-xxhdpi")

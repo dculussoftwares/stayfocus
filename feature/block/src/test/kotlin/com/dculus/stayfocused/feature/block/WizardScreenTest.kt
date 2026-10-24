@@ -74,10 +74,10 @@ class WizardScreenTest {
 
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.SCHEDULE)).performClick()
         composeRule.onNodeWithTag(wizardTypeTag(BlockType.SCHEDULE)).assertIsSelected()
-        composeRule.onNodeWithText("Step 1 of 3 · tap the red tag to switch phone").assertExists()
+        composeRule.onNodeWithText("Step 1 of 3 · tap the green tag to switch phone").assertExists()
         composeRule.onNodeWithText("Continue").performClick()
         composeRule.onNodeWithText("Which apps?").assertExists()
-        composeRule.onNodeWithText("Step 2 of 3 · tap the red tag to switch phone").assertExists()
+        composeRule.onNodeWithText("Step 2 of 3 · tap the green tag to switch phone").assertExists()
         composeRule.onNodeWithText("Continue with 2 apps").assertExists()
 
         composeRule.onNodeWithTag(wizardAppTag(pkg("reddit"))).performClick()

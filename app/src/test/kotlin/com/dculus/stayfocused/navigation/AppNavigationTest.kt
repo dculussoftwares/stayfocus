@@ -367,18 +367,18 @@ class AppNavigationTest {
     @Test
     fun homeActionsLeadToTheWizardInsightsAndDevices() {
         launch()
-        composeRule.onNodeWithTag("home_new_block").performClick()
+        composeRule.onNodeWithTag("home_new_block").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(BlockWizard::class), "Block apps opens the wizard")
         pressBack()
         assertTrue(currentIs(Home::class))
-        composeRule.onNodeWithTag("home_blocked_tile").performClick()
+        composeRule.onNodeWithTag("home_blocked_tile").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Insights::class), "the hero tiles open Insights")
         tab(MainTab.HOME).performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_link_phone"))
-        composeRule.onNodeWithTag("home_link_phone").performClick()
+        composeRule.onNodeWithTag("home_link_phone").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(LinkAdd::class), "the empty linked-phones state leads to the link flow")
     }
@@ -387,7 +387,7 @@ class AppNavigationTest {
     fun aiDescribeOpensTheDescribeScreenWithoutTheTabBar() {
         launch()
         composeRule.onNodeWithTag("home_list").performScrollToNode(hasTestTag("home_ai_describe"))
-        composeRule.onNodeWithTag("home_ai_describe").performClick()
+        composeRule.onNodeWithTag("home_ai_describe").performScrollTo().performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(BlockDescribe::class))
         assertTrue(!tabBarVisible())

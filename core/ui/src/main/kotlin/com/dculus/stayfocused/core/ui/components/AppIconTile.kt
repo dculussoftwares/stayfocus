@@ -73,7 +73,7 @@ fun appTileColors(
         return AppTileColors(known, if (known == brand.snapchat) colors.ink else colors.onGradient)
     }
     val palette =
-        listOf(colors.orange, colors.violet, colors.pink, colors.green, colors.inkGlow, colors.red, colors.pinkText)
+        listOf(colors.green, colors.greenLabel, colors.ink, colors.inkGlow, colors.red)
     return AppTileColors(palette[Math.floorMod(pkg.hashCode(), palette.size)], colors.onGradient)
 }
 

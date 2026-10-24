@@ -29,10 +29,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.R
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
-import com.dculus.stayfocused.core.ui.components.Numerals
+import com.dculus.stayfocused.core.ui.components.Numeral
+import com.dculus.stayfocused.core.ui.theme.PlusJakartaSansFontFamily
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.UrbanistFontFamily
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 /**
@@ -46,7 +45,6 @@ import com.dculus.stayfocused.core.ui.theme.V5Gradients
 fun BreakArt(
     lengthMins: Int,
     modifier: Modifier = Modifier,
-    numerals: Numerals = Numerals.Dots,
     contentDescription: String? = null,
 ) {
     val colors = StayFocusedTheme.colors
@@ -57,19 +55,18 @@ fun BreakArt(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp), verticalAlignment = Alignment.Bottom) {
-            DotMatrixText(
+            Numeral(
                 text = lengthMins.toString(),
                 contentDescription = lengthMins.toString(),
-                dotSize = 4.dp,
+                fontSize = 36.sp,
                 color = Color.White,
-                numerals = numerals,
             )
             Text(
                 text = stringResource(R.string.v5_unit_min),
                 color = Color.White,
                 style =
                     TextStyle(
-                        fontFamily = UrbanistFontFamily,
+                        fontFamily = PlusJakartaSansFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 13.sp,
                         platformStyle = PlatformTextStyle(includeFontPadding = false),
@@ -101,11 +98,11 @@ fun BreakArt(
 internal fun BreakArtPreview() {
     StayFocusedTheme {
         Column(
-            Modifier.background(V5Gradients.breakTile.adaptive).fillMaxWidth().padding(18.dp),
+            Modifier.background(V5Gradients.brand.adaptive).fillMaxWidth().padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             BreakArt(lengthMins = 30, modifier = Modifier.fillMaxWidth())
-            BreakArt(lengthMins = 5, modifier = Modifier.fillMaxWidth(), numerals = Numerals.Thin)
+            BreakArt(lengthMins = 5, modifier = Modifier.fillMaxWidth())
         }
     }
 }
