@@ -43,7 +43,7 @@ internal fun DrawScope.drawTicks(
 
 /**
  * Usage-against-limit meter of a block card: 40 two-dp ticks across the width, the first `fraction × 40` lit
- * (30 dp, orange), the rest unlit (14 dp, hairline). [fraction] is `used / limit`; it is clamped to 0..1 and NaN counts
+ * (30 dp, green), the rest unlit (14 dp, hairline). [fraction] is `used / limit`; it is clamped to 0..1 and NaN counts
  * as 0. [contentDescription] is the caller's TalkBack summary (e.g. "1 h 12 min used of 2 h").
  */
 @Composable
@@ -56,7 +56,7 @@ fun TickProgress(
     val heights =
         List(TICK_PROGRESS_COUNT) { if (isProgressTickLit(it, fraction)) LIT_HEIGHT else UNLIT_HEIGHT }
     val tickColors =
-        List(TICK_PROGRESS_COUNT) { if (isProgressTickLit(it, fraction)) colors.orange else colors.hairline }
+        List(TICK_PROGRESS_COUNT) { if (isProgressTickLit(it, fraction)) colors.green else colors.hairline }
     Canvas(
         modifier =
             modifier

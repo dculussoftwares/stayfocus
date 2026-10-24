@@ -35,7 +35,7 @@ import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
-private const val PINK_PILL_ALPHA = 0.22f
+private const val CARD_PILL_ALPHA = 0.22f
 
 /** Shared pill: [height] tall, radius height / 2, 12 dp side padding, [content] centred in a row. */
 @Composable
@@ -170,32 +170,32 @@ fun StatusTag(
 }
 
 /**
- * "Online" / "Offline" pill (30 dp, 13/600) with a dot that pulses while online. [onPink] is the white .22 variant for
+ * "Online" / "Offline" pill (30 dp, 13/600) with a dot that pulses while online. [onCard] is the white .22 variant for
  * the child card; otherwise it is the [SoftPill] green on `onlineBackground`. Offline is a quiet `track` pill.
  */
 @Composable
 fun OnlinePill(
     modifier: Modifier = Modifier,
     online: Boolean = true,
-    onPink: Boolean = false,
+    onCard: Boolean = false,
 ) {
     val c = StayFocusedTheme.colors
     val background =
         when {
-            onPink -> c.onGradient.copy(alpha = PINK_PILL_ALPHA)
+            onCard -> c.onGradient.copy(alpha = CARD_PILL_ALPHA)
             online -> c.onlineBackground
             else -> c.track
         }
     val content =
         when {
-            onPink -> c.onGradient
+            onCard -> c.onGradient
             online -> c.onlineText
             else -> c.textSecondary
         }
     val dot =
         if (online) {
             c.online
-        } else if (onPink) {
+        } else if (onCard) {
             c.onGradient.copy(alpha = 0.6f)
         } else {
             c.hairline
@@ -223,7 +223,7 @@ internal fun TagsPreview() {
         OnlinePill()
         OnlinePill(online = false)
         Box(Modifier.background(V5Gradients.brand.adaptive).padding(12.dp)) {
-            OnlinePill(onPink = true)
+            OnlinePill(onCard = true)
         }
     }
 }

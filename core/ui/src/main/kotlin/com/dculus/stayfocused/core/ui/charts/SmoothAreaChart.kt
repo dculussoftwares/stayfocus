@@ -19,12 +19,14 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 
 private val CHART_HEIGHT = AREA_CHART_HEIGHT_DP.dp
@@ -36,7 +38,7 @@ private const val HALO_ALPHA = 0.28f
 private const val AXIS_ALPHA = 0.85f
 
 /**
- * v6 area chart (replaces [DotGrid] and [GlassBarChart]): [values] are evenly spaced and joined by cubic Béziers whose
+ * v6 area chart: [values] are evenly spaced and joined by cubic Béziers whose
  * control points sit at the horizontal midpoint between neighbours. White 2.4 dp stroke with round caps and joins, a
  * fill fading from white 55 % to 0 and, at [highlightIndex], a 10 dp dot with a 5 dp halo (white 28 %). [axisLabels]
  * are spread evenly underneath at 11 sp semibold, 85 % opacity.
@@ -77,6 +79,17 @@ fun SmoothAreaChart(
         }
     }
 }
+
+/** "12 AM, 6 AM, 12 PM, 6 PM, 11 PM": the axis of a 24-hour [SmoothAreaChart]. */
+@Composable
+fun dayAxisLabels(): List<String> =
+    listOf(
+        stringResource(R.string.v5_axis_12am),
+        stringResource(R.string.v5_axis_6am),
+        stringResource(R.string.v5_axis_12pm),
+        stringResource(R.string.v5_axis_6pm),
+        stringResource(R.string.v5_axis_11pm),
+    )
 
 private fun DrawScope.drawArea(
     values: List<Int>,

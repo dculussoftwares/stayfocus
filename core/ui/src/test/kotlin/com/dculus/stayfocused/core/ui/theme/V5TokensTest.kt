@@ -75,14 +75,14 @@ class V5TokensTest {
             gradient.brush(Size(390f, 844f))
             gradient.brush(Size(0f, 0f))
         }
-        assertEquals(17, V5Gradients.all.size)
+        assertEquals(5, V5Gradients.all.size)
     }
 
     @Test
     fun `gradient depth is limited`() {
         val layer = V5Gradients.welcome.layers.first()
         assertThrows(IllegalArgumentException::class.java) {
-            V5Gradient(V5GradientBase.Solid(V5Colors().orange), listOf(layer, layer, layer))
+            V5Gradient(V5GradientBase.Solid(V5Colors().green), listOf(layer, layer, layer))
         }
     }
 

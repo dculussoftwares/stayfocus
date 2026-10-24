@@ -64,12 +64,12 @@ class V5ShowcaseScreenshotTest {
     @Test
     fun upperRadialLayerIsDrawnOverTheBase() {
         composeRule.setContent {
-            Box(Modifier.size(200.dp, 400.dp).background(V5Gradients.pinkHero.adaptive))
+            Box(Modifier.size(200.dp, 400.dp).background(V5Gradients.brand.adaptive))
         }
         val bitmap = composeRule.onRoot().captureToImage().asAndroidBitmap()
-        // The white .3 highlight is centred at the top edge, so it lightens the middle but not the corner.
-        val highlighted = Color(bitmap.getPixel(bitmap.width / 2, 2)).green
-        val corner = Color(bitmap.getPixel(1, 2)).green
+        // The brand highlight is centred at 75 % x, 15 % y, so it lightens there but not in the far corner.
+        val highlighted = Color(bitmap.getPixel(bitmap.width * 3 / 4, bitmap.height * 15 / 100)).green
+        val corner = Color(bitmap.getPixel(1, bitmap.height - 2)).green
         assertTrue("highlight $highlighted vs corner $corner", highlighted - corner > 0.1f)
     }
 

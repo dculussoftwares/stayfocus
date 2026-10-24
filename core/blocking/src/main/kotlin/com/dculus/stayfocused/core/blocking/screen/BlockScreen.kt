@@ -21,10 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.blocking.R
 import com.dculus.stayfocused.core.blocking.evaluator.BlockReason
 import com.dculus.stayfocused.core.ui.components.AppIconTile
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonVariant
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -151,10 +152,10 @@ private fun TimeLine(timeLine: BlockTimeLine) {
                     color = colors.onGradient,
                     modifier = Modifier.padding(top = 6.dp),
                 )
-                DotMatrixText(
+                Numeral(
                     text = shown,
                     contentDescription = shown,
-                    dotSize = if (shown.length > 5) 6.dp else 9.dp,
+                    fontSize = if (shown.length > 5) 54.sp else 81.sp,
                     color = colors.onGradient,
                     modifier = Modifier.padding(top = 22.dp),
                 )

@@ -43,8 +43,6 @@ import com.dculus.stayfocused.core.ui.R
 import com.dculus.stayfocused.core.ui.art.Spinner
 import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
-import com.dculus.stayfocused.core.ui.theme.V5Gradients
-import com.dculus.stayfocused.core.ui.theme.grainOverlay
 
 /** Look of a [PillButton] (V5_SPEC §4). */
 enum class PillButtonVariant {
@@ -53,9 +51,6 @@ enum class PillButtonVariant {
 
     /** White fill, ink label. */
     White,
-
-    /** `orangeButton` gradient with grain, white label. */
-    Orange,
 
     /** White .2 fill with a white .4 border, white label; for use on a gradient. */
     Glass,
@@ -96,7 +91,6 @@ private const val GLASS_BORDER_ALPHA = 0.4f
 private class PillColors(
     val content: Color,
     val container: Color?,
-    val gradient: Boolean = false,
     val border: Color? = null,
 )
 
@@ -113,10 +107,6 @@ private fun pillColors(
 
         PillButtonVariant.White -> {
             PillColors(c.ink, c.surface)
-        }
-
-        PillButtonVariant.Orange -> {
-            PillColors(c.onGradient, container = null, gradient = true)
         }
 
         PillButtonVariant.Glass -> {
@@ -191,7 +181,6 @@ fun PillButton(
                     ).clip(shape)
                     .then(
                         when {
-                            colors.gradient -> Modifier.background(V5Gradients.orangeButton.adaptive).grainOverlay()
                             colors.container != null -> Modifier.background(colors.container)
                             else -> Modifier
                         },
@@ -263,9 +252,9 @@ internal fun PillButtonLightPreview() {
                 enabled = false,
             )
         }
-        PillButton("Take a break", onClick = {}, variant = PillButtonVariant.Orange, leadingIcon = plus)
+        PillButton("Take a break", onClick = {}, variant = PillButtonVariant.Primary, leadingIcon = plus)
         PillButton("Build my block", onClick = {
-        }, variant = PillButtonVariant.Orange, loading = true, loadingLabel = "Building")
+        }, variant = PillButtonVariant.Primary, loading = true, loadingLabel = "Building")
         PillButton("Not now", onClick = {}, variant = PillButtonVariant.Text, size = PillButtonSize.Medium)
     }
 }

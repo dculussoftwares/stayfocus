@@ -90,7 +90,7 @@ fun BatteryGuidance(
         Text(stringResource(R.string.sf_battery_intro, name), style = type.body, color = colors.textSecondary)
         steps.forEachIndexed { index, step ->
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("${index + 1}", style = type.label.copy(fontWeight = FontWeight.Bold), color = colors.orange)
+                Text("${index + 1}", style = type.label.copy(fontWeight = FontWeight.Bold), color = colors.green)
                 Text(step, style = type.body, color = colors.ink)
             }
         }

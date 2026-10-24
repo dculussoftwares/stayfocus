@@ -200,7 +200,7 @@ internal fun V5CardPreview() {
             Text("Raised, tappable", style = StayFocusedTheme.type.bodyL)
             Text("Ripple stays inside the corners", style = StayFocusedTheme.type.body, color = PreviewBodyColor)
         }
-        GlowCard(V5Gradients.violet, Modifier.fillMaxWidth(), onClick = {}) {
+        GlowCard(V5Gradients.brand, Modifier.fillMaxWidth(), onClick = {}) {
             Text("Blocked", style = StayFocusedTheme.type.bodyL)
             Text("12 times today", style = StayFocusedTheme.type.body)
         }
@@ -219,11 +219,11 @@ internal fun GlowCardPreview() {
             Text("White card on gradient", style = StayFocusedTheme.type.bodyL)
             Text("2 of 3 on", style = StayFocusedTheme.type.body, color = PreviewBodyColor)
         }
-        GlowCard(V5Gradients.violet, Modifier.fillMaxWidth()) {
+        GlowCard(V5Gradients.brand, Modifier.fillMaxWidth()) {
             Text("Insights", style = StayFocusedTheme.type.bodyL)
             Text("2h 33m on screen", style = StayFocusedTheme.type.body)
         }
-        GlowCard(V5Gradients.pinkCard, Modifier.fillMaxWidth(), radius = 28.dp) {
+        GlowCard(V5Gradients.brand, Modifier.fillMaxWidth(), radius = 28.dp) {
             Text("Maya", style = StayFocusedTheme.type.cardTitle)
             Text("Online", style = StayFocusedTheme.type.body)
         }

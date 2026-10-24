@@ -142,7 +142,7 @@ private fun ActionTilesPair(modifier: Modifier = Modifier) {
             "Take a\nbreak",
             onClick = {},
             modifier = Modifier.fillMaxWidth(),
-            gradient = V5Gradients.breakTile,
+            gradient = V5Gradients.brand,
         ) {
             Text(
                 "Tap to end early",

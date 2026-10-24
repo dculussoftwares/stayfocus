@@ -44,21 +44,13 @@ class V5ChartsBehaviourTest {
     fun chartsExposeTheCallersSummary() {
         composeRule.setContent {
             StayFocusedTheme {
-                DotGrid(ChartSamples.meHourly, 20, androidx.compose.ui.graphics.Color.White, "dots summary")
+                SmoothAreaChart(ChartSamples.meHourly, 20, ChartSamples.dayAxis, "area summary")
                 TickProgress(0.5f, "ticks summary")
                 HourTicks(ChartSamples.kidHourly, "hours summary")
-                GlassBarChart(
-                    values = ChartSamples.week,
-                    max = 240,
-                    average = 176f,
-                    averageLabel = "2h 56m",
-                    axisLabels = ChartSamples.weekAxis,
-                    contentDescription = "week summary",
-                    mode = GlassBarMode.Week,
-                )
+                SmoothAreaChart(ChartSamples.week, 240, ChartSamples.weekAxis, "week summary", highlightIndex = 6)
             }
         }
-        composeRule.onNodeWithContentDescription("dots summary").assertContentDescriptionEquals("dots summary")
+        composeRule.onNodeWithContentDescription("area summary").assertContentDescriptionEquals("area summary")
         composeRule.onNodeWithContentDescription("ticks summary").assertExists()
         composeRule.onNodeWithContentDescription("hours summary").assertExists()
         composeRule.onNodeWithContentDescription("week summary").assertExists()
@@ -68,14 +60,14 @@ class V5ChartsBehaviourTest {
     fun emptyAndOutOfRangeDataRenderWithoutCrashing() {
         composeRule.setContent {
             StayFocusedTheme {
-                DotGrid(emptyList(), 20, androidx.compose.ui.graphics.Color.White, "empty grid")
-                DotGrid(listOf(5, 500, -1), 0, androidx.compose.ui.graphics.Color.White, "zero max")
+                SmoothAreaChart(emptyList(), 20, emptyList(), "empty chart")
+                SmoothAreaChart(listOf(5, 500, -1), 0, listOf("a"), "zero max", highlightIndex = 9)
                 TickProgress(Float.NaN, "nan")
                 TickProgress(9f, "over")
                 HourTicks(emptyList(), "no hours")
-                GlassBarChart(emptyList(), 0, 0f, "0", emptyList(), "empty chart")
-                GlassBarChart(listOf(0, 0, 0), 20, 0f, "0m/h", listOf("a"), "zeros")
-                GlassBarChart(listOf(900, -3), 20, 700f, "x", listOf("a"), "big", highlightIndex = 5)
+                SmoothAreaChart(listOf(0, 0, 0), 20, listOf("a"), "zeros")
+                SmoothAreaChart(listOf(900, -3), 20, listOf("a"), "big", highlightIndex = 5)
+                SmoothAreaChart(listOf(7), 20, listOf("a"), "single", highlightIndex = 0)
                 UsageRow(icon = {}, name = "App", timeText = "1 min", fraction = 7f)
             }
         }
