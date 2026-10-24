@@ -22,7 +22,7 @@ plugins {
 spotless {
     kotlin {
         target("**/*.kt")
-        targetExclude("**/build/**", "**/.gradle/**")
+        targetExclude("**/build/**", "**/.gradle/**", "**/.claude/**")
         ktlint(libs.versions.ktlint.get())
             .customRuleSets(
                 listOf(
@@ -34,7 +34,7 @@ spotless {
     }
     kotlinGradle {
         target("**/*.gradle.kts")
-        targetExclude("**/build/**", "**/.gradle/**")
+        targetExclude("**/build/**", "**/.gradle/**", "**/.claude/**")
         ktlint(libs.versions.ktlint.get())
     }
 }
@@ -46,7 +46,7 @@ detekt {
     source.setFrom(
         files(rootDir).asFileTree.matching {
             include("**/src/**/*.kt")
-            exclude("**/build/**")
+            exclude("**/build/**", "**/.claude/**")
         },
     )
     parallel = true
