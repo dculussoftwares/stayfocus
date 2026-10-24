@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.PillButton
 import com.dculus.stayfocused.core.ui.components.PillButtonSize
 import com.dculus.stayfocused.core.ui.components.PillButtonVariant
@@ -108,7 +108,7 @@ internal fun KidsConsentScreen(
             Text(
                 stringResource(R.string.app_name),
                 style = type.label.copy(fontWeight = FontWeight.SemiBold),
-                color = colors.pinkText,
+                color = colors.greenLabel,
             )
             Text(
                 stringResource(R.string.kids_consent_heading, parent),
@@ -157,10 +157,10 @@ private fun CodeCard(
                 color = colors.textSecondary,
             )
             val shown = formatLinkCode(code)
-            DotMatrixText(
+            Numeral(
                 text = shown,
                 contentDescription = code.toList().joinToString(" "),
-                dotSize = 5.dp,
+                fontSize = 45.sp,
                 color = colors.ink,
             )
         }
@@ -182,7 +182,7 @@ private fun AbilitiesCard(parent: String) {
             )
             stringArrayResource(R.array.kids_consent_list).forEach { item ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.padding(top = 7.dp).size(6.dp).background(colors.pink, CircleShape))
+                    Box(Modifier.padding(top = 7.dp).size(6.dp).background(colors.green, CircleShape))
                     Text(
                         item,
                         style = StayFocusedTheme.type.body.copy(lineHeight = 20.25.sp),
