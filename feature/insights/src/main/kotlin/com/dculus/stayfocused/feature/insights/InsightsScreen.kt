@@ -2,7 +2,9 @@
 
 package com.dculus.stayfocused.feature.insights
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,12 +34,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.model.formatMinutes
-import com.dculus.stayfocused.core.ui.charts.GlassBarChart
+import com.dculus.stayfocused.core.ui.charts.SmoothAreaChart
 import com.dculus.stayfocused.core.ui.charts.UsageRow
 import com.dculus.stayfocused.core.ui.components.AppIconTile
-import com.dculus.stayfocused.core.ui.components.DotMatrixText
 import com.dculus.stayfocused.core.ui.components.GlowCard
 import com.dculus.stayfocused.core.ui.components.LocalTabBarPadding
+import com.dculus.stayfocused.core.ui.components.Numeral
 import com.dculus.stayfocused.core.ui.components.RoundIconButton
 import com.dculus.stayfocused.core.ui.components.SegmentedPill
 import com.dculus.stayfocused.core.ui.components.SegmentedPillSize
@@ -191,12 +194,20 @@ private fun HeroCard(
             formatMinutes(Math.round(day.average))
         }
     val heroDescription = stringResource(R.string.insights_hero_description, label, formatMinutes(day.heroMins))
-    GlowCard(V5Gradients.violet, Modifier.fillMaxWidth(), radius = 34.dp) {
+    GlowCard(V5Gradients.brand, Modifier.fillMaxWidth(), radius = 34.dp) {
         Column(
             Modifier.clearAndSetSemantics { contentDescription = heroDescription },
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Text(label, style = StayFocusedTheme.type.label.copy(fontSize = 15.sp), color = colors.onGradient)
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    label,
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+                    color = colors.onGradient,
+                    modifier = Modifier.weight(1f),
+                )
+                AverageChip(stringResource(R.string.insights_avg_chip, averageLabel))
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     hours,
@@ -240,17 +251,29 @@ private fun HeroCard(
                     if (day.range == InsightsRange.Day) R.string.insights_chart_day else R.string.insights_chart_week,
                     averageLabel,
                 )
-            GlassBarChart(
+            SmoothAreaChart(
                 values = day.values,
                 max = day.chartMax,
-                average = day.average,
-                averageLabel = averageLabel,
                 axisLabels = axis,
                 contentDescription = chartDescription,
                 highlightIndex = day.highlightIndex,
-                mode = day.mode,
             )
         }
+    }
+}
+
+/** "Avg 6m/h": white at 22 %, 26 dp tall, 12 sp bold. */
+@Composable
+private fun AverageChip(text: String) {
+    val white = StayFocusedTheme.colors.onGradient
+    Box(
+        Modifier
+            .height(26.dp)
+            .background(white.copy(alpha = 0.22f), RoundedCornerShape(13.dp))
+            .padding(horizontal = 10.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, style = StayFocusedTheme.type.tag, color = white)
     }
 }
 
@@ -265,8 +288,8 @@ private fun Tiles(
             count = unlocks,
             caption = stringResource(R.string.insights_today),
             description = stringResource(R.string.insights_unlocks_description, unlocks),
-            gradient = V5Gradients.orangeTile,
-            dotSize = 6.dp,
+            gradient = V5Gradients.brand,
+            fontSize = 54.sp,
             modifier = Modifier.weight(1f),
         )
         CountTile(
@@ -274,8 +297,8 @@ private fun Tiles(
             count = blocked,
             caption = stringResource(R.string.insights_times_today),
             description = stringResource(R.string.insights_blocked_description, blocked),
-            gradient = V5Gradients.violet,
-            dotSize = 5.dp,
+            gradient = V5Gradients.brand,
+            fontSize = 45.sp,
             modifier = Modifier.weight(1f),
         )
     }
@@ -288,7 +311,7 @@ private fun CountTile(
     caption: String,
     description: String,
     gradient: com.dculus.stayfocused.core.ui.theme.V5Gradient,
-    dotSize: androidx.compose.ui.unit.Dp,
+    fontSize: androidx.compose.ui.unit.TextUnit,
     modifier: Modifier = Modifier,
 ) {
     val white = StayFocusedTheme.colors.onGradient
@@ -300,7 +323,7 @@ private fun CountTile(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(18.dp)) {
             Text(title, style = StayFocusedTheme.type.label.copy(fontSize = 15.sp), color = white)
-            DotMatrixText(count.toString(), description, dotSize, white)
+            Numeral(count.toString(), description, fontSize, white)
             Text(caption, style = StayFocusedTheme.type.label.copy(fontSize = 13.sp), color = white)
         }
     }
