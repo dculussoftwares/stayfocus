@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5ContentMaxWidth
 import com.dculus.stayfocused.core.ui.theme.v5NavigationBarPadding
 
 const val V5_TAB_BAR_TAG = "v5_tab_bar"
@@ -135,6 +137,7 @@ fun PillTabBar(
                     .v5NavigationBarPadding(extra = BarBottomMargin)
                     .padding(horizontal = BarSideMargin)
                     .testTag(V5_TAB_BAR_TAG)
+                    .widthIn(max = V5ContentMaxWidth)
                     .fillMaxWidth()
                     .shadow(
                         elevation = 20.dp,

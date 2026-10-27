@@ -73,6 +73,7 @@ import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.fontScaledDp
 import kotlinx.coroutines.delay
 import java.time.Instant
 import java.util.Locale
@@ -464,7 +465,7 @@ private fun LockTile(
 ) {
     val c = StayFocusedTheme.colors
     V5Card(
-        modifier.height(140.dp).testTag(REMOTE_LOCK_ALL_TAG),
+        modifier.height(fontScaledDp(140.dp)).testTag(REMOTE_LOCK_ALL_TAG),
         radius = 32.dp,
         containerColor = c.ink,
         padding = 16.dp,
@@ -500,7 +501,7 @@ private fun FocusTile(
     val white = StayFocusedTheme.colors.onGradient
     GlowCard(
         V5Gradients.brand,
-        modifier.height(140.dp).testTag(if (running) REMOTE_FOCUS_STOP_TAG else REMOTE_FOCUS_TAG),
+        modifier.height(fontScaledDp(140.dp)).testTag(if (running) REMOTE_FOCUS_STOP_TAG else REMOTE_FOCUS_TAG),
         radius = 32.dp,
         padding = 16.dp,
         onClick = if (running) actions.onStopFocus else ({ actions.onStartFocus(FOCUS_DEFAULT_MINS) }),

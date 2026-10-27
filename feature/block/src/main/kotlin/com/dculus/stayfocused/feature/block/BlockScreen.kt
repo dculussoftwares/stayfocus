@@ -62,6 +62,7 @@ import com.dculus.stayfocused.core.ui.components.V5Toggle
 import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.fontScaledDp
 import java.time.DayOfWeek
 import java.time.ZoneId
 import java.time.format.TextStyle
@@ -486,7 +487,7 @@ private fun TemplateCard(
             },
         )
     V5Card(
-        modifier = Modifier.width(168.dp).height(176.dp),
+        modifier = Modifier.width(fontScaledDp(168.dp)).height(fontScaledDp(176.dp)),
         radius = 28.dp,
         padding = 16.dp,
         onClick = onClick,

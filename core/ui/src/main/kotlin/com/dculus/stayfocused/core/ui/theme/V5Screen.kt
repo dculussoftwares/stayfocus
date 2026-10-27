@@ -12,19 +12,25 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import java.util.WeakHashMap
+
+/** Widest a screen's content column grows; wider windows get side margins instead of stretched layouts. */
+val V5ContentMaxWidth: Dp = 600.dp
 
 /**
  * Root of a migrated screen: [StayFocusedTheme], the background ([V5Colors.background] unless [background] is set) and
@@ -42,6 +48,8 @@ fun V5Screen(
     StayFocusedTheme {
         SystemBarIcons(lightIcons = darkContent)
         val base = modifier.fillMaxSize()
+        // The background bleeds edge to edge; the content keeps a phone-like column, centred, on tablets, foldables
+        // and landscape.
         Box(
             modifier =
                 if (background != null) {
@@ -49,8 +57,10 @@ fun V5Screen(
                 } else {
                     base.background(StayFocusedTheme.colors.background)
                 },
-            content = content,
-        )
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Box(Modifier.widthIn(max = V5ContentMaxWidth).fillMaxSize(), content = content)
+        }
     }
 }
 
@@ -121,3 +131,7 @@ private tailrec fun Context.findActivity(): Activity? =
         is ContextWrapper -> baseContext.findActivity()
         else -> null
     }
+
+/** [base] grown with the system font scale (never shrunk), for tiles whose text must keep fitting at large sizes. */
+@Composable
+fun fontScaledDp(base: Dp): Dp = base * LocalDensity.current.fontScale.coerceAtLeast(1f)

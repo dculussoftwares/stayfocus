@@ -50,6 +50,7 @@ import com.dculus.stayfocused.core.ui.icons.V5Icons
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.theme.V5Screen
+import com.dculus.stayfocused.core.ui.theme.fontScaledDp
 
 internal const val DEVICES_LIST_TAG = "devices_list"
 internal const val DEVICES_LINK_TAG = "devices_link"
@@ -284,7 +285,7 @@ internal fun deviceAttentionLine(device: LinkedDevice): String? {
 private fun LinkTile(onClick: () -> Unit) {
     GlowCard(
         V5Gradients.brand,
-        Modifier.fillMaxWidth().height(236.dp).testTag(DEVICES_LINK_TAG),
+        Modifier.fillMaxWidth().height(fontScaledDp(236.dp)).testTag(DEVICES_LINK_TAG),
         padding = 0.dp,
         onClick = onClick,
     ) {
