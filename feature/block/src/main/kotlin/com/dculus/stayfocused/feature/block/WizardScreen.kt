@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.dculus.stayfocused.core.model.BlockDraft
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.RulerReadout
@@ -139,6 +140,7 @@ data class WizardActions(
     val onDays: (DaysOfWeek) -> Unit = {},
     val onCycleValue: (Int) -> Unit = {},
     val onCycleEdit: (CycleEdit) -> Unit = {},
+    val onCycleScope: (CycleScope) -> Unit = {},
     val onRange: (TimeRange) -> Unit = {},
     val onChangeType: () -> Unit = {},
     val onDelete: () -> Unit = {},
@@ -809,6 +811,32 @@ private fun RulesStep(
     ) {
         if (state.editing) AppsRow(state, onClick = actions.onEditApps)
         RuleCard(state, actions)
+        // Per-hour limits: day / hour switch under the ruler card.
+        if (draft.type == BlockType.LIMIT) {
+            SegmentedPill(
+                options =
+                    listOf(
+                        stringResource(R.string.block_wizard_period_day),
+                        stringResource(R.string.block_wizard_period_hour),
+                    ),
+                selectedIndex = if (draft.period == LimitPeriod.DAILY) 0 else 1,
+                onSelect = { actions.onPeriod(if (it == 0) LimitPeriod.DAILY else LimitPeriod.HOURLY) },
+                size = SegmentedPillSize.Small,
+            )
+        }
+        // "Use, then lock": every app gets its own window (default), or all apps of the block share one.
+        if (draft.type == BlockType.CYCLE) {
+            SegmentedPill(
+                options =
+                    listOf(
+                        stringResource(R.string.block_wizard_scope_per_app),
+                        stringResource(R.string.block_wizard_scope_total),
+                    ),
+                selectedIndex = if (draft.cycleScope == CycleScope.PER_APP) 0 else 1,
+                onSelect = { actions.onCycleScope(if (it == 0) CycleScope.PER_APP else CycleScope.TOTAL) },
+                size = SegmentedPillSize.Small,
+            )
+        }
         if (draft.type != BlockType.NOW) {
             V5Card(Modifier.fillMaxWidth(), radius = 30.dp) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -845,19 +873,6 @@ private fun RulesStep(
             modifier = Modifier.fillMaxWidth().testTag(WIZARD_CTA_TAG),
             enabled = state.ready && !state.saving,
         )
-        // Per-hour limits: day / hour switch under the ruler card.
-        if (draft.type == BlockType.LIMIT) {
-            SegmentedPill(
-                options =
-                    listOf(
-                        stringResource(R.string.block_wizard_period_day),
-                        stringResource(R.string.block_wizard_period_hour),
-                    ),
-                selectedIndex = if (draft.period == LimitPeriod.DAILY) 0 else 1,
-                onSelect = { actions.onPeriod(if (it == 0) LimitPeriod.DAILY else LimitPeriod.HOURLY) },
-                size = SegmentedPillSize.Small,
-            )
-        }
         if (state.editing && !state.saving) DeleteButton(onClick = onDelete)
     }
 }

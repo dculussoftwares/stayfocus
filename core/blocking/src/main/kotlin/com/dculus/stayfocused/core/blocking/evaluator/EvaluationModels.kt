@@ -2,6 +2,8 @@ package com.dculus.stayfocused.core.blocking.evaluator
 
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BreakSession
+import com.dculus.stayfocused.core.model.CYCLE_TOTAL_PKG
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.FocusSession
 import com.dculus.stayfocused.core.model.LockedApp
 import com.dculus.stayfocused.core.model.TemporaryAllowance
@@ -14,11 +16,14 @@ data class AppUsageSnapshot(
     val thisHourMs: Long,
 )
 
-/** Key of a cycle state: one per (block, app). */
+/** Key of a cycle state: one per (block, app), or one per block when its scope is [CycleScope.TOTAL]. */
 data class CycleKey(
     val blockId: String,
     val pkg: String,
 )
+
+/** The cycle state [pkg] is counted in: its own, or the block's shared one for a total cycle. */
+fun Block.cycleKey(pkg: String): CycleKey = CycleKey(id, if (cycleScope == CycleScope.TOTAL) CYCLE_TOTAL_PKG else pkg)
 
 /**
  * Progress of a "use, then rest" cycle. [usedMs] is foreground time in the current window;

@@ -154,7 +154,7 @@ object RuleEvaluator {
         ctx: EvaluationContext,
         block: Block,
     ): Decision.Block? {
-        val lockedUntil = ctx.cycleStates[CycleKey(block.id, ctx.pkg)]?.lockedUntil ?: return null
+        val lockedUntil = ctx.cycleStates[block.cycleKey(ctx.pkg)]?.lockedUntil ?: return null
         return if (lockedUntil > ctx.now.toInstant()) {
             Decision.Block(BlockReason.CYCLE_REST, block.id, lockedUntil)
         } else {
@@ -245,7 +245,7 @@ object RuleEvaluator {
         block: Block,
     ): List<Instant?> {
         val now = ctx.now.toInstant()
-        val state = ctx.cycleStates[CycleKey(block.id, ctx.pkg)] ?: CycleState()
+        val state = ctx.cycleStates[block.cycleKey(ctx.pkg)] ?: CycleState()
         val lockedUntil = state.lockedUntil
         if (lockedUntil != null && lockedUntil > now) return listOf(lockedUntil)
         val useMs = (block.useMins ?: return emptyList()) * MS_PER_MIN

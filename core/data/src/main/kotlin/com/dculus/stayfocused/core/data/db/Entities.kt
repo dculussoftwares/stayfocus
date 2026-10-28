@@ -9,6 +9,7 @@ import androidx.room.PrimaryKey
 import androidx.room.Relation
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import java.time.Instant
@@ -37,6 +38,7 @@ data class BlockEntity(
     val enabled: Boolean,
     val createdAt: Instant,
     val source: BlockSource,
+    @ColumnInfo(defaultValue = "PER_APP") val cycleScope: CycleScope = CycleScope.PER_APP,
 )
 
 @Entity(

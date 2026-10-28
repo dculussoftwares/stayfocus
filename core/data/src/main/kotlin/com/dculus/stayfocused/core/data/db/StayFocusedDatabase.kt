@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UsageHourEntity::class,
         UsageTotalsEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -43,6 +43,14 @@ abstract class StayFocusedDatabase : RoomDatabase() {
             object : Migration(1, 2) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE usage_day ADD COLUMN firstAfterUnlock INTEGER NOT NULL DEFAULT 0")
+                }
+            }
+
+        /** Adds `blocks.cycleScope`; every existing "use, then lock" block keeps its per-app windows. */
+        val MIGRATION_2_3 =
+            object : Migration(2, 3) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE blocks ADD COLUMN cycleScope TEXT NOT NULL DEFAULT 'PER_APP'")
                 }
             }
     }

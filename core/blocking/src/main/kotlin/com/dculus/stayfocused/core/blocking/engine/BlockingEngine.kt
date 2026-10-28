@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.blocking.evaluator.CycleStateMachine
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.evaluator.EvaluationContext
 import com.dculus.stayfocused.core.blocking.evaluator.RuleEvaluator
+import com.dculus.stayfocused.core.blocking.evaluator.cycleKey
 import com.dculus.stayfocused.core.blocking.screen.BlockPresenter
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
@@ -19,6 +20,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
 import com.dculus.stayfocused.core.model.BreakSession
+import com.dculus.stayfocused.core.model.CYCLE_TOTAL_PKG
 import com.dculus.stayfocused.core.model.FocusSession
 import com.dculus.stayfocused.core.model.LockedApp
 import com.dculus.stayfocused.core.model.TemporaryAllowance
@@ -492,13 +494,15 @@ class BlockingEngine
         private fun pruneCycleCache(inputs: EngineInputs) {
             // An edited cycle rule starts fresh (the DAO clears the stored state of the block the same way).
             for (b in inputs.blocks) {
-                val rule = "${b.type}:${b.useMins}:${b.restMins}"
+                val rule = "${b.type}:${b.useMins}:${b.restMins}:${b.cycleScope}"
                 val previous = cycleRules.put(b.id, rule)
                 if (previous != null && previous != rule) cycleCache.keys.removeAll { it.blockId == b.id }
             }
             val ids = inputs.blocks.mapTo(hashSetOf()) { it.id }
             cycleRules.keys.retainAll(ids)
-            cycleCache.keys.removeAll { key -> inputs.blocks.none { it.id == key.blockId && key.pkg in it.apps } }
+            cycleCache.keys.removeAll { key ->
+                inputs.blocks.none { it.id == key.blockId && (key.pkg == CYCLE_TOTAL_PKG || key.pkg in it.apps) }
+            }
         }
 
         private suspend fun bookForeground(
@@ -518,7 +522,7 @@ class BlockingEngine
                         current.blocks.any { it.id == b.id && pkg in it.apps && it.sameCycleRule(b) }
                 }.forEach { block ->
                     try {
-                        val key = CycleKey(block.id, pkg)
+                        val key = block.cycleKey(pkg)
                         val before = cycleCache[key] ?: cycleStore.load(key) ?: CycleState()
                         val after = CycleStateMachine.advance(before, delta, stateAt, block)
                         cycleCache[key] = after
@@ -545,7 +549,7 @@ class BlockingEngine
             val tracked = inputs.blocks.filter { it.enabled && pkg in it.apps }
             val cycles = HashMap<CycleKey, CycleState>()
             for (block in tracked.filter { it.type == BlockType.CYCLE }) {
-                val key = CycleKey(block.id, pkg)
+                val key = block.cycleKey(pkg)
                 val state = cycleCache[key] ?: cycleStore.load(key)?.also { cycleCache[key] = it }
                 if (state != null) cycles[key] = state
             }
@@ -578,4 +582,5 @@ class BlockingEngine
     }
 
 private fun Block.sameCycleRule(other: Block): Boolean =
-    type == other.type && useMins == other.useMins && restMins == other.restMins
+    type == other.type && useMins == other.useMins && restMins == other.restMins &&
+        cycleScope == other.cycleScope

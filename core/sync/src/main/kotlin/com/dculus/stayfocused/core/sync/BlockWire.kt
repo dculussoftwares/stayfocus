@@ -4,6 +4,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
@@ -33,6 +34,8 @@ internal fun Block.toWire(): Map<String, Any> =
         period?.let { put("period", it.name) }
         useMins?.let { put("useMins", it) }
         restMins?.let { put("restMins", it) }
+        // Only a shared window is sent, so a block that counts per app stays valid against older rules.
+        if (type == BlockType.CYCLE && cycleScope == CycleScope.TOTAL) put("cycleScope", cycleScope.name)
         range?.let { put("range", mapOf("start" to it.start.toString(), "end" to it.end.toString())) }
         durationMins?.let { put("durationMins", it) }
         startedAt?.let { put("startedAt", it.toTimestamp()) }
@@ -72,6 +75,7 @@ internal fun parseWireBlock(
             enabled = enabled,
             createdAt = data.instant("createdAt") ?: Instant.EPOCH,
             source = enumOrNull<BlockSource>(data["source"]) ?: BlockSource.MANUAL,
+            cycleScope = enumOrNull<CycleScope>(data["cycleScope"]) ?: CycleScope.PER_APP,
         )
     return block.takeIf { it.hasFieldsOfItsType() }
 }

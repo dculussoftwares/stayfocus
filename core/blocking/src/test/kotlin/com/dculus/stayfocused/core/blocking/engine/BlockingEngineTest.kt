@@ -16,6 +16,8 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CYCLE_TOTAL_PKG
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
@@ -496,6 +498,34 @@ class BlockingEngineTest {
             assertTrue(
                 r.cycles.states
                     .getValue(CycleKey("cycle", APP))
+                    .lockedUntil != null,
+            )
+            r.engine.stop()
+        }
+
+    @Test fun totalCycleSharesOneWindowBetweenApps() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(
+                block("cycle", BlockType.CYCLE, apps = setOf(APP, OTHER), useMins = 1, restMins = 2)
+                    .copy(cycleScope = CycleScope.TOTAL),
+            )
+            r.engine.start()
+            r.open(APP)
+            r.pass(40_000)
+            r.open(OTHER)
+            r.pass(20_000)
+            assertEquals(
+                BlockReason.CYCLE_REST,
+                r.presenter.shown
+                    .single()
+                    .second.reason,
+                "the 40 s in one app and 20 s in the other add up to the minute",
+            )
+            assertEquals(null, r.cycles.states[CycleKey("cycle", APP)])
+            assertTrue(
+                r.cycles.states
+                    .getValue(CycleKey("cycle", CYCLE_TOTAL_PKG))
                     .lockedUntil != null,
             )
             r.engine.stop()

@@ -79,7 +79,7 @@ service cloud.firestore {
 
     function blockIsValid(b) {
       return b.keys().hasOnly(['id', 'type', 'name', 'apps', 'limitMins', 'period', 'useMins', 'restMins', 'range',
-                               'durationMins', 'startedAt', 'days', 'enabled', 'createdAt', 'source'])
+                               'durationMins', 'startedAt', 'days', 'enabled', 'createdAt', 'source', 'cycleScope'])
         && b.keys().hasAll(['type', 'name', 'apps', 'days', 'enabled', 'createdAt', 'source'])
         && isOptStr(b, 'id', 128)
         && b.type in ['LIMIT', 'CYCLE', 'SCHEDULE', 'NOW']
@@ -93,6 +93,7 @@ service cloud.firestore {
         && (!('limitMins' in b) || b.limitMins == null || isIntIn(b.limitMins, 1, 1440))
         && (!('useMins' in b) || b.useMins == null || isIntIn(b.useMins, 1, 1440))
         && (!('restMins' in b) || b.restMins == null || isIntIn(b.restMins, 1, 1440))
+        && (!('cycleScope' in b) || b.cycleScope == null || b.cycleScope in ['PER_APP', 'TOTAL'])
         && (!('durationMins' in b) || b.durationMins == null || isIntIn(b.durationMins, 1, 1440))
         && (!('range' in b) || b.range == null || b.range is map)
         && isOptTimestamp(b, 'startedAt')

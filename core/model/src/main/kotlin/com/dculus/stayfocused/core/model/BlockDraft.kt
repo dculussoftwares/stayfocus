@@ -13,6 +13,7 @@ data class BlockDraft(
     val mins: Int = 30,
     val use: Int = 10,
     val rest: Int = 30,
+    val cycleScope: CycleScope = CycleScope.PER_APP,
     val range: TimeRange = TimeRange.parse("09:00–17:00"),
     val now: Int = 60,
     val days: DaysOfWeek = DaysOfWeek.WEEKDAYS,

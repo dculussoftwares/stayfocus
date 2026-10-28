@@ -335,6 +335,7 @@ internal fun BlockWizardRoute(
                 onDays = viewModel::setDays,
                 onCycleValue = viewModel::setCycleValue,
                 onCycleEdit = viewModel::selectCycleEdit,
+                onCycleScope = viewModel::setCycleScope,
                 onRange = viewModel::setRange,
                 onChangeType = viewModel::changeType,
                 onDelete = viewModel::deleteBlock,
