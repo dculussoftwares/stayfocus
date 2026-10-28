@@ -138,7 +138,7 @@ fun BlockScreen(
                     )
                 }
                 Column(
-                    modifier = Modifier.padding(top = 24.dp),
+                    modifier = Modifier.padding(top = StayFocusedTheme.spacing.gap22),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     PillButton(

@@ -319,11 +319,8 @@ private fun Hero(ready: RemoteUiState.Ready) {
                     contentDescription = stringResource(R.string.remote_dots_description),
                     modifier = Modifier.padding(horizontal = 6.dp),
                     highlightIndex =
-                        remember {
-                            java.time.LocalTime
-                                .now()
-                                .hour
-                        },
+                        LocalNow.current
+                            .let { now -> remember { now().atZone(java.time.ZoneId.systemDefault()).hour } },
                 )
             }
         }
