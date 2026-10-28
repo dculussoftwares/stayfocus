@@ -147,4 +147,56 @@ class EditBlockTest {
             val vm = viewModel("gone")
             vm.events.test { assertEquals(WizardEvent.Close, awaitItem()) }
         }
+
+    @Test
+    fun editAppsOpensThePickerAndBackReturnsToTheRules() =
+        runTest {
+            blocks.upsert(limitBlock())
+            val vm = viewModel("b2")
+            vm.editApps()
+            assertEquals(WIZARD_STEP_APPS, vm.state.value.step)
+            vm.back()
+            assertEquals(WIZARD_STEP_RULES, vm.state.value.step)
+        }
+
+    @Test
+    fun changedAppsAreSaved() =
+        runTest {
+            blocks.upsert(limitBlock())
+            val vm = viewModel("b2")
+            val extra = defaultApps().map { it.pkg }.first { it !in vm.state.value.draft.apps }
+            vm.editApps()
+            vm.toggleApp(extra)
+            vm.next()
+            vm.next()
+            assertTrue(extra in blocks.get("b2")!!.apps)
+        }
+
+    @Test
+    fun backFromTheRulesClosesWithoutChanges() =
+        runTest {
+            blocks.upsert(limitBlock())
+            val vm = viewModel("b2")
+            vm.events.test {
+                vm.back()
+                assertEquals(WizardEvent.Close, awaitItem())
+            }
+        }
+
+    @Test
+    fun closingWithUnsavedChangesAsksFirst() =
+        runTest {
+            blocks.upsert(limitBlock())
+            val vm = viewModel("b2")
+            vm.setMins(5)
+            vm.back()
+            assertTrue(vm.state.value.confirmDiscard)
+            vm.keepEditing()
+            assertFalse(vm.state.value.confirmDiscard)
+            vm.events.test {
+                vm.back()
+                vm.discardChanges()
+                assertEquals(WizardEvent.Close, awaitItem())
+            }
+        }
 }

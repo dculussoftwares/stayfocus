@@ -112,6 +112,16 @@
     <string name="block_delete_failed">Couldn\'t delete the block. Try again.</string>
     <string name="block_wizard_update_failed">Couldn\'t save the changes. Try again.</string>
     <string name="block_wizard_pick_one_app">Pick at least one app</string>
+    <!-- Proposed copy for editing a block, flagged for design review. -->
+    <string name="block_wizard_apps_row_title">Apps</string>
+    <plurals name="block_wizard_apps_row_count">
+        <item quantity="one">%1$d app</item>
+        <item quantity="other">%1$d apps</item>
+    </plurals>
+    <string name="block_discard_title">Discard your changes?</string>
+    <string name="block_discard_body">The block keeps its current settings.</string>
+    <string name="block_discard_confirm">Discard</string>
+    <string name="block_discard_keep">Keep editing</string>
     <string name="block_wizard_step3_title">Set the rule</string>
     <string name="block_wizard_ai_change">Change</string>
     <string name="block_wizard_period_day">Per day</string>
