@@ -109,6 +109,9 @@ const val WIZARD_RANGE_CUSTOM_TAG = "wizard_range_custom"
 const val WIZARD_DELETE_TAG = "wizard_delete"
 const val WIZARD_DELETE_CONFIRM_TAG = "wizard_delete_confirm"
 const val WIZARD_DELETE_KEEP_TAG = "wizard_delete_keep"
+const val WIZARD_APPS_ROW_TAG = "wizard_apps_row"
+const val WIZARD_DISCARD_TAG = "wizard_discard"
+const val WIZARD_KEEP_EDITING_TAG = "wizard_keep_editing"
 const val WIZARD_REPORT_TAG = "wizard_report"
 const val WIZARD_REPORT_CONFIRM_TAG = "wizard_report_confirm"
 const val WIZARD_REPORT_SENTENCE_TAG = "wizard_report_sentence"
@@ -139,6 +142,9 @@ data class WizardActions(
     val onRange: (TimeRange) -> Unit = {},
     val onChangeType: () -> Unit = {},
     val onDelete: () -> Unit = {},
+    val onEditApps: () -> Unit = {},
+    val onKeepEditing: () -> Unit = {},
+    val onDiscard: () -> Unit = {},
     val onReport: () -> Unit = {},
 )
 
@@ -197,6 +203,9 @@ fun WizardScreen(
                 }
             }
         }
+    }
+    V5BottomSheet(visible = state.confirmDiscard, onDismiss = actions.onKeepEditing) {
+        DiscardSheetContent(onDiscard = actions.onDiscard, onKeep = actions.onKeepEditing)
     }
     V5BottomSheet(visible = confirmDelete, onDismiss = { confirmDelete = false }) {
         DeleteSheetContent(
@@ -277,6 +286,79 @@ private fun ColumnScope.ReportSheetContent(
         variant = PillButtonVariant.Text,
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+@Composable
+private fun ColumnScope.DiscardSheetContent(
+    onDiscard: () -> Unit,
+    onKeep: () -> Unit,
+) {
+    Text(
+        stringResource(R.string.block_discard_title),
+        style = StayFocusedTheme.type.title,
+        color = StayFocusedTheme.colors.ink,
+    )
+    Text(
+        stringResource(R.string.block_discard_body),
+        style = StayFocusedTheme.type.body,
+        color = StayFocusedTheme.colors.textSecondary,
+    )
+    PillButton(
+        text = stringResource(R.string.block_discard_confirm),
+        onClick = onDiscard,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_DISCARD_TAG),
+    )
+    PillButton(
+        text = stringResource(R.string.block_discard_keep),
+        onClick = onKeep,
+        variant = PillButtonVariant.Text,
+        modifier = Modifier.fillMaxWidth().testTag(WIZARD_KEEP_EDITING_TAG),
+    )
+}
+
+/** Edit mode only: the selected apps and a way back to the picker. */
+@Composable
+private fun AppsRow(
+    state: WizardUiState,
+    onClick: () -> Unit,
+) {
+    V5Card(
+        Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = onClick)
+            .testTag(WIZARD_APPS_ROW_TAG),
+        radius = 30.dp,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    stringResource(R.string.block_wizard_apps_row_title),
+                    style = StayFocusedTheme.type.label.copy(fontSize = 15.sp),
+                    color = StayFocusedTheme.colors.ink,
+                )
+                Text(
+                    pluralStringResource(
+                        R.plurals.block_wizard_apps_row_count,
+                        state.selectedCount,
+                        state.selectedCount,
+                    ) +
+                        " · " + state.appLabels.joinToString(),
+                    style = StayFocusedTheme.type.body,
+                    color = StayFocusedTheme.colors.textSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Text(
+                stringResource(R.string.block_wizard_ai_change),
+                style = StayFocusedTheme.type.label,
+                color = StayFocusedTheme.colors.ink,
+            )
+        }
+    }
 }
 
 @Composable
@@ -559,34 +641,44 @@ private fun AppsStep(
     state: WizardUiState,
     actions: WizardActions,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(state.apps.chunked(APP_COLUMNS), key = { it.first().pkg }) { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { app ->
-                    AppTile(
-                        app = app,
-                        selected = app.pkg in state.draft.apps,
-                        onToggle = { actions.onToggleApp(app.pkg) },
-                        modifier = Modifier.weight(1f),
-                    )
+    // The CTA floats over the grid so it stays reachable however far the list is scrolled.
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding =
+                PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = AppsCtaClearance),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(state.apps.chunked(APP_COLUMNS), key = { it.first().pkg }) { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { app ->
+                        AppTile(
+                            app = app,
+                            selected = app.pkg in state.draft.apps,
+                            onToggle = { actions.onToggleApp(app.pkg) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    repeat(APP_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
                 }
-                repeat(APP_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-        item {
-            PillButton(
-                text = ctaLabel(state),
-                onClick = actions.onNext,
-                modifier = Modifier.padding(top = 10.dp).fillMaxWidth().testTag(WIZARD_CTA_TAG),
-                enabled = state.ready && state.selectedCount > 0,
-            )
-        }
+        PillButton(
+            text = ctaLabel(state),
+            onClick = actions.onNext,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = ScreenPadding, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .testTag(WIZARD_CTA_TAG),
+            enabled = state.ready && state.selectedCount > 0,
+        )
     }
 }
+
+/** Bottom padding of the apps grid so the last row scrolls clear of the floating CTA. */
+private val AppsCtaClearance = 88.dp
 
 private const val APP_COLUMNS = 3
 
@@ -715,6 +807,7 @@ private fun RulesStep(
                 .testTag(WIZARD_RULES_TAG),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        if (state.editing) AppsRow(state, onClick = actions.onEditApps)
         RuleCard(state, actions)
         if (draft.type != BlockType.NOW) {
             V5Card(Modifier.fillMaxWidth(), radius = 30.dp) {

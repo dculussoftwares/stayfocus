@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
@@ -89,7 +90,17 @@ fun TimeRangePickerDialog(
                 style = StayFocusedTheme.type.label,
                 color = c.textSecondary,
             )
-            TimePicker(state = if (editingEnd) endState else startState, colors = colors)
+            // The picker's selector boxes are 80dp tall and read displayLarge, which the v5 theme maps to 92sp.
+            MaterialTheme(
+                colorScheme = MaterialTheme.colorScheme,
+                typography =
+                    MaterialTheme.typography.copy(
+                        displayLarge = MaterialTheme.typography.displayLarge.copy(fontSize = 48.sp, lineHeight = 56.sp),
+                    ),
+                shapes = MaterialTheme.shapes,
+            ) {
+                TimePicker(state = if (editingEnd) endState else startState, colors = colors)
+            }
             if (same) {
                 Text(
                     stringResource(R.string.block_wizard_picker_same_time),

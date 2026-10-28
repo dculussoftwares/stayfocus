@@ -72,6 +72,8 @@ data class WizardUiState(
     val saving: Boolean = false,
     /** True when an existing block is being edited: the CTA reads "Save changes" and delete is offered. */
     val editing: Boolean = false,
+    /** True while "Discard your changes?" is shown (back or close with unsaved edits). */
+    val confirmDiscard: Boolean = false,
     /** The sentence the AI draft came from; what "Report a bad result" sends together with the draft. */
     val aiSentence: String = "",
     /** The draft as the AI returned it (before the user's edits); what "Report a bad result" sends. */
@@ -488,17 +490,41 @@ class WizardViewModel
         private fun updateDraft(change: BlockDraft.() -> BlockDraft) =
             mutableState.update { it.copy(draft = it.draft.change()) }
 
-        /** Back: one step earlier, or close from step 1. */
+        /**
+         * Back: one step earlier, or close from step 1. An edit never walks back to the type step: from the apps
+         * picker it returns to the rules, from the rules it closes.
+         */
         fun back() {
             val s = mutableState.value
-            if (s.step > WIZARD_STEP_TYPE) {
-                mutableState.update { it.copy(step = it.step - 1) }
+            when {
+                s.editing && s.step == WIZARD_STEP_APPS -> mutableState.update { it.copy(step = WIZARD_STEP_RULES) }
+                s.editing -> close()
+                s.step > WIZARD_STEP_TYPE -> mutableState.update { it.copy(step = it.step - 1) }
+                else -> emit(WizardEvent.Close)
+            }
+        }
+
+        /** Leaves the wizard; an edit with unsaved changes asks first. */
+        fun close() {
+            val s = mutableState.value
+            if (s.editing && !s.saving && s.draft != original?.toDraft()) {
+                mutableState.update { it.copy(confirmDiscard = true) }
             } else {
                 emit(WizardEvent.Close)
             }
         }
 
-        fun close() = emit(WizardEvent.Close)
+        fun keepEditing() = mutableState.update { it.copy(confirmDiscard = false) }
+
+        fun discardChanges() {
+            mutableState.update { it.copy(confirmDiscard = false) }
+            emit(WizardEvent.Close)
+        }
+
+        /** The "Apps" row of an edit: opens the apps picker; Continue returns to the rules. */
+        fun editApps() {
+            if (mutableState.value.editing) mutableState.update { it.copy(step = WIZARD_STEP_APPS) }
+        }
 
         fun describeWithAi() =
             emit(WizardEvent.DescribeWithAi((mutableState.value.draft.target as? BlockTarget.Device)?.deviceId))

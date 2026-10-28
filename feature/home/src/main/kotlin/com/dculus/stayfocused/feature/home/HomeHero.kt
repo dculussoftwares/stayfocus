@@ -40,6 +40,7 @@ import com.dculus.stayfocused.core.model.formatMinutes
 import com.dculus.stayfocused.core.model.v5Duration
 import com.dculus.stayfocused.core.ui.charts.SmoothAreaChart
 import com.dculus.stayfocused.core.ui.charts.dayAxisLabels
+import com.dculus.stayfocused.core.ui.components.AppIconTile
 import com.dculus.stayfocused.core.ui.components.GlassTile
 import com.dculus.stayfocused.core.ui.components.GlowCard
 import com.dculus.stayfocused.core.ui.components.Numeral
@@ -278,15 +279,11 @@ private fun MostUsedTile(
     ) {
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             TileHeader(stringResource(R.string.home_most_used_label)) {
-                Text(
-                    mostUsed
-                        ?.label
-                        ?.firstOrNull()
-                        ?.uppercase()
-                        .orEmpty(),
-                    style = StayFocusedTheme.type.label.copy(fontWeight = FontWeight.Bold),
-                    color = white,
-                )
+                if (mostUsed != null) {
+                    AppIconTile(mostUsed.pkg, 28.dp, label = mostUsed.label)
+                } else {
+                    Icon(V5Icons.timer, contentDescription = null, tint = white, modifier = Modifier.size(15.dp))
+                }
             }
             TileValue((mostUsed?.mins ?: 0).toString(), stringResource(R.string.home_most_used_unit))
             Text(

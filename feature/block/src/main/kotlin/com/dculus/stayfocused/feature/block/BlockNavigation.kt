@@ -338,6 +338,9 @@ internal fun BlockWizardRoute(
                 onRange = viewModel::setRange,
                 onChangeType = viewModel::changeType,
                 onDelete = viewModel::deleteBlock,
+                onEditApps = viewModel::editApps,
+                onKeepEditing = viewModel::keepEditing,
+                onDiscard = viewModel::discardChanges,
                 onReport = viewModel::reportBadResult,
             )
         }
