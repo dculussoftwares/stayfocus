@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -194,7 +194,7 @@ private fun HeroReady(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.height(56.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.heightIn(min = 56.dp), contentAlignment = Alignment.Center) {
             Numeral(
                 text = clockMins(gauge.totalMins),
                 contentDescription = formatMinutes(gauge.totalMins),

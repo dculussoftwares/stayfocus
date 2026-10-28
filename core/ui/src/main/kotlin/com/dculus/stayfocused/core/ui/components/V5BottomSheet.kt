@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,6 +55,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
+import com.dculus.stayfocused.core.ui.theme.V5ContentMaxWidth
 import com.dculus.stayfocused.core.ui.theme.V5Easing
 import com.dculus.stayfocused.core.ui.theme.V5_SHEET_DURATION_MS
 import kotlinx.coroutines.Job
@@ -248,6 +250,7 @@ private fun V5SheetSurface(
 ) {
     Column(
         modifier
+            .widthIn(max = V5ContentMaxWidth)
             .fillMaxWidth()
             .clip(StayFocusedTheme.shapes.sheet)
             .background(StayFocusedTheme.colors.surfaceRaised)

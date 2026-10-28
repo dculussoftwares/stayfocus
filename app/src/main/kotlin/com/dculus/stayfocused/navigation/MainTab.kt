@@ -48,6 +48,12 @@ internal fun NavDestination?.selectedTab(): MainTab? =
  * restored, and Home stays at the bottom so back from any tab lands on Home (and back from Home exits).
  */
 internal fun NavController.navigateToTab(tab: MainTab) {
+    // Home is the bottom of the stack and the saved-state key for every other tab, so restoring "Home" would bring back
+    // the tab just left (or no-op). Pop to it instead, saving the tab being left so its state comes back later.
+    if (tab == MainTab.HOME) {
+        popBackStack(tab.route, inclusive = false, saveState = true)
+        return
+    }
     if (currentDestination.selectedTab() == tab) {
         popBackStack(tab.route, inclusive = false)
         return

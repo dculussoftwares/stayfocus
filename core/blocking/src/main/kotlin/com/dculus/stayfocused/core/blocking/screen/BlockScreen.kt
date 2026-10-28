@@ -3,14 +3,19 @@
 package com.dculus.stayfocused.core.blocking.screen
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -87,50 +92,64 @@ fun BlockScreen(
         Box(gradientGrain)
         val colors = StayFocusedTheme.colors
         val type = StayFocusedTheme.type
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .v5StatusBarPadding(extra = 50.dp)
-                    .v5NavigationBarPadding(extra = 40.dp)
-                    .padding(horizontal = 22.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            AppIconTile(
-                pkg = pkg,
-                size = 76.dp,
-                label = appLabel,
-                modifier = Modifier.shadow(16.dp, RoundedCornerShape(26.dp), clip = false, spotColor = colors.ink),
-            )
-            Text(
-                text = stringResource(R.string.block_resting, name),
-                style = type.headline,
-                color = colors.onGradient,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 22.dp),
-            )
-            TimeLine(timeLine)
-            val ruleText =
-                if (reason == BlockReason.CYCLE_REST && cycleRule != null) {
-                    stringResource(R.string.block_cycle_rule, cycleRule.use, cycleRule.rest, cycleRule.use)
-                } else {
-                    stringResource(reasonRes(reason))
+        // Scrolls when the window is short (landscape, large text); otherwise the button stays at the bottom.
+        BoxWithConstraints(Modifier.fillMaxSize()) {
+            val minHeight = maxHeight
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .heightIn(min = minHeight)
+                        .v5StatusBarPadding(extra = 50.dp)
+                        .v5NavigationBarPadding(extra = 40.dp)
+                        .padding(horizontal = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    AppIconTile(
+                        pkg = pkg,
+                        size = 76.dp,
+                        label = appLabel,
+                        modifier =
+                            Modifier.shadow(16.dp, RoundedCornerShape(26.dp), clip = false, spotColor = colors.ink),
+                    )
+                    Text(
+                        text = stringResource(R.string.block_resting, name),
+                        style = type.headline,
+                        color = colors.onGradient,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 22.dp),
+                    )
+                    TimeLine(timeLine)
+                    val ruleText =
+                        if (reason == BlockReason.CYCLE_REST && cycleRule != null) {
+                            stringResource(R.string.block_cycle_rule, cycleRule.use, cycleRule.rest, cycleRule.use)
+                        } else {
+                            stringResource(reasonRes(reason))
+                        }
+                    Text(
+                        text = ruleText,
+                        style = type.body.copy(fontWeight = FontWeight.Medium),
+                        color = colors.onGradient,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 300.dp).padding(top = 26.dp),
+                    )
                 }
-            Text(
-                text = ruleText,
-                style = type.body.copy(fontWeight = FontWeight.Medium),
-                color = colors.onGradient,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.widthIn(max = 300.dp).padding(top = 26.dp),
-            )
-            Spacer(Modifier.weight(1f))
-            PillButton(
-                text = stringResource(R.string.block_close_app, name),
-                onClick = onGoHome,
-                variant = PillButtonVariant.White,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            extraActions()
+                Column(
+                    modifier = Modifier.padding(top = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    PillButton(
+                        text = stringResource(R.string.block_close_app, name),
+                        onClick = onGoHome,
+                        variant = PillButtonVariant.White,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    extraActions()
+                }
+            }
         }
     }
 }
