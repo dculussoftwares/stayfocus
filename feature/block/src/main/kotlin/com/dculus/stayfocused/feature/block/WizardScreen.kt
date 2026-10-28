@@ -559,34 +559,44 @@ private fun AppsStep(
     state: WizardUiState,
     actions: WizardActions,
 ) {
-    LazyColumn(
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = 40.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(state.apps.chunked(APP_COLUMNS), key = { it.first().pkg }) { row ->
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { app ->
-                    AppTile(
-                        app = app,
-                        selected = app.pkg in state.draft.apps,
-                        onToggle = { actions.onToggleApp(app.pkg) },
-                        modifier = Modifier.weight(1f),
-                    )
+    // The CTA floats over the grid so it stays reachable however far the list is scrolled.
+    Box(Modifier.fillMaxSize()) {
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding =
+                PaddingValues(start = ScreenPadding, end = ScreenPadding, bottom = AppsCtaClearance),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            items(state.apps.chunked(APP_COLUMNS), key = { it.first().pkg }) { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { app ->
+                        AppTile(
+                            app = app,
+                            selected = app.pkg in state.draft.apps,
+                            onToggle = { actions.onToggleApp(app.pkg) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    repeat(APP_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
                 }
-                repeat(APP_COLUMNS - row.size) { Spacer(Modifier.weight(1f)) }
             }
         }
-        item {
-            PillButton(
-                text = ctaLabel(state),
-                onClick = actions.onNext,
-                modifier = Modifier.padding(top = 10.dp).fillMaxWidth().testTag(WIZARD_CTA_TAG),
-                enabled = state.ready && state.selectedCount > 0,
-            )
-        }
+        PillButton(
+            text = ctaLabel(state),
+            onClick = actions.onNext,
+            modifier =
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(horizontal = ScreenPadding, vertical = 8.dp)
+                    .fillMaxWidth()
+                    .testTag(WIZARD_CTA_TAG),
+            enabled = state.ready && state.selectedCount > 0,
+        )
     }
 }
+
+/** Bottom padding of the apps grid so the last row scrolls clear of the floating CTA. */
+private val AppsCtaClearance = 88.dp
 
 private const val APP_COLUMNS = 3
 
