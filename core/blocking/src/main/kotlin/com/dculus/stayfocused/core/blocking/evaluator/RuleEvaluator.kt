@@ -16,6 +16,10 @@ import java.time.temporal.ChronoUnit
 object RuleEvaluator {
     private const val MS_PER_MIN = 60_000L
     private const val SCHEDULE_LOOKAHEAD_DAYS = 8L
+    private const val ONE_MIN_MS = MS_PER_MIN
+
+    /** Slack so a warning is not missed when the wake-up lands a few ms before its threshold. */
+    private const val WARNING_SLACK_MS = 1_000L
 
     /** Order in which equally long blocks are reported. */
     private val TIE_BREAK =
@@ -57,6 +61,78 @@ object RuleEvaluator {
         times += ctx.focusSession?.endsAt
         ctx.blocks.filter { it.enabled && ctx.pkg in it.apps }.forEach { times += blockChangeTimes(ctx, it) }
         return times.filterNotNull().filter { it > now }.minOrNull()
+    }
+
+    /**
+     * The warnings each limit or use-then-lock block with a budget has reached for [EvaluationContext.pkg]: the
+     * most urgent kind per block. Empty while the app is blocked or allowlisted. No state: the caller remembers
+     * what it already showed.
+     */
+    fun usageWarnings(ctx: EvaluationContext): List<UsageWarning> {
+        if (ctx.pkg in ctx.allowlist || ctx.allLocked || ctx.lockedApps.any { it.pkg == ctx.pkg }) return emptyList()
+        return ctx.blocks
+            .filter { it.enabled && ctx.pkg in it.apps }
+            .mapNotNull { block ->
+                val (total, remaining) = budget(ctx, block) ?: return@mapNotNull null
+                val kind =
+                    when {
+                        total > ONE_MIN_MS + WARNING_SLACK_MS && remaining <= ONE_MIN_MS + WARNING_SLACK_MS -> {
+                            WarningKind.ONE_MIN
+                        }
+
+                        total > 2 * ONE_MIN_MS && remaining <= total / 2 + WARNING_SLACK_MS -> {
+                            WarningKind.HALF
+                        }
+
+                        else -> {
+                            null
+                        }
+                    }
+                kind?.let { UsageWarning(block.id, it, remaining) }
+            }
+    }
+
+    /** (total, remaining) milliseconds of the block's budget right now, or null if it has none or is spent. */
+    private fun budget(
+        ctx: EvaluationContext,
+        block: Block,
+    ): Pair<Long, Long>? {
+        val (total, remaining) =
+            when (block.type) {
+                BlockType.LIMIT -> {
+                    val limitMins = block.limitMins ?: return null
+                    val period = block.period ?: return null
+                    if (ctx.now.dayOfWeek !in block.days) return null
+                    val total = limitMins * MS_PER_MIN
+                    total to total - combinedUsedMs(ctx, block, period)
+                }
+
+                BlockType.CYCLE -> {
+                    val state = ctx.cycleStates[block.cycleKey(ctx.pkg)] ?: CycleState()
+                    if (state.lockedUntil?.let { it > ctx.now.toInstant() } == true) return null
+                    val total = (block.useMins ?: return null) * MS_PER_MIN
+                    total to total - state.usedMs
+                }
+
+                else -> {
+                    return null
+                }
+            }
+        return if (remaining > 0) total to remaining else null
+    }
+
+    /** Instants at which the budget crosses a warning threshold, assuming the app stays in front. */
+    private fun warningTimes(
+        ctx: EvaluationContext,
+        block: Block,
+    ): List<Instant> {
+        val (total, remaining) = budget(ctx, block) ?: return emptyList()
+        val now = ctx.now.toInstant()
+        return listOfNotNull(
+            (remaining - ONE_MIN_MS).takeIf { total > ONE_MIN_MS + WARNING_SLACK_MS },
+            (remaining - total / 2).takeIf { total > 2 * ONE_MIN_MS },
+        ).filter { it > 0 }
+            .map { now.plusMillis(it) }
     }
 
     private fun isLater(
@@ -237,7 +313,11 @@ object RuleEvaluator {
         if (ctx.now.dayOfWeek !in block.days) return listOf(boundary)
         val remainingMs = limitMins * MS_PER_MIN - combinedUsedMs(ctx, block, period)
         // Exhaustion assumes the app stays in the foreground; once exhausted only the reset matters.
-        return if (remainingMs > 0) listOf(ctx.now.toInstant().plusMillis(remainingMs), boundary) else listOf(boundary)
+        return if (remainingMs > 0) {
+            listOf(ctx.now.toInstant().plusMillis(remainingMs), boundary) + warningTimes(ctx, block)
+        } else {
+            listOf(boundary)
+        }
     }
 
     private fun cycleChangeTimes(
@@ -249,6 +329,6 @@ object RuleEvaluator {
         val lockedUntil = state.lockedUntil
         if (lockedUntil != null && lockedUntil > now) return listOf(lockedUntil)
         val useMs = (block.useMins ?: return emptyList()) * MS_PER_MIN
-        return listOf(now.plusMillis((useMs - state.usedMs).coerceAtLeast(0)))
+        return listOf(now.plusMillis((useMs - state.usedMs).coerceAtLeast(0))) + warningTimes(ctx, block)
     }
 }

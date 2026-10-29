@@ -755,8 +755,9 @@ class RuleEvaluatorTest {
     @Test
     fun `nextEvaluationAt for a limit is the exhaustion at current usage`() {
         val b = block(type = BlockType.LIMIT, limitMins = 60, period = LimitPeriod.DAILY)
+        // Already past half: the next wake-up is the one-minute warning, a minute before exhaustion at 12:40.
         val c = ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(50 * MIN, 0)))
-        assertEquals(inst("2026-10-07T12:40:00"), RuleEvaluator.nextEvaluationAt(c))
+        assertEquals(inst("2026-10-07T12:39:00"), RuleEvaluator.nextEvaluationAt(c))
     }
 
     @Test
@@ -797,8 +798,9 @@ class RuleEvaluatorTest {
             ctx(wed, b, cycleStates = mapOf(CycleKey("b1", APP) to CycleState(0, inst("2026-10-07T13:00:00"))))
         assertEquals(inst("2026-10-07T13:00:00"), RuleEvaluator.nextEvaluationAt(resting))
         val using = ctx(wed, b, cycleStates = mapOf(CycleKey("b1", APP) to CycleState(4 * MIN, null)))
-        assertEquals(inst("2026-10-07T12:36:00"), RuleEvaluator.nextEvaluationAt(using))
-        assertEquals(inst("2026-10-07T12:40:00"), RuleEvaluator.nextEvaluationAt(ctx(wed, b)))
+        // 6 min left of 10: exhaustion is 12:36, the half mark (5 left) is 12:31, the one-minute warning 12:35.
+        assertEquals(inst("2026-10-07T12:31:00"), RuleEvaluator.nextEvaluationAt(using))
+        assertEquals(inst("2026-10-07T12:35:00"), RuleEvaluator.nextEvaluationAt(ctx(wed, b)))
         val over = ctx(wed, b, cycleStates = mapOf(CycleKey("b1", APP) to CycleState(99 * MIN, null)))
         assertEquals(null, RuleEvaluator.nextEvaluationAt(over)) // already due: not strictly after now
         assertEquals(null, RuleEvaluator.nextEvaluationAt(ctx(wed, block(type = BlockType.CYCLE))))
@@ -810,5 +812,78 @@ class RuleEvaluatorTest {
         val nowB = block(id = "n", type = BlockType.NOW, durationMins = 5, startedAt = inst("2026-10-07T12:29:00"))
         val c = ctx(wed, limit, nowB, usage = mapOf(APP to AppUsageSnapshot(10 * MIN, 0)))
         assertEquals(inst("2026-10-07T12:34:00"), RuleEvaluator.nextEvaluationAt(c))
+    }
+
+    // ---- usage warnings ----
+
+    private fun limitWarnings(
+        limitMins: Int,
+        usedMins: Double,
+    ): List<UsageWarning> {
+        val b = block(type = BlockType.LIMIT, limitMins = limitMins, period = LimitPeriod.DAILY)
+        val used = (usedMins * MIN).toLong()
+        return RuleEvaluator.usageWarnings(ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(used, 0))))
+    }
+
+    @Test
+    fun `no warning before half of a limit is used`() {
+        assertEquals(emptyList(), limitWarnings(30, 14.0))
+    }
+
+    @Test
+    fun `half warning at half of a limit`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.HALF, 15 * MIN)), limitWarnings(30, 15.0))
+    }
+
+    @Test
+    fun `one minute warning wins over half`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.ONE_MIN, MIN)), limitWarnings(30, 29.0))
+    }
+
+    @Test
+    fun `no warning once the limit is spent`() {
+        assertEquals(emptyList(), limitWarnings(30, 30.0))
+    }
+
+    @Test
+    fun `a two minute limit skips the half warning`() {
+        assertEquals(emptyList(), limitWarnings(2, 1.0 - 0.1))
+        assertEquals(listOf(UsageWarning("b1", WarningKind.ONE_MIN, MIN)), limitWarnings(2, 1.0))
+    }
+
+    @Test
+    fun `a one minute limit never warns`() {
+        assertEquals(emptyList(), limitWarnings(1, 0.0))
+    }
+
+    @Test
+    fun `no warnings while the app is locked`() {
+        val b = block(type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        val c = ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(29 * MIN, 0)), allLocked = true)
+        assertEquals(emptyList(), RuleEvaluator.usageWarnings(c))
+    }
+
+    @Test
+    fun `cycle warns on its use window`() {
+        val b = block(type = BlockType.CYCLE, useMins = 20, restMins = 10)
+        val state = mapOf(b.cycleKey(APP) to CycleState(usedMs = 10 * MIN))
+        assertEquals(
+            listOf(UsageWarning("b1", WarningKind.HALF, 10 * MIN)),
+            RuleEvaluator.usageWarnings(ctx(wed, b, cycleStates = state)),
+        )
+    }
+
+    @Test
+    fun `cycle does not warn while resting`() {
+        val b = block(type = BlockType.CYCLE, useMins = 20, restMins = 10)
+        val state = mapOf(b.cycleKey(APP) to CycleState(usedMs = 19 * MIN, lockedUntil = inst("2026-10-07T13:00:00")))
+        assertEquals(emptyList(), RuleEvaluator.usageWarnings(ctx(wed, b, cycleStates = state)))
+    }
+
+    @Test
+    fun `next evaluation wakes at the half mark of a limit`() {
+        val b = block(type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        val c = ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(5 * MIN, 0)))
+        assertEquals(wed.toInstant().plusMillis(10 * MIN), RuleEvaluator.nextEvaluationAt(c))
     }
 }

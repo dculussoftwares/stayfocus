@@ -10,6 +10,7 @@ import com.dculus.stayfocused.core.blocking.evaluator.CycleStateMachine
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
 import com.dculus.stayfocused.core.blocking.evaluator.EvaluationContext
 import com.dculus.stayfocused.core.blocking.evaluator.RuleEvaluator
+import com.dculus.stayfocused.core.blocking.evaluator.WarningKind
 import com.dculus.stayfocused.core.blocking.evaluator.cycleKey
 import com.dculus.stayfocused.core.blocking.screen.BlockPresenter
 import com.dculus.stayfocused.core.data.repository.BlockRepository
@@ -115,6 +116,9 @@ class BlockingEngine
 
         /** The inputs the time since the last evaluation has to be booked against. */
         private var bookingInputs: EngineInputs? = null
+
+        /** The most urgent warning already shown per `blockId|pkg`; cleared once the block is out of warning range. */
+        private val warned = HashMap<String, WarningKind>()
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
         private val cycleRules = ConcurrentHashMap<String, String>()
 
@@ -391,6 +395,7 @@ class BlockingEngine
                     BlockingLog.log("Engine", "$pkg -> allow")
                     current.counting = true
                     clearShown(now)
+                    warnIfDue(pkg, ctx)
                     wait
                 }
 
@@ -401,6 +406,18 @@ class BlockingEngine
                     minOf(wait, BLOCKED_RECHECK_MS)
                 }
             }
+        }
+
+        /** Shows at most one warning per evaluation, and each kind only once per block until its budget resets. */
+        private fun warnIfDue(
+            pkg: String,
+            ctx: EvaluationContext,
+        ) {
+            val reached = RuleEvaluator.usageWarnings(ctx).associateBy { "${it.blockId}|$pkg" }
+            warned.keys.removeAll { it.endsWith("|$pkg") && it !in reached }
+            val due = reached.filter { (key, w) -> warned[key]?.let { w.kind > it } ?: true }
+            reached.forEach { (key, w) -> warned[key] = maxOf(w.kind, warned[key] ?: w.kind) }
+            due.values.minByOrNull { it.remainingMs }?.let { presenter.showWarning(pkg, it.kind) }
         }
 
         /**

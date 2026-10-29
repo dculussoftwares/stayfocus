@@ -10,7 +10,9 @@ import android.os.Looper
 import android.util.Log
 import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
+import com.dculus.stayfocused.core.blocking.R
 import com.dculus.stayfocused.core.blocking.evaluator.Decision
+import com.dculus.stayfocused.core.blocking.evaluator.WarningKind
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.Clock
 import java.util.Optional
@@ -44,6 +46,7 @@ class BlockScreenLauncher
         @Volatile private var overlay: AccessibilityOverlay? = null
         private var lastToken = 0L
         private var pendingCheck: Runnable? = null
+        private var pill: UsageWarningPill? = null
 
         /** True from [show] until the launch is settled (activity visible, overlay up, or cancelled). */
         @Volatile private var launching = false
@@ -60,6 +63,7 @@ class BlockScreenLauncher
 
         /** Called by the service when it unbinds or is destroyed. */
         fun detach() {
+            handler.post { removePill() }
             invalidate()
             service = null
         }
@@ -71,9 +75,31 @@ class BlockScreenLauncher
             decision: Decision.Block,
         ) {
             launching = true
+            handler.post { removePill() }
             tracker.onBlockScreenShown()
             BlockingLog.log("Launcher", "show $pkg ${decision.reason}")
             handler.post { showOnMain(pkg, decision) }
+        }
+
+        override fun showWarning(
+            pkg: String,
+            kind: WarningKind,
+        ) {
+            handler.post {
+                val svc = service ?: return@post
+                if (isShowing()) return@post
+                val app = appLabel(pkg) ?: pkg
+                val urgent = kind == WarningKind.ONE_MIN
+                val text =
+                    context.getString(if (urgent) R.string.usage_warning_one_min else R.string.usage_warning_half, app)
+                val shown = pill ?: UsageWarningPill(svc, handler).also { pill = it }
+                shown.show(text, urgent, if (urgent) ONE_MIN_SHOWN_MS else HALF_SHOWN_MS)
+            }
+        }
+
+        private fun removePill() {
+            pill?.remove()
+            pill = null
         }
 
         /** Removes the fallback overlay, if showing. The engine calls this when the user leaves the blocked app. */
@@ -183,5 +209,7 @@ class BlockScreenLauncher
         private companion object {
             const val TAG = "BlockScreenLauncher"
             const val LAUNCH_CHECK_MS = 350L
+            const val HALF_SHOWN_MS = 4_000L
+            const val ONE_MIN_SHOWN_MS = 6_000L
         }
     }
