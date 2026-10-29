@@ -13,6 +13,7 @@ import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockSummary
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.LinkedDevice
@@ -345,6 +346,7 @@ class WizardViewModel
                     period = draft.period.takeIf { draft.type == BlockType.LIMIT },
                     useMins = draft.use.takeIf { draft.type == BlockType.CYCLE },
                     restMins = draft.rest.takeIf { draft.type == BlockType.CYCLE },
+                    cycleScope = draft.cycleScope.takeIf { draft.type == BlockType.CYCLE } ?: CycleScope.PER_APP,
                     range = draft.range.takeIf { draft.type == BlockType.SCHEDULE },
                     durationMins = draft.now.takeIf { draft.type == BlockType.NOW },
                     startedAt = startedAtFor(draft, old, now),
@@ -448,6 +450,9 @@ class WizardViewModel
                 )
             }
 
+        fun setCycleScope(scope: CycleScope) =
+            mutableState.update { it.copy(draft = it.draft.copy(cycleScope = scope)) }
+
         fun selectCycleEdit(edit: CycleEdit) = mutableState.update { it.copy(cycleEdit = edit) }
 
         fun setRange(range: TimeRange) = updateDraft { copy(range = range) }
@@ -544,6 +549,7 @@ private fun Block.toDraft(): BlockDraft {
         mins = limitMins ?: defaults.mins,
         use = useMins ?: defaults.use,
         rest = restMins ?: defaults.rest,
+        cycleScope = cycleScope,
         range = range ?: defaults.range,
         now = durationMins ?: defaults.now,
         days = days,

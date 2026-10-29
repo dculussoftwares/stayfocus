@@ -55,6 +55,22 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun `v2 to v3 adds cycleScope as per app`() {
+        helper.createDatabase(TEST_DB, 2).use { db ->
+            db.execSQL(
+                "INSERT INTO blocks (id, target, type, name, useMins, restMins, days, enabled, createdAt, source) " +
+                    "VALUES ('b', 'me', 'CYCLE', 'n', 10, 30, 127, 1, 0, 'MANUAL')",
+            )
+        }
+        helper.runMigrationsAndValidate(TEST_DB, 3, true, StayFocusedDatabase.MIGRATION_2_3).use { db ->
+            db.query("SELECT cycleScope FROM blocks").use {
+                it.moveToFirst()
+                assertEquals("PER_APP", it.getString(0))
+            }
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test"
     }

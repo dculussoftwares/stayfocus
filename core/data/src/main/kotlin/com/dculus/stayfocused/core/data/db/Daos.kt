@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
+import com.dculus.stayfocused.core.model.CYCLE_TOTAL_PKG
 import kotlinx.coroutines.flow.Flow
 import java.time.Instant
 import java.time.LocalDate
@@ -45,7 +46,10 @@ interface BlockDao {
         deleteCycleStateOfRemovedApps(block.id)
     }
 
-    @Query("SELECT type || ':' || IFNULL(useMins, '') || ':' || IFNULL(restMins, '') FROM blocks WHERE id = :id")
+    @Query(
+        "SELECT type || ':' || IFNULL(useMins, '') || ':' || IFNULL(restMins, '') || ':' || cycleScope " +
+            "FROM blocks WHERE id = :id",
+    )
     suspend fun cycleRuleOf(id: String): String?
 
     @Query("DELETE FROM cycle_state WHERE blockId = :blockId")
@@ -57,7 +61,7 @@ interface BlockDao {
 
     /** Subquery, not a bound list: Android SQLite caps bind parameters at 999. */
     @Query(
-        "DELETE FROM cycle_state WHERE blockId = :blockId " +
+        "DELETE FROM cycle_state WHERE blockId = :blockId AND pkg != '$CYCLE_TOTAL_PKG' " +
             "AND pkg NOT IN (SELECT pkg FROM block_apps WHERE blockId = :blockId)",
     )
     suspend fun deleteCycleStateOfRemovedApps(blockId: String)
@@ -217,4 +221,4 @@ interface UsageDao {
 }
 
 /** Matches the SQL of [BlockDao.cycleRuleOf]: what the cycle state of a block depends on. */
-private fun BlockEntity.cycleRule(): String = "${type.name}:${useMins ?: ""}:${restMins ?: ""}"
+private fun BlockEntity.cycleRule(): String = "${type.name}:${useMins ?: ""}:${restMins ?: ""}:${cycleScope.name}"

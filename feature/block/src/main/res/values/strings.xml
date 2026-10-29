@@ -137,6 +137,8 @@
     <string name="block_wizard_sent">Block sent to %1$s</string>
     <string name="block_wizard_seg_use">Use for %1$dm</string>
     <string name="block_wizard_seg_rest">Then lock %1$s</string>
+    <string name="block_wizard_scope_per_app">Per app</string>
+    <string name="block_wizard_scope_total">All apps together</string>
     <string name="block_wizard_sub_limit">allowed per day</string>
     <string name="block_wizard_sub_limit_hour">allowed per hour</string>
     <string name="block_wizard_sub_use">open before it locks</string>

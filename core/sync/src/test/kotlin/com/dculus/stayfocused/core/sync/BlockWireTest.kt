@@ -4,6 +4,7 @@ import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockSource
 import com.dculus.stayfocused.core.model.BlockTarget
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import com.dculus.stayfocused.core.model.TimeRange
@@ -50,6 +51,7 @@ class BlockWireTest {
             listOf(
                 base(BlockType.LIMIT).copy(limitMins = 30, period = LimitPeriod.HOURLY),
                 base(BlockType.CYCLE).copy(useMins = 10, restMins = 30),
+                base(BlockType.CYCLE).copy(useMins = 10, restMins = 30, cycleScope = CycleScope.TOTAL),
                 base(BlockType.SCHEDULE).copy(range = TimeRange.parse("22:00–07:00")),
                 base(BlockType.NOW).copy(durationMins = 60, startedAt = at),
             )
@@ -77,6 +79,7 @@ class BlockWireTest {
                 "enabled",
                 "createdAt",
                 "source",
+                "cycleScope",
             )
         val wire = base(BlockType.SCHEDULE).copy(range = TimeRange.parse("09:00–17:00")).toWire()
         assertEquals(emptySet(), wire.keys - allowed)

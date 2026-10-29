@@ -70,7 +70,7 @@ interface DeviceBlocksRepository {
 
 /** Fields of a block document only some types use. */
 private val BLOCK_OPTIONAL_FIELDS =
-    setOf("limitMins", "period", "useMins", "restMins", "range", "durationMins", "startedAt")
+    setOf("limitMins", "period", "useMins", "restMins", "range", "durationMins", "startedAt", "cycleScope")
 
 internal class FirebaseDeviceBlocksRepository(
     private val firestore: FirebaseFirestore,

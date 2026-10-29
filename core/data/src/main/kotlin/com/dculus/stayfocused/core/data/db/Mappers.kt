@@ -37,6 +37,7 @@ fun Block.toEntity(): BlockEntity =
         enabled = enabled,
         createdAt = createdAt,
         source = source,
+        cycleScope = cycleScope,
     )
 
 fun Block.toAppEntities(): List<BlockAppEntity> = apps.map { BlockAppEntity(blockId = id, pkg = it) }
@@ -59,6 +60,7 @@ fun BlockWithApps.toModel(): Block =
         enabled = block.enabled,
         createdAt = block.createdAt,
         source = block.source,
+        cycleScope = block.cycleScope,
     )
 
 fun LockedApp.toEntity(): LockedAppEntity = LockedAppEntity(pkg = pkg, target = target.toKey(), since = since)
