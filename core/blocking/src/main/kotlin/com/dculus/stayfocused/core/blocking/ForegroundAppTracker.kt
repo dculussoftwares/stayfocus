@@ -10,7 +10,8 @@ import javax.inject.Singleton
  * Turns raw window-state events into a stable [foreground] value.
  *
  * Ignored events: our own block screen, System UI (notification shade, recents overlay), keyboards,
- * windows that aren't activities (dialogs, popups) and consecutive duplicates (except the first event after
+ * system overlays that report as windows (vendor volume pop-ups, side panels), windows that aren't activities
+ * (dialogs, popups) and consecutive duplicates (except the first event after
  * the block screen was shown).
  */
 @Singleton
@@ -58,6 +59,8 @@ class ForegroundAppTracker
                 packageName == SYSTEM_UI_PACKAGE -> "system ui"
                 packageName == env.ownPackage && className == BLOCK_SCREEN_CLASS -> "block screen"
                 packageName in env.imePackages() -> "keyboard"
+                packageName in OVERLAY_PACKAGES -> "system overlay"
+                OVERLAY_CLASS.containsMatchIn(className) -> "dialog or popup"
                 env.isActivity(packageName, className) == false -> "not an activity"
                 _foreground.value?.packageName == packageName && !blockScreenUp -> "duplicate"
                 else -> null
@@ -72,6 +75,22 @@ class ForegroundAppTracker
 
         companion object {
             const val SYSTEM_UI_PACKAGE = "com.android.systemui"
+
+            /**
+             * Vendor (vivo) overlays that raise window events while an app is in front. The activity lookup can't
+             * see other packages, so without this the volume pop-up would count as the app and stop its timer.
+             */
+            private val OVERLAY_PACKAGES =
+                setOf(
+                    "com.vivo.systemuiplugin",
+                    "com.vivo.upslide",
+                    "com.vivo.nightpearl",
+                    "com.vivo.card",
+                    "com.vivo.fingerprintui",
+                )
+
+            /** Class names that are dialogs or popups, never an app's screen. */
+            private val OVERLAY_CLASS = Regex("(Dialog|Popup)")
 
             /** Class name of the block screen activity (`screen.BlockActivity`). */
             const val BLOCK_SCREEN_CLASS = "com.dculus.stayfocused.core.blocking.screen.BlockActivity"
