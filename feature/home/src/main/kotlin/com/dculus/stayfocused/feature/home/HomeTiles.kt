@@ -46,6 +46,7 @@ import com.dculus.stayfocused.core.ui.theme.V5Gradients
 
 internal const val HOME_NEW_BLOCK_TAG = "home_new_block"
 internal const val HOME_AI_DESCRIBE_TAG = "home_ai_describe"
+internal const val HOME_ACTIVE_BLOCKS_TAG = "home_active_blocks"
 internal const val BREAK_IDLE_CARD_TAG = "home_break_idle_card"
 internal const val BREAK_ACTIVE_CARD_TAG = "home_break_active_card"
 internal const val BREAK_COUNTDOWN_TAG = "home_break_countdown"
@@ -57,12 +58,13 @@ internal fun HomeTiles(
     breakUi: () -> BreakUi,
     breakLengthMins: Int,
     onNewBlock: () -> Unit,
+    onOpenBlocks: () -> Unit,
     onOpenBreakSheet: () -> Unit,
     onEndBreak: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        BlockAppsTile(state.activeBlockCount, state.tiltedApps, onNewBlock, Modifier.weight(1f))
+        BlockAppsTile(state.activeBlockCount, state.tiltedApps, onNewBlock, onOpenBlocks, Modifier.weight(1f))
         BreakTile(breakUi, breakLengthMins, onOpenBreakSheet, onEndBreak, Modifier.weight(1f))
     }
 }
@@ -72,6 +74,7 @@ private fun BlockAppsTile(
     activeBlocks: Int,
     apps: List<String>,
     onClick: () -> Unit,
+    onOpenBlocks: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     ActionTile(
@@ -87,7 +90,7 @@ private fun BlockAppsTile(
         apps.getOrNull(1)?.let { pkg ->
             TiltedApp(pkg, 6f, Modifier.align(Alignment.BottomEnd).padding(end = 18.dp, bottom = 90.dp))
         }
-        ActiveBlocksFooter(activeBlocks)
+        ActiveBlocksFooter(activeBlocks, onOpenBlocks)
     }
 }
 
@@ -101,7 +104,10 @@ private fun TiltedApp(
 }
 
 @Composable
-private fun BoxScope.ActiveBlocksFooter(count: Int) {
+private fun BoxScope.ActiveBlocksFooter(
+    count: Int,
+    onOpenBlocks: () -> Unit,
+) {
     val colors = StayFocusedTheme.colors
     Column(
         Modifier
@@ -111,6 +117,9 @@ private fun BoxScope.ActiveBlocksFooter(count: Int) {
             .height(62.dp)
             .shadow(6.dp, RoundedCornerShape(28.dp), clip = false)
             .background(colors.surface, RoundedCornerShape(28.dp))
+            .clip(RoundedCornerShape(28.dp))
+            .testTag(HOME_ACTIVE_BLOCKS_TAG)
+            .clickable(role = Role.Button, onClick = onOpenBlocks)
             .padding(horizontal = 14.dp),
         verticalArrangement = Arrangement.spacedBy(1.dp, Alignment.CenterVertically),
     ) {

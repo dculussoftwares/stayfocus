@@ -47,7 +47,7 @@ class HomeDestinations(
     /** "Describe a block in your words": the Block tab with the describe box open. */
     val onAiDescribe: () -> Unit,
     val onOpenInsights: () -> Unit,
-    /** "Manage": the Block tab. */
+    /** "Manage" and the "Active blocks" tile footer: the Block tab. */
     val onOpenBlock: () -> Unit,
     /** The Family tab (the bell when no phone needs attention). */
     val onOpenDevices: () -> Unit,
@@ -170,6 +170,7 @@ internal fun HomeScreen(
                     breakUi = breakUi,
                     breakLengthMins = mins,
                     onNewBlock = destinations.onNewBlock,
+                    onOpenBlocks = destinations.onOpenBlock,
                     onOpenBreakSheet = { sheetVisible = true },
                     onEndBreak = actions.onEndBreak,
                 )
