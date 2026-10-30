@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
@@ -49,6 +50,10 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.theme.V5Screen
 import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 @Composable
 internal fun InsightsRoute(viewModel: InsightsViewModel = hiltViewModel()) {
@@ -367,10 +372,31 @@ private fun AppList(
                             pluralStringResource(R.plurals.insights_opens_count, app.value, app.value)
                         },
                     fraction = app.fraction,
+                    recentFraction = recentShare(app, metric, day.range),
+                    subtitle =
+                        if (metric == InsightsMetric.ScreenTime && day.range == InsightsRange.Day) {
+                            lastUsedText(app)
+                        } else {
+                            null
+                        },
                 )
             }
         }
     }
+}
+
+/** "Last used 2:14 PM · 8 min": when the app was last in the foreground and how long that stretch lasted. */
+@Composable
+private fun lastUsedText(app: RankedApp): String? {
+    if (app.lastUsedMillis <= 0) return null
+    val time =
+        remember(app.lastUsedMillis) {
+            DateTimeFormatter
+                .ofLocalizedTime(FormatStyle.SHORT)
+                .format(Instant.ofEpochMilli(app.lastUsedMillis).atZone(ZoneId.systemDefault()))
+        }
+    val session = formatMinutes(sessionMinutes(app.lastSessionMillis))
+    return stringResource(R.string.insights_last_used, time, session)
 }
 
 @Composable

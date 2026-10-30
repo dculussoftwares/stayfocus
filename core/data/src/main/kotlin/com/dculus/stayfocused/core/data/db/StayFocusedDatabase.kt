@@ -17,7 +17,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         UsageHourEntity::class,
         UsageTotalsEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -51,6 +51,17 @@ abstract class StayFocusedDatabase : RoomDatabase() {
             object : Migration(2, 3) {
                 override fun migrate(db: SupportSQLiteDatabase) {
                     db.execSQL("ALTER TABLE blocks ADD COLUMN cycleScope TEXT NOT NULL DEFAULT 'PER_APP'")
+                }
+            }
+
+        /**
+         * Adds `usage_day.lastUsedAt` and `lastSessionMs`; days cached earlier show no "last used" until they expire.
+         */
+        val MIGRATION_3_4 =
+            object : Migration(3, 4) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL("ALTER TABLE usage_day ADD COLUMN lastUsedAt INTEGER NOT NULL DEFAULT 0")
+                    db.execSQL("ALTER TABLE usage_day ADD COLUMN lastSessionMs INTEGER NOT NULL DEFAULT 0")
                 }
             }
     }

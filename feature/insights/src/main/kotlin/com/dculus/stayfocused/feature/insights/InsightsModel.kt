@@ -10,6 +10,7 @@ import java.util.Locale
 internal const val HOURS_PER_DAY = 24
 internal const val WEEK_DAYS = 7
 internal const val TOP_APPS = 6
+private const val MILLIS_PER_MINUTE = 60_000
 
 /** The prototype's fixed chart scales (20 min per hour, 4 h per day); a busier hour or day stretches the scale. */
 internal const val DAY_CHART_MIN_MAX = 20
@@ -28,6 +29,10 @@ internal data class RankedApp(
     val value: Int,
     /** 0..1 relative to the top app. */
     val fraction: Float,
+    /** When the app last left the foreground (epoch millis), 0 when unknown or for a multi-day range. */
+    val lastUsedMillis: Long = 0,
+    /** Length of that last stretch in the foreground, 0 when unknown. */
+    val lastSessionMillis: Long = 0,
 )
 
 private fun AppUsageStat.valueFor(metric: InsightsMetric): Int =
@@ -55,7 +60,15 @@ internal fun rankApps(
             )
     val top = ranked.firstOrNull()?.second ?: return emptyList()
     return ranked.mapIndexed { i, (app, value) ->
-        RankedApp(i + 1, app.pkg, labelOf(app.pkg), value, value.toFloat() / top)
+        RankedApp(
+            rank = i + 1,
+            pkg = app.pkg,
+            label = labelOf(app.pkg),
+            value = value,
+            fraction = value.toFloat() / top,
+            lastUsedMillis = app.lastUsedMillis,
+            lastSessionMillis = app.lastSessionMillis,
+        )
     }
 }
 
@@ -74,6 +87,22 @@ internal data class InsightsDay(
     val axisLabels: List<String>,
     val apps: List<RankedApp>,
 )
+
+/** A session length in whole minutes, at least 1: a few seconds of use is still use. */
+internal fun sessionMinutes(millis: Long): Int = maxOf(1, Math.round(millis.toFloat() / MILLIS_PER_MINUTE))
+
+/** Share of an app's day (0..1) that its last session makes up; 0 off the Day screen-time list or when unknown. */
+internal fun recentShare(
+    app: RankedApp,
+    metric: InsightsMetric,
+    range: InsightsRange,
+): Float {
+    if (metric != InsightsMetric.ScreenTime || range != InsightsRange.Day || app.value <= 0) return 0f
+    return (sessionMinutes(app.lastSessionMillis).takeIf { app.lastSessionMillis > 0 } ?: 0)
+        .toFloat()
+        .div(app.value)
+        .coerceIn(0f, 1f)
+}
 
 internal fun dayHeroParts(mins: Int): Pair<String, String> =
     (mins / 60).toString() to (mins % 60).toString().padStart(2, '0')
@@ -105,7 +134,15 @@ internal fun aggregateApps(days: List<DayUsageStats?>): List<AppUsageStat> =
         .flatMap { it.apps }
         .groupBy { it.pkg }
         .map { (pkg, list) ->
-            AppUsageStat(pkg, list.sumOf { it.millis }, list.sumOf { it.opens }, list.sumOf { it.firstAfterUnlock })
+            val latest = list.maxBy { it.lastUsedMillis }
+            AppUsageStat(
+                pkg = pkg,
+                millis = list.sumOf { it.millis },
+                opens = list.sumOf { it.opens },
+                firstAfterUnlock = list.sumOf { it.firstAfterUnlock },
+                lastUsedMillis = latest.lastUsedMillis,
+                lastSessionMillis = latest.lastSessionMillis,
+            )
         }
 
 /**

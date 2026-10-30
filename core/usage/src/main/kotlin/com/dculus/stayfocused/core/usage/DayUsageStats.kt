@@ -15,6 +15,10 @@ data class AppUsageStat(
     val opens: Int,
     /** How many unlocks of the day had this app as the first one opened (Insights, Unlocks tab). */
     val firstAfterUnlock: Int,
+    /** When the app last left the foreground that day (epoch millis); 0 when unknown (older cached days). */
+    val lastUsedMillis: Long = 0,
+    /** How long that last stretch in the foreground lasted; 0 when unknown. */
+    val lastSessionMillis: Long = 0,
 ) {
     val mins: Int get() = millisToMins(millis)
 }
