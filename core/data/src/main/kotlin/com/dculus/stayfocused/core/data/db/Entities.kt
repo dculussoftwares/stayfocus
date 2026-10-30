@@ -103,6 +103,10 @@ data class UsageDayEntity(
     val opens: Int,
     /** Unlocks of the day whose first opened app was [pkg] (Insights, Unlocks tab). */
     @ColumnInfo(defaultValue = "0") val firstAfterUnlock: Int = 0,
+    /** Epoch millis the app last left the foreground that day; 0 when unknown (Insights, "last used"). */
+    @ColumnInfo(defaultValue = "0") val lastUsedAt: Long = 0,
+    /** Length of that last stretch in the foreground; 0 when unknown. */
+    @ColumnInfo(defaultValue = "0") val lastSessionMs: Long = 0,
 )
 
 @Entity(tableName = "usage_hour", primaryKeys = ["date", "hour"])

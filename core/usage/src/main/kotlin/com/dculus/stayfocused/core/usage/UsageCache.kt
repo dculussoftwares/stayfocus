@@ -49,7 +49,18 @@ internal class RoomUsageCache
                         opens = stats.totalOpens,
                         unlocks = stats.unlocks,
                     ),
-                days = stats.apps.map { UsageDayEntity(date, it.pkg, it.millis, it.opens, it.firstAfterUnlock) },
+                days =
+                    stats.apps.map {
+                        UsageDayEntity(
+                            date,
+                            it.pkg,
+                            it.millis,
+                            it.opens,
+                            it.firstAfterUnlock,
+                            it.lastUsedMillis,
+                            it.lastSessionMillis,
+                        )
+                    },
                 hours =
                     List(HOURS_PER_DAY) { hour ->
                         UsageHourEntity(
@@ -80,8 +91,16 @@ internal class RoomUsageCache
                     totalMillis = row.totalMs,
                     apps =
                         days
-                            .map { AppUsageStat(it.pkg, it.foregroundMs, it.opens, it.firstAfterUnlock) }
-                            .sortedByDescending { it.millis },
+                            .map {
+                                AppUsageStat(
+                                    it.pkg,
+                                    it.foregroundMs,
+                                    it.opens,
+                                    it.firstAfterUnlock,
+                                    it.lastUsedAt,
+                                    it.lastSessionMs,
+                                )
+                            }.sortedByDescending { it.millis },
                     hourlyMillis = hourlyMillis.toList(),
                     unlocks = row.unlocks,
                     hourlyUnlocks = hourlyUnlocks.toList(),

@@ -30,6 +30,7 @@ private val BAR_HEIGHT = 4.dp
  * right in secondary colour, and a 4 dp bar below — green on a track — filled to [fraction] of the row's width (clamped
  * to 0..1, NaN counts as 0). The row reads as "name, time" to TalkBack: the icon's own semantics are dropped so the
  * name isn't read twice; the bar is decorative.
+ * [recentFraction] (0..1) paints that share of the filled bar, at its end, in lime: the part from the last session.
  */
 @Composable
 fun UsageRow(
@@ -38,9 +39,12 @@ fun UsageRow(
     timeText: String,
     fraction: Float,
     modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    recentFraction: Float = 0f,
 ) {
     val colors = StayFocusedTheme.colors
     val shown = if (fraction.isNaN()) 0f else fraction.coerceIn(0f, 1f)
+    val recent = if (recentFraction.isNaN()) 0f else recentFraction.coerceIn(0f, 1f)
     Row(
         modifier = modifier.fillMaxWidth().padding(vertical = 10.dp).semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -56,6 +60,13 @@ fun UsageRow(
                 )
                 Text(timeText, style = StayFocusedTheme.type.body, color = colors.textSecondary)
             }
+            if (subtitle != null) {
+                Text(
+                    subtitle,
+                    style = StayFocusedTheme.type.body.copy(fontSize = 12.sp),
+                    color = colors.textSecondary,
+                )
+            }
             Box(
                 Modifier
                     .fillMaxWidth()
@@ -64,7 +75,10 @@ fun UsageRow(
                     .background(colors.track),
             ) {
                 if (shown > 0f) {
-                    Box(Modifier.fillMaxWidth(shown).height(BAR_HEIGHT).background(colors.green))
+                    Row(Modifier.fillMaxWidth(shown).height(BAR_HEIGHT)) {
+                        if (recent < 1f) Box(Modifier.weight(1f - recent).height(BAR_HEIGHT).background(colors.green))
+                        if (recent > 0f) Box(Modifier.weight(recent).height(BAR_HEIGHT).background(colors.lime))
+                    }
                 }
             }
         }

@@ -92,6 +92,17 @@ class ForegroundAppTrackerTest {
         assertEquals("com.b", tracker.foreground.value?.packageName)
     }
 
+    @Test fun vendorOverlayAndDialogWindowsAreIgnored() {
+        tracker.onWindowStateChanged("com.a", "A")
+        tracker.onWindowStateChanged(
+            "com.vivo.systemuiplugin",
+            "com.vivo.systemuiplugin.volume.VolumeDialogImpl\$BriefDialog",
+        )
+        tracker.onWindowStateChanged("com.vivo.upslide", "android.widget.FrameLayout")
+        tracker.onWindowStateChanged("com.b", "com.b.ui.ConfirmDialog")
+        assertEquals("com.a", tracker.foreground.value?.packageName)
+    }
+
     @Test fun failedActivityLookupDoesNotDropTheEvent() {
         env.activityAnswer = { _, _ -> null }
         tracker.onWindowStateChanged("com.a", "A")

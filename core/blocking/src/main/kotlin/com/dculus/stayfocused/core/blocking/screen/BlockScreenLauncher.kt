@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.Log
 import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
@@ -51,10 +52,28 @@ class BlockScreenLauncher
         /** True from [show] until the launch is settled (activity visible, overlay up, or cancelled). */
         @Volatile private var launching = false
 
+        private var lastRequest: BlockRequest? = null
+        private var lastLaunchAt = 0L
+
         init {
+            // The home action can finish after the activity started and push it behind the launcher: cover that too.
+            BlockScreenState.onPushedBack = { token -> handler.post { onPushedBack(token) } }
             // The activity made it to the screen (possibly late): the fallback overlay must not stay on top of it.
             BlockScreenState.onVisible = { handler.post { removeOverlay() } }
         }
+
+        /** Within [PUSH_BACK_WINDOW_MS] of a launch a stop is the home action racing it, not the user leaving. */
+        private fun onPushedBack(token: Long) {
+            val request = lastRequest
+            val svc = service
+            if (request == null || svc == null || !isPushedBackLaunch(token)) return
+            BlockingLog.log("Launcher", "block screen pushed behind after launch, overlay for ${request.pkg}")
+            showOverlay(svc, request)
+        }
+
+        private fun isPushedBackLaunch(token: Long): Boolean =
+            token == lastToken && BlockScreenState.activeToken == token && overlay == null &&
+                SystemClock.elapsedRealtime() - lastLaunchAt <= PUSH_BACK_WINDOW_MS
 
         /** Called by the service when it connects. */
         fun attach(service: AccessibilityService) {
@@ -134,6 +153,8 @@ class BlockScreenLauncher
             val token = ++lastToken
             BlockScreenState.activeToken = token
             val request = BlockRequest(pkg, appLabel(pkg), decision, token)
+            lastRequest = request
+            lastLaunchAt = SystemClock.elapsedRealtime()
             val homed = svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
             val started = startBlockActivity(request)
             BlockingLog.log("Launcher", "home=$homed activityStarted=$started token=$token")
@@ -209,6 +230,7 @@ class BlockScreenLauncher
         private companion object {
             const val TAG = "BlockScreenLauncher"
             const val LAUNCH_CHECK_MS = 350L
+            const val PUSH_BACK_WINDOW_MS = 2_000L
             const val HALF_SHOWN_MS = 4_000L
             const val ONE_MIN_SHOWN_MS = 6_000L
         }

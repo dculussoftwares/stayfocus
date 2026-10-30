@@ -150,4 +150,42 @@ class InsightsModelTest {
         assertFalse(DayUsageStats.empty(date).copy(unlocks = 1).hasNoData())
         assertFalse(DayUsageStats.empty(date).copy(totalMillis = 1_000).hasNoData())
     }
+
+    private fun ranked(
+        totalMillis: Long,
+        lastSessionMillis: Long,
+        value: Int = 1,
+    ) = RankedApp(1, "p", "P", value, 1f, totalMillis, 0, lastSessionMillis)
+
+    @Test
+    fun `short sessions count as one minute`() {
+        assertEquals(1, sessionMinutes(1_000))
+        assertEquals(1, sessionMinutes(0))
+        assertEquals(8, sessionMinutes(8 * 60_000L))
+    }
+
+    @Test
+    fun `recent share is measured in milliseconds not rounded minutes`() {
+        val share = recentShare(ranked(50_000, 1_000), InsightsMetric.ScreenTime, InsightsRange.Day)
+        assertEquals(0.02f, share, 0.001f)
+        assertEquals(1f, recentShare(ranked(1_000, 5_000), InsightsMetric.ScreenTime, InsightsRange.Day))
+    }
+
+    @Test
+    fun `recent share is zero when unknown or off the day screen time list`() {
+        assertEquals(0f, recentShare(ranked(60_000, 0), InsightsMetric.ScreenTime, InsightsRange.Day))
+        assertEquals(0f, recentShare(ranked(0, 5_000), InsightsMetric.ScreenTime, InsightsRange.Day))
+        assertEquals(0f, recentShare(ranked(60_000, 5_000), InsightsMetric.Opens, InsightsRange.Day))
+        assertEquals(0f, recentShare(ranked(60_000, 5_000), InsightsMetric.ScreenTime, InsightsRange.Week))
+    }
+
+    @Test
+    fun `aggregating days keeps the latest session`() {
+        val older = AppUsageStat("p", 60_000, 1, 0, lastUsedMillis = 1_000, lastSessionMillis = 10_000)
+        val newer = AppUsageStat("p", 120_000, 2, 0, lastUsedMillis = 9_000, lastSessionMillis = 30_000)
+        val app = aggregateApps(listOf(newer, older).map { DayUsageStats.empty(date).copy(apps = listOf(it)) }).single()
+        assertEquals(180_000L, app.millis)
+        assertEquals(9_000L, app.lastUsedMillis)
+        assertEquals(30_000L, app.lastSessionMillis)
+    }
 }

@@ -54,6 +54,23 @@ class UsageAggregatorTest {
     private fun DayUsageStats.opensOf(pkg: String) = apps.firstOrNull { it.pkg == pkg }?.opens ?: 0
 
     @Test
+    fun `last used is the end of the latest session and its length`() {
+        val stats =
+            aggregate(
+                listOf(
+                    resumed(ig, at(9)),
+                    paused(ig, at(9, 30)),
+                    resumed(ig, at(14, 10)),
+                    paused(ig, at(14, 18)),
+                ),
+            )
+        val app = stats.apps.single()
+        assertEquals(at(14, 18), app.lastUsedMillis)
+        assertEquals(8 * MIN, app.lastSessionMillis)
+        assertEquals(38 * MIN, app.millis)
+    }
+
+    @Test
     fun `empty stream gives an empty day`() {
         val stats = aggregate(emptyList())
         assertEquals(0L, stats.totalMillis)

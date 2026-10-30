@@ -85,6 +85,10 @@ internal object BlockScreenState {
     @Volatile
     var onVisible: (() -> Unit)? = null
 
+    /** Set by the launcher: the activity of this launch token was stopped without finishing (pushed behind). */
+    @Volatile
+    var onPushedBack: ((Long) -> Unit)? = null
+
     /** Token 0 is for launches that don't go through the launcher. */
     fun accepts(token: Long): Boolean = token == 0L || token == activeToken
 }
@@ -144,6 +148,7 @@ class BlockActivity : ComponentActivity() {
             BlockingLog.log("BlockActivity", "stopped")
             BlockScreenState.visible = false
             BlockScreenState.visibleOwner = null
+            if (!isFinishing) request?.token?.let { BlockScreenState.onPushedBack?.invoke(it) }
         }
         super.onStop()
     }

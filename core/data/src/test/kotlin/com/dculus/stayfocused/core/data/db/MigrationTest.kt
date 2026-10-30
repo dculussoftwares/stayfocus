@@ -71,6 +71,22 @@ class MigrationTest {
         }
     }
 
+    @Test
+    fun `v3 to v4 adds last used columns as zero`() {
+        helper.createDatabase(TEST_DB, 3).use { db ->
+            db.execSQL(
+                "INSERT INTO usage_day (date, pkg, foregroundMs, opens, firstAfterUnlock) VALUES ('d', 'p', 5, 1, 0)",
+            )
+        }
+        helper.runMigrationsAndValidate(TEST_DB, 4, true, StayFocusedDatabase.MIGRATION_3_4).use { db ->
+            db.query("SELECT lastUsedAt, lastSessionMs FROM usage_day").use {
+                it.moveToFirst()
+                assertEquals(0L, it.getLong(0))
+                assertEquals(0L, it.getLong(1))
+            }
+        }
+    }
+
     private companion object {
         const val TEST_DB = "migration-test"
     }

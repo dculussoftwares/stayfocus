@@ -76,6 +76,8 @@ class UsageAggregator(
         private val millis = HashMap<String, Long>()
         private val opens = HashMap<String, Int>()
         private val firstAfterUnlock = HashMap<String, Int>()
+        private val lastEnd = HashMap<String, Long>()
+        private val lastSession = HashMap<String, Long>()
         private val hourlyMillis = LongArray(HOURS_PER_DAY)
         private val hourlyUnlocks = IntArray(HOURS_PER_DAY)
         private var unlocks = 0
@@ -157,7 +159,13 @@ class UsageAggregator(
         ) {
             val start = openSince.remove(pkg) ?: return
             if (pkg in excluded) return
-            addSpan(pkg, maxOf(start, windowStart), minOf(end, windowEnd))
+            val spanStart = maxOf(start, windowStart)
+            val spanEnd = minOf(end, windowEnd)
+            addSpan(pkg, spanStart, spanEnd)
+            if (spanEnd > spanStart && spanEnd >= (lastEnd[pkg] ?: 0L)) {
+                lastEnd[pkg] = spanEnd
+                lastSession[pkg] = spanEnd - spanStart
+            }
         }
 
         private fun addSpan(
@@ -196,8 +204,16 @@ class UsageAggregator(
         fun toStats(date: LocalDate): DayUsageStats {
             val apps =
                 millis.keys
-                    .map { AppUsageStat(it, millis.getValue(it), opens[it] ?: 0, firstAfterUnlock[it] ?: 0) }
-                    .sortedWith(compareByDescending<AppUsageStat> { it.millis }.thenBy { it.pkg })
+                    .map {
+                        AppUsageStat(
+                            pkg = it,
+                            millis = millis.getValue(it),
+                            opens = opens[it] ?: 0,
+                            firstAfterUnlock = firstAfterUnlock[it] ?: 0,
+                            lastUsedMillis = lastEnd[it] ?: 0L,
+                            lastSessionMillis = lastSession[it] ?: 0L,
+                        )
+                    }.sortedWith(compareByDescending<AppUsageStat> { it.millis }.thenBy { it.pkg })
             return DayUsageStats(
                 date = date,
                 totalMillis = apps.sumOf { it.millis },
