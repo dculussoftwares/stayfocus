@@ -2,6 +2,7 @@
 
 package com.dculus.stayfocused.feature.insights
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -50,10 +52,7 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import com.dculus.stayfocused.core.ui.theme.V5Gradients
 import com.dculus.stayfocused.core.ui.theme.V5Screen
 import com.dculus.stayfocused.core.ui.theme.v5StatusBarPadding
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import java.util.Date
 
 @Composable
 internal fun InsightsRoute(viewModel: InsightsViewModel = hiltViewModel()) {
@@ -389,12 +388,8 @@ private fun AppList(
 @Composable
 private fun lastUsedText(app: RankedApp): String? {
     if (app.lastUsedMillis <= 0) return null
-    val time =
-        remember(app.lastUsedMillis) {
-            DateTimeFormatter
-                .ofLocalizedTime(FormatStyle.SHORT)
-                .format(Instant.ofEpochMilli(app.lastUsedMillis).atZone(ZoneId.systemDefault()))
-        }
+    val context = LocalContext.current
+    val time = remember(app.lastUsedMillis) { DateFormat.getTimeFormat(context).format(Date(app.lastUsedMillis)) }
     val session = formatMinutes(sessionMinutes(app.lastSessionMillis))
     return stringResource(R.string.insights_last_used, time, session)
 }

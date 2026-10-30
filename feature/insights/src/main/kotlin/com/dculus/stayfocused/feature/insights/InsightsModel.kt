@@ -29,6 +29,8 @@ internal data class RankedApp(
     val value: Int,
     /** 0..1 relative to the top app. */
     val fraction: Float,
+    /** The app's total foreground time, unrounded: the bar's last-session share is measured against it. */
+    val totalMillis: Long = 0,
     /** When the app last left the foreground (epoch millis), 0 when unknown or for a multi-day range. */
     val lastUsedMillis: Long = 0,
     /** Length of that last stretch in the foreground, 0 when unknown. */
@@ -66,6 +68,7 @@ internal fun rankApps(
             label = labelOf(app.pkg),
             value = value,
             fraction = value.toFloat() / top,
+            totalMillis = app.millis,
             lastUsedMillis = app.lastUsedMillis,
             lastSessionMillis = app.lastSessionMillis,
         )
@@ -97,11 +100,9 @@ internal fun recentShare(
     metric: InsightsMetric,
     range: InsightsRange,
 ): Float {
-    if (metric != InsightsMetric.ScreenTime || range != InsightsRange.Day || app.value <= 0) return 0f
-    return (sessionMinutes(app.lastSessionMillis).takeIf { app.lastSessionMillis > 0 } ?: 0)
-        .toFloat()
-        .div(app.value)
-        .coerceIn(0f, 1f)
+    val applies = metric == InsightsMetric.ScreenTime && range == InsightsRange.Day
+    if (!applies || app.totalMillis <= 0 || app.lastSessionMillis <= 0) return 0f
+    return (app.lastSessionMillis.toFloat() / app.totalMillis).coerceIn(0f, 1f)
 }
 
 internal fun dayHeroParts(mins: Int): Pair<String, String> =
