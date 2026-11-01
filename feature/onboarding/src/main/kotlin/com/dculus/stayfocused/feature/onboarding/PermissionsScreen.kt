@@ -86,8 +86,12 @@ internal fun permsAllowTag(row: PermissionRow) = "perms_allow_${row.tag}"
  * [disclosureReads], [disclosureWhy] and [disclosureNever] are the three body paragraphs of the Play disclosure.
  */
 data class PermissionsCopy(
+    /** The Kids app needs Accessibility; on the phone it is an optional upgrade (faster blocking). */
+    val accessibilityRequired: Boolean = false,
     @StringRes val headline1: Int = R.string.perms_headline_1,
     @StringRes val headline2: Int = R.string.perms_headline_2,
+    @StringRes val accessibilityWhy: Int = R.string.perms_accessibility_why,
+    @StringRes val countButton: Int = R.string.perms_count_button,
     @StringRes val body: Int = R.string.perms_body,
     @StringRes val disclosureTitle: Int = R.string.perms_disclosure_title,
     @StringRes val disclosureReads: Int = R.string.perms_disclosure_reads,
@@ -95,10 +99,22 @@ data class PermissionsCopy(
     @StringRes val disclosureNever: Int = R.string.perms_disclosure_never,
 )
 
+/** The "why" line of [row]; Accessibility has its own words per host. */
+@StringRes
+internal fun PermissionsCopy.whyOf(row: PermissionRow): Int =
+    if (row ==
+        PermissionRow.Accessibility
+    ) {
+        accessibilityWhy
+    } else {
+        row.why
+    }
+
 /**
  * The system check. [onFinish] gets the toast the host shows on the next screen ("All set, {first name}" with all
- * four on, "Blocking needs all 4" when leaving with fewer) and whether all four are on. [copy] swaps the headline and
- * disclosure words; [footer] is extra content under the four cards (the Kids app puts battery guidance there).
+ * the required ones on, "Blocking needs all 3" when leaving with fewer) and whether they are all on. [copy] swaps the
+ * headline and disclosure words and says whether Accessibility is required; [footer] is extra content under the cards
+ * (the Kids app puts battery guidance there).
  */
 @Composable
 fun PermissionsRoute(
@@ -157,7 +173,7 @@ fun PermissionsRoute(
             }
         },
         onContinue = {
-            val all = permissions.grantedCount() == PermissionRow.entries.size
+            val all = permissions.grantedCount(copy.accessibilityRequired) == requiredCount(copy.accessibilityRequired)
             onFinish(if (all) allSet else incomplete, all)
         },
     )
@@ -221,8 +237,9 @@ internal fun PermissionsScreen(
 ) {
     val colors = StayFocusedTheme.colors
     val type = StayFocusedTheme.type
-    val granted = permissions.grantedCount()
-    val all = granted == PermissionRow.entries.size
+    val granted = permissions.grantedCount(copy.accessibilityRequired)
+    val all = granted == requiredCount(copy.accessibilityRequired)
+    val rows = displayRows(copy.accessibilityRequired)
     V5Screen(darkContent = false, modifier = modifier) {
         // Fills the screen when it fits; scrolls on short screens or at large font scales.
         BoxWithConstraints(Modifier.matchParentSize()) {
@@ -247,12 +264,12 @@ internal fun PermissionsScreen(
                     style = type.body.copy(lineHeight = 21.75.sp),
                     color = colors.textSecondary,
                 )
-                // Decorative: the bottom button says "{n} of 4 allowed".
+                // Decorative: the bottom button says "{n} of 3 allowed".
                 Row(
                     Modifier.fillMaxWidth().padding(vertical = 4.dp).clearAndSetSemantics {},
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    PermissionRow.entries.forEach { row ->
+                    rows.filter { it.isRequired(copy.accessibilityRequired) }.forEach { row ->
                         Box(
                             Modifier
                                 .weight(1f)
@@ -262,8 +279,8 @@ internal fun PermissionsScreen(
                         )
                     }
                 }
-                PermissionRow.entries.forEach { row ->
-                    PermissionCard(row, row.isGranted(permissions)) { onAllow(row) }
+                rows.forEach { row ->
+                    PermissionCard(row, row.isGranted(permissions), stringResource(copy.whyOf(row))) { onAllow(row) }
                 }
                 footer?.invoke()
                 Box(Modifier.weight(1f))
@@ -272,7 +289,7 @@ internal fun PermissionsScreen(
                         if (all) {
                             stringResource(R.string.perms_start)
                         } else {
-                            stringResource(R.string.perms_count_button, granted)
+                            stringResource(copy.countButton, granted)
                         },
                     onClick = onContinue,
                     enabled = all,
@@ -296,6 +313,7 @@ internal fun PermissionsScreen(
 private fun PermissionCard(
     row: PermissionRow,
     on: Boolean,
+    why: String,
     onAllow: () -> Unit,
 ) {
     val colors = StayFocusedTheme.colors
@@ -313,7 +331,7 @@ private fun PermissionCard(
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(title, style = type.bodyL, color = colors.ink)
             Text(
-                stringResource(row.why),
+                why,
                 style = type.body.copy(fontSize = 14.sp, lineHeight = 18.9.sp),
                 color = colors.textSecondary,
             )

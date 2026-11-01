@@ -34,8 +34,14 @@ data class Permissions(
     /** Battery optimisation exemption. Informational: never gates onboarding or blocking. */
     val batteryUnrestricted: Boolean = false,
 ) {
-    /** The four permissions that gate blocking; [batteryUnrestricted] is deliberately excluded. */
+    /** The four permissions the Kids app needs (it uses Accessibility); [batteryUnrestricted] is excluded. */
     val allGatingGranted: Boolean get() = usage && accessibility && overlay && notifications
+
+    /**
+     * What the phone app needs to block. Accessibility is optional there ("faster blocking"): without it the standard
+     * engine uses Usage access and Display over other apps.
+     */
+    val canBlock: Boolean get() = usage && overlay && notifications
 }
 
 data class AppInfo(

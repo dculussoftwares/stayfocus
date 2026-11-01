@@ -47,6 +47,7 @@ import com.dculus.stayfocused.feature.onboarding.PermissionsRoute
 import com.dculus.stayfocused.feature.onboarding.PermissionsViewModel
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import com.dculus.stayfocused.feature.onboarding.R as OnboardingR
 
 /**
  * The Kids app UI: Permissions (first run) → Link (QR) → Consent → Home. Unlinking (or being unlinked) returns to Link.
@@ -142,6 +143,10 @@ private fun KidsPermissionsRoute(
     val copy =
         remember {
             PermissionsCopy(
+                accessibilityRequired = true,
+                headline1 = OnboardingR.string.perms_headline_1_kids,
+                accessibilityWhy = OnboardingR.string.perms_accessibility_why_required,
+                countButton = OnboardingR.string.perms_count_button_kids,
                 body = R.string.kids_perms_body,
                 disclosureTitle = R.string.kids_perms_disclosure_title,
                 disclosureReads = R.string.kids_perms_disclosure_reads,

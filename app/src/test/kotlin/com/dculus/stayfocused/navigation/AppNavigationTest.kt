@@ -407,7 +407,7 @@ class AppNavigationTest {
         assertTrue(currentIs(Home::class))
         assertTrue(tabBarVisible())
         assertEquals(null, navController.currentBackStack.value.firstOrNull { it.destination.hasRoute(Welcome::class) })
-        composeRule.onNodeWithText("Blocking needs all 4. Finish in Account.").assertIsDisplayed()
+        composeRule.onNodeWithText("Blocking needs all 3. Finish in Account.").assertIsDisplayed()
     }
 
     @Test
@@ -439,18 +439,18 @@ class AppNavigationTest {
     }
 
     @Test
-    fun onboardingWithAllFourPermissionsUpdatesLiveAndFinishesWithAllSetToast() {
+    fun onboardingWithAllThreePermissionsUpdatesLiveAndFinishesWithAllSetToast() {
         launch(StartGraph.ONBOARDING)
         composeRule.onNodeWithText("Get started").performClick()
         composeRule.waitForIdle()
         composeRule.onNodeWithText("Continue without an account").performScrollTo().performClick()
         composeRule.waitUntil(5_000) { currentIs(Permissions::class) }
-        composeRule.onNodeWithText("0 of 4 allowed").assertIsDisplayed()
+        composeRule.onNodeWithText("0 of 3 allowed").assertIsDisplayed()
         // "No thanks" on the disclosure leaves the row as Allow.
         composeRule.onNodeWithTag("perms_allow_accessibility").performClick()
         composeRule.onNodeWithTag("accessibility_disclosure_no").performClick()
         composeRule.waitForIdle()
-        composeRule.onNodeWithText("0 of 4 allowed").assertIsDisplayed()
+        composeRule.onNodeWithText("0 of 3 allowed").assertIsDisplayed()
         // The user comes back from Settings with everything granted.
         fakePermissions.grant(usage = true, accessibility = true, overlay = true, notifications = true)
         composeRule.waitUntil(5_000) {
@@ -460,7 +460,7 @@ class AppNavigationTest {
         composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
         composeRule.onNodeWithText("All set").assertIsDisplayed()
-        composeRule.onAllNodesWithText("Blocking needs all 4. Finish in Account.").assertCountEquals(0)
+        composeRule.onAllNodesWithText("Blocking needs all 3. Finish in Account.").assertCountEquals(0)
     }
 }
 

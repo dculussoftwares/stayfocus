@@ -41,15 +41,53 @@ class PermissionsScreenTest {
         permissions: Permissions,
         onAllow: (PermissionRow) -> Unit = {},
         onContinue: () -> Unit = {},
-    ) = show { PermissionsScreen(permissions, onAllow, onContinue) }
+        copy: PermissionsCopy = PermissionsCopy(),
+    ) = show { PermissionsScreen(permissions, onAllow, onContinue, copy = copy) }
 
     @Test
-    fun twoOfFour() {
+    fun twoOfThree() {
         screen(Permissions(usage = true, accessibility = false, overlay = true, notifications = false))
-        composeRule.onNodeWithText("2 of 4 allowed").assertIsDisplayed()
+        composeRule.onNodeWithText("2 of 3 allowed").assertIsDisplayed()
         composeRule.onNodeWithTag(PERMS_CONTINUE_TAG).assertIsNotEnabled()
         composeRule.onNodeWithText("Continue for now").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/Permissions.png")
+    }
+
+    @Test
+    fun threeRequiredPermissionsAreEnoughWithoutAccessibility() {
+        var continued = 0
+        screen(
+            Permissions(usage = true, accessibility = false, overlay = true, notifications = true),
+            onContinue = { continued++ },
+        )
+        composeRule.onNodeWithText("Start using Stay Focused").assertIsDisplayed()
+        composeRule.onNodeWithTag(PERMS_CONTINUE_TAG).assertIsEnabled().performClick()
+        assertEquals(1, continued)
+        // Accessibility stays on offer as an optional upgrade.
+        composeRule.onNodeWithTag(permsAllowTag(PermissionRow.Accessibility)).assertExists()
+        composeRule.onNodeWithText("Optional · Block apps faster").assertExists()
+    }
+
+    @Test
+    fun accessibilityDoesNotCountTowardsTheRequiredRows() {
+        screen(Permissions(usage = false, accessibility = true, overlay = false, notifications = false))
+        composeRule.onNodeWithText("0 of 3 allowed").assertIsDisplayed()
+    }
+
+    @Test
+    fun kidsStillNeedAllFour() {
+        val kids =
+            PermissionsCopy(
+                accessibilityRequired = true,
+                headline1 = R.string.perms_headline_1_kids,
+                accessibilityWhy = R.string.perms_accessibility_why_required,
+                countButton = R.string.perms_count_button_kids,
+            )
+        screen(Permissions(usage = true, accessibility = false, overlay = true, notifications = true), copy = kids)
+        composeRule.onNodeWithText("Four switches,\nthen you're set").assertIsDisplayed()
+        composeRule.onNodeWithText("3 of 4 allowed").assertIsDisplayed()
+        composeRule.onNodeWithTag(PERMS_CONTINUE_TAG).assertIsNotEnabled()
+        composeRule.onNodeWithText("Spot a blocked app the moment it opens").assertExists()
     }
 
     @Test
@@ -64,14 +102,14 @@ class PermissionsScreenTest {
     @Test
     fun rowsShowTheirReasons() {
         screen(Permissions(usage = false, accessibility = false, overlay = false, notifications = false))
-        composeRule.onNodeWithText("Four switches,\nthen you're set").assertIsDisplayed()
+        composeRule.onNodeWithText("Three switches,\nthen you're set").assertIsDisplayed()
         composeRule
             .onNodeWithText("Android needs these to block apps. Your data stays on this phone.")
             .assertIsDisplayed()
-        composeRule.onNodeWithText("0 of 4 allowed").assertIsDisplayed()
+        composeRule.onNodeWithText("0 of 3 allowed").assertIsDisplayed()
         listOf(
             "Usage access" to "See how long each app is used",
-            "Accessibility" to "Spot a blocked app the moment it opens",
+            "Accessibility" to "Optional · Block apps faster",
             "Display over other apps" to "Show the block screen on top",
             "Notifications" to "Tell you when a block starts or ends",
         ).forEach { (title, why) ->
@@ -121,7 +159,7 @@ class PermissionsScreenTest {
     }
 
     @Test
-    fun continueForNowLeavesWithFewerThanFour() {
+    fun continueForNowLeavesWithFewerThanThree() {
         var continued = 0
         screen(Permissions(usage = false, accessibility = false, overlay = false, notifications = false), onContinue = {
             continued++
@@ -133,7 +171,7 @@ class PermissionsScreenTest {
     }
 
     @Test
-    fun startUsingFinishesWithAllFour() {
+    fun startUsingFinishesWithAllThree() {
         var continued = 0
         screen(Permissions(usage = true, accessibility = true, overlay = true, notifications = true), onContinue = {
             continued++
@@ -173,7 +211,7 @@ class PermissionsScreenTest {
         listOf(
             "Accessibility access",
             "What it reads",
-            "Which app is on screen and the address of websites you open.",
+            "Which app is on screen.",
             "Why",
             "To block an app or site the moment it opens.",
             "Never",

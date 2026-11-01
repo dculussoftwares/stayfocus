@@ -15,7 +15,9 @@
     <string name="account_cta_allow">Allow</string>
     <string name="account_cta_on">On</string>
     <string name="account_cta_fix">Fix</string>
-    <string name="account_engine_running">Running</string>
+    <string name="account_cta_optional">Optional</string>
+    <string name="account_engine_running_fast">Fast</string>
+    <string name="account_engine_running_standard">Standard</string>
     <string name="account_engine_stopped">Stopped</string>
     <string name="account_oss_blurb">Stay Focused is free and open source, with no ads.</string>
     <string name="account_link_github">Source on GitHub</string>
