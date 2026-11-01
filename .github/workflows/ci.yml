@@ -49,15 +49,16 @@ jobs:
             cp "$f" "sarif/input/lint-$(echo "$f" | tr '/.' '--').sarif"
           done
           python3 - <<'PY'
-          import json, glob
+          import json, glob, os
           runs = []
-          for path in glob.glob("sarif/input/*.sarif"):
-              try:
-                  with open(path) as f:
-                      data = json.load(f)
-                      runs.extend(data.get("runs", []))
-              except Exception as e:
-                  print(f"Skipping {path}: {e}")
+          for path in sorted(glob.glob("sarif/input/*.sarif")):
+              with open(path) as f:
+                  data = json.load(f)
+                  module_id = os.path.basename(path).replace(".sarif", "")
+                  for run in data.get("runs", []):
+                      if "automationDetails" not in run:
+                          run["automationDetails"] = {"id": module_id}
+                      runs.append(run)
           combined = {
               "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
               "version": "2.1.0",
