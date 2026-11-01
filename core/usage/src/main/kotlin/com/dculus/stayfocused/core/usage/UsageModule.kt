@@ -22,6 +22,9 @@ internal abstract class UsageModule {
     abstract fun usageStats(impl: AndroidUsageStatsDataSource): UsageStatsDataSource
 
     @Binds
+    abstract fun resumeEvents(impl: AndroidResumeEventReader): ResumeEventReader
+
+    @Binds
     abstract fun packageUsage(impl: AndroidUsageStatsDataSource): PackageUsageSource
 
     @Binds

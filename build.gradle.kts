@@ -149,6 +149,8 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "*.MainActivity",
         "*.StayFocusedApp",
         "*.StayFocusedKidsApp",
+        "com.dculus.stayfocused.core.blocking.standard.AndroidInteractiveScreen*", // broadcast adapter
+        "com.dculus.stayfocused.core.usage.AndroidResumeEventReader", // UsageStatsManager adapter
         "*.AppCheckInstaller", // thin Firebase SDK glue; the availability gate it relies on is unit-tested
         "*.AppCheckProviders",
     )
