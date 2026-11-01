@@ -1,4 +1,4 @@
-@file:Suppress("MagicNumber")
+@file:Suppress("TooManyFunctions", "MagicNumber")
 
 package com.dculus.stayfocused.feature.account
 
@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dculus.stayfocused.core.blocking.BlockingLog
+import com.dculus.stayfocused.core.blocking.engine.EngineMode
 import com.dculus.stayfocused.core.blocking.permissions.PermissionIntents
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
@@ -103,7 +104,7 @@ internal fun HealthRow.isOn(state: AccountUiState): Boolean =
         HealthRow.Overlay -> state.permissions.overlay
         HealthRow.Notifications -> state.permissions.notifications
         HealthRow.Battery -> state.permissions.batteryUnrestricted
-        HealthRow.Engine -> state.engine.serviceBound
+        HealthRow.Engine -> state.engine.running
     }
 
 @Composable
@@ -137,19 +138,35 @@ internal fun AccountRoute(
         onSignIn = onSignIn,
         onFix = { row ->
             when (row) {
-                HealthRow.Usage -> context.open(PermissionIntents.usageAccess())
+                HealthRow.Usage -> {
+                    context.open(PermissionIntents.usageAccess())
+                }
 
-                HealthRow.Overlay -> context.open(PermissionIntents.overlay(context.packageName))
+                HealthRow.Overlay -> {
+                    context.open(PermissionIntents.overlay(context.packageName))
+                }
 
                 // Never straight to Settings: the disclosure comes first.
-                HealthRow.Accessibility -> disclosureVisible = true
+                HealthRow.Accessibility -> {
+                    disclosureVisible = true
+                }
 
-                HealthRow.Notifications -> context.open(PermissionIntents.notificationSettings(context.packageName))
+                HealthRow.Notifications -> {
+                    context.open(PermissionIntents.notificationSettings(context.packageName))
+                }
 
-                HealthRow.Battery -> batteryVisible = true
+                HealthRow.Battery -> {
+                    batteryVisible = true
+                }
 
-                // Stopped means Android unbound the service: turning it on in Accessibility settings restarts it.
-                HealthRow.Engine -> disclosureVisible = true
+                // Stopped means nothing can see the foreground app: Usage access or Display over other apps is off.
+                HealthRow.Engine -> {
+                    if (!state.permissions.usage) {
+                        context.open(PermissionIntents.usageAccess())
+                    } else {
+                        context.open(PermissionIntents.overlay(context.packageName))
+                    }
+                }
             }
         },
         onOpenUrl = { context.open(Intent(Intent.ACTION_VIEW, Uri.parse(it))) },
@@ -396,6 +413,13 @@ private fun V5ProfileHeader(
     }
 }
 
+private fun engineLabel(mode: EngineMode): Int =
+    when (mode) {
+        EngineMode.ACCESSIBILITY -> R.string.account_engine_running_fast
+        EngineMode.STANDARD -> R.string.account_engine_running_standard
+        EngineMode.OFF -> R.string.account_engine_stopped
+    }
+
 @Composable
 private fun V5HealthItem(
     row: HealthRow,
@@ -417,9 +441,15 @@ private fun V5HealthItem(
     val cta =
         stringResource(
             when {
-                row == HealthRow.Engine -> if (on) R.string.account_engine_running else R.string.account_engine_stopped
+                row == HealthRow.Engine -> engineLabel(state.engine.mode)
+
                 on -> R.string.account_cta_on
+
+                // Accessibility only makes blocking faster: off is not a fault.
+                row == HealthRow.Accessibility -> R.string.account_cta_optional
+
                 row == HealthRow.Battery -> R.string.account_cta_fix
+
                 else -> R.string.account_cta_allow
             },
         )

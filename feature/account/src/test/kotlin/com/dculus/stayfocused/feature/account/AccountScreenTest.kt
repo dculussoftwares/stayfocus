@@ -11,6 +11,7 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.dculus.stayfocused.core.blocking.engine.EngineHealth
+import com.dculus.stayfocused.core.blocking.engine.EngineMode
 import com.dculus.stayfocused.core.model.Permissions
 import com.dculus.stayfocused.core.sync.AuthUser
 import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
@@ -58,7 +59,7 @@ class AccountScreenTest {
 
     @Test
     fun signedIn() {
-        show(AccountUiState(user, allOn, EngineHealth(serviceBound = true)))
+        show(AccountUiState(user, allOn, EngineHealth(serviceBound = true, mode = EngineMode.ACCESSIBILITY)))
         composeRule.onNodeWithText("Alex").assertIsDisplayed()
         composeRule.onNodeWithText("alex@example.com").assertIsDisplayed()
         composeRule.onNodeWithTag(ACCOUNT_SIGN_OUT_TAG).performScrollTo().assertIsDisplayed()
@@ -69,7 +70,16 @@ class AccountScreenTest {
     @Test
     fun skipped() {
         var signIn = 0
-        show(AccountUiState(null, allOn, EngineHealth(serviceBound = true)), onSignIn = { signIn++ })
+        show(
+            AccountUiState(
+                null,
+                allOn,
+                EngineHealth(serviceBound = true, mode = EngineMode.ACCESSIBILITY),
+            ),
+            onSignIn = {
+                signIn++
+            },
+        )
         composeRule.onNodeWithText("Not signed in").assertIsDisplayed()
         composeRule.onNodeWithTag(ACCOUNT_SIGN_IN_TAG).performClick()
         assertEquals(1, signIn)
@@ -89,6 +99,19 @@ class AccountScreenTest {
         assertEquals(listOf(HealthRow.Accessibility), fixed)
         composeRule.onNodeWithText("STOPPED").assertIsDisplayed()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/AccountPermissionMissing.png")
+    }
+
+    @Test
+    fun accessibilityOffIsOptionalNotAFaultWhenTheStandardEngineRuns() {
+        show(AccountUiState(user, allOn.copy(accessibility = false), EngineHealth(mode = EngineMode.STANDARD)))
+        composeRule.onNodeWithText("STANDARD").assertIsDisplayed()
+        composeRule.onNodeWithText("OPTIONAL").assertIsDisplayed()
+    }
+
+    @Test
+    fun fastModeIsNamedWhenAccessibilityRuns() {
+        show(AccountUiState(user, allOn, EngineHealth(serviceBound = true, mode = EngineMode.ACCESSIBILITY)))
+        composeRule.onNodeWithText("FAST").assertIsDisplayed()
     }
 
     @Test

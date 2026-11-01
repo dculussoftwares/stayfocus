@@ -131,6 +131,7 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         // Android adapters in :core:blocking (system service, Settings/PackageManager lookups); the logic they
         // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
         "com.dculus.stayfocused.core.blocking.ForegroundAppService*",
+        "com.dculus.stayfocused.core.blocking.standard.BlockingService", // like ForegroundAppService: lifecycle glue
         "com.dculus.stayfocused.core.blocking.AndroidForegroundEnvironment",
         // Block screen UI and window plumbing (Activity, Compose host, accessibility overlay, launcher): covered by
         // the manual/E2E checks; its logic (BlockCountdown, BlockRequest, decision source) is unit-tested.
@@ -141,11 +142,16 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher*",
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenState",
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenModule",
-        "com.dculus.stayfocused.core.blocking.screen.AccessibilityOverlay*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockOverlayWindow*",
+        "com.dculus.stayfocused.core.blocking.screen.AccessibilitySurface",
+        "com.dculus.stayfocused.core.blocking.screen.BlockSurfaceKt",
+        "com.dculus.stayfocused.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts
         "com.dculus.stayfocused.core.blocking.screen.BackAwareFrame",
         "*.MainActivity",
         "*.StayFocusedApp",
         "*.StayFocusedKidsApp",
+        "com.dculus.stayfocused.core.blocking.standard.AndroidInteractiveScreen*", // broadcast adapter
+        "com.dculus.stayfocused.core.usage.AndroidResumeEventReader", // UsageStatsManager adapter
         "*.AppCheckInstaller", // thin Firebase SDK glue; the availability gate it relies on is unit-tested
         "*.AppCheckProviders",
     )

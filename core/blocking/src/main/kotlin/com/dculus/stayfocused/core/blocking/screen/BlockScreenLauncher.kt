@@ -21,12 +21,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Puts the block screen in front of a blocked app.
+ * Puts the block screen in front of a blocked app, through the [BlockSurface] of the running engine mode.
  *
- * 1. `performGlobalAction(GLOBAL_ACTION_HOME)` moves the blocked app out of the way.
- * 2. `startActivity(BlockActivity, NEW_TASK)` from the accessibility service.
+ * 1. [BlockSurface.goHome] moves the blocked app out of the way (`GLOBAL_ACTION_HOME`, or the HOME intent).
+ * 2. `startActivity(BlockActivity, NEW_TASK)`.
  * 3. If [BlockActivity] isn't visible after [LAUNCH_CHECK_MS] (Android silently drops background activity
- *    starts it doesn't allow), a `TYPE_ACCESSIBILITY_OVERLAY` window from the service shows the same screen.
+ *    starts it doesn't allow), a full-screen overlay window of the surface's type shows the same screen.
  *
  * Which path each API level uses is documented in `docs/blocking/block-screen-launch.md`.
  */
@@ -42,12 +42,14 @@ class BlockScreenLauncher
         private val tracker: ForegroundAppTracker,
     ) : BlockPresenter {
         private val handler = Handler(Looper.getMainLooper())
-        private var service: AccessibilityService? = null
+        private var accessibility: AccessibilitySurface? = null
+        private val standard = OverlaySurface(context)
 
-        @Volatile private var overlay: AccessibilityOverlay? = null
+        @Volatile private var overlay: BlockOverlayWindow? = null
         private var lastToken = 0L
         private var pendingCheck: Runnable? = null
         private var pill: UsageWarningPill? = null
+        private var pillSurface: BlockSurface? = null
 
         /** True from [show] until the launch is settled (activity visible, overlay up, or cancelled). */
         @Volatile private var launching = false
@@ -65,7 +67,7 @@ class BlockScreenLauncher
         /** Within [PUSH_BACK_WINDOW_MS] of a launch a stop is the home action racing it, not the user leaving. */
         private fun onPushedBack(token: Long) {
             val request = lastRequest
-            val svc = service
+            val svc = surface()
             if (request == null || svc == null || !isPushedBackLaunch(token)) return
             BlockingLog.log("Launcher", "block screen pushed behind after launch, overlay for ${request.pkg}")
             showOverlay(svc, request)
@@ -77,14 +79,17 @@ class BlockScreenLauncher
 
         /** Called by the service when it connects. */
         fun attach(service: AccessibilityService) {
-            this.service = service
+            accessibility = AccessibilitySurface(service)
         }
+
+        /** The surface for the current engine mode: Accessibility when attached, else "Display over other apps". */
+        private fun surface(): BlockSurface? = accessibility ?: standard.takeIf { it.isAvailable() }
 
         /** Called by the service when it unbinds or is destroyed. */
         fun detach() {
             handler.post { removePill() }
             invalidate()
-            service = null
+            accessibility = null
         }
 
         override fun isShowing(): Boolean = launching || BlockScreenState.visible || overlay != null
@@ -105,13 +110,18 @@ class BlockScreenLauncher
             kind: WarningKind,
         ) {
             handler.post {
-                val svc = service ?: return@post
+                val svc = surface() ?: return@post
                 if (isShowing()) return@post
                 val app = appLabel(pkg) ?: pkg
                 val urgent = kind == WarningKind.ONE_MIN
                 val text =
                     context.getString(if (urgent) R.string.usage_warning_one_min else R.string.usage_warning_half, app)
-                val shown = pill ?: UsageWarningPill(svc, handler).also { pill = it }
+                if (pillSurface !== svc) removePill()
+                val shown =
+                    pill ?: UsageWarningPill(svc, handler).also {
+                        pill = it
+                        pillSurface = svc
+                    }
                 shown.show(text, urgent, if (urgent) ONE_MIN_SHOWN_MS else HALF_SHOWN_MS)
             }
         }
@@ -119,6 +129,7 @@ class BlockScreenLauncher
         private fun removePill() {
             pill?.remove()
             pill = null
+            pillSurface = null
         }
 
         /** Removes the fallback overlay, if showing. The engine calls this when the user leaves the blocked app. */
@@ -144,9 +155,9 @@ class BlockScreenLauncher
             decision: Decision.Block,
         ) {
             val svc =
-                service ?: run {
+                surface() ?: run {
                     launching = false
-                    BlockingLog.log("Launcher", "no accessibility service attached, cannot show $pkg")
+                    BlockingLog.log("Launcher", "no block surface available, cannot show $pkg")
                     return
                 }
             cancelCheck()
@@ -155,7 +166,7 @@ class BlockScreenLauncher
             val request = BlockRequest(pkg, appLabel(pkg), decision, token)
             lastRequest = request
             lastLaunchAt = SystemClock.elapsedRealtime()
-            val homed = svc.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)
+            val homed = svc.goHome()
             val started = startBlockActivity(request)
             BlockingLog.log("Launcher", "home=$homed activityStarted=$started token=$token")
             // Home did not happen: the blocked app is still in front, so cover it right now.
@@ -194,16 +205,16 @@ class BlockScreenLauncher
             }
 
         private fun showOverlay(
-            svc: AccessibilityService,
+            svc: BlockSurface,
             request: BlockRequest,
         ) {
             BlockingLog.log("Launcher", "overlay shown for ${request.pkg}")
             overlay?.remove()
             // Stored before add(): a failed attachment reports through onRemoved() while add() is still running,
             // and that must clear this very reference (otherwise isShowing() would see an overlay that isn't there).
-            lateinit var created: AccessibilityOverlay
+            lateinit var created: BlockOverlayWindow
             created =
-                AccessibilityOverlay(
+                BlockOverlayWindow(
                     svc,
                     request,
                     decisionSource,

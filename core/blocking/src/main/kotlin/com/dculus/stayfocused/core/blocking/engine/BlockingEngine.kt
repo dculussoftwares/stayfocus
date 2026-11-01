@@ -13,6 +13,7 @@ import com.dculus.stayfocused.core.blocking.evaluator.RuleEvaluator
 import com.dculus.stayfocused.core.blocking.evaluator.WarningKind
 import com.dculus.stayfocused.core.blocking.evaluator.cycleKey
 import com.dculus.stayfocused.core.blocking.screen.BlockPresenter
+import com.dculus.stayfocused.core.blocking.standard.ActiveRules
 import com.dculus.stayfocused.core.data.repository.BlockRepository
 import com.dculus.stayfocused.core.data.repository.BreakRepository
 import com.dculus.stayfocused.core.data.repository.LockedAppsRepository
@@ -35,6 +36,8 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
@@ -57,6 +60,12 @@ internal data class EngineInputs(
     val allowances: List<TemporaryAllowance>,
     val allLocked: Boolean = false,
 )
+
+/** True when something needs the foreground app: an enabled block, a locked app, a break or a focus session. */
+internal val EngineInputs.hasActiveRules: Boolean
+    get() =
+        blocks.any { it.enabled } || lockedApps.isNotEmpty() || breakSession != null || focusSession != null ||
+            allLocked
 
 /**
  * Enforces the blocks: watches the foreground app, evaluates [RuleEvaluator] on every change and again when the
@@ -87,7 +96,8 @@ class BlockingEngine
         private val clock: Clock,
         private val monotonic: MonotonicClock,
         @EngineDispatcher private val dispatcher: CoroutineDispatcher,
-    ) {
+    ) : EngineRunner,
+        ActiveRules {
         /** An uninterrupted stay of [pkg] in front. [counting] is false while it is being blocked. */
         private class Session(
             val pkg: String,
@@ -127,6 +137,12 @@ class BlockingEngine
 
         @Volatile private var latestInputs: EngineInputs? = null
 
+        // True until the first inputs arrive (a source must not sleep before the engine knows), then follows them.
+        private val _hasActiveRules = MutableStateFlow(true)
+
+        /** Whether there is a block, locked app, break or focus session to enforce; sources sleep while not. */
+        override val hasActiveRules: StateFlow<Boolean> = _hasActiveRules.asStateFlow()
+
         /** End of the break the engine is waiting to announce; survives a restart of the run, not of the engine. */
         @Volatile private var watchedBreakEnd: Instant? = null
 
@@ -148,7 +164,7 @@ class BlockingEngine
             clockChanges.update { it + 1 }
         }
 
-        fun start() {
+        override fun start() {
             synchronized(lock) {
                 if (scope != null) return
                 val s = CoroutineScope(SupervisorJob() + dispatcher)
@@ -164,7 +180,7 @@ class BlockingEngine
         }
 
         /** Cancels everything the engine started. Safe to call repeatedly. */
-        fun stop() {
+        override fun stop() {
             val stoppedAt = clock.instant()
             synchronized(lock) {
                 val s = scope ?: return
@@ -205,6 +221,7 @@ class BlockingEngine
                 shown = null
                 bookingInputs = null
                 latestInputs = null
+                _hasActiveRules.value = true
                 watchedBreakEnd = null
                 announcedBreak = null
                 cachedAllowlist = null
@@ -286,6 +303,7 @@ class BlockingEngine
                     Triple(pkg, i, tick)
                 }.collectLatest { (pkg, i, tick) ->
                     latestInputs = i
+                    _hasActiveRules.value = i.hasActiveRules
                     if (tick != handledClockTick) {
                         handledClockTick = tick
                         discardClockJump()

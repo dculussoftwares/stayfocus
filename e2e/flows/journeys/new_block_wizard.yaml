@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Continue for now"
+- tapOn: "Start using Stay Focused"
 - tapOn: "Blocks"
 - tapOn: "New block"
 - assertVisible: "What should it do?"

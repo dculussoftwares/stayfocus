@@ -52,9 +52,16 @@ class EngineBlockDecisionSource
 
 @Module
 @InstallIn(SingletonComponent::class)
+@Suppress("TooManyFunctions") // one binding per collaborator
 internal abstract class EngineModule {
     @Binds
     abstract fun decisionSource(impl: EngineBlockDecisionSource): BlockDecisionSource
+
+    @Binds
+    abstract fun engineRunner(impl: BlockingEngine): EngineRunner
+
+    @Binds
+    abstract fun receivers(impl: ScreenAndClockReceivers): ReceiverControl
 
     @Binds
     abstract fun presenter(impl: BlockScreenLauncher): BlockPresenter

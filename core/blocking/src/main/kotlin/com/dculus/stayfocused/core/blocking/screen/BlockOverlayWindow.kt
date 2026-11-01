@@ -1,6 +1,5 @@
 package com.dculus.stayfocused.core.blocking.screen
 
-import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.PixelFormat
 import android.util.Log
@@ -20,12 +19,12 @@ import com.dculus.stayfocused.core.ui.theme.StayFocusedTheme
 import java.time.Clock
 
 /**
- * Fallback when Android drops the background start of [BlockActivity]: the same screen as a full-screen
- * `TYPE_ACCESSIBILITY_OVERLAY` window owned by the accessibility service (needs no extra permission).
- * Back and the button go home and remove the window.
+ * Fallback when Android drops the background start of [BlockActivity] (and the only path without a window of its
+ * own): the same screen as a full-screen window of the [surface]'s type, `TYPE_ACCESSIBILITY_OVERLAY` or
+ * `TYPE_APPLICATION_OVERLAY`. Back and the button go home and remove the window.
  */
-internal class AccessibilityOverlay(
-    private val service: AccessibilityService,
+internal class BlockOverlayWindow(
+    private val surface: BlockSurface,
     private val request: BlockRequest,
     private val decisionSource: BlockDecisionSource,
     private val clock: Clock,
@@ -37,7 +36,7 @@ internal class AccessibilityOverlay(
     SavedStateRegistryOwner {
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val savedStateController = SavedStateRegistryController.create(this)
-    private val windowManager = service.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val windowManager = surface.windowContext.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var view: BackAwareFrame? = null
     private var compose: ComposeView? = null
 
@@ -48,8 +47,8 @@ internal class AccessibilityOverlay(
         savedStateController.performAttach()
         savedStateController.performRestore(null)
         lifecycleRegistry.currentState = Lifecycle.State.RESUMED
-        val root = BackAwareFrame(service, ::goHome)
-        val composeView = ComposeView(service)
+        val root = BackAwareFrame(surface.windowContext, ::goHome)
+        val composeView = ComposeView(surface.windowContext)
         root.addView(composeView)
         root.setViewTreeLifecycleOwner(this)
         root.setViewTreeSavedStateRegistryOwner(this)
@@ -62,22 +61,24 @@ internal class AccessibilityOverlay(
             WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                surface.windowType,
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
                 PixelFormat.OPAQUE,
             )
-        try {
-            windowManager.addView(root, params)
-        } catch (e: WindowManager.BadTokenException) {
-            // The service disconnected under us: leave nothing half-attached.
-            Log.w(TAG, "Overlay could not be attached", e)
-            composeView.disposeComposition()
-            lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
-            onRemoved()
-            return
-        }
+        val error = windowManager.tryAddOverlay(root, params)
+        if (error != null) return failed(composeView, error)
         view = root
         compose = composeView
+    }
+
+    private fun failed(
+        composeView: ComposeView,
+        e: Exception,
+    ) {
+        Log.w(TAG, "Overlay could not be attached", e)
+        composeView.disposeComposition()
+        lifecycleRegistry.currentState = Lifecycle.State.DESTROYED
+        onRemoved()
     }
 
     fun remove() {
@@ -97,7 +98,7 @@ internal class AccessibilityOverlay(
 
     private fun goHome() {
         // Keep the overlay if Home did not happen: removing it would expose the blocked app.
-        if (service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_HOME)) finish()
+        if (surface.goHome()) finish()
     }
 }
 
@@ -113,4 +114,4 @@ private class BackAwareFrame(
     }
 }
 
-private const val TAG = "AccessibilityOverlay"
+private const val TAG = "BlockOverlayWindow"

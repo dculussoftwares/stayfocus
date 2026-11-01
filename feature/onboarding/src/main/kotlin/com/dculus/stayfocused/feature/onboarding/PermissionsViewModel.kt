@@ -18,7 +18,7 @@ import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
 
-/** The four rows of the system check, in display order. */
+/** The rows of the system check. Which are required, and their order, depends on the host (see [PermissionsCopy]). */
 internal enum class PermissionRow(
     @StringRes val title: Int,
     @StringRes val why: Int,
@@ -39,7 +39,24 @@ internal enum class PermissionRow(
         }
 }
 
-internal fun Permissions.grantedCount(): Int = PermissionRow.entries.count { it.isGranted(this) }
+/** The phone app can block without Accessibility; the Kids app cannot. */
+internal fun PermissionRow.isRequired(accessibilityRequired: Boolean): Boolean =
+    this != PermissionRow.Accessibility || accessibilityRequired
+
+/** Required rows first, in display order; an optional Accessibility row goes last. */
+internal fun displayRows(accessibilityRequired: Boolean): List<PermissionRow> =
+    if (accessibilityRequired) {
+        PermissionRow.entries
+    } else {
+        PermissionRow.entries.filter { it != PermissionRow.Accessibility } + PermissionRow.Accessibility
+    }
+
+/** How many of the required rows are granted. */
+internal fun Permissions.grantedCount(accessibilityRequired: Boolean = true): Int =
+    PermissionRow.entries.count { it.isRequired(accessibilityRequired) && it.isGranted(this) }
+
+internal fun requiredCount(accessibilityRequired: Boolean = true): Int =
+    PermissionRow.entries.count { it.isRequired(accessibilityRequired) }
 
 /** What tapping Allow on Notifications should do. */
 internal enum class NotificationStep { RequestRuntime, OpenSettings }

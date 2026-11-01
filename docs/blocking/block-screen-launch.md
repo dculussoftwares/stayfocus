@@ -1,15 +1,29 @@
 # Block screen launch paths (M2-03)
 
-`BlockScreenLauncher.show(pkg, decision)` (in `:core:blocking`) runs on the main thread:
+`BlockScreenLauncher.show(pkg, decision)` (in `:core:blocking`) runs on the main thread, through a `BlockSurface`
+chosen by the engine mode (see below):
 
-1. `performGlobalAction(GLOBAL_ACTION_HOME)`: the blocked app leaves the front.
-2. `startActivity(BlockActivity, FLAG_ACTIVITY_NEW_TASK)` from the accessibility service context.
+1. `BlockSurface.goHome()`: the blocked app leaves the front.
+2. `startActivity(BlockActivity, FLAG_ACTIVITY_NEW_TASK)`.
 3. After 350 ms, if `BlockScreenState.visible` is still false (or the start threw), the launcher adds a full-screen
-   `TYPE_ACCESSIBILITY_OVERLAY` window with the same Compose screen (`AccessibilityOverlay`).
+   overlay window of the surface's type with the same Compose screen (`BlockOverlayWindow`).
+
+## Surfaces
+
+| Mode | Surface | Home | Window type | Needs |
+|---|---|---|---|---|
+| Accessibility on | `AccessibilitySurface` | `performGlobalAction(GLOBAL_ACTION_HOME)` | `TYPE_ACCESSIBILITY_OVERLAY` | the accessibility service |
+| Standard (no Accessibility) | `OverlaySurface` | `Intent(ACTION_MAIN).addCategory(CATEGORY_HOME)`, `NEW_TASK` | `TYPE_APPLICATION_OVERLAY` | Display over other apps |
+
+Accessibility wins whenever its service is attached. Without it, the launcher uses `OverlaySurface` if
+`Settings.canDrawOverlays` is true, otherwise it logs "no block surface available" and shows nothing. Granted
+"Display over other apps" also exempts the app from the background activity start limits, so step 2 is allowed from
+the foreground service of the standard engine. `TYPE_APPLICATION_OVERLAY` windows sit below System UI (status bar,
+notification shade), which the tracker already ignores.
 
 Android drops disallowed background activity starts silently (no exception), so step 3 checks the outcome instead of
-assuming it. No extra permission is needed for either path: `TYPE_ACCESSIBILITY_OVERLAY` is available to any enabled
-accessibility service, and `BlockActivity` is not exported.
+assuming it. `TYPE_ACCESSIBILITY_OVERLAY` needs no extra permission (any enabled accessibility service may use it),
+and `BlockActivity` is not exported.
 
 ## Path per API level
 

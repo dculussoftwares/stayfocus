@@ -43,6 +43,47 @@ class ManifestAuditTest {
         assertTrue(ManifestAudit.auditManifest(m, AppRole.KIDS).single().contains("BATTERY"))
     }
 
+    private val blockingService =
+        """
+        <service android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService"
+            android:foregroundServiceType="specialUse">
+          <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="@string/use_case"/>
+        </service>
+        """.trimIndent()
+    private val specialUse = "android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
+
+    @Test
+    fun `app may declare only the blocking service as specialUse`() {
+        assertEquals(
+            emptyList<String>(),
+            ManifestAudit.auditManifest(manifest(listOf(specialUse), blockingService), AppRole.APP),
+        )
+    }
+
+    @Test
+    fun `blocking service must be specialUse with a subtype`() {
+        val dataSync = blockingService.replace("specialUse", "dataSync")
+        assertTrue(
+            ManifestAudit.auditManifest(manifest(application = dataSync), AppRole.APP).any { "specialUse" in it },
+        )
+        val noProperty =
+            """<service android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService" android:foregroundServiceType="specialUse"/>"""
+        assertTrue(
+            ManifestAudit.auditManifest(manifest(application = noProperty), AppRole.APP).any {
+                "PROPERTY_SPECIAL_USE" in
+                    it
+            },
+        )
+    }
+
+    @Test
+    fun `another foreground service next to the blocking service fails`() {
+        val other = """<service android:name=".Other" android:foregroundServiceType="specialUse"/>"""
+        val v = ManifestAudit.auditManifest(manifest(listOf(specialUse), blockingService + other), AppRole.APP)
+        assertEquals(1, v.size)
+        assertTrue(".Other" !in v.single() && "other than" in v.single())
+    }
+
     @Test
     fun `app with a foreground service or permission fails`() {
         val svc = """<service android:name=".S" android:foregroundServiceType="dataSync"/>"""

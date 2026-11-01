@@ -68,6 +68,15 @@ class PermissionsRepositoryTest {
         assertFalse(all.copy(overlay = false, batteryUnrestricted = true).allGatingGranted)
     }
 
+    @Test fun phoneCanBlockWithoutAccessibility() {
+        val standard = Permissions(usage = true, accessibility = false, overlay = true, notifications = true)
+        assertTrue(standard.canBlock)
+        assertFalse(standard.allGatingGranted) // the Kids app still needs Accessibility
+        assertFalse(standard.copy(usage = false).canBlock)
+        assertFalse(standard.copy(overlay = false).canBlock)
+        assertFalse(standard.copy(notifications = false).canBlock)
+    }
+
     @Test fun guidanceOnlyForHandInstalledAndroid13PlusWithoutAccessibility() {
         checks.installer = "com.google.android.packageinstaller"
         assertTrue(repo(33).needsRestrictedSettingsGuidance())

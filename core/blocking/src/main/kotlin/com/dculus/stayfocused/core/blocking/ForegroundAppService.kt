@@ -1,14 +1,13 @@
 package com.dculus.stayfocused.core.blocking
 
 import android.accessibilityservice.AccessibilityService
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.view.accessibility.AccessibilityEvent
-import com.dculus.stayfocused.core.blocking.engine.BlockingEngine
 import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
+import com.dculus.stayfocused.core.blocking.engine.EngineLifecycle
+import com.dculus.stayfocused.core.blocking.engine.EngineModeArbiter
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher
+import com.dculus.stayfocused.core.blocking.standard.StandardEngineStarter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -19,30 +18,13 @@ class ForegroundAppService : AccessibilityService() {
 
     @Inject lateinit var launcher: BlockScreenLauncher
 
-    @Inject lateinit var engine: BlockingEngine
+    @Inject lateinit var lifecycle: EngineLifecycle
+
+    @Inject lateinit var arbiter: EngineModeArbiter
+
+    @Inject lateinit var starter: StandardEngineStarter
 
     @Inject lateinit var health: EngineHealthMonitor
-
-    private val screenOffReceiver =
-        object : BroadcastReceiver() {
-            override fun onReceive(
-                context: Context,
-                intent: Intent,
-            ) {
-                if (intent.action == Intent.ACTION_SCREEN_OFF) tracker.onScreenOff()
-            }
-        }
-    private val clockReceiver =
-        object : BroadcastReceiver() {
-            override fun onReceive(
-                context: Context,
-                intent: Intent,
-            ) {
-                // Schedules are local-time ranges: a changed clock or zone moves every boundary.
-                engine.onClockChanged()
-            }
-        }
-    private var receiverRegistered = false
 
     override fun onServiceConnected() {
         super.onServiceConnected()
@@ -50,19 +32,10 @@ class ForegroundAppService : AccessibilityService() {
         launcher.attach(this)
         // A rebind (reboot, update, the user toggling the service) must not trust a foreground app from before it.
         tracker.onScreenOff()
-        engine.start()
         health.onServiceConnected()
-        if (!receiverRegistered) {
-            registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
-            registerReceiver(
-                clockReceiver,
-                IntentFilter().apply {
-                    addAction(Intent.ACTION_TIME_CHANGED)
-                    addAction(Intent.ACTION_TIMEZONE_CHANGED)
-                },
-            )
-            receiverRegistered = true
-        }
+        // Acquire first: the standard engine stops itself when the mode turns to ACCESSIBILITY.
+        lifecycle.acquire(EngineLifecycle.Owner.ACCESSIBILITY)
+        arbiter.refresh()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -75,21 +48,22 @@ class ForegroundAppService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onUnbind(intent: Intent?): Boolean {
-        health.onServiceUnbound()
-        engine.stop()
+        shutDown()
         tracker.onScreenOff()
         launcher.detach()
         return super.onUnbind(intent)
     }
 
     override fun onDestroy() {
-        health.onServiceUnbound()
-        engine.stop()
-        if (receiverRegistered) {
-            unregisterReceiver(screenOffReceiver)
-            unregisterReceiver(clockReceiver)
-            receiverRegistered = false
-        }
+        shutDown()
         super.onDestroy()
+    }
+
+    private fun shutDown() {
+        health.onServiceUnbound()
+        lifecycle.release(EngineLifecycle.Owner.ACCESSIBILITY)
+        arbiter.refresh()
+        // Accessibility was turned off: the standard engine takes over if it can (best effort from the background).
+        starter.sync()
     }
 }

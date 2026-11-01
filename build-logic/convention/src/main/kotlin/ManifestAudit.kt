@@ -25,6 +25,7 @@ object ManifestAudit {
     private const val FGS_TYPED_PERMISSION_PREFIX = "android.permission.FOREGROUND_SERVICE_"
     private const val MONITORING_SERVICE = "com.dculus.stayfocused.kids.monitoring.MonitoringService"
     private val MONITORING_SERVICE_NAMES = setOf(MONITORING_SERVICE, ".monitoring.MonitoringService")
+    private const val BLOCKING_SERVICE = "com.dculus.stayfocused.core.blocking.standard.BlockingService"
     private const val FGS_SPECIAL_USE = "android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
     private const val FGS_SUBTYPE_PROPERTY = "android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
 
@@ -46,10 +47,7 @@ object ManifestAudit {
 
         when (role) {
             AppRole.APP -> {
-                if (fgsServices.isNotEmpty()) violations += ":app must declare no foreground service"
-                permissions
-                    .filter { it.startsWith(FGS_TYPED_PERMISSION_PREFIX) }
-                    .forEach { violations += ":app must not request $it" }
+                violations += auditAppForeground(fgsServices, permissions)
                 if (monitoringElement != null) violations += ":app must not carry isMonitoringTool"
             }
 
@@ -68,13 +66,36 @@ object ManifestAudit {
                 }
                 specialUse
                     .filter { service ->
-                        service.children("property").none {
-                            it.attr("name") == FGS_SUBTYPE_PROPERTY && !it.attr("value").isNullOrBlank()
-                        }
+                        service.children("property").none { it.isSubtype() }
                     }.forEach { violations += "${it.attr("name")} lacks the $FGS_SUBTYPE_PROPERTY property" }
                 if (FGS_SPECIAL_USE !in permissions) violations += ":kids must request $FGS_SPECIAL_USE"
             }
         }
+        return violations
+    }
+
+    /** The phone app may declare exactly one foreground service: the standard engine's `specialUse` one. */
+    private fun auditAppForeground(
+        fgsServices: List<Element>,
+        permissions: Set<String>,
+    ): List<String> {
+        val violations = mutableListOf<String>()
+        fgsServices
+            .filterNot { it.attr("name") == BLOCKING_SERVICE }
+            .forEach { violations += ":app must declare no foreground service other than $BLOCKING_SERVICE" }
+        fgsServices
+            .filter { it.attr("name") == BLOCKING_SERVICE }
+            .forEach { service ->
+                if (service.attr("foregroundServiceType") != "specialUse") {
+                    violations += "$BLOCKING_SERVICE must use foregroundServiceType=specialUse"
+                }
+                if (service.children("property").none { it.isSubtype() }) {
+                    violations += "$BLOCKING_SERVICE lacks the $FGS_SUBTYPE_PROPERTY property"
+                }
+            }
+        permissions
+            .filter { it.startsWith(FGS_TYPED_PERMISSION_PREFIX) && it != FGS_SPECIAL_USE }
+            .forEach { violations += ":app must not request $it" }
         return violations
     }
 
@@ -102,6 +123,8 @@ object ManifestAudit {
         factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
         return factory.newDocumentBuilder().parse(InputSource(StringReader(xml))).documentElement
     }
+
+    private fun Element.isSubtype(): Boolean = attr("name") == FGS_SUBTYPE_PROPERTY && !attr("value").isNullOrBlank()
 
     private fun Element.attr(name: String): String? =
         getAttributeNS(ANDROID_NS, name).takeIf { hasAttributeNS(ANDROID_NS, name) }
