@@ -7,6 +7,7 @@ import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.blocking.engine.EngineLifecycle
 import com.dculus.stayfocused.core.blocking.engine.EngineModeArbiter
 import com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher
+import com.dculus.stayfocused.core.blocking.standard.StandardEngineStarter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -21,6 +22,8 @@ class ForegroundAppService : AccessibilityService() {
 
     @Inject lateinit var arbiter: EngineModeArbiter
 
+    @Inject lateinit var starter: StandardEngineStarter
+
     @Inject lateinit var health: EngineHealthMonitor
 
     override fun onServiceConnected() {
@@ -30,8 +33,9 @@ class ForegroundAppService : AccessibilityService() {
         // A rebind (reboot, update, the user toggling the service) must not trust a foreground app from before it.
         tracker.onScreenOff()
         health.onServiceConnected()
-        arbiter.refresh()
+        // Acquire first: the standard engine stops itself when the mode turns to ACCESSIBILITY.
         lifecycle.acquire(EngineLifecycle.Owner.ACCESSIBILITY)
+        arbiter.refresh()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -59,5 +63,7 @@ class ForegroundAppService : AccessibilityService() {
         health.onServiceUnbound()
         lifecycle.release(EngineLifecycle.Owner.ACCESSIBILITY)
         arbiter.refresh()
+        // Accessibility was turned off: the standard engine takes over if it can (best effort from the background).
+        starter.sync()
     }
 }

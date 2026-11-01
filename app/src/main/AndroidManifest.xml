@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!--
+      Standard engine (blocking without Accessibility): one specialUse foreground service that polls Usage Access
+      events, restarted after a reboot or an update. See docs/blocking/STANDARD_ENGINE_IMPLEMENTATION_PLAN.md.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".StayFocusedApp"
         android:allowBackup="false"
@@ -29,6 +37,25 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/foreground_app_service" />
         </service>
+
+        <service
+            android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="@string/blocking_service_use_case" />
+        </service>
+
+        <!-- Restarts the standard engine after a reboot or an app update, without opening the app. -->
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+            </intent-filter>
+        </receiver>
 
         <!-- Pushes from the notifyParent / unlinkDevice functions (M8-05). Not exported: only FCM binds the service. -->
         <service

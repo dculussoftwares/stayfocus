@@ -131,6 +131,7 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         // Android adapters in :core:blocking (system service, Settings/PackageManager lookups); the logic they
         // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
         "com.dculus.stayfocused.core.blocking.ForegroundAppService*",
+        "com.dculus.stayfocused.core.blocking.standard.BlockingService", // like ForegroundAppService: lifecycle glue
         "com.dculus.stayfocused.core.blocking.AndroidForegroundEnvironment",
         // Block screen UI and window plumbing (Activity, Compose host, accessibility overlay, launcher): covered by
         // the manual/E2E checks; its logic (BlockCountdown, BlockRequest, decision source) is unit-tested.

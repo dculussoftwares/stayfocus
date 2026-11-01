@@ -2,6 +2,7 @@ package com.dculus.stayfocused.core.blocking.standard
 
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.blocking.ForegroundEnvironment
+import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.usage.ResumeEvent
 import com.dculus.stayfocused.core.usage.ResumeEventReader
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -18,6 +19,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -51,6 +53,7 @@ class UsageEventsForegroundSourceTest {
             override fun nowMillis() = 0L
         }
     private val tracker = ForegroundAppTracker(env)
+    private val health = EngineHealthMonitor(Clock.systemUTC())
     private val reader = FakeReader()
     private val screenOn = MutableStateFlow(true)
     private val hasRules = MutableStateFlow(true)
@@ -68,6 +71,7 @@ class UsageEventsForegroundSourceTest {
         return UsageEventsForegroundSource(
             reader,
             tracker,
+            health,
             object : ActiveRules {
                 override val hasActiveRules = hasRules
             },
@@ -103,6 +107,7 @@ class UsageEventsForegroundSourceTest {
             s.start { lostAccess++ }
             runCurrent()
             assertEquals("b", tracker.foreground.value?.packageName)
+            assertNotNull(health.health.value.lastEventAt)
         }
 
     @Test fun newEventsAreDeliveredAndNotRepeatedAcrossOverlappingReads() =

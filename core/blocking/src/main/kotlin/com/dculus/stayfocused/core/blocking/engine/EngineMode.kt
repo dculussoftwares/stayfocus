@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.core.blocking.engine
 
 import com.dculus.stayfocused.core.blocking.permissions.PermissionsRepository
+import com.dculus.stayfocused.core.blocking.standard.StandardSupport
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,15 +20,19 @@ enum class EngineMode {
     STANDARD,
 }
 
-/** Pure choice of the [EngineMode]; one source at a time, so time is never booked twice. */
+/**
+ * Pure choice of the [EngineMode]; one source at a time, so time is never booked twice. [standardAvailable] is false
+ * in an app that does not declare the standard engine's service (the Kids app).
+ */
 fun resolveEngineMode(
     accessibilityBound: Boolean,
     usage: Boolean,
     overlay: Boolean,
+    standardAvailable: Boolean = true,
 ): EngineMode =
     when {
         accessibilityBound -> EngineMode.ACCESSIBILITY
-        usage && overlay -> EngineMode.STANDARD
+        standardAvailable && usage && overlay -> EngineMode.STANDARD
         else -> EngineMode.OFF
     }
 
@@ -41,13 +46,14 @@ class EngineModeArbiter
     constructor(
         private val permissions: PermissionsRepository,
         private val health: EngineHealthMonitor,
+        private val support: StandardSupport,
     ) {
         private val _mode = MutableStateFlow(EngineMode.OFF)
         val mode: StateFlow<EngineMode> = _mode.asStateFlow()
 
         fun refresh(): EngineMode {
             val p = permissions.current()
-            val next = resolveEngineMode(health.health.value.serviceBound, p.usage, p.overlay)
+            val next = resolveEngineMode(health.health.value.serviceBound, p.usage, p.overlay, support.declared())
             _mode.value = next
             health.onModeChanged(next)
             return next

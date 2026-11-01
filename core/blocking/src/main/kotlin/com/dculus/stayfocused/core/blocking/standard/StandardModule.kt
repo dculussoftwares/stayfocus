@@ -13,5 +13,8 @@ internal abstract class StandardModule {
     abstract fun activeRules(impl: BlockingEngine): ActiveRules
 
     @Binds
+    abstract fun support(impl: AndroidStandardSupport): StandardSupport
+
+    @Binds
     abstract fun screen(impl: AndroidInteractiveScreen): InteractiveScreen
 }

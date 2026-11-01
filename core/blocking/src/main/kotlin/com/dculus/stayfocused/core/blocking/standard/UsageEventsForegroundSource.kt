@@ -3,6 +3,7 @@ package com.dculus.stayfocused.core.blocking.standard
 import com.dculus.stayfocused.core.blocking.BlockingLog
 import com.dculus.stayfocused.core.blocking.ForegroundAppTracker
 import com.dculus.stayfocused.core.blocking.engine.EngineDispatcher
+import com.dculus.stayfocused.core.blocking.engine.EngineHealthMonitor
 import com.dculus.stayfocused.core.usage.ResumeEvent
 import com.dculus.stayfocused.core.usage.ResumeEventReader
 import kotlinx.coroutines.CoroutineDispatcher
@@ -45,6 +46,7 @@ class UsageEventsForegroundSource
     internal constructor(
         private val reader: ResumeEventReader,
         private val tracker: ForegroundAppTracker,
+        private val health: EngineHealthMonitor,
         private val rules: ActiveRules,
         private val screen: InteractiveScreen,
         private val clock: Clock,
@@ -114,6 +116,7 @@ class UsageEventsForegroundSource
                     atTime.clear()
                 }
                 if (!atTime.add(event)) return
+                health.onEvent()
                 BlockingLog.log("UsageSource", "${event.pkg}/${event.className}")
                 tracker.onWindowStateChanged(event.pkg, event.className)
             }
