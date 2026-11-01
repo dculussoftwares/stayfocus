@@ -43,17 +43,36 @@ jobs:
       - name: Collect SARIF reports
         if: ${{ !cancelled() }}
         run: |
-          mkdir -p sarif
-          cp build/reports/detekt/detekt.sarif sarif/detekt.sarif || true
+          mkdir -p sarif/input
+          cp build/reports/detekt/detekt.sarif sarif/input/detekt.sarif || true
           find . -path ./sarif -prune -o -name 'lint-results-debug.sarif' -print | while read -r f; do
-            cp "$f" "sarif/lint-$(echo "$f" | tr '/.' '--').sarif"
+            cp "$f" "sarif/input/lint-$(echo "$f" | tr '/.' '--').sarif"
           done
+          python3 - <<'PY'
+          import json, glob, os
+          runs = []
+          for path in sorted(glob.glob("sarif/input/*.sarif")):
+              with open(path) as f:
+                  data = json.load(f)
+                  module_id = os.path.basename(path).replace(".sarif", "")
+                  for run in data.get("runs", []):
+                      if "automationDetails" not in run:
+                          run["automationDetails"] = {"id": module_id}
+                      runs.append(run)
+          combined = {
+              "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json",
+              "version": "2.1.0",
+              "runs": runs
+          }
+          with open("sarif/combined.sarif", "w") as f:
+              json.dump(combined, f)
+          PY
       - name: Upload SARIF (code scanning)
         if: ${{ !cancelled() && github.event.pull_request.head.repo.fork != true }}
         continue-on-error: true
         uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2
         with:
-          sarif_file: sarif
+          sarif_file: sarif/combined.sarif
           category: static-analysis
       - name: Upload reports
         if: ${{ failure() }}
