@@ -87,7 +87,7 @@ class BlockingEngine
         private val clock: Clock,
         private val monotonic: MonotonicClock,
         @EngineDispatcher private val dispatcher: CoroutineDispatcher,
-    ) {
+    ) : EngineRunner {
         /** An uninterrupted stay of [pkg] in front. [counting] is false while it is being blocked. */
         private class Session(
             val pkg: String,
@@ -148,7 +148,7 @@ class BlockingEngine
             clockChanges.update { it + 1 }
         }
 
-        fun start() {
+        override fun start() {
             synchronized(lock) {
                 if (scope != null) return
                 val s = CoroutineScope(SupervisorJob() + dispatcher)
@@ -164,7 +164,7 @@ class BlockingEngine
         }
 
         /** Cancels everything the engine started. Safe to call repeatedly. */
-        fun stop() {
+        override fun stop() {
             val stoppedAt = clock.instant()
             synchronized(lock) {
                 val s = scope ?: return

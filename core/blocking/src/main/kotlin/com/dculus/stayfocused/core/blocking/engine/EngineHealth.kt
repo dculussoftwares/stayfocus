@@ -19,7 +19,12 @@ import javax.inject.Singleton
 data class EngineHealth(
     val serviceBound: Boolean = false,
     val lastEventAt: Instant? = null,
-)
+    /** Which source feeds the engine right now; [EngineMode.OFF] when none can. */
+    val mode: EngineMode = EngineMode.OFF,
+) {
+    /** True when some source (Accessibility or the standard engine) is detecting the foreground app. */
+    val running: Boolean get() = mode != EngineMode.OFF
+}
 
 /** Written by `ForegroundAppService`; read through [health]. */
 @Singleton
@@ -34,6 +39,8 @@ class EngineHealthMonitor
         fun onServiceConnected() = _health.update { it.copy(serviceBound = true) }
 
         fun onServiceUnbound() = _health.update { it.copy(serviceBound = false) }
+
+        fun onModeChanged(mode: EngineMode) = _health.update { it.copy(mode = mode) }
 
         fun onEvent() = _health.update { it.copy(lastEventAt = clock.instant()) }
     }
