@@ -141,7 +141,10 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher*",
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenState",
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenModule",
-        "com.dculus.stayfocused.core.blocking.screen.AccessibilityOverlay*",
+        "com.dculus.stayfocused.core.blocking.screen.BlockOverlayWindow*",
+        "com.dculus.stayfocused.core.blocking.screen.AccessibilitySurface",
+        "com.dculus.stayfocused.core.blocking.screen.BlockSurfaceKt",
+        "com.dculus.stayfocused.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts
         "com.dculus.stayfocused.core.blocking.screen.BackAwareFrame",
         "*.MainActivity",
         "*.StayFocusedApp",

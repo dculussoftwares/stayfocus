@@ -1,6 +1,5 @@
 package com.dculus.stayfocused.core.blocking.screen
 
-import android.accessibilityservice.AccessibilityService
 import android.content.Context
 import android.graphics.Color
 import android.graphics.PixelFormat
@@ -16,14 +15,15 @@ import android.view.WindowManager
 import android.widget.TextView
 
 /**
- * A slim pill at the top of the screen, as a `TYPE_ACCESSIBILITY_OVERLAY` window that takes no touches and no
+ * A slim pill at the top of the screen, as an overlay window of the [surface]'s type that takes no touches and no
  * focus, so the app underneath keeps working. Removes itself after the duration given to [show].
  */
 internal class UsageWarningPill(
-    private val service: AccessibilityService,
+    private val surface: BlockSurface,
     private val handler: Handler,
 ) {
-    private val windowManager = service.getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private val context = surface.windowContext
+    private val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
     private var view: TextView? = null
     private val removeRunnable = Runnable { remove() }
 
@@ -34,7 +34,7 @@ internal class UsageWarningPill(
     ) {
         remove()
         val pill =
-            TextView(service).apply {
+            TextView(context).apply {
                 this.text = text
                 setTextColor(Color.WHITE)
                 setTextSize(TypedValue.COMPLEX_UNIT_SP, TEXT_SP)
@@ -51,7 +51,7 @@ internal class UsageWarningPill(
                 .LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    surface.windowType,
                     WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
                         WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                         WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -60,11 +60,7 @@ internal class UsageWarningPill(
                     gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
                     y = statusBarHeight() + dp(TOP_GAP_DP)
                 }
-        try {
-            windowManager.addView(pill, params)
-        } catch (_: WindowManager.BadTokenException) {
-            return // the service disconnected under us
-        }
+        if (windowManager.tryAddOverlay(pill, params) != null) return
         view = pill
         if (urgent) pill.performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
         playSound()
@@ -73,11 +69,11 @@ internal class UsageWarningPill(
 
     /** The default notification sound, only when the phone's ringer is on (not silent or vibrate). */
     private fun playSound() {
-        val audio = service.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) return
         val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION) ?: return
         runCatching {
-            RingtoneManager.getRingtone(service, uri)?.apply {
+            RingtoneManager.getRingtone(context, uri)?.apply {
                 audioAttributes =
                     AudioAttributes
                         .Builder()
@@ -98,12 +94,12 @@ internal class UsageWarningPill(
 
     private fun dp(value: Int): Int =
         TypedValue
-            .applyDimension(TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), service.resources.displayMetrics)
+            .applyDimension(TypedValue.COMPLEX_UNIT_DIP, value.toFloat(), context.resources.displayMetrics)
             .toInt()
 
     private fun statusBarHeight(): Int {
-        val id = service.resources.getIdentifier("status_bar_height", "dimen", "android")
-        return if (id > 0) service.resources.getDimensionPixelSize(id) else 0
+        val id = context.resources.getIdentifier("status_bar_height", "dimen", "android")
+        return if (id > 0) context.resources.getDimensionPixelSize(id) else 0
     }
 
     private companion object {
