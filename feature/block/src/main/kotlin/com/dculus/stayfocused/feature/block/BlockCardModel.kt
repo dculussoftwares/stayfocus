@@ -2,6 +2,7 @@ package com.dculus.stayfocused.feature.block
 
 import com.dculus.stayfocused.core.model.Block
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import java.time.LocalTime
@@ -19,20 +20,29 @@ data class BlockProgress(
 /**
  * Today's usage of a block's apps against its allowance, from the shipped usage stats (V5_SPEC §5):
  * a daily limit counts all of today's minutes of its apps; a cycle counts them up to its "use" minutes (the open
- * window). Hourly limits, schedules and "block now" have no meter. [todayMins] maps package to minutes used today.
+ * window). For [CycleScope.PER_APP] cycles, progress measures the highest single-app usage against the open window;
+ * for [CycleScope.TOTAL] cycles, progress sums all apps. Hourly limits, schedules and "block now" have no meter.
+ * [todayMins] maps package to minutes used today.
  */
 fun blockProgress(
     block: Block,
     todayMins: Map<String, Int>,
 ): BlockProgress? {
-    val used = block.apps.sumOf { todayMins[it] ?: 0 }
     return when (block.type) {
         BlockType.LIMIT -> {
+            val used = block.apps.sumOf { todayMins[it] ?: 0 }
             block.limitMins?.takeIf { block.period != LimitPeriod.HOURLY }?.let { BlockProgress(used, it) }
         }
 
         BlockType.CYCLE -> {
-            block.useMins?.let { BlockProgress(minOf(used, it), it) }
+            val useMins = block.useMins ?: return null
+            val used =
+                if (block.cycleScope == CycleScope.TOTAL) {
+                    block.apps.sumOf { todayMins[it] ?: 0 }
+                } else {
+                    block.apps.maxOfOrNull { todayMins[it] ?: 0 } ?: 0
+                }
+            BlockProgress(minOf(used, useMins), useMins)
         }
 
         BlockType.SCHEDULE, BlockType.NOW -> {
