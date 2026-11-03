@@ -110,8 +110,19 @@ class BlockScreenLauncher
             kind: WarningKind,
         ) {
             handler.post {
-                val svc = surface() ?: return@post
-                if (isShowing()) return@post
+                val svc = surface()
+                if (svc == null) {
+                    BlockingLog.log(
+                        "Launcher",
+                        "warning $kind for $pkg dropped: no surface (no Accessibility, no overlay permission)",
+                    )
+                    return@post
+                }
+                if (isShowing()) {
+                    BlockingLog.log("Launcher", "warning $kind for $pkg dropped: block screen showing")
+                    return@post
+                }
+                BlockingLog.log("Launcher", "warning $kind for $pkg shown")
                 val app = appLabel(pkg) ?: pkg
                 val urgent = kind == WarningKind.ONE_MIN
                 val text =
