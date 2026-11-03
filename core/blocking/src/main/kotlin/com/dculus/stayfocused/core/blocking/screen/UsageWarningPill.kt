@@ -102,11 +102,12 @@ internal class UsageWarningPill(
     /** Removes the warning at once (the block screen is coming up, or a newer warning replaces it). */
     fun remove() {
         handler.removeCallbacks(dismissRunnable)
+        // Clear root first: cancelling the entrance ends it, and its end listener must not start new animations.
+        val parts = root
+        root = null
         running.toList().forEach { it.cancel() }
         running.clear()
-        val parts = root ?: return
-        root = null
-        runCatching { windowManager.removeView(parts.container) }
+        if (parts != null) runCatching { windowManager.removeView(parts.container) }
     }
 
     @Suppress("DEPRECATION") // FLAG_LAYOUT_NO_LIMITS: the only way to reach under the system bars on API 26–29
@@ -190,8 +191,15 @@ internal class UsageWarningPill(
             }
         enter.addListener(
             object : AnimatorListenerAdapter() {
+                private var cancelled = false
+
+                override fun onAnimationCancel(animation: Animator) {
+                    cancelled = true
+                }
+
                 override fun onAnimationEnd(animation: Animator) {
-                    if (root !== parts) return
+                    // A cancel (exit or removal) also ends the entrance; only a finished entrance draws attention.
+                    if (cancelled || root !== parts) return
                     if (urgent) attentionUrgent(parts) else attentionCalm(card)
                 }
             },

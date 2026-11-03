@@ -120,7 +120,7 @@ M1 ──┬── M2 ───────────────────�
   Strings go in `strings.xml`.
 - New UI components have a `@Preview` and, in `:core:ui`, a Roborazzi screenshot test. Coverage stays above the Kover thresholds.
 - A story that adds or changes a user journey adds or extends a Maestro flow in `e2e/flows/` (and instrumented tests where useful). Flows under `e2e/flows/smoke/` gate every PR (`e2e-smoke`, kept under ~5 minutes); the rest run in the full suite (`e2e.yml`). See `e2e/flows/README.md`.
-- No new permission, manifest flag or Play-relevant declaration unless the story says so.
+- Add permissions, manifest flags or Play-relevant declarations only when the change needs them, and list each one in the PR description. Never add `QUERY_ALL_PACKAGES`.
 - Builds without `google-services.json`.
 - CI is green, CodeRabbit approved the PR (or Qodo fallback gate met) with no unresolved threads, and every acceptance criterion is ticked in the PR
   (anything needing a real device or a person is listed in `docs/qa/pending-manual-checks.md`).

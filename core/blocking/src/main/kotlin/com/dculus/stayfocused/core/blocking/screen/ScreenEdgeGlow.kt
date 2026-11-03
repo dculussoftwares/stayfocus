@@ -1,5 +1,6 @@
 package com.dculus.stayfocused.core.blocking.screen
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -10,6 +11,8 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.util.TypedValue
 import android.view.View
+import androidx.compose.ui.graphics.toArgb
+import com.dculus.stayfocused.core.ui.theme.V5Colors
 
 /** Brand colours of a warning: the screen-edge glow and the halo behind the chip. */
 internal class WarningPalette(
@@ -21,11 +24,12 @@ internal class WarningPalette(
     val halo: Int,
 ) {
     companion object {
-        private val GREEN = Color.rgb(0x2F, 0x9A, 0x3C)
-        private val GREEN_GLOW = Color.rgb(0x9C, 0xCB, 0x4A)
-        private val LIME = Color.rgb(0xD8, 0xF2, 0x3C)
+        private val tokens = V5Colors()
+        private val GREEN = tokens.green.toArgb()
+        private val GREEN_GLOW = tokens.greenGlow.toArgb()
+        private val LIME = tokens.lime.toArgb()
 
-        // v5 green ("Use, then lock": #9CCB4A glow on #2F9A3C), lifted with the v5 lime (#D8F23C) for urgency.
+        // v5 green ("Use, then lock": greenGlow on green), lifted with the v5 lime for urgency.
         val URGENT =
             WarningPalette(
                 corners = intArrayOf(LIME, GREEN_GLOW, GREEN_GLOW, LIME),
@@ -33,7 +37,7 @@ internal class WarningPalette(
                 halo = LIME,
             )
 
-        // v5 green: `radial(80% 70% at 75% 15%, #9CCB4A)` on `#2F9A3C`.
+        // v5 green: `radial(80% 70% at 75% 15%, greenGlow)` on `green`.
         val CALM =
             WarningPalette(
                 corners = intArrayOf(GREEN_GLOW, GREEN, GREEN, GREEN_GLOW),
@@ -47,6 +51,7 @@ internal class WarningPalette(
  * A colour glow along the edges and corners of the whole screen: a bloom in each corner plus a thin wash along each
  * edge, all fading to transparent towards the middle so the app underneath stays readable.
  */
+@SuppressLint("ViewConstructor") // created in code for an overlay window, never inflated from XML
 internal class EdgeGlowView(
     context: Context,
     private val palette: WarningPalette,
