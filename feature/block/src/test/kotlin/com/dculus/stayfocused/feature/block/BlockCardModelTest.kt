@@ -1,6 +1,7 @@
 package com.dculus.stayfocused.feature.block
 
 import com.dculus.stayfocused.core.model.BlockType
+import com.dculus.stayfocused.core.model.CycleScope
 import com.dculus.stayfocused.core.model.DaysOfWeek
 import com.dculus.stayfocused.core.model.LimitPeriod
 import org.junit.Assert.assertEquals
@@ -30,6 +31,32 @@ class BlockCardModelTest {
         assertEquals(BlockProgress(10, 10), blockProgress(cycleBlock(), usage))
         assertEquals(BlockProgress(0, 10), blockProgress(cycleBlock(), emptyMap()))
         assertEquals(BlockProgress(6, 10), blockProgress(cycleBlock(), mapOf(pkg("youtube") to 6)))
+    }
+
+    @Test
+    fun cycleScopePerAppTakesMaxAppUsage() {
+        val perAppBlock =
+            cycleBlock().copy(
+                cycleScope = CycleScope.PER_APP,
+                apps = setOf(pkg("instagram"), pkg("youtube")),
+                useMins = 10,
+            )
+        val multiAppUsage = mapOf(pkg("instagram") to 6, pkg("youtube") to 3)
+        // Max usage is instagram (6 mins), not sum (9 mins)
+        assertEquals(BlockProgress(6, 10), blockProgress(perAppBlock, multiAppUsage))
+    }
+
+    @Test
+    fun cycleScopeTotalSumsAllAppsUsage() {
+        val totalBlock =
+            cycleBlock().copy(
+                cycleScope = CycleScope.TOTAL,
+                apps = setOf(pkg("instagram"), pkg("youtube")),
+                useMins = 10,
+            )
+        val multiAppUsage = mapOf(pkg("instagram") to 6, pkg("youtube") to 3)
+        // Sum usage is instagram (6) + youtube (3) = 9 mins
+        assertEquals(BlockProgress(9, 10), blockProgress(totalBlock, multiAppUsage))
     }
 
     @Test

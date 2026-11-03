@@ -435,7 +435,10 @@ class BlockingEngine
             warned.keys.removeAll { it.endsWith("|$pkg") && it !in reached }
             val due = reached.filter { (key, w) -> warned[key]?.let { w.kind > it } ?: true }
             reached.forEach { (key, w) -> warned[key] = maxOf(w.kind, warned[key] ?: w.kind) }
-            due.values.minByOrNull { it.remainingMs }?.let { presenter.showWarning(pkg, it.kind) }
+            due.values.minByOrNull { it.remainingMs }?.let {
+                BlockingLog.log("Engine", "$pkg warning ${it.kind}, ${it.remainingMs} ms left")
+                presenter.showWarning(pkg, it.kind)
+            }
         }
 
         /**

@@ -852,8 +852,9 @@ class RuleEvaluatorTest {
     }
 
     @Test
-    fun `a one minute limit never warns`() {
+    fun `a one minute limit warns once, at half`() {
         assertEquals(emptyList(), limitWarnings(1, 0.0))
+        assertEquals(listOf(UsageWarning("b1", WarningKind.HALF, MIN / 2)), limitWarnings(1, 0.5))
     }
 
     @Test

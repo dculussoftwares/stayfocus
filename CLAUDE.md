@@ -52,7 +52,10 @@ python3 scripts/backlog/waves.py --status         # progress per wave + NEXT_WAV
 python3 scripts/backlog/waves.py --wave 3          # one wave's stories, issues and state
 ```
 
-## Working on a story
+## Working on a story (optional)
+
+New work doesn't need a backlog story or issue: branch from `origin/main`, implement, run the Definition-of-done
+command and open a PR. The flow below applies only when you pick up an existing backlog story.
 
 Use **`/wave <N>`** (a whole wave, parallel workers), **`/next-wave`** or **`/story <ID>`** (one story). One session per wave;
 `/clear` between waves. The procedure each worker follows is `.claude/agents/story-worker.md`. In short:

@@ -80,7 +80,7 @@ object RuleEvaluator {
                             WarningKind.ONE_MIN
                         }
 
-                        total > 2 * ONE_MIN_MS && remaining <= total / 2 + WARNING_SLACK_MS -> {
+                        total >= ONE_MIN_MS && remaining <= total / 2 + WARNING_SLACK_MS -> {
                             WarningKind.HALF
                         }
 
@@ -130,7 +130,7 @@ object RuleEvaluator {
         val now = ctx.now.toInstant()
         return listOfNotNull(
             (remaining - ONE_MIN_MS).takeIf { total > ONE_MIN_MS + WARNING_SLACK_MS },
-            (remaining - total / 2).takeIf { total > 2 * ONE_MIN_MS },
+            (remaining - total / 2).takeIf { total >= ONE_MIN_MS },
         ).filter { it > 0 }
             .map { now.plusMillis(it) }
     }

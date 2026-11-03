@@ -143,6 +143,10 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenState",
         "com.dculus.stayfocused.core.blocking.screen.BlockScreenModule",
         "com.dculus.stayfocused.core.blocking.screen.BlockOverlayWindow*",
+        // Usage-warning overlay (window, views, animations); when it fires is RuleEvaluator.usageWarnings, tested.
+        "com.dculus.stayfocused.core.blocking.screen.UsageWarningPill*",
+        "com.dculus.stayfocused.core.blocking.screen.EdgeGlowView",
+        "com.dculus.stayfocused.core.blocking.screen.WarningPalette*",
         "com.dculus.stayfocused.core.blocking.screen.AccessibilitySurface",
         "com.dculus.stayfocused.core.blocking.screen.BlockSurfaceKt",
         "com.dculus.stayfocused.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts
