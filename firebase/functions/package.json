@@ -1,7 +1,7 @@
 {
   "name": "stayfocus-functions",
   "private": true,
-  "description": "Cloud Functions (2nd gen) for Vesper. Built by Actions and deployed by Terraform (infra/firebase/functions.tf); never by the Firebase CLI.",
+  "description": "Cloud Functions (2nd gen) for Stay Focused. Built by Actions and deployed by Terraform (infra/firebase/functions.tf); never by the Firebase CLI.",
   "license": "GPL-3.0-only",
   "engines": {
     "node": ">=22"
