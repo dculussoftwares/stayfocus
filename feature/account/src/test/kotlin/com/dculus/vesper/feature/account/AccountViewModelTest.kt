@@ -11,10 +11,12 @@ import com.dculus.vesper.core.sync.DeleteAccountFailure
 import com.dculus.vesper.core.sync.DeleteAccountResult
 import com.dculus.vesper.core.sync.FakeAccountDeletionRepository
 import com.dculus.vesper.core.sync.FakeAuthRepository
+import com.dculus.vesper.core.testing.FakeSettingsRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -57,6 +59,7 @@ class AccountViewModelTest {
                     FakePermissions(),
                     EngineHealthMonitor(Clock.systemUTC()),
                     FakeAccountDeletionRepository(auth) {},
+                    FakeSettingsRepository(),
                 )
             viewModel.state.test {
                 var item = awaitItem()
@@ -67,13 +70,43 @@ class AccountViewModelTest {
         }
 
     @Test
+    fun warningGlowFollowsTheSettingAndTheToggleWritesIt() =
+        runTest {
+            val auth = FakeAuthRepository()
+            val settings = FakeSettingsRepository()
+            val viewModel =
+                AccountViewModel(
+                    auth,
+                    FakePermissions(),
+                    EngineHealthMonitor(Clock.systemUTC()),
+                    FakeAccountDeletionRepository(auth) {},
+                    settings,
+                )
+            viewModel.state.test {
+                var item = awaitItem()
+                if (!item.authLoaded) item = awaitItem()
+                assertTrue(item.warningGlow)
+                viewModel.setWarningGlow(false)
+                assertEquals(false, awaitItem().warningGlow)
+                assertEquals(false, settings.settings.first().usageWarningGlow)
+            }
+        }
+
+    @Test
     fun permissionsAndEngineFollowTheirSourcesAndSignOutClearsTheUser() =
         runTest {
             val auth = FakeAuthRepository()
             val permissions = FakePermissions()
             val engine = EngineHealthMonitor(Clock.systemUTC())
             auth.signInWithEmail("alex@example.com", "secret1")
-            val viewModel = AccountViewModel(auth, permissions, engine, FakeAccountDeletionRepository(auth) {})
+            val viewModel =
+                AccountViewModel(
+                    auth,
+                    permissions,
+                    engine,
+                    FakeAccountDeletionRepository(auth) {},
+                    FakeSettingsRepository(),
+                )
             viewModel.state.test {
                 var item = awaitItem()
                 if (!item.authLoaded) item = awaitItem()
@@ -100,7 +133,13 @@ class AccountViewModelTest {
         val auth = FakeAuthRepository()
         val deletion = FakeAccountDeletionRepository(auth) {}
         val viewModel =
-            AccountViewModel(auth, FakePermissions(), EngineHealthMonitor(Clock.systemUTC()), deletion)
+            AccountViewModel(
+                auth,
+                FakePermissions(),
+                EngineHealthMonitor(Clock.systemUTC()),
+                deletion,
+                FakeSettingsRepository(),
+            )
     }
 
     @Test

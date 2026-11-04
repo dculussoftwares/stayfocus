@@ -13,10 +13,14 @@ interface BlockPresenter {
     /** Whether a block screen is on screen or on its way (activity launching, overlay up). */
     fun isShowing(): Boolean
 
-    /** A brief, untouchable heads-up over [pkg] that its budget is running out. Does nothing by default. */
+    /**
+     * A brief, untouchable heads-up over [pkg] that its budget is running out; [glow] adds the edge glow.
+     * Does nothing by default.
+     */
     fun showWarning(
         pkg: String,
         kind: WarningKind,
+        glow: Boolean = true,
     ) = Unit
 
     /** Removes the fallback overlay, if showing. */

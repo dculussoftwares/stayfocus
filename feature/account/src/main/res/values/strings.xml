@@ -6,6 +6,9 @@
     <string name="account_not_signed_in_hint">Sign in to keep blocks and linked phones in sync.</string>
     <string name="account_sign_in">Sign in</string>
     <string name="account_system_check">System check</string>
+    <string name="account_preferences">Preferences</string>
+    <string name="account_warning_glow">Warning glow</string>
+    <string name="account_warning_glow_hint">Glow along the screen edges when a limit is nearly up.</string>
     <string name="account_perm_usage">Usage access</string>
     <string name="account_perm_accessibility">Accessibility</string>
     <string name="account_perm_overlay">Display over apps</string>

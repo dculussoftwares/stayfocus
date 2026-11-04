@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -427,7 +428,7 @@ class BlockingEngine
         }
 
         /** Shows at most one warning per evaluation, and each kind only once per block until its budget resets. */
-        private fun warnIfDue(
+        private suspend fun warnIfDue(
             pkg: String,
             ctx: EvaluationContext,
         ) {
@@ -437,7 +438,7 @@ class BlockingEngine
             reached.forEach { (key, w) -> warned[key] = maxOf(w.kind, warned[key] ?: w.kind) }
             due.values.minByOrNull { it.remainingMs }?.let {
                 BlockingLog.log("Engine", "$pkg warning ${it.kind}, ${it.remainingMs} ms left")
-                presenter.showWarning(pkg, it.kind)
+                presenter.showWarning(pkg, it.kind, settings.settings.first().usageWarningGlow)
             }
         }
 

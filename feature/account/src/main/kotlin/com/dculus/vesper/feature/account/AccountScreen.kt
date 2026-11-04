@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -61,6 +62,7 @@ import com.dculus.vesper.core.ui.components.PillButtonVariant
 import com.dculus.vesper.core.ui.components.RoundIconButton
 import com.dculus.vesper.core.ui.components.V5BottomSheet
 import com.dculus.vesper.core.ui.components.V5Card
+import com.dculus.vesper.core.ui.components.V5Toggle
 import com.dculus.vesper.core.ui.icons.V5Icons
 import com.dculus.vesper.core.ui.theme.V5Screen
 import com.dculus.vesper.core.ui.theme.VesperTheme
@@ -75,6 +77,7 @@ internal const val ACCOUNT_SIGN_OUT_TAG = "account_sign_out"
 internal const val ACCOUNT_DELETE_TAG = "account_delete"
 internal const val ACCOUNT_BACK_TAG = "account_back"
 internal const val ACCOUNT_OSS_TAG = "account_oss"
+internal const val ACCOUNT_GLOW_TAG = "account_warning_glow"
 internal const val ACCOUNT_DISCLOSURE_AGREE_TAG = "account_disclosure_agree"
 
 internal const val GITHUB_URL = "https://github.com/dculussoftwares/vesper"
@@ -136,6 +139,7 @@ internal fun AccountRoute(
         version = version,
         onBack = onBack,
         onSignIn = onSignIn,
+        onWarningGlowChange = viewModel::setWarningGlow,
         onFix = { row ->
             when (row) {
                 HealthRow.Usage -> {
@@ -272,6 +276,7 @@ internal fun AccountScreen(
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
     onShareLog: (() -> Unit)? = null,
+    onWarningGlowChange: (Boolean) -> Unit = {},
 ) {
     V5Screen(darkContent = false, modifier = modifier) {
         Column(
@@ -301,6 +306,23 @@ internal fun AccountScreen(
                 )
                 V5Card(Modifier.fillMaxWidth(), padding = 0.dp) {
                     HealthRow.entries.forEach { row -> V5HealthItem(row, state, onFix) }
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.account_preferences),
+                    Modifier.padding(horizontal = 4.dp),
+                    style = VesperTheme.type.label,
+                    color = VesperTheme.colors.textSecondary,
+                )
+                V5Card(Modifier.fillMaxWidth()) {
+                    V5ToggleRow(
+                        title = stringResource(R.string.account_warning_glow),
+                        subtitle = stringResource(R.string.account_warning_glow_hint),
+                        checked = state.warningGlow,
+                        onCheckedChange = onWarningGlowChange,
+                        modifier = Modifier.testTag(ACCOUNT_GLOW_TAG),
+                    )
                 }
             }
             V5Card(Modifier.fillMaxWidth()) {
@@ -483,6 +505,29 @@ private fun V5HealthItem(
                 color = if (on) VesperTheme.colors.onlineText else VesperTheme.colors.onGradient,
             )
         }
+    }
+}
+
+@Composable
+private fun V5ToggleRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = VesperTheme.type.bodyL.copy(fontSize = 15.sp), color = VesperTheme.colors.ink)
+            Text(subtitle, style = VesperTheme.type.label, color = VesperTheme.colors.textSecondary)
+        }
+        V5Toggle(checked = checked, onCheckedChange = null)
     }
 }
 

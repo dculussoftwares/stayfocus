@@ -79,6 +79,8 @@ interface SettingsRepository {
 
     suspend fun setAiEnabled(enabled: Boolean)
 
+    suspend fun setUsageWarningGlow(enabled: Boolean)
+
     /** [mins] must be positive. */
     suspend fun setScreenTimeGoalMins(mins: Int)
 }

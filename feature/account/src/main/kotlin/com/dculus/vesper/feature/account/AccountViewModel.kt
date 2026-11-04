@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dculus.vesper.core.blocking.engine.EngineHealth
 import com.dculus.vesper.core.blocking.engine.EngineHealthMonitor
 import com.dculus.vesper.core.blocking.permissions.PermissionsRepository
+import com.dculus.vesper.core.data.repository.SettingsRepository
 import com.dculus.vesper.core.model.Permissions
 import com.dculus.vesper.core.sync.AccountDeletionRepository
 import com.dculus.vesper.core.sync.AuthFailure
@@ -35,6 +36,8 @@ internal data class AccountUiState(
     val engine: EngineHealth = EngineHealth(),
     /** False until the auth repository has emitted, so a persisted session is not shown as signed out. */
     val authLoaded: Boolean = true,
+    /** Whether the usage warning glows along the screen edges. */
+    val warningGlow: Boolean = true,
 )
 
 /** Where the delete-account flow is. */
@@ -76,6 +79,7 @@ internal fun AuthUser.initial(): String =
     (shownName() ?: email)?.firstOrNull { it.isLetterOrDigit() }?.uppercase() ?: "?"
 
 @HiltViewModel
+@Suppress("TooManyFunctions") // sign-out, delete flow and the preference toggles
 class AccountViewModel
     @Inject
     constructor(
@@ -83,13 +87,19 @@ class AccountViewModel
         permissions: PermissionsRepository,
         engine: EngineHealthMonitor,
         private val deletion: AccountDeletionRepository,
+        private val settings: SettingsRepository,
     ) : ViewModel() {
         private val deleteState = MutableStateFlow(DeleteUiState())
         internal val delete: StateFlow<DeleteUiState> = deleteState.asStateFlow()
 
         internal val state: StateFlow<AccountUiState> =
-            combine(auth.currentUser, permissions.observe(), engine.health) { user, perms, health ->
-                AccountUiState(user, perms, health, authLoaded = true)
+            combine(
+                auth.currentUser,
+                permissions.observe(),
+                engine.health,
+                settings.settings,
+            ) { user, perms, health, prefs ->
+                AccountUiState(user, perms, health, authLoaded = true, warningGlow = prefs.usageWarningGlow)
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -99,6 +109,10 @@ class AccountViewModel
                     authLoaded = false,
                 ),
             )
+
+        fun setWarningGlow(enabled: Boolean) {
+            viewModelScope.launch { settings.setUsageWarningGlow(enabled) }
+        }
 
         /** Signs out. Blocks stay on this device; nothing else is stored per account yet (cached devices: M7). */
         fun signOut() {

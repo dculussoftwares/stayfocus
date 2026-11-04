@@ -190,6 +190,7 @@ class AppNavigationTest {
             fakePermissions,
             EngineHealthMonitor(Clock.systemUTC()),
             FakeAccountDeletionRepository(accountAuth) {},
+            FakeSettingsRepository(),
         )
     private val homeViewModel =
         HomeViewModel(

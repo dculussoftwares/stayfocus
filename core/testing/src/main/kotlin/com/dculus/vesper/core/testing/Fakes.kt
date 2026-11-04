@@ -121,6 +121,8 @@ class FakeSettingsRepository(
 
     override suspend fun setAiEnabled(enabled: Boolean) = state.update { it.copy(aiEnabled = enabled) }
 
+    override suspend fun setUsageWarningGlow(enabled: Boolean) = state.update { it.copy(usageWarningGlow = enabled) }
+
     override suspend fun setScreenTimeGoalMins(mins: Int) {
         require(mins > 0) { "mins must be positive" }
         goalMins.value = mins

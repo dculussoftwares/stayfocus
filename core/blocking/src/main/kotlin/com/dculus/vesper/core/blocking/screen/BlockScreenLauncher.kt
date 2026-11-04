@@ -108,6 +108,7 @@ class BlockScreenLauncher
         override fun showWarning(
             pkg: String,
             kind: WarningKind,
+            glow: Boolean,
         ) {
             handler.post {
                 val svc = surface()
@@ -133,7 +134,7 @@ class BlockScreenLauncher
                         pill = it
                         pillSurface = svc
                     }
-                shown.show(text, urgent, if (urgent) ONE_MIN_SHOWN_MS else HALF_SHOWN_MS)
+                shown.show(text, urgent, if (urgent) ONE_MIN_SHOWN_MS else HALF_SHOWN_MS, glow)
             }
         }
 

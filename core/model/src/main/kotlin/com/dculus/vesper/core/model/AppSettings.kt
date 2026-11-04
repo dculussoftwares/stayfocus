@@ -12,4 +12,6 @@ data class AppSettings(
     /** When the user agreed to the accessibility disclosure; null until then. */
     val accessibilityConsentAt: Instant? = null,
     val aiEnabled: Boolean = false,
+    /** Whether the usage warning glows along the screen edges; off leaves only the centre chip. */
+    val usageWarningGlow: Boolean = true,
 )
