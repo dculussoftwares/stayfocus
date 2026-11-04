@@ -125,16 +125,29 @@ class BlockScreenLauncher
                 }
                 BlockingLog.log("Launcher", "warning $kind for $pkg shown")
                 val app = appLabel(pkg) ?: pkg
-                val urgent = kind == WarningKind.ONE_MIN
+                val urgent = kind != WarningKind.HALF
                 val text =
-                    context.getString(if (urgent) R.string.usage_warning_one_min else R.string.usage_warning_half, app)
+                    context.getString(
+                        when (kind) {
+                            WarningKind.HALF -> R.string.usage_warning_half
+                            WarningKind.ONE_MIN -> R.string.usage_warning_one_min
+                            WarningKind.FINAL -> R.string.usage_warning_final
+                        },
+                        app,
+                    )
                 if (pillSurface !== svc) removePill()
                 val shown =
                     pill ?: UsageWarningPill(svc, handler).also {
                         pill = it
                         pillSurface = svc
                     }
-                shown.show(text, urgent, if (urgent) ONE_MIN_SHOWN_MS else HALF_SHOWN_MS, glow)
+                val shownMs =
+                    when (kind) {
+                        WarningKind.HALF -> HALF_SHOWN_MS
+                        WarningKind.ONE_MIN -> ONE_MIN_SHOWN_MS
+                        WarningKind.FINAL -> FINAL_SHOWN_MS
+                    }
+                shown.show(text, urgent, shownMs, glow)
             }
         }
 
@@ -256,5 +269,6 @@ class BlockScreenLauncher
             const val PUSH_BACK_WINDOW_MS = 2_000L
             const val HALF_SHOWN_MS = 4_000L
             const val ONE_MIN_SHOWN_MS = 6_000L
+            const val FINAL_SHOWN_MS = 3_000L
         }
     }

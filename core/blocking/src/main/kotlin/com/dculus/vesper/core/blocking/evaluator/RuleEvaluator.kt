@@ -20,6 +20,7 @@ object RuleEvaluator {
 
     /** Slack so a warning is not missed when the wake-up lands a few ms before its threshold. */
     private const val WARNING_SLACK_MS = 1_000L
+    private const val FINAL_MS = 3_000L
 
     /** Order in which equally long blocks are reported. */
     private val TIE_BREAK =
@@ -76,6 +77,10 @@ object RuleEvaluator {
                 val (total, remaining) = budget(ctx, block) ?: return@mapNotNull null
                 val kind =
                     when {
+                        total >= ONE_MIN_MS && remaining <= FINAL_MS + WARNING_SLACK_MS -> {
+                            WarningKind.FINAL
+                        }
+
                         total > ONE_MIN_MS + WARNING_SLACK_MS && remaining <= ONE_MIN_MS + WARNING_SLACK_MS -> {
                             WarningKind.ONE_MIN
                         }
@@ -129,6 +134,7 @@ object RuleEvaluator {
         val (total, remaining) = budget(ctx, block) ?: return emptyList()
         val now = ctx.now.toInstant()
         return listOfNotNull(
+            (remaining - FINAL_MS).takeIf { total >= ONE_MIN_MS },
             (remaining - ONE_MIN_MS).takeIf { total > ONE_MIN_MS + WARNING_SLACK_MS },
             (remaining - total / 2).takeIf { total >= ONE_MIN_MS },
         ).filter { it > 0 }

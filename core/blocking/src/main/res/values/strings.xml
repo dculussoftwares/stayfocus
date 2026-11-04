@@ -34,4 +34,5 @@
     <string name="block_reason_all_locked">Everything is locked now</string>
     <string name="usage_warning_half">Half your time on %1$s is used</string>
     <string name="usage_warning_one_min">1 min left on %1$s</string>
+    <string name="usage_warning_final">%1$s locks in 3 seconds</string>
 </resources>

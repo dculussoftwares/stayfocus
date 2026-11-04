@@ -36,8 +36,8 @@ data class CycleState(
 
 enum class BlockReason { BREAK, FOCUS, NOW, LIMIT_DAILY, LIMIT_HOURLY, CYCLE_REST, SCHEDULE, MANUAL_LOCK, ALL_LOCKED }
 
-/** How far into its budget a limit or use-then-lock block is. [ONE_MIN] is the more urgent. */
-enum class WarningKind { HALF, ONE_MIN }
+/** How far into its budget a limit or use-then-lock block is, least to most urgent. [FINAL] is 3 s before the block. */
+enum class WarningKind { HALF, ONE_MIN, FINAL }
 
 /** [blockId] has reached [kind]; [remainingMs] is what is left of its budget. */
 data class UsageWarning(

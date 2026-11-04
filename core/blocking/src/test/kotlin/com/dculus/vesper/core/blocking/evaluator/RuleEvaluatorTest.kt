@@ -841,6 +841,17 @@ class RuleEvaluatorTest {
     }
 
     @Test
+    fun `final warning three seconds before a limit is spent`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.ONE_MIN, 5_000L)), limitWarnings(30, 30.0 - 5.0 / 60))
+        assertEquals(listOf(UsageWarning("b1", WarningKind.FINAL, 3_000L)), limitWarnings(30, 30.0 - 3.0 / 60))
+    }
+
+    @Test
+    fun `a one minute limit also gets the final warning`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.FINAL, 3_000L)), limitWarnings(1, 1.0 - 3.0 / 60))
+    }
+
+    @Test
     fun `no warning once the limit is spent`() {
         assertEquals(emptyList(), limitWarnings(30, 30.0))
     }
