@@ -54,6 +54,11 @@ for flow in "${files[@]}"; do
     result="fail"
     failed=$((failed + 1))
     adb exec-out screencap -p >"$OUT_DIR/$name-failure.png" || true
+    # Also print the crash buffer and the text on screen, so a failure can be read from the job log alone.
+    echo "--- crash log ---"
+    adb logcat -d -b crash | tail -n 60 || true
+    echo "--- text on screen ---"
+    adb exec-out uiautomator dump /dev/tty 2>/dev/null | grep -o 'text="[^"]\+"' | head -n 40 || true
   fi
   elapsed=$(($(date +%s) - start))
   # SIGINT lets screenrecord finalise the mp4.
