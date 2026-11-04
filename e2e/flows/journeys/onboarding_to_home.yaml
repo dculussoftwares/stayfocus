@@ -11,6 +11,6 @@ tags:
 - assertVisible: "Continue with Google"
 - tapOn: "Continue without an account"
 - assertVisible: "Allow"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - assertVisible: "Screen time today"
 - assertVisible: "Take a break"

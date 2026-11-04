@@ -23,7 +23,7 @@ class KidsLinkScreenTest {
     @Test
     fun showsTheCopyTheQrAndTheCountdown() {
         composeRule.setContent { KidsLinkScreen(KidsLinkState.Waiting("stayfocused://link?t=abc", "4:52"), {}) }
-        composeRule.onNodeWithText("Stay Focused Kids").assertIsDisplayed()
+        composeRule.onNodeWithText("Vesper Kids").assertIsDisplayed()
         composeRule.onNodeWithText("Show this to\nyour parent").assertIsDisplayed()
         composeRule.onNodeWithText("They scan it from their phone.").assertIsDisplayed()
         composeRule.onNodeWithContentDescription("QR code for the parent to scan").assertIsDisplayed()

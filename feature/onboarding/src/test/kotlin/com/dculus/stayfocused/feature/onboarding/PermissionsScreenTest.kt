@@ -60,7 +60,7 @@ class PermissionsScreenTest {
             Permissions(usage = true, accessibility = false, overlay = true, notifications = true),
             onContinue = { continued++ },
         )
-        composeRule.onNodeWithText("Start using Stay Focused").assertIsDisplayed()
+        composeRule.onNodeWithText("Start using Vesper").assertIsDisplayed()
         composeRule.onNodeWithTag(PERMS_CONTINUE_TAG).assertIsEnabled().performClick()
         assertEquals(1, continued)
         // Accessibility stays on offer as an optional upgrade.
@@ -93,7 +93,7 @@ class PermissionsScreenTest {
     @Test
     fun allSet() {
         screen(Permissions(usage = true, accessibility = true, overlay = true, notifications = true))
-        composeRule.onNodeWithText("Start using Stay Focused").assertIsDisplayed()
+        composeRule.onNodeWithText("Start using Vesper").assertIsDisplayed()
         composeRule.onNodeWithTag(PERMS_CONTINUE_TAG).assertIsEnabled()
         composeRule.onAllNodesWithText("Continue for now").assertCountEquals(0)
         composeRule.onRoot().captureRoboImage("src/test/screenshots/PermissionsAllSet.png")

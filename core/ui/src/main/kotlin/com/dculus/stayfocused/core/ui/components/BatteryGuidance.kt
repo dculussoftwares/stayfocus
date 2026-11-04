@@ -63,11 +63,11 @@ enum class OemFamily(
 }
 
 /**
- * OEM-specific steps for keeping Stay Focused alive in the background, plus a button for the battery optimisation
+ * OEM-specific steps for keeping Vesper alive in the background, plus a button for the battery optimisation
  * list and a link to dontkillmyapp.com, built from v5 tokens (no container: host it in [BatteryGuidanceSheet]).
  * Navigation is the caller's job: [onOpenBatterySettings] and [onOpenGuide] receive the click (the guide with the
- * URL to open). [appName] defaults to the host app's label, so the steps name "Stay Focused" or
- * "Stay Focused Kids" as installed.
+ * URL to open). [appName] defaults to the host app's label, so the steps name "Vesper" or
+ * "Vesper Kids" as installed.
  */
 @Composable
 fun BatteryGuidance(
@@ -140,7 +140,7 @@ internal fun BatteryGuidancePreview() {
                 onOpenBatterySettings = {},
                 onOpenGuide = {},
                 family = OemFamily.XIAOMI,
-                appName = "Stay Focused",
+                appName = "Vesper",
             )
         }
     }

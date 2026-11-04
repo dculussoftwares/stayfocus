@@ -62,8 +62,8 @@ class InstalledAppsRepositoryTest {
             entries += launcher("com.zed", "Zed")
             entries += launcher("com.apple", "apple")
             entries += launcher("com.apple", "apple", activity = "Second")
-            entries += launcher("com.dculus.stayfocused", "Stay Focused")
-            entries += launcher("com.dculus.stayfocused.kids", "Stay Focused Kids")
+            entries += launcher("com.dculus.stayfocused", "Vesper")
+            entries += launcher("com.dculus.stayfocused.kids", "Vesper Kids")
             entries += launcher("com.banana", "Banana")
             publish()
 

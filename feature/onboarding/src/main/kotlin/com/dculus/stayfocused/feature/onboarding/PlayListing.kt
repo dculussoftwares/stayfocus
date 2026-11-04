@@ -11,7 +11,7 @@ internal const val KIDS_WEB_URI = "https://play.google.com/store/apps/details?id
 
 private fun viewIntent(uri: String) = Intent(Intent.ACTION_VIEW, Uri.parse(uri)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
-/** Opens the Stay Focused Kids Play listing: `market://` first, the `https` page when no Play Store is installed. */
+/** Opens the Vesper Kids Play listing: `market://` first, the `https` page when no Play Store is installed. */
 internal fun openKidsListing(context: Context) {
     try {
         context.startActivity(viewIntent(KIDS_MARKET_URI))

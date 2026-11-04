@@ -77,7 +77,7 @@ data class RemoteDevice(
     val deviceId: String,
 )
 
-// Stay Focused Kids: Permissions (first run only), then Link (QR) → Consent → Home.
+// Vesper Kids: Permissions (first run only), then Link (QR) → Consent → Home.
 
 @Serializable
 data object KidsPermissions

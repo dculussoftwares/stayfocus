@@ -1,4 +1,4 @@
-# Stay Focused Cloud Functions
+# Vesper Cloud Functions
 
 TypeScript, Node 22, 2nd-gen Functions. Every callable is created with `secureCallable()` (`src/lib/secureCallable.ts`):
 App Check enforced (token consumed for one-shot operations), sign-in required, per-uid rate limit, `zod` input

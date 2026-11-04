@@ -108,7 +108,7 @@ internal fun V5ShowcaseTokens() {
         StayFocusedTheme.type.styles().forEach { (name, style) ->
             Column {
                 Text(name, style = StayFocusedTheme.type.tag, color = colors.textSecondary)
-                Text("Stay Focused 0123", style = style, color = colors.ink)
+                Text("Vesper 0123", style = style, color = colors.ink)
             }
         }
         Text("Weights", style = StayFocusedTheme.type.title, color = colors.ink)

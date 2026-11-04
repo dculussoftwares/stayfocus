@@ -70,7 +70,7 @@ class DevicesScreenTest {
         composeRule.onNodeWithText("THIS PHONE · PIXEL 8 · PARENT · 1 LINKED").assertIsDisplayed()
         composeRule
             .onNodeWithText(
-                "Install Stay Focused Kids on their phone. It shows a code, and you scan it from here.",
+                "Install Vesper Kids on their phone. It shows a code, and you scan it from here.",
             ).assertExists()
         composeRule.onRoot().captureRoboImage("src/test/screenshots/DevicesOnline.png")
     }

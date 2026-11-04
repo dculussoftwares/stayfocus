@@ -454,9 +454,9 @@ class AppNavigationTest {
         // The user comes back from Settings with everything granted.
         fakePermissions.grant(usage = true, accessibility = true, overlay = true, notifications = true)
         composeRule.waitUntil(5_000) {
-            composeRule.onAllNodesWithText("Start using Stay Focused").fetchSemanticsNodes().isNotEmpty()
+            composeRule.onAllNodesWithText("Start using Vesper").fetchSemanticsNodes().isNotEmpty()
         }
-        composeRule.onNodeWithText("Start using Stay Focused").performClick()
+        composeRule.onNodeWithText("Start using Vesper").performClick()
         composeRule.waitForIdle()
         assertTrue(currentIs(Home::class))
         composeRule.onNodeWithText("All set").assertIsDisplayed()

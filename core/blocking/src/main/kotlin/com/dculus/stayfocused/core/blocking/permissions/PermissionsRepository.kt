@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Live state of the permissions Stay Focused needs. */
+/** Live state of the permissions Vesper needs. */
 interface PermissionsRepository {
     /** Emits the current state, then again whenever the app returns to the foreground and something changed. */
     fun observe(): Flow<Permissions>

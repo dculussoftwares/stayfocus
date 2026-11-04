@@ -29,7 +29,7 @@ data class V5Colors(
     val greenLight: Color = Color(0xFFB9DE6A),
     /** Scan line gradient centre. */
     val greenScanLine: Color = Color(0xFFC8E88F),
-    /** "Stay Focused Kids" label on the consent screen. */
+    /** "Vesper Kids" label on the consent screen. */
     val greenLabel: Color = Color(0xFF23772F),
     val success: Color = Color(0xFF2F9E45),
     val online: Color = Color(0xFF34C759),

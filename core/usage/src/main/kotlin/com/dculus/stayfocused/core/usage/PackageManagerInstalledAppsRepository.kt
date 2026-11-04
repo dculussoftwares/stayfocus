@@ -22,7 +22,7 @@ import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Packages of the Stay Focused apps themselves; never offered for blocking. */
+/** Packages of the Vesper apps themselves; never offered for blocking. */
 internal val OwnPackages: Set<String> = setOf("com.dculus.stayfocused", "com.dculus.stayfocused.kids")
 
 @Singleton

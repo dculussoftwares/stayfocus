@@ -50,7 +50,7 @@ class LinkScanScreenTest {
         show(CameraAccess.Granted)
         composeRule.onNodeWithText("Scan their code").assertIsDisplayed()
         composeRule
-            .onNodeWithText("Open Stay Focused Kids on your child's phone and point your camera at the code.")
+            .onNodeWithText("Open Vesper Kids on your child's phone and point your camera at the code.")
             .assertIsDisplayed()
         composeRule.onNodeWithTag(LINK_SCAN_VIEWFINDER_TAG).assertIsDisplayed()
         composeRule.onNodeWithText("Looking for a code…").assertIsDisplayed()

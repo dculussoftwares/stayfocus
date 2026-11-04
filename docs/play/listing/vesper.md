@@ -1,13 +1,13 @@
-# Stay Focused: store listing (draft)
+# Vesper: store listing (draft)
 
-**Title (max 30):** Stay Focused: App Blocker
+**Title (max 30):** Vesper: Calm App Blocker
 
 **Short description (max 80):**
 Block distracting apps with time limits, schedules and breaks. Free and open source.
 
 **Full description (max 4000):**
 
-Stay Focused is a free, open-source app blocker that helps you take back your attention.
+Vesper is a free, open-source app blocker that helps you take back your attention.
 
 Set the rules you want and let the app hold you to them:
 - Time limit: cap how long you spend in an app each day.
@@ -22,7 +22,7 @@ Describe a block in your own words (optional AI): type a sentence about what to 
 block for you. The draft is only a suggestion. It is marked "AI DRAFT" and nothing turns on until you check it and confirm.
 Your sentence is sent to Google's Gemini model through Firebase AI Logic to produce the draft.
 
-Link a child's phone (optional): if you are a parent, you can install Stay Focused Kids on your child's phone and link
+Link a child's phone (optional): if you are a parent, you can install Vesper Kids on your child's phone and link
 it by scanning a QR code on that phone. The child's phone shows a clear notice that it is managed, and linking needs the
 child's phone to approve it. You can then set blocks, lock apps and start focus sessions from your phone, and see
 the child's app usage.
@@ -38,4 +38,4 @@ Privacy: no ads, no analytics, no advertising ID. You can use the app without an
 phone except an AI sentence if you use that feature. Signing in is only needed to link a child's phone. You can delete
 your account and data in the app. Privacy policy and source code are linked from this page.
 
-Stay Focused is licensed under GPL-3.0.
+Vesper is licensed under GPL-3.0.

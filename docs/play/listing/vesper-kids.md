@@ -1,18 +1,18 @@
-# Stay Focused Kids: store listing (draft)
+# Vesper Kids: store listing (draft)
 
-**Title (max 30):** Stay Focused Kids
+**Title (max 30):** Vesper Kids
 
 **Short description (max 80):**
 Companion app for parents: manage app limits on your child's phone, openly.
 
 **Full description (max 4000):**
 
-Stay Focused Kids is the child-phone companion to Stay Focused. It is for parents and guardians who want to manage
+Vesper Kids is the child-phone companion to Vesper. It is for parents and guardians who want to manage
 how their child uses their own phone, and it works openly: the child can see that it is installed and that the phone
 is managed.
 
-You need the Stay Focused app on your own phone. Install Stay Focused Kids on your child's phone, open it, and scan the
-QR code it shows with Stay Focused. Both phones show a matching 6-digit code, and the child's phone asks for
+You need the Vesper app on your own phone. Install Vesper Kids on your child's phone, open it, and scan the
+QR code it shows with Vesper. Both phones show a matching 6-digit code, and the child's phone asks for
 approval before it is linked. Nothing is monitored until that approval.
 
 What the parent can do from their phone:

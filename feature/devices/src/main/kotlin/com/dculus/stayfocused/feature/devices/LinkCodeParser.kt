@@ -11,7 +11,7 @@ internal object LinkCodeParser {
     // 128 random bits as unpadded base64url is 22 characters; allow some slack for format changes.
     private val TOKEN = Regex("[A-Za-z0-9_-]{16,128}")
 
-    /** The token, or null when [raw] is not a Stay Focused link code. */
+    /** The token, or null when [raw] is not a Vesper link code. */
     fun parseToken(raw: String): String? {
         val uri = runCatching { URI(raw.trim()) }.getOrNull()
         val query = uri?.takeIf { it.scheme == SCHEME && it.host == HOST }?.rawQuery

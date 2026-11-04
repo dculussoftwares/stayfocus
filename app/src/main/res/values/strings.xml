@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Stay Focused</string>
+    <string name="app_name">Vesper</string>
     <!-- Not shown to users: read by Play reviewers (specialUse foreground service subtype). -->
     <string name="blocking_service_use_case">Digital wellbeing app blocker: detects which app the user opens, using Usage Access, so it can show the block screen the user set up. Runs only while blocking rules are active.</string>
     <string name="tab_home">Home</string>

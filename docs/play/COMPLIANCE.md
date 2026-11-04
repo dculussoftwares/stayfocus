@@ -1,6 +1,6 @@
 # Play compliance checklist (Phase 1)
 
-Mirror of section 8 of the design handoff (`design_handoff_stay_focused_phase1/Stay Focused Phase Plan.dc.html`).
+Mirror of section 8 of the design handoff (`design_handoff_stay_focused_phase1/Vesper Phase Plan.dc.html`).
 Items marked **Automated** are enforced in CI by `./gradlew verifyManifests` (part of `ciCheck`), which audits the merged
 release manifests of `:app` and `:kids` with the rules in
 [`build-logic/convention/src/main/kotlin/ManifestAudit.kt`](../../build-logic/convention/src/main/kotlin/ManifestAudit.kt) (tests: [`build-logic/convention/src/test/kotlin/ManifestAuditTest.kt`](../../build-logic/convention/src/test/kotlin/ManifestAuditTest.kt),

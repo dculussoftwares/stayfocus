@@ -77,12 +77,12 @@ class BatteryGuidanceTest {
         composeRule.setContent {
             CompositionLocalProvider(LocalInspectionMode provides true) {
                 StayFocusedTheme {
-                    BatteryGuidance({}, {}, family = OemFamily.XIAOMI, appName = "Stay Focused Kids")
+                    BatteryGuidance({}, {}, family = OemFamily.XIAOMI, appName = "Vesper Kids")
                 }
             }
         }
-        composeRule.onNodeWithText("Keep Stay Focused Kids running").assertExists()
-        composeRule.onNodeWithText("Open Settings, then Apps, then Manage apps, then Stay Focused Kids.").assertExists()
+        composeRule.onNodeWithText("Keep Vesper Kids running").assertExists()
+        composeRule.onNodeWithText("Open Settings, then Apps, then Manage apps, then Vesper Kids.").assertExists()
     }
 
     @Test

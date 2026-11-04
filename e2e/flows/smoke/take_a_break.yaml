@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - assertVisible: "Screen time today"
 - tapOn: "Take a break"
 - assertVisible: "Start 30 min break"
