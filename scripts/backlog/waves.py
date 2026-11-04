@@ -115,7 +115,7 @@ def render(stories: dict[str, dict]) -> str:
 def issue_states() -> dict[str, dict]:
     """Story id -> {number, state} from GitHub (titles start with "[Mx-yy]")."""
     out = subprocess.run(
-        ["gh", "issue", "list", "--repo", "dculussoftwares/stayfocus", "--state", "all", "--limit", "300",
+        ["gh", "issue", "list", "--repo", "dculussoftwares/vesper", "--state", "all", "--limit", "300",
          "--label", "type:story", "--json", "number,title,state"],
         check=True, capture_output=True, text=True,
     ).stdout
@@ -131,7 +131,7 @@ def handed_over(number: int) -> bool:
     """True when a merged PR says `Refs #<number>`: story-worker's handoff PR for a needs-human story (its repo part
     is done and the issue stays open for a person). Claiming the issue alone isn't enough: the worker may have stopped."""
     out = subprocess.run(
-        ["gh", "pr", "list", "--repo", "dculussoftwares/stayfocus", "--state", "merged", "--limit", "5",
+        ["gh", "pr", "list", "--repo", "dculussoftwares/vesper", "--state", "merged", "--limit", "5",
          "--search", f'"Refs #{number}" in:body', "--json", "number"],
         check=True, capture_output=True, text=True,
     ).stdout

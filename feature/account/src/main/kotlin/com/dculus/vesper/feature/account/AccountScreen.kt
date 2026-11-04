@@ -77,9 +77,9 @@ internal const val ACCOUNT_BACK_TAG = "account_back"
 internal const val ACCOUNT_OSS_TAG = "account_oss"
 internal const val ACCOUNT_DISCLOSURE_AGREE_TAG = "account_disclosure_agree"
 
-internal const val GITHUB_URL = "https://github.com/dculussoftwares/stayfocus"
-internal const val LICENSE_URL = "https://github.com/dculussoftwares/stayfocus/blob/main/LICENSE"
-internal const val PRIVACY_URL = "https://dculussoftwares.github.io/stayfocus/privacy.html"
+internal const val GITHUB_URL = "https://github.com/dculussoftwares/vesper"
+internal const val LICENSE_URL = "https://github.com/dculussoftwares/vesper/blob/main/LICENSE"
+internal const val PRIVACY_URL = "https://dculussoftwares.github.io/vesper/privacy.html"
 
 private val OffLed = Color(0xFF3A3E35)
 

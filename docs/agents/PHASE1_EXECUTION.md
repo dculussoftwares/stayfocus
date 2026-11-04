@@ -72,7 +72,7 @@ M13 extras + v2 removal). Run it exactly like Phase 1: `/wave 17`, `/clear`, `/w
    `python3 scripts/backlog/board.py ready` lists the Ready cards (`[M1-01]` at the start).
 2. The agent's `gh` account has **write** access to the repo and the `project` + `workflow` scopes
    (`gh auth refresh -h github.com -s project,workflow`).
-3. **CodeRabbit** is enabled for `dculussoftwares/stayfocus` (org Settings → GitHub Apps → coderabbitai → Configure →
+3. **CodeRabbit** is enabled for `dculussoftwares/vesper` (org Settings → GitHub Apps → coderabbitai → Configure →
    Repository access). Its behaviour is in `.coderabbit.yaml`: request-changes workflow on, authors can't self-approve.
 4. The machine has the tooling the wave needs: JDK 17 and the Android SDK (`ANDROID_HOME`) from wave 1; an emulator for
    launch/UI criteria; Terraform for `infra` stories; Node for `firebase/` (from M7); Maestro for E2E flows (from M1-16).
