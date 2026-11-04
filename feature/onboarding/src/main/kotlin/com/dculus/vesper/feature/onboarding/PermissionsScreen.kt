@@ -77,7 +77,7 @@ internal const val PERMS_RESTRICTED_APP_INFO_TAG = "perms_restricted_app_info"
 internal const val PERMS_RESTRICTED_ACCESSIBILITY_TAG = "perms_restricted_accessibility"
 internal const val PERMS_DISCLOSURE_AGREE_TAG = ACCESSIBILITY_DISCLOSURE_AGREE_TAG
 internal const val PERMS_DISCLOSURE_NO_TAG = ACCESSIBILITY_DISCLOSURE_NO_TAG
-internal const val PRIVACY_URL = "https://dculussoftwares.github.io/vesper/privacy.html"
+internal const val PRIVACY_URL = "https://dculussoftwares.github.io/stayfocus/privacy.html"
 
 internal fun permsAllowTag(row: PermissionRow) = "perms_allow_${row.tag}"
 

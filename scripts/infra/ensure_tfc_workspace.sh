@@ -41,7 +41,7 @@ case "$status" in
     fi
     echo "Creating HCP workspace ${TF_CLOUD_ORGANIZATION}/${TF_WORKSPACE} (execution mode: local)"
     curl -sS --fail-with-body "${auth[@]}" -X POST "${api}/organizations/${TF_CLOUD_ORGANIZATION}/workspaces" \
-      -d "{\"data\":{\"type\":\"workspaces\",\"attributes\":{\"name\":\"${TF_WORKSPACE}\",\"execution-mode\":\"local\",\"description\":\"Managed from GitHub Actions (${GITHUB_REPOSITORY:-dculussoftwares/vesper})\"}}}" \
+      -d "{\"data\":{\"type\":\"workspaces\",\"attributes\":{\"name\":\"${TF_WORKSPACE}\",\"execution-mode\":\"local\",\"description\":\"Managed from GitHub Actions (${GITHUB_REPOSITORY:-dculussoftwares/stayfocus})\"}}}" \
       > /dev/null
     ;;
   *)

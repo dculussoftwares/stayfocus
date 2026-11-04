@@ -41,7 +41,7 @@ These are the only manual steps, and they create credentials, not infrastructure
    Preferred option: `GITHUB_TOKEN` can't
    access org-level Projects v2, and this is a public repo, so use an App rather than a personal access token:
    create an org-owned GitHub App "stayfocus-automation" with *Organization → Projects: Read and write* and
-   *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/vesper` only. Then add:
+   *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/stayfocus` only. Then add:
    - variable `BACKLOG_APP_CLIENT_ID` = the App's client ID
    - secret `BACKLOG_APP_PRIVATE_KEY` = an App private key
 
