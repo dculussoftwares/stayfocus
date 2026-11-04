@@ -1,0 +1,31 @@
+package com.dculus.vesper.kids
+
+import android.app.Application
+import com.dculus.vesper.core.blocking.BlockingLog
+import com.dculus.vesper.core.sync.AppCheckInstaller
+import com.dculus.vesper.kids.monitoring.MonitoringLauncher
+import com.dculus.vesper.kids.monitoring.ParentRulesCleaner
+import dagger.hilt.android.HiltAndroidApp
+import javax.inject.Inject
+
+@HiltAndroidApp
+class VesperKidsApp : Application() {
+    @Inject
+    lateinit var appCheckInstaller: AppCheckInstaller
+
+    @Inject
+    lateinit var monitoringLauncher: MonitoringLauncher
+
+    @Inject
+    internal lateinit var rulesCleaner: ParentRulesCleaner
+
+    override fun onCreate() {
+        super.onCreate()
+        BlockingLog.init(this) // TEMPORARY: debug-only diagnostics; in release it deletes a leftover log
+        appCheckInstaller.install()
+        // No-op until a parent is linked; afterwards keeps the "Managed by" notification up.
+        monitoringLauncher.sync()
+        // An unlink the process died in the middle of must still end the parent's rules.
+        rulesCleaner.resume()
+    }
+}

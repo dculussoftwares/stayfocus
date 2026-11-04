@@ -12,8 +12,8 @@ locals {
   ]
 
   apps = {
-    app  = { package = "com.dculus.stayfocused", name = "Stay Focused" }
-    kids = { package = "com.dculus.stayfocused.kids", name = "Stay Focused Kids" }
+    app  = { package = "com.dculus.vesper", name = "Vesper" }
+    kids = { package = "com.dculus.vesper.kids", name = "Vesper Kids" }
   }
 }
 
@@ -102,7 +102,7 @@ resource "google_billing_budget" "dev" {
   count = var.billing_account != "" ? 1 : 0
 
   billing_account = var.billing_account
-  display_name    = "Stay Focused ${var.env} budget"
+  display_name    = "Vesper ${var.env} budget"
 
   budget_filter {
     projects = ["projects/${data.google_project.this.number}"]

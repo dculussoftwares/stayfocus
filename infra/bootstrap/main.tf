@@ -4,7 +4,7 @@
 resource "google_project" "env" {
   for_each = var.environments
 
-  name            = "Stay Focused ${each.key}"
+  name            = "Vesper ${each.key}"
   project_id      = each.value.project_id
   org_id          = var.org_id != "" ? var.org_id : null
   billing_account = var.billing_account

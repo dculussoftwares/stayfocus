@@ -23,8 +23,8 @@
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleTask"
-            android:taskAffinity="com.dculus.stayfocused.block"
-            android:theme="@style/Theme.StayFocused.Block" />
+            android:taskAffinity="com.dculus.vesper.block"
+            android:theme="@style/Theme.Vesper.Block" />
     </application>
 
 </manifest>

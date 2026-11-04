@@ -4,7 +4,7 @@
 |---|---|---|---|
 | All text (display, body, labels, numbers) | Plus Jakarta Sans 200-800 (variable `wght`) | SIL OFL 1.1 | Yes, `core/ui/src/main/res/font/plus_jakarta_sans.ttf` |
 
-The design system (`com.dculus.stayfocused.core.ui`, spec in [`docs/design/V5_SPEC.md`](design/V5_SPEC.md)) uses a single
+The design system (`com.dculus.vesper.core.ui`, spec in [`docs/design/V5_SPEC.md`](design/V5_SPEC.md)) uses a single
 family, **Plus Jakarta Sans** by Tokotype, from [Google Fonts](https://fonts.google.com/specimen/Plus+Jakarta+Sans) (SIL OFL 1.1, so it can
 live in this repo). It is bundled as the variable font `core/ui/src/main/res/font/plus_jakarta_sans.ttf` and loaded at weights 200,
 300, 400, 500, 600, 700 and 800 by `PlusJakartaSansFontFamily`. Nothing is downloaded at runtime and there is no fallback, so

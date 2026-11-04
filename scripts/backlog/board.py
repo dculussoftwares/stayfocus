@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 OWNER = os.environ.get("BACKLOG_OWNER", "dculussoftwares")
-REPO = os.environ.get("BACKLOG_REPO", "stayfocus")
+REPO = os.environ.get("BACKLOG_REPO", "vesper")
 PROJECT_NUMBER = int(os.environ.get("BACKLOG_PROJECT_NUMBER") or 11)  # https://github.com/orgs/dculussoftwares/projects/11
 
 

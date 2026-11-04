@@ -1,14 +1,14 @@
 plugins {
-    id("stayfocused.android.application.compose")
-    id("stayfocused.android.hilt")
-    id("stayfocused.android.instrumented-test")
+    id("vesper.android.application.compose")
+    id("vesper.android.hilt")
+    id("vesper.android.instrumented-test")
 }
 
 android {
-    namespace = "com.dculus.stayfocused"
+    namespace = "com.dculus.vesper"
 
     defaultConfig {
-        applicationId = "com.dculus.stayfocused"
+        applicationId = "com.dculus.vesper"
     }
 
     testOptions {

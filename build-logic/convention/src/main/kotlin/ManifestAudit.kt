@@ -23,9 +23,9 @@ object ManifestAudit {
 
     // Typed FGS permissions only: the bare FOREGROUND_SERVICE one is injected by Firebase/Play services libraries.
     private const val FGS_TYPED_PERMISSION_PREFIX = "android.permission.FOREGROUND_SERVICE_"
-    private const val MONITORING_SERVICE = "com.dculus.stayfocused.kids.monitoring.MonitoringService"
+    private const val MONITORING_SERVICE = "com.dculus.vesper.kids.monitoring.MonitoringService"
     private val MONITORING_SERVICE_NAMES = setOf(MONITORING_SERVICE, ".monitoring.MonitoringService")
-    private const val BLOCKING_SERVICE = "com.dculus.stayfocused.core.blocking.standard.BlockingService"
+    private const val BLOCKING_SERVICE = "com.dculus.vesper.core.blocking.standard.BlockingService"
     private const val FGS_SPECIAL_USE = "android.permission.FOREGROUND_SERVICE_SPECIAL_USE"
     private const val FGS_SUBTYPE_PROPERTY = "android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
 

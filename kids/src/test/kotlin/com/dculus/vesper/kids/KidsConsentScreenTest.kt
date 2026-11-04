@@ -1,0 +1,81 @@
+package com.dculus.vesper.kids
+
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import com.dculus.vesper.core.ui.theme.VesperTheme
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import kotlin.test.assertEquals
+
+@RunWith(RobolectricTestRunner::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], qualifiers = "w360dp-h1200dp-xxhdpi")
+class KidsConsentScreenTest {
+    @get:Rule
+    val composeRule = createComposeRule()
+
+    private fun show(
+        state: KidsConsentUiState,
+        onAllow: () -> Unit = {},
+        onCancel: () -> Unit = {},
+        onShowNewCode: () -> Unit = {},
+    ) = composeRule.setContent {
+        VesperTheme { KidsConsentScreen(state, onAllow, onCancel, onShowNewCode) }
+    }
+
+    private val ready = KidsConsentUiState(code = "482913", parentName = "Asha")
+
+    @Test
+    fun showsTheCodeTheParentCanDoListAndTheNote() {
+        show(ready)
+        composeRule.onNodeWithText("Let Asha manage\nthis phone?").assertIsDisplayed()
+        composeRule.onNodeWithText("Check that Asha's phone shows").assertIsDisplayed()
+        composeRule.onNodeWithContentDescription("4 8 2 9 1 3").assertIsDisplayed()
+        composeRule.onNodeWithText("Asha will be able to").assertIsDisplayed()
+        composeRule.onNodeWithText("Lock the phone for study time").assertIsDisplayed()
+        composeRule.onNodeWithText("Answer your requests for more time").assertIsDisplayed()
+        composeRule
+            .onNodeWithText("You can unlink anytime from this app. Asha gets a notification if you do.")
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun aParentWithoutANameIsCalledYourParent() {
+        show(ready.copy(parentName = null))
+        composeRule.onNodeWithText("Let your parent manage\nthis phone?").assertIsDisplayed()
+    }
+
+    @Test
+    fun allowAndCancelReachTheViewModel() {
+        var allowed = 0
+        var cancelled = 0
+        show(ready, onAllow = { allowed++ }, onCancel = { cancelled++ })
+        composeRule.onNodeWithTag(KIDS_CONSENT_ALLOW_TAG).performClick()
+        composeRule.onNodeWithTag(KIDS_CONSENT_CANCEL_TAG).performClick()
+        assertEquals(1, allowed)
+        assertEquals(1, cancelled)
+    }
+
+    @Test
+    fun nothingCanBeAllowedBeforeTheCodeArrives() {
+        show(KidsConsentUiState())
+        composeRule.onNodeWithTag(KIDS_CONSENT_ALLOW_TAG).assertDoesNotExist()
+    }
+
+    @Test
+    fun anExpiredCodeOffersANewOneInsteadOfAllow() {
+        var newCodes = 0
+        show(ready.copy(error = ConsentError.Expired), onShowNewCode = { newCodes++ })
+        composeRule.onNodeWithTag(KIDS_CONSENT_ALLOW_TAG).assertDoesNotExist()
+        composeRule.onNodeWithTag(KIDS_CONSENT_NEW_CODE_TAG).performClick()
+        assertEquals(1, newCodes)
+    }
+}

@@ -1,11 +1,11 @@
-# Stay Focused: Phase 1 implementation plan
+# Vesper: Phase 1 implementation plan
 
 This is the engineering plan for Phase 1 (v1.0). Product scope, screens and design tokens live in the v5 spec
 [`docs/design/V5_SPEC.md`](design/V5_SPEC.md) (source of truth: `design/Stay Focused v5.dc.html`). Read that first.
 `design_handoff_stay_focused_phase1/` is the v2 handoff, kept as history only (the v2 design system has been removed).
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
-**GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/stayfocus`. Every story is meant to be
+**GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/vesper`. Every story is meant to be
 picked up and finished by one coding agent or developer in **one pull request, reviewed by CodeRabbit**. This document is the shared
 contract all stories refer to. Agent prompts and the parallel execution order are in
 [`docs/agents/PHASE1_EXECUTION.md`](agents/PHASE1_EXECUTION.md).
@@ -23,7 +23,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 | Async | Coroutines + Flow; ViewModels expose a single `StateFlow<UiState>` |
 | Navigation | Navigation Compose with **type-safe `@Serializable` routes** |
 | Build | Gradle version catalog (`gradle/libs.versions.toml`) + convention plugins in `build-logic/` |
-| Packages | `com.dculus.stayfocused` (main app), `com.dculus.stayfocused.kids` (Kids app) |
+| Packages | `com.dculus.vesper` (main app), `com.dculus.vesper.kids` (Kids app) |
 | Two apps | `:app` = self-control + parent. `:kids` = child companion (carries `IsMonitoringTool`, FGS `specialUse`, persistent notification) |
 | Accounts | **Optional.** "Continue without an account" on sign-in. Self-blocking and AI work with no account; an account is needed only to link a child's phone. The child phone has no account (Firebase Anonymous Auth under the hood) |
 | Backend | **Firebase-first**: Auth, Firestore + security rules, App Check, FCM, AI Logic (Gemini). Client SDKs talk to Firebase directly; **Cloud Functions (TypeScript, 2nd gen, Blaze plan) only where security or clean architecture needs them** (6 functions, see §9). Lives in `/firebase` |
@@ -40,8 +40,8 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 ## 2. Module map
 
 ```
-:app                       Stay Focused (self + parent)                → feature:*, core:*
-:kids                      Stay Focused Kids (child companion)         → core:blocking, core:usage, core:data, core:sync, core:ui
+:app                       Vesper (self + parent)                → feature:*, core:*
+:kids                      Vesper Kids (child companion)         → core:blocking, core:usage, core:data, core:sync, core:ui
 :core:model                Pure Kotlin domain models (Block, Rule, Break, Device, AppInfo, ...)    → (nothing)
 :core:ui                   Theme, type, tokens, components (dial, gauge, LED bars, toggle, sheet)  → core:model
 :core:data                 Room DB, DAOs, DataStore, repositories                                   → core:model
@@ -130,7 +130,7 @@ M1 ──┬── M2 ───────────────────�
 ## 5. Conventions
 
 - **Units:** design px → dp 1:1, font px → sp 1:1.
-- **Tokens:** never hard-code colours or radii in features; use `StayFocusedTheme.colors / .type / .shapes / .spacing`.
+- **Tokens:** never hard-code colours or radii in features; use `VesperTheme.colors / .type / .shapes / .spacing`.
 - **State:** each screen has `XxxRoute` (wires the ViewModel) and a stateless `XxxScreen(state, onEvent)` that previews and tests use.
 - **Time:** inject `java.time.Clock` (or a `TimeSource` interface) everywhere; never call `System.currentTimeMillis()` in logic.
 - **Strings with numbers:** use the formatters in `:core:model` (`formatMinutes`, `dialLabel`, `mmss`, `hms`), ported from the prototype.

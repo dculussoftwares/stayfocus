@@ -1,11 +1,11 @@
 plugins {
-    id("stayfocused.android.library")
-    id("stayfocused.android.hilt")
+    id("vesper.android.library")
+    id("vesper.android.hilt")
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.dculus.stayfocused.core.sync"
+    namespace = "com.dculus.vesper.core.sync"
 
     testOptions {
         unitTests.isIncludeAndroidResources = true

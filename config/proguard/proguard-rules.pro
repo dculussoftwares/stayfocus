@@ -15,7 +15,7 @@
 -keep class * extends androidx.room.RoomDatabase { <init>(); }
 
 # Firebase (Firestore POJO mapping): keep annotated members and generic signatures.
--keepclassmembers class com.dculus.stayfocused.** { @com.google.firebase.firestore.PropertyName <fields>; }
+-keepclassmembers class com.dculus.vesper.** { @com.google.firebase.firestore.PropertyName <fields>; }
 -keepattributes Signature
 
 # ML Kit / Play services ship consumer rules; silence optional-dependency warnings only.

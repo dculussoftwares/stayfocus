@@ -105,7 +105,7 @@ Findings from those walks are fixed in the PR that finds them or filed as issues
 Neither Macrobenchmark nor JankStats is set up in the repo yet, and the development machine cannot run an x86 emulator
 (see the M1-16 entry in the pending checks). Adding a benchmark module is out of this story's scope. No measurement was
 taken: the frame-time check for Home and Insights is a pending manual check (JankStats log or `adb shell dumpsys
-gfxinfo com.dculus.stayfocused framestats` on a mid-range emulator, 5 scrolls of Home and 5 Day/Week toggles on Insights;
+gfxinfo com.dculus.vesper framestats` on a mid-range emulator, 5 scrolls of Home and 5 Day/Week toggles on Insights;
 record janky-frame percentage here). Follow-up F2: add a Macrobenchmark module with a Home and an Insights scenario.
 
 ## 5. E2E flows (Maestro)

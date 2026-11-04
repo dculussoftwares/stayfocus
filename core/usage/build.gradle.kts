@@ -1,10 +1,10 @@
 plugins {
-    id("stayfocused.android.library")
-    id("stayfocused.android.hilt")
+    id("vesper.android.library")
+    id("vesper.android.hilt")
 }
 
 android {
-    namespace = "com.dculus.stayfocused.core.usage"
+    namespace = "com.dculus.vesper.core.usage"
 
     testOptions {
         unitTests.isIncludeAndroidResources = true

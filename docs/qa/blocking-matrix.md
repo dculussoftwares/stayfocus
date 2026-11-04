@@ -29,7 +29,7 @@ The engine runs inside the accessibility service (`ForegroundAppService`): it st
 | 5 | Split-screen with a blocked app in one pane | Block screen appears when the blocked app's window becomes active. The block screen sends the user home, which affects the whole screen, not just the blocked pane (expected, record what you see) | Window events come from both panes; `ForegroundAppTrackerTest` | - | - | - | - |
 | 6 | Picture-in-picture of a blocked app (video call or player) | The block screen takes the foreground; the PiP window is closed or covered. Known risk: a PiP window that keeps playing is not an activity change; if it still plays, file an issue | Manual only | - | - | - | - |
 | 7 | Update of a blocked app (Play Store or `adb install -r`) | Block persists (stored by package name); the service stays bound | Package name does not change; nothing to re-register | - | - | - | - |
-| 8 | Update of Stay Focused itself | The system rebinds the service after the update; blocks and cycles intact | As row 1 | - | - | - | - |
+| 8 | Update of Vesper itself | The system rebinds the service after the update; blocks and cycles intact | As row 1 | - | - | - | - |
 | 9 | Device language change while a block is shown | Block screen and app text switch language, block stays | Resources are resolved per configuration; the engine holds no localised text | - | - | - | - |
 | 10 | Clock or time-zone change | Schedules re-evaluate at once; the jump is never counted as usage | `BlockingEngineTest` (clock changes), M2-08 | - | - | - | - |
 | 11 | Keyboard, notification shade, other overlays | Never counted or blocked as the foreground app | `ForegroundAppTrackerTest` | - | - | - | - |

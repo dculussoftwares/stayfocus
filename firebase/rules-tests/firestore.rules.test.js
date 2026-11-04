@@ -20,7 +20,7 @@ let env;
 
 before(async () => {
   env = await initializeTestEnvironment({
-    projectId: 'demo-stayfocus',
+    projectId: 'demo-vesper',
     firestore: { rules: readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8') },
   });
 });

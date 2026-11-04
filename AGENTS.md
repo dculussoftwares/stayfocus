@@ -1,6 +1,6 @@
-# Agent guide: Stay Focused
+# Agent guide: Vesper
 
-Stay Focused is a free, open-source (GPL-3.0) Android app blocker, with a companion "Kids" app for parent → child control.
+Vesper is a free, open-source (GPL-3.0) Android app blocker, with a companion "Kids" app for parent → child control.
 
 **Before you write code, read:**
 1. `docs/IMPLEMENTATION_PLAN.md`: decisions, module map, workflow, definition of done, conventions.

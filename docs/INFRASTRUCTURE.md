@@ -41,7 +41,7 @@ These are the only manual steps, and they create credentials, not infrastructure
    Preferred option: `GITHUB_TOKEN` can't
    access org-level Projects v2, and this is a public repo, so use an App rather than a personal access token:
    create an org-owned GitHub App "stayfocus-automation" with *Organization → Projects: Read and write* and
-   *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/stayfocus` only. Then add:
+   *Repository → Issues: Read and write, Metadata: Read*. Install it on `dculussoftwares/vesper` only. Then add:
    - variable `BACKLOG_APP_CLIENT_ID` = the App's client ID
    - secret `BACKLOG_APP_PRIVATE_KEY` = an App private key
 
@@ -123,7 +123,7 @@ Until then the apply fails with 403.
 
 ### Firebase Auth and apps (M6-01)
 
-`infra/firebase` creates the Firebase project, the two Android apps (`com.dculus.stayfocused`, `com.dculus.stayfocused.kids`),
+`infra/firebase` creates the Firebase project, the two Android apps (`com.dculus.vesper`, `com.dculus.vesper.kids`),
 Identity Platform (Firebase Auth) with email/password and anonymous sign-in, and a budget alert (50/90/100% of
 `budget_amount`, default 20 in the billing account currency, on the dev project). It outputs `google_services_json` (sensitive, per app) from the
 `google_firebase_android_app_config` data source; the files are never committed.

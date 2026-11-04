@@ -1,16 +1,16 @@
 # Firebase setup (forks and local builds)
 
-Stay Focused builds and runs **without** any Firebase configuration. In that case the account, device linking and cloud AI
+Vesper builds and runs **without** any Firebase configuration. In that case the account, device linking and cloud AI
 features show "Not available in this build", and blocking works normally. Add a configuration only if you want those
 features in your own build.
 
 ## How the build decides
 
-The `stayfocused.android.application` convention plugin applies the `com.google.gms.google-services` plugin only when the
+The `vesper.android.application` convention plugin applies the `com.google.gms.google-services` plugin only when the
 app module contains a `google-services.json`:
 
-- `app/google-services.json` for the Stay Focused app (`com.dculus.stayfocused`)
-- `kids/google-services.json` for the Kids app (`com.dculus.stayfocused.kids`)
+- `app/google-services.json` for the Vesper app (`com.dculus.vesper`)
+- `kids/google-services.json` for the Kids app (`com.dculus.vesper.kids`)
 
 Both files are git-ignored. Never commit them. At runtime, `FirebaseAvailability.isConfigured` in `:core:sync` is true
 only when a Firebase app was initialised from that file.

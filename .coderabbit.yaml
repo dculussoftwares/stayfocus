@@ -28,7 +28,7 @@ reviews:
     - path: "**/*.kt"
       instructions: |
         Kotlin + Jetpack Compose Android code. Check against docs/IMPLEMENTATION_PLAN.md §5:
-        - Features use only StayFocusedTheme tokens (no hard-coded colours, radii or dp spacing outside :core:ui).
+        - Features use only VesperTheme tokens (no hard-coded colours, radii or dp spacing outside :core:ui).
         - Screens split into XxxRoute (ViewModel wiring) and a stateless XxxScreen(state, onEvent); one StateFlow<UiState> per ViewModel.
         - Time comes from an injected Clock/TimeSource, never System.currentTimeMillis() in logic.
         - :feature:* modules never import each other; :core:model has no Android imports.

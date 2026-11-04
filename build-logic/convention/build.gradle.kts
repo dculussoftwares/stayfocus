@@ -2,7 +2,7 @@ plugins {
     `kotlin-dsl`
 }
 
-group = "com.dculus.stayfocused.buildlogic"
+group = "com.dculus.vesper.buildlogic"
 
 kotlin {
     jvmToolchain(17)
@@ -23,43 +23,43 @@ dependencies {
 gradlePlugin {
     plugins {
         register("androidApplication") {
-            id = "stayfocused.android.application"
+            id = "vesper.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
         }
         register("androidApplicationCompose") {
-            id = "stayfocused.android.application.compose"
+            id = "vesper.android.application.compose"
             implementationClass = "AndroidApplicationComposeConventionPlugin"
         }
         register("androidLibrary") {
-            id = "stayfocused.android.library"
+            id = "vesper.android.library"
             implementationClass = "AndroidLibraryConventionPlugin"
         }
         register("androidLibraryCompose") {
-            id = "stayfocused.android.library.compose"
+            id = "vesper.android.library.compose"
             implementationClass = "AndroidLibraryComposeConventionPlugin"
         }
         register("androidFeature") {
-            id = "stayfocused.android.feature"
+            id = "vesper.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
         }
         register("androidHilt") {
-            id = "stayfocused.android.hilt"
+            id = "vesper.android.hilt"
             implementationClass = "AndroidHiltConventionPlugin"
         }
         register("androidRoom") {
-            id = "stayfocused.android.room"
+            id = "vesper.android.room"
             implementationClass = "AndroidRoomConventionPlugin"
         }
         register("androidInstrumentedTest") {
-            id = "stayfocused.android.instrumented-test"
+            id = "vesper.android.instrumented-test"
             implementationClass = "AndroidInstrumentedTestConventionPlugin"
         }
         register("manifestAudit") {
-            id = "stayfocused.manifest-audit"
+            id = "vesper.manifest-audit"
             implementationClass = "ManifestAuditPlugin"
         }
         register("jvmLibrary") {
-            id = "stayfocused.jvm.library"
+            id = "vesper.jvm.library"
             implementationClass = "JvmLibraryConventionPlugin"
         }
     }

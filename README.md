@@ -2,7 +2,7 @@
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
 
-Vesper (formerly Stay Focused) is a free, open-source Android app blocker. It helps you block distracting apps on your own phone, and a
+Vesper is a free, open-source Android app blocker. It helps you block distracting apps on your own phone, and a
 companion **Vesper Kids** app lets a parent set limits on a child's phone.
 
 Phase 1 is under construction. The plan, module map and conventions are in
@@ -33,7 +33,7 @@ for `infra/`, actionlint, and a guard against `google-services.json`, keystores,
 
 `:app` (Vesper) and `:kids` (Vesper Kids) sit on top of `:core:*` (model, ui, data, usage, blocking, sync,
 testing) and `:feature:*` (onboarding, home, block, devices, insights, account). Build logic lives in `build-logic/`
-as convention plugins (`stayfocused.android.*`, `stayfocused.jvm.library`), and every version is in
+as convention plugins (`vesper.android.*`, `vesper.jvm.library`), and every version is in
 `gradle/libs.versions.toml`.
 
 ## License

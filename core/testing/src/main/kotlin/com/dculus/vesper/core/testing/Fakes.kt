@@ -1,0 +1,144 @@
+package com.dculus.vesper.core.testing
+
+import com.dculus.vesper.core.data.repository.AccountProfileRepository
+import com.dculus.vesper.core.data.repository.BlockRepository
+import com.dculus.vesper.core.data.repository.BreakRepository
+import com.dculus.vesper.core.data.repository.LinkedDevicesRepository
+import com.dculus.vesper.core.data.repository.LockedAppsRepository
+import com.dculus.vesper.core.data.repository.SettingsRepository
+import com.dculus.vesper.core.model.AppSettings
+import com.dculus.vesper.core.model.Block
+import com.dculus.vesper.core.model.BlockTarget
+import com.dculus.vesper.core.model.BreakSession
+import com.dculus.vesper.core.model.DEFAULT_SCREEN_TIME_GOAL_MINS
+import com.dculus.vesper.core.model.FocusSession
+import com.dculus.vesper.core.model.LinkedDevice
+import com.dculus.vesper.core.model.LockedApp
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import java.time.Clock
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
+/** In-memory [BlockRepository]; behaviour is pinned to the Room implementation by a shared contract test. */
+class FakeBlockRepository : BlockRepository {
+    private val blocks = MutableStateFlow<Map<String, Block>>(emptyMap())
+
+    override fun observeByTarget(target: BlockTarget): Flow<List<Block>> =
+        blocks
+            .map { all -> all.values.filter { it.target == target }.sortedBy { it.createdAt } }
+            .distinctUntilChanged()
+
+    override fun observe(id: String): Flow<Block?> = blocks.map { it[id] }.distinctUntilChanged()
+
+    override suspend fun get(id: String): Block? = blocks.value[id]
+
+    override suspend fun upsert(block: Block) = blocks.update { it + (block.id to block) }
+
+    override suspend fun setEnabled(
+        id: String,
+        enabled: Boolean,
+    ) = blocks.update { all -> all[id]?.let { all + (id to it.copy(enabled = enabled)) } ?: all }
+
+    override suspend fun delete(id: String) = blocks.update { it - id }
+}
+
+class FakeLockedAppsRepository(
+    private val clock: Clock = TestClock(),
+) : LockedAppsRepository {
+    private val apps = MutableStateFlow<List<LockedApp>>(emptyList())
+
+    override fun observeAll(): Flow<List<LockedApp>> =
+        apps.map { all -> all.sortedBy { it.since } }.distinctUntilChanged()
+
+    override fun observeByTarget(target: BlockTarget): Flow<List<LockedApp>> =
+        observeAll().map { all -> all.filter { it.target == target } }.distinctUntilChanged()
+
+    override suspend fun lock(
+        pkg: String,
+        target: BlockTarget,
+    ) = apps.update { all ->
+        if (all.any { it.pkg == pkg && it.target == target }) {
+            all
+        } else {
+            all +
+                LockedApp(pkg, target, clock.instant().truncatedTo(ChronoUnit.MILLIS))
+        }
+    }
+
+    override suspend fun unlock(
+        pkg: String,
+        target: BlockTarget,
+    ) = apps.update { all -> all.filterNot { it.pkg == pkg && it.target == target } }
+}
+
+class FakeBreakRepository(
+    private val clock: Clock = TestClock(),
+) : BreakRepository {
+    private val session = MutableStateFlow<BreakSession?>(null)
+
+    override fun observe(): Flow<BreakSession?> = session
+
+    override suspend fun start(mins: Int) {
+        require(mins > 0) { "mins must be positive" }
+        val now = clock.instant().truncatedTo(ChronoUnit.MILLIS)
+        session.value = BreakSession(now, now.plusSeconds(mins * SECONDS_PER_MINUTE), mins)
+    }
+
+    override suspend fun end() {
+        session.value = null
+    }
+
+    private companion object {
+        const val SECONDS_PER_MINUTE = 60L
+    }
+}
+
+class FakeSettingsRepository(
+    initial: AppSettings = AppSettings(),
+) : SettingsRepository {
+    private val state = MutableStateFlow(initial)
+
+    override val settings: Flow<AppSettings> = state
+
+    private val goalMins = MutableStateFlow(DEFAULT_SCREEN_TIME_GOAL_MINS)
+
+    override val screenTimeGoalMins: Flow<Int> = goalMins
+
+    override suspend fun setOnboardingComplete(complete: Boolean) =
+        state.update { it.copy(onboardingComplete = complete) }
+
+    override suspend fun setAccountSkipped(skipped: Boolean) = state.update { it.copy(accountSkipped = skipped) }
+
+    override suspend fun setFocusSession(session: FocusSession?) = state.update { it.copy(focusSession = session) }
+
+    override suspend fun setAllLocked(locked: Boolean) = state.update { it.copy(allLocked = locked) }
+
+    override suspend fun setAccessibilityConsentAt(at: Instant?) = state.update { it.copy(accessibilityConsentAt = at) }
+
+    override suspend fun setAiEnabled(enabled: Boolean) = state.update { it.copy(aiEnabled = enabled) }
+
+    override suspend fun setScreenTimeGoalMins(mins: Int) {
+        require(mins > 0) { "mins must be positive" }
+        goalMins.value = mins
+    }
+}
+
+class FakeLinkedDevicesRepository(
+    initial: List<LinkedDevice> = emptyList(),
+) : LinkedDevicesRepository {
+    val devices = MutableStateFlow(initial)
+
+    override fun observeAll(): Flow<List<LinkedDevice>> = devices
+}
+
+class FakeAccountProfileRepository(
+    initialFirstName: String? = null,
+) : AccountProfileRepository {
+    val firstName = MutableStateFlow(initialFirstName)
+
+    override fun observeFirstName(): Flow<String?> = firstName
+}

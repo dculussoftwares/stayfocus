@@ -1,5 +1,5 @@
 # M3-04 / M12-07: Home shows the v5 hero and tiles; "Block apps" opens the wizard.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - smoke
 ---

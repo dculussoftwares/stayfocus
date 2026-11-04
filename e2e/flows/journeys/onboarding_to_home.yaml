@@ -1,5 +1,5 @@
 # M12-19: first run, v5 onboarding: Welcome -> Sign-up (skipped) -> Permissions (all three granted) -> Home.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - journey
 ---

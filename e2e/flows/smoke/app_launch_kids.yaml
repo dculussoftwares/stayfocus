@@ -1,5 +1,5 @@
 # Smoke: a fresh Kids install opens on the permission setup.
-appId: com.dculus.stayfocused.kids
+appId: com.dculus.vesper.kids
 tags:
   - smoke
 ---

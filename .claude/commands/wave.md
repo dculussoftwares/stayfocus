@@ -3,7 +3,7 @@ description: Run one wave of the backlog (Phase 1 or the v5 redesign) — parall
 argument-hint: <wave-number> [max-parallel, default 2] [reviewer: coderabbit (default) | qodo]
 ---
 
-Run **wave $1** of the Stay Focused backlog (Phase 1: waves 1–16; v5 redesign: waves 17–24). Max parallel workers: **$2** (if empty, use 2).
+Run **wave $1** of the Vesper backlog (Phase 1: waves 1–16; v5 redesign: waves 17–24). Max parallel workers: **$2** (if empty, use 2).
 Reviewer: **$3** (if empty, `coderabbit`; `qodo` = Qodo-only mode, no CodeRabbit).
 
 You are the coordinator. Keep this session small: don't implement stories yourself, don't read source files, and

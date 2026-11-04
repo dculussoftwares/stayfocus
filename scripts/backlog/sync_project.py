@@ -26,7 +26,7 @@ import subprocess
 import sys
 
 OWNER = os.environ.get("BACKLOG_OWNER", "dculussoftwares")
-REPO = os.environ.get("BACKLOG_REPO", "stayfocus")
+REPO = os.environ.get("BACKLOG_REPO", "vesper")
 # The board is an existing org project: https://github.com/orgs/dculussoftwares/projects/11
 PROJECT_NUMBER = int(os.environ.get("BACKLOG_PROJECT_NUMBER") or 11)
 DRY_RUN = os.environ.get("DRY_RUN") == "1"

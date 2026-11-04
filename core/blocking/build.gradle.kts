@@ -1,11 +1,11 @@
 plugins {
     alias(libs.plugins.roborazzi)
-    id("stayfocused.android.library.compose")
-    id("stayfocused.android.hilt")
+    id("vesper.android.library.compose")
+    id("vesper.android.hilt")
 }
 
 android {
-    namespace = "com.dculus.stayfocused.core.blocking"
+    namespace = "com.dculus.vesper.core.blocking"
 
     testOptions {
         unitTests.isIncludeAndroidResources = true
