@@ -97,6 +97,18 @@ object RuleEvaluator {
             }
     }
 
+    /**
+     * The tightest budget [EvaluationContext.pkg] has right now: the limit or use-then-lock block with the least
+     * time left. Null when no such block applies, or the app is allowlisted or locked.
+     */
+    fun tightestBudget(ctx: EvaluationContext): AppBudget? {
+        if (ctx.pkg in ctx.allowlist || ctx.allLocked || ctx.lockedApps.any { it.pkg == ctx.pkg }) return null
+        return ctx.blocks
+            .filter { it.enabled && ctx.pkg in it.apps }
+            .mapNotNull { block -> budget(ctx, block)?.let { (total, left) -> AppBudget(block.id, total, left) } }
+            .minByOrNull { it.remainingMs }
+    }
+
     /** (total, remaining) milliseconds of the block's budget right now, or null if it has none or is spent. */
     private fun budget(
         ctx: EvaluationContext,

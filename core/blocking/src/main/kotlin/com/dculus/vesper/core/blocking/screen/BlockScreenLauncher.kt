@@ -50,6 +50,8 @@ class BlockScreenLauncher
         private var pendingCheck: Runnable? = null
         private var pill: UsageWarningPill? = null
         private var pillSurface: BlockSurface? = null
+        private var timer: AppTimerChip? = null
+        private var timerSurface: BlockSurface? = null
 
         /** True from [show] until the launch is settled (activity visible, overlay up, or cancelled). */
         @Volatile private var launching = false
@@ -87,7 +89,10 @@ class BlockScreenLauncher
 
         /** Called by the service when it unbinds or is destroyed. */
         fun detach() {
-            handler.post { removePill() }
+            handler.post {
+                removePill()
+                removeTimer()
+            }
             invalidate()
             accessibility = null
         }
@@ -99,7 +104,10 @@ class BlockScreenLauncher
             decision: Decision.Block,
         ) {
             launching = true
-            handler.post { removePill() }
+            handler.post {
+                removePill()
+                removeTimer()
+            }
             tracker.onBlockScreenShown()
             BlockingLog.log("Launcher", "show $pkg ${decision.reason}")
             handler.post { showOnMain(pkg, decision) }
@@ -135,6 +143,8 @@ class BlockScreenLauncher
                         },
                         app,
                     )
+                // The warning takes the stage: the timer tab tucks itself in.
+                timer?.collapse()
                 if (pillSurface !== svc) removePill()
                 val shown =
                     pill ?: UsageWarningPill(svc, handler).also {
@@ -149,6 +159,38 @@ class BlockScreenLauncher
                     }
                 shown.show(text, urgent, shownMs, glow)
             }
+        }
+
+        override fun showAppTimer(
+            pkg: String,
+            remainingMs: Long,
+            totalMs: Long,
+            expanded: Boolean,
+        ) {
+            handler.post {
+                val svc = surface()
+                if (svc == null || isShowing()) {
+                    BlockingLog.log("Launcher", "app timer for $pkg dropped: no surface or block screen showing")
+                    return@post
+                }
+                if (timerSurface !== svc) removeTimer()
+                val shown =
+                    timer ?: AppTimerChip(svc, handler).also {
+                        timer = it
+                        timerSurface = svc
+                    }
+                shown.show(appLabel(pkg) ?: pkg, remainingMs, totalMs, expanded)
+            }
+        }
+
+        override fun hideAppTimer() {
+            handler.post { timer?.hide() }
+        }
+
+        private fun removeTimer() {
+            timer?.remove()
+            timer = null
+            timerSurface = null
         }
 
         private fun removePill() {

@@ -898,4 +898,28 @@ class RuleEvaluatorTest {
         val c = ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(5 * MIN, 0)))
         assertEquals(wed.toInstant().plusMillis(10 * MIN), RuleEvaluator.nextEvaluationAt(c))
     }
+
+    @Test
+    fun `tightest budget is the block with the least time left`() {
+        val daily = block("daily", type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        val cycle = block("cycle", type = BlockType.CYCLE, useMins = 20, restMins = 10)
+        val c =
+            ctx(
+                wed,
+                daily,
+                cycle,
+                usage = mapOf(APP to AppUsageSnapshot(25 * MIN, 0)),
+                cycleStates = mapOf(cycle.cycleKey(APP) to CycleState(usedMs = 5 * MIN)),
+            )
+        assertEquals(AppBudget("daily", 30 * MIN, 5 * MIN), RuleEvaluator.tightestBudget(c))
+    }
+
+    @Test
+    fun `no budget without a limit or cycle, or while locked`() {
+        val sched = block(type = BlockType.SCHEDULE, range = range("22:00–23:00"))
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, sched)))
+        val limit = block(type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, limit, allLocked = true)))
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, limit, allowlist = setOf(APP))))
+    }
 }

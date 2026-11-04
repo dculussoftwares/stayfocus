@@ -78,6 +78,7 @@ internal const val ACCOUNT_DELETE_TAG = "account_delete"
 internal const val ACCOUNT_BACK_TAG = "account_back"
 internal const val ACCOUNT_OSS_TAG = "account_oss"
 internal const val ACCOUNT_GLOW_TAG = "account_warning_glow"
+internal const val ACCOUNT_TIMER_TAG = "account_app_timer"
 internal const val ACCOUNT_DISCLOSURE_AGREE_TAG = "account_disclosure_agree"
 
 internal const val GITHUB_URL = "https://github.com/dculussoftwares/vesper"
@@ -140,6 +141,7 @@ internal fun AccountRoute(
         onBack = onBack,
         onSignIn = onSignIn,
         onWarningGlowChange = viewModel::setWarningGlow,
+        onAppTimerChange = viewModel::setAppTimer,
         onFix = { row ->
             when (row) {
                 HealthRow.Usage -> {
@@ -277,6 +279,7 @@ internal fun AccountScreen(
     modifier: Modifier = Modifier,
     onShareLog: (() -> Unit)? = null,
     onWarningGlowChange: (Boolean) -> Unit = {},
+    onAppTimerChange: (Boolean) -> Unit = {},
 ) {
     V5Screen(darkContent = false, modifier = modifier) {
         Column(
@@ -322,6 +325,13 @@ internal fun AccountScreen(
                         checked = state.warningGlow,
                         onCheckedChange = onWarningGlowChange,
                         modifier = Modifier.testTag(ACCOUNT_GLOW_TAG),
+                    )
+                    V5ToggleRow(
+                        title = stringResource(R.string.account_app_timer),
+                        subtitle = stringResource(R.string.account_app_timer_hint),
+                        checked = state.appTimer,
+                        onCheckedChange = onAppTimerChange,
+                        modifier = Modifier.padding(top = 16.dp).testTag(ACCOUNT_TIMER_TAG),
                     )
                 }
             }

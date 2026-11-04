@@ -46,6 +46,13 @@ data class UsageWarning(
     val remainingMs: Long,
 )
 
+/** What is left of [blockId]'s budget: [remainingMs] of [totalMs]. */
+data class AppBudget(
+    val blockId: String,
+    val totalMs: Long,
+    val remainingMs: Long,
+)
+
 sealed interface Decision {
     data object Allow : Decision
 

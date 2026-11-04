@@ -38,6 +38,8 @@ internal data class AccountUiState(
     val authLoaded: Boolean = true,
     /** Whether the usage warning glows along the screen edges. */
     val warningGlow: Boolean = true,
+    /** Whether a timer with the time left shows as a limited app opens. */
+    val appTimer: Boolean = true,
 )
 
 /** Where the delete-account flow is. */
@@ -99,7 +101,14 @@ class AccountViewModel
                 engine.health,
                 settings.settings,
             ) { user, perms, health, prefs ->
-                AccountUiState(user, perms, health, authLoaded = true, warningGlow = prefs.usageWarningGlow)
+                AccountUiState(
+                    user,
+                    perms,
+                    health,
+                    authLoaded = true,
+                    warningGlow = prefs.usageWarningGlow,
+                    appTimer = prefs.appStartTimer,
+                )
             }.stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -112,6 +121,10 @@ class AccountViewModel
 
         fun setWarningGlow(enabled: Boolean) {
             viewModelScope.launch { settings.setUsageWarningGlow(enabled) }
+        }
+
+        fun setAppTimer(enabled: Boolean) {
+            viewModelScope.launch { settings.setAppStartTimer(enabled) }
         }
 
         /** Signs out. Blocks stay on this device; nothing else is stored per account yet (cached devices: M7). */

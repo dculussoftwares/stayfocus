@@ -123,6 +123,8 @@ class FakeSettingsRepository(
 
     override suspend fun setUsageWarningGlow(enabled: Boolean) = state.update { it.copy(usageWarningGlow = enabled) }
 
+    override suspend fun setAppStartTimer(enabled: Boolean) = state.update { it.copy(appStartTimer = enabled) }
+
     override suspend fun setScreenTimeGoalMins(mins: Int) {
         require(mins > 0) { "mins must be positive" }
         goalMins.value = mins

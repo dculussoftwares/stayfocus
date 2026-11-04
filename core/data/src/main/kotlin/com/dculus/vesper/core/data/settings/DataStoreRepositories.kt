@@ -25,6 +25,7 @@ private object Keys {
     val accessibilityConsentAt = longPreferencesKey("accessibilityConsentAt")
     val aiEnabled = booleanPreferencesKey("aiEnabled")
     val usageWarningGlow = booleanPreferencesKey("usageWarningGlow")
+    val appStartTimer = booleanPreferencesKey("appStartTimer")
     val breakStartedAt = longPreferencesKey("breakSession.startedAt")
     val breakEndsAt = longPreferencesKey("breakSession.endsAt")
     val breakLengthMins = intPreferencesKey("breakSession.lengthMins")
@@ -68,6 +69,7 @@ internal class DataStoreSettingsRepository
                         accessibilityConsentAt = prefs[Keys.accessibilityConsentAt]?.let(Instant::ofEpochMilli),
                         aiEnabled = prefs[Keys.aiEnabled] ?: false,
                         usageWarningGlow = prefs[Keys.usageWarningGlow] ?: true,
+                        appStartTimer = prefs[Keys.appStartTimer] ?: true,
                     )
                 }.distinctUntilChanged()
 
@@ -118,6 +120,10 @@ internal class DataStoreSettingsRepository
 
         override suspend fun setUsageWarningGlow(enabled: Boolean) {
             store.edit { it[Keys.usageWarningGlow] = enabled }
+        }
+
+        override suspend fun setAppStartTimer(enabled: Boolean) {
+            store.edit { it[Keys.appStartTimer] = enabled }
         }
 
         override suspend fun setScreenTimeGoalMins(mins: Int) {

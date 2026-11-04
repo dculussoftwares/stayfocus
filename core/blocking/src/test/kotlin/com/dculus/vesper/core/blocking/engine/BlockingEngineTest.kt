@@ -72,6 +72,29 @@ private class RecordingPresenter : BlockPresenter {
     var dismissals = 0
     var showing = true
 
+    data class Timer(
+        val pkg: String,
+        val remainingMs: Long,
+        val totalMs: Long,
+        val expanded: Boolean,
+    )
+
+    val timers = mutableListOf<Timer>()
+    var timerHides = 0
+
+    override fun showAppTimer(
+        pkg: String,
+        remainingMs: Long,
+        totalMs: Long,
+        expanded: Boolean,
+    ) {
+        timers += Timer(pkg, remainingMs, totalMs, expanded)
+    }
+
+    override fun hideAppTimer() {
+        timerHides++
+    }
+
     override fun isShowing(): Boolean = showing
 
     override fun show(
@@ -604,6 +627,62 @@ class BlockingEngineTest {
                     .single()
                     .second.reason,
             )
+            r.engine.stop()
+        }
+
+    @Test fun appTimerDocksWhileALimitedAppIsInFront() =
+        runTest {
+            val r = rig(this)
+            r.blocks.upsert(block("limit", BlockType.LIMIT, limitMins = 10, period = LimitPeriod.DAILY))
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(
+                listOf(RecordingPresenter.Timer(APP, 10 * 60_000L, 10 * 60_000L, expanded = true)),
+                r.presenter.timers,
+            )
+
+            // Staying in the app does not show it again; leaving hides it.
+            r.pass(10_000)
+            assertEquals(1, r.presenter.timers.size)
+            assertEquals(0, r.presenter.timerHides)
+            r.open(LAUNCHER)
+            r.pass(1_000)
+            assertEquals(1, r.presenter.timerHides)
+
+            // A quick hop back docks it again, tucked in.
+            r.open(APP)
+            r.pass(1_000)
+            assertEquals(2, r.presenter.timers.size)
+            assertEquals(
+                false,
+                r.presenter.timers
+                    .last()
+                    .expanded,
+            )
+
+            // After the cool-down it opens expanded again, with what is left.
+            r.open(LAUNCHER)
+            r.pass(60_000)
+            r.open(APP)
+            r.pass(1_000)
+            val last = r.presenter.timers.last()
+            assertEquals(true, last.expanded)
+            assertTrue(last.remainingMs < 10 * 60_000L - 10_000L, "time used so far is taken off")
+            r.engine.stop()
+        }
+
+    @Test fun appTimerRespectsTheSettingAndUnlimitedApps() =
+        runTest {
+            val r = rig(this)
+            r.settings.setAppStartTimer(false)
+            r.blocks.upsert(block("limit", BlockType.LIMIT, limitMins = 10, period = LimitPeriod.DAILY))
+            r.engine.start()
+            r.open(APP)
+            r.pass(1_000)
+            r.open("com.unlimited")
+            r.pass(1_000)
+            assertTrue(r.presenter.timers.isEmpty())
             r.engine.stop()
         }
 

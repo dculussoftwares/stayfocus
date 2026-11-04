@@ -14,4 +14,6 @@ data class AppSettings(
     val aiEnabled: Boolean = false,
     /** Whether the usage warning glows along the screen edges; off leaves only the centre chip. */
     val usageWarningGlow: Boolean = true,
+    /** Whether a timer tab with the time left docks on the screen edge while a limited app is open. */
+    val appStartTimer: Boolean = true,
 )
