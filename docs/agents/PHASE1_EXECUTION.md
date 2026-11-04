@@ -185,7 +185,7 @@ CodeRabbit is capped (≈5 included reviews/hour per repo; check with `coderabbi
 | 1 | `M1-01` | L | Gradle multi-module project skeleton | — |
 | 2 | `M1-02` | L | CI pipeline: static analysis, unit tests, coverage, screenshots, build | M1-01 |
 | 2 | `M1-03` | M | Domain model and formatters (:core:model) | M1-01 |
-| 2 | `M1-04` | M | Design tokens, fonts and StayFocusedTheme | M1-01 |
+| 2 | `M1-04` | M | Design tokens, fonts and VesperTheme | M1-01 |
 | 2 | `M1-14` | S | Pre-commit and pre-push hooks | M1-01 |
 | 2 | `M2-02` | M | Foreground-app detection AccessibilityService | M1-01 |
 | 2 | `M3-02` | M | Installed apps catalog (no QUERY_ALL_PACKAGES) | M1-01 |

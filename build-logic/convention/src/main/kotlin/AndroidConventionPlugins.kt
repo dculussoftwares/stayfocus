@@ -23,7 +23,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
 class AndroidApplicationComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =
         with(target) {
-            pluginManager.apply("stayfocused.android.application")
+            pluginManager.apply("vesper.android.application")
             configureCompose()
         }
 }
@@ -42,7 +42,7 @@ class AndroidLibraryConventionPlugin : Plugin<Project> {
 class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =
         with(target) {
-            pluginManager.apply("stayfocused.android.library")
+            pluginManager.apply("vesper.android.library")
             configureCompose()
         }
 }
@@ -51,8 +51,8 @@ class AndroidLibraryComposeConventionPlugin : Plugin<Project> {
 class AndroidFeatureConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =
         with(target) {
-            pluginManager.apply("stayfocused.android.library.compose")
-            pluginManager.apply("stayfocused.android.hilt")
+            pluginManager.apply("vesper.android.library.compose")
+            pluginManager.apply("vesper.android.hilt")
             dependencies {
                 add("implementation", project(":core:ui"))
                 add("implementation", project(":core:model"))

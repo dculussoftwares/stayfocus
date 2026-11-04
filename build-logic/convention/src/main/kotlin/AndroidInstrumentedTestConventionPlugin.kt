@@ -5,7 +5,7 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 import org.gradle.kotlin.dsl.dependencies
 
-internal const val HILT_TEST_RUNNER = "com.dculus.stayfocused.core.testing.HiltTestRunner"
+internal const val HILT_TEST_RUNNER = "com.dculus.vesper.core.testing.HiltTestRunner"
 internal const val CI_DEVICES_GROUP = "ciDevices"
 
 /** Managed device name -> (API level, system image source). */
@@ -20,7 +20,7 @@ internal val CI_DEVICES =
  * Instrumented tests for an application module: the Hilt test runner from `:core:testing`, the AndroidX Test and
  * Compose UI test dependencies, and the Gradle Managed Devices group `ciDevices`
  * (`./gradlew ciDevicesGroupDebugAndroidTest` runs it headless).
- * Apply after `stayfocused.android.application` and `stayfocused.android.hilt`.
+ * Apply after `vesper.android.application` and `vesper.android.hilt`.
  */
 class AndroidInstrumentedTestConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) =

@@ -1,5 +1,5 @@
 # M12-19: Insights opens on Day, switches to Week and back; both hero labels show.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - journey
 ---
@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - tapOn: "Insights"
 # A fresh emulator has no usage data, so the hero card is replaced by the empty state; the tiles always show.
 - assertVisible: "Day"

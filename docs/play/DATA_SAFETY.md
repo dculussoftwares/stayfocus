@@ -17,7 +17,7 @@ Common to both apps
   sign-in data.
 - Independent security review: No.
 
-## Stay Focused (parent / main app)
+## Vesper (parent / main app)
 
 Collection is optional: with no account nothing leaves the device, except an AI sentence if the user uses that feature.
 
@@ -33,7 +33,7 @@ Collection is optional: with no account nothing leaves the device, except an AI 
 Not collected: location, contacts, messages, photos/videos, audio, files, calendar, health, financial info, web
 browsing history, crash logs or diagnostics, installed apps of the parent phone.
 
-## Stay Focused Kids (child app)
+## Vesper Kids (child app)
 
 The child app only works linked to a parent. The data below goes to the linked parent's account.
 

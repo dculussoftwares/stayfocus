@@ -32,7 +32,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "StayFocused"
+rootProject.name = "Vesper"
 
 include(":app")
 include(":kids")

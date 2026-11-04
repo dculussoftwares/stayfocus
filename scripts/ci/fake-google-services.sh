@@ -9,8 +9,8 @@ write() {
 {
   "project_info": {
     "project_number": "000000000000",
-    "project_id": "stayfocused-ci-fake",
-    "storage_bucket": "stayfocused-ci-fake.appspot.com"
+    "project_id": "vesper-ci-fake",
+    "storage_bucket": "vesper-ci-fake.appspot.com"
   },
   "client": [
     {
@@ -27,5 +27,5 @@ write() {
 }
 JSON
 }
-write app com.dculus.stayfocused
-write kids com.dculus.stayfocused.kids
+write app com.dculus.vesper
+write kids com.dculus.vesper.kids

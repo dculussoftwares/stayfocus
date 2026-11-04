@@ -1,5 +1,5 @@
-# Smoke: Stay Focused starts and shows the first onboarding screen on a clean install.
-appId: com.dculus.stayfocused
+# Smoke: Vesper starts and shows the first onboarding screen on a clean install.
+appId: com.dculus.vesper
 tags:
   - smoke
 ---

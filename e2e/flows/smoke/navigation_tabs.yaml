@@ -1,5 +1,5 @@
-# M1-09 / M3-04: the app opens on onboarding (flag stub = false); Get started, Continue without an account, Start using Stay Focused reaches Home, then the tabs work.
-appId: com.dculus.stayfocused
+# M1-09 / M3-04: the app opens on onboarding (flag stub = false); Get started, Continue without an account, Start using Vesper reaches Home, then the tabs work.
+appId: com.dculus.vesper
 tags:
   - smoke
 ---
@@ -10,7 +10,7 @@ tags:
 - assertVisible: "Continue with Google"
 - tapOn: "Continue without an account"
 - assertVisible: "Allow"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - assertVisible: "Take a break"
 - tapOn: "Blocks"
 - assertVisible: "New block"

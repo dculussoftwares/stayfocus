@@ -35,12 +35,27 @@ if [ "${#files[@]}" -eq 0 ]; then
   exit 1
 fi
 
+# A slow CI emulator can raise "<system app> isn't responding" (often Quickstep, the launcher). The dialog covers the
+# app under test and fails every flow, so hide new error dialogs and tap "Wait" on one that is already up.
+adb shell settings put global hide_error_dialogs 1 || true
+dismiss_anr_dialog() {
+  local ui wait_bounds
+  ui="$(adb exec-out uiautomator dump /dev/tty 2>/dev/null)" || return 0
+  grep -q "isn't responding" <<<"$ui" || return 0
+  wait_bounds="$(grep -o 'text="Wait"[^>]*bounds="\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]"' <<<"$ui" | grep -o '[0-9]\+' | tail -n 4)"
+  [ -n "$wait_bounds" ] || return 0
+  read -r x1 y1 x2 y2 <<<"$(tr '\n' ' ' <<<"$wait_bounds")"
+  echo "Dismissing a system \"isn't responding\" dialog"
+  adb shell input tap $(((x1 + x2) / 2)) $(((y1 + y2) / 2)) || true
+}
+
 failed=0
 cases=""
 for flow in "${files[@]}"; do
   # The path, not the basename, so same-named flows in different folders keep separate artifacts.
   name="$(echo "${flow%.yaml}" | sed -e 's#^\./##' -e 's#[^A-Za-z0-9_.-]#__#g')"
   echo "::group::maestro $flow"
+  dismiss_anr_dialog
   # screenrecord stops after 3 minutes; each flow is far shorter.
   adb shell screenrecord --time-limit 170 "/sdcard/$name.mp4" &
   rec_pid=$!
@@ -48,12 +63,17 @@ for flow in "${files[@]}"; do
   # One retry: the first launch on a freshly booted CI emulator sometimes fails before the app is up (the flow
   # itself is fine). A flow that fails twice is a real failure.
   if maestro test --test-output-dir "$OUT_DIR/maestro/$name" "$flow" ||
-    { echo "::warning::$flow failed, retrying once"; sleep 5; maestro test --test-output-dir "$OUT_DIR/maestro/$name-retry" "$flow"; }; then
+    { echo "::warning::$flow failed, retrying once"; sleep 5; dismiss_anr_dialog; maestro test --test-output-dir "$OUT_DIR/maestro/$name-retry" "$flow"; }; then
     result="pass"
   else
     result="fail"
     failed=$((failed + 1))
     adb exec-out screencap -p >"$OUT_DIR/$name-failure.png" || true
+    # Also print the crash buffer and the text on screen, so a failure can be read from the job log alone.
+    echo "--- crash log ---"
+    adb logcat -d -b crash | tail -n 60 || true
+    echo "--- text on screen ---"
+    adb exec-out uiautomator dump /dev/tty 2>/dev/null | grep -o 'text="[^"]\+"' | head -n 40 || true
   fi
   elapsed=$(($(date +%s) - start))
   # SIGINT lets screenrecord finalise the mp4.

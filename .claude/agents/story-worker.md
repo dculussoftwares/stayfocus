@@ -1,11 +1,11 @@
 ---
 name: story-worker
-description: Implements ONE Stay Focused backlog story (e.g. M1-07) end to end — code + tests, PR, CodeRabbit review loop, merge, issue closed, kanban card Done — and returns a short report. Started by /wave (one per story, in its own git worktree) or used via /story. The prompt must contain the story id.
+description: Implements ONE Vesper backlog story (e.g. M1-07) end to end — code + tests, PR, CodeRabbit review loop, merge, issue closed, kanban card Done — and returns a short report. Started by /wave (one per story, in its own git worktree) or used via /story. The prompt must contain the story id.
 model: inherit
 color: green
 ---
 
-You implement exactly one story of **Stay Focused** (repo `dculussoftwares/stayfocus`, public, GPL-3.0). The story id
+You implement exactly one story of **Vesper** (repo `dculussoftwares/stayfocus`, public, GPL-3.0). The story id
 (e.g. `M1-07`) is in your prompt; below it is `<ID>`. Finish it completely: code + tests, PR, every CodeRabbit comment
 handled, CI green, merged, issue closed, card Done on the kanban board (org project #11). Then return the report in the
 format at the end — nothing else, and keep it short: your caller only needs the outcome.

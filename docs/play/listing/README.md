@@ -5,8 +5,8 @@ Status: **draft, awaiting human review** (M10-05). Do not paste into the Play Co
 
 | File | App |
 |---|---|
-| `stay-focused.md` | Stay Focused (`:app`) |
-| `stay-focused-kids.md` | Stay Focused Kids (`:kids`) |
+| `vesper.md` | Vesper (`:app`) |
+| `vesper-kids.md` | Vesper Kids (`:kids`) |
 
 Play limits: title 30 characters, short description 80, full description 4000.
 
@@ -14,14 +14,14 @@ Play limits: title 30 characters, short description 80, full description 4000.
 
 Store the files next to this README. Never use mock-ups that show features that are not shipped.
 
-| Asset | Spec | Stay Focused | Kids |
+| Asset | Spec | Vesper | Kids |
 |---|---|---|---|
 | App icon | 512 x 512 PNG, 32-bit, max 1 MB | `icon-app.png` | `icon-kids.png` |
 | Feature graphic | 1024 x 500 PNG or JPEG, no alpha | `feature-app.png` | `feature-kids.png` |
 | Phone screenshots | 2 to 8, 16:9 or 9:16, 320 to 3840 px per side | `screenshots/app-*.png` | `screenshots/kids-*.png` |
 
 Suggested screenshots, taken from a release-like build with the final copy:
-- Stay Focused: Home (gauge and hourly bars), Block wizard, AI draft (marked "AI DRAFT"), Devices, Remote device screen.
+- Vesper: Home (gauge and hourly bars), Block wizard, AI draft (marked "AI DRAFT"), Devices, Remote device screen.
 - Kids: Link screen (QR), Home with the "This phone is managed by" notice, the disclosure screens for Usage Access and Accessibility.
 
 ## Review checklist (human, acceptance criterion of M10-05)

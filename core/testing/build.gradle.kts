@@ -1,9 +1,9 @@
 plugins {
-    id("stayfocused.android.library")
+    id("vesper.android.library")
 }
 
 android {
-    namespace = "com.dculus.stayfocused.core.testing"
+    namespace = "com.dculus.vesper.core.testing"
 }
 
 dependencies {

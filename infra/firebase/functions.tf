@@ -157,7 +157,7 @@ resource "google_cloudfunctions2_function" "function" {
   project     = var.project_id
   name        = each.key
   location    = var.region
-  description = "Stay Focused ${each.key} (${var.env})"
+  description = "Vesper ${each.key} (${var.env})"
 
   build_config {
     runtime         = "nodejs22"

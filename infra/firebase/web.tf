@@ -6,7 +6,7 @@ resource "google_firebase_web_app" "site" {
   provider = google-beta
 
   project      = google_firebase_project.this.project
-  display_name = "Stay Focused web"
+  display_name = "Vesper web"
 
   # Terraform removes the app on destroy instead of only abandoning it.
   deletion_policy = "DELETE"

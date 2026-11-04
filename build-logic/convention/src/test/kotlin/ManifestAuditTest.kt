@@ -45,7 +45,7 @@ class ManifestAuditTest {
 
     private val blockingService =
         """
-        <service android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService"
+        <service android:name="com.dculus.vesper.core.blocking.standard.BlockingService"
             android:foregroundServiceType="specialUse">
           <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="@string/use_case"/>
         </service>
@@ -67,7 +67,7 @@ class ManifestAuditTest {
             ManifestAudit.auditManifest(manifest(application = dataSync), AppRole.APP).any { "specialUse" in it },
         )
         val noProperty =
-            """<service android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService" android:foregroundServiceType="specialUse"/>"""
+            """<service android:name="com.dculus.vesper.core.blocking.standard.BlockingService" android:foregroundServiceType="specialUse"/>"""
         assertTrue(
             ManifestAudit.auditManifest(manifest(application = noProperty), AppRole.APP).any {
                 "PROPERTY_SPECIAL_USE" in

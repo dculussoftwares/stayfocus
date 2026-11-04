@@ -1,5 +1,5 @@
 # M12-19: first run, v5 onboarding: Welcome -> Sign-up (skipped) -> Permissions (all three granted) -> Home.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - journey
 ---
@@ -11,6 +11,6 @@ tags:
 - assertVisible: "Continue with Google"
 - tapOn: "Continue without an account"
 - assertVisible: "Allow"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - assertVisible: "Screen time today"
 - assertVisible: "Take a break"

@@ -13,7 +13,7 @@ resource "google_monitoring_notification_channel" "email" {
   count = var.alert_email != "" ? 1 : 0
 
   project      = var.project_id
-  display_name = "Stay Focused ${var.env} alerts"
+  display_name = "Vesper ${var.env} alerts"
   type         = "email"
   labels = {
     email_address = var.alert_email

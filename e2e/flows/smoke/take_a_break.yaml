@@ -1,5 +1,5 @@
 # M2-05 / M12-08: Home -> Take a break sheet -> pick the 1h preset -> live countdown card -> End early.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - smoke
 ---
@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - assertVisible: "Screen time today"
 - tapOn: "Take a break"
 - assertVisible: "Start 30 min break"

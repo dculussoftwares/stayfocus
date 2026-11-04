@@ -1,10 +1,10 @@
 plugins {
-    id("stayfocused.android.library")
+    id("vesper.android.library")
     alias(libs.plugins.kotlin.serialization)
 }
 
 android {
-    namespace = "com.dculus.stayfocused.core.navigation"
+    namespace = "com.dculus.vesper.core.navigation"
 }
 
 dependencies {

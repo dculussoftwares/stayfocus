@@ -1,5 +1,5 @@
 plugins {
-    id("stayfocused.jvm.library")
+    id("vesper.jvm.library")
     alias(libs.plugins.kotlin.serialization)
 }
 

@@ -1,5 +1,5 @@
 # M12-19: new block through the wizard, v5 steps 1-3: type -> apps -> rule card; Turn on block creates it.
-appId: com.dculus.stayfocused
+appId: com.dculus.vesper
 tags:
   - journey
 ---
@@ -7,7 +7,7 @@ tags:
     clearState: true
 - tapOn: "Get started"
 - tapOn: "Continue without an account"
-- tapOn: "Start using Stay Focused"
+- tapOn: "Start using Vesper"
 - tapOn: "Blocks"
 - tapOn: "New block"
 - assertVisible: "What should it do?"

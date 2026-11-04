@@ -1,6 +1,6 @@
 // Plugins are declared here (not applied) so every module shares one plugin classpath.
 plugins {
-    id("stayfocused.manifest-audit")
+    id("vesper.manifest-audit")
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.android.library) apply false
     alias(libs.plugins.kotlin.jvm) apply false
@@ -107,55 +107,55 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "hilt_aggregated_deps.*",
         // Plain data holders in :core:model (no logic; their generated members are not worth testing).
         // Logic types (DaysOfWeek, TimeRange, DialConfig, KnownApps, formatters) stay covered. Add new data holders here.
-        "com.dculus.stayfocused.core.model.AppInfo",
-        "com.dculus.stayfocused.core.model.AppUsage",
-        "com.dculus.stayfocused.core.model.Block",
-        "com.dculus.stayfocused.core.model.BlockSource",
-        "com.dculus.stayfocused.core.model.BlockTarget*",
-        "com.dculus.stayfocused.core.model.BlockType",
-        "com.dculus.stayfocused.core.model.BreakSession",
-        "com.dculus.stayfocused.core.model.DayUsage",
-        "com.dculus.stayfocused.core.model.FocusSession",
-        "com.dculus.stayfocused.core.model.LimitPeriod",
-        "com.dculus.stayfocused.core.model.LinkedDevice",
-        "com.dculus.stayfocused.core.model.LockedApp",
-        "com.dculus.stayfocused.core.model.Permissions",
-        "com.dculus.stayfocused.core.model.TamperAlert",
-        "com.dculus.stayfocused.core.model.TamperKind",
-        "com.dculus.stayfocused.core.model.TemporaryAllowance",
-        "com.dculus.stayfocused.core.model.UnlockRequest*",
-        "com.dculus.stayfocused.core.testing.HiltTestRunner", // instrumented-test harness, runs on devices only
-        "com.dculus.stayfocused.core.testing.ScreenshotOnFailureRule",
-        "com.dculus.stayfocused.core.testing.ScenarioCleanupRule",
+        "com.dculus.vesper.core.model.AppInfo",
+        "com.dculus.vesper.core.model.AppUsage",
+        "com.dculus.vesper.core.model.Block",
+        "com.dculus.vesper.core.model.BlockSource",
+        "com.dculus.vesper.core.model.BlockTarget*",
+        "com.dculus.vesper.core.model.BlockType",
+        "com.dculus.vesper.core.model.BreakSession",
+        "com.dculus.vesper.core.model.DayUsage",
+        "com.dculus.vesper.core.model.FocusSession",
+        "com.dculus.vesper.core.model.LimitPeriod",
+        "com.dculus.vesper.core.model.LinkedDevice",
+        "com.dculus.vesper.core.model.LockedApp",
+        "com.dculus.vesper.core.model.Permissions",
+        "com.dculus.vesper.core.model.TamperAlert",
+        "com.dculus.vesper.core.model.TamperKind",
+        "com.dculus.vesper.core.model.TemporaryAllowance",
+        "com.dculus.vesper.core.model.UnlockRequest*",
+        "com.dculus.vesper.core.testing.HiltTestRunner", // instrumented-test harness, runs on devices only
+        "com.dculus.vesper.core.testing.ScreenshotOnFailureRule",
+        "com.dculus.vesper.core.testing.ScenarioCleanupRule",
         "*.Placeholder", // empty module placeholders; delete this line when the modules get real code
         // Android adapters in :core:blocking (system service, Settings/PackageManager lookups); the logic they
         // delegate to (ForegroundAppTracker, AccessibilityStatus.isEnabled decision) is unit-tested.
-        "com.dculus.stayfocused.core.blocking.ForegroundAppService*",
-        "com.dculus.stayfocused.core.blocking.standard.BlockingService", // like ForegroundAppService: lifecycle glue
-        "com.dculus.stayfocused.core.blocking.AndroidForegroundEnvironment",
+        "com.dculus.vesper.core.blocking.ForegroundAppService*",
+        "com.dculus.vesper.core.blocking.standard.BlockingService", // like ForegroundAppService: lifecycle glue
+        "com.dculus.vesper.core.blocking.AndroidForegroundEnvironment",
         // Block screen UI and window plumbing (Activity, Compose host, accessibility overlay, launcher): covered by
         // the manual/E2E checks; its logic (BlockCountdown, BlockRequest, decision source) is unit-tested.
-        "com.dculus.stayfocused.core.blocking.screen.BlockActivity",
-        "com.dculus.stayfocused.core.blocking.screen.BlockActivity$*",
-        "com.dculus.stayfocused.core.blocking.screen.BlockHostKt*",
-        "com.dculus.stayfocused.core.blocking.screen.BlockScreenKt*",
-        "com.dculus.stayfocused.core.blocking.screen.BlockScreenLauncher*",
-        "com.dculus.stayfocused.core.blocking.screen.BlockScreenState",
-        "com.dculus.stayfocused.core.blocking.screen.BlockScreenModule",
-        "com.dculus.stayfocused.core.blocking.screen.BlockOverlayWindow*",
+        "com.dculus.vesper.core.blocking.screen.BlockActivity",
+        "com.dculus.vesper.core.blocking.screen.BlockActivity$*",
+        "com.dculus.vesper.core.blocking.screen.BlockHostKt*",
+        "com.dculus.vesper.core.blocking.screen.BlockScreenKt*",
+        "com.dculus.vesper.core.blocking.screen.BlockScreenLauncher*",
+        "com.dculus.vesper.core.blocking.screen.BlockScreenState",
+        "com.dculus.vesper.core.blocking.screen.BlockScreenModule",
+        "com.dculus.vesper.core.blocking.screen.BlockOverlayWindow*",
         // Usage-warning overlay (window, views, animations); when it fires is RuleEvaluator.usageWarnings, tested.
-        "com.dculus.stayfocused.core.blocking.screen.UsageWarningPill*",
-        "com.dculus.stayfocused.core.blocking.screen.EdgeGlowView",
-        "com.dculus.stayfocused.core.blocking.screen.WarningPalette*",
-        "com.dculus.stayfocused.core.blocking.screen.AccessibilitySurface",
-        "com.dculus.stayfocused.core.blocking.screen.BlockSurfaceKt",
-        "com.dculus.stayfocused.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts
-        "com.dculus.stayfocused.core.blocking.screen.BackAwareFrame",
+        "com.dculus.vesper.core.blocking.screen.UsageWarningPill*",
+        "com.dculus.vesper.core.blocking.screen.EdgeGlowView",
+        "com.dculus.vesper.core.blocking.screen.WarningPalette*",
+        "com.dculus.vesper.core.blocking.screen.AccessibilitySurface",
+        "com.dculus.vesper.core.blocking.screen.BlockSurfaceKt",
+        "com.dculus.vesper.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts
+        "com.dculus.vesper.core.blocking.screen.BackAwareFrame",
         "*.MainActivity",
-        "*.StayFocusedApp",
-        "*.StayFocusedKidsApp",
-        "com.dculus.stayfocused.core.blocking.standard.AndroidInteractiveScreen*", // broadcast adapter
-        "com.dculus.stayfocused.core.usage.AndroidResumeEventReader", // UsageStatsManager adapter
+        "*.VesperApp",
+        "*.VesperKidsApp",
+        "com.dculus.vesper.core.blocking.standard.AndroidInteractiveScreen*", // broadcast adapter
+        "com.dculus.vesper.core.usage.AndroidResumeEventReader", // UsageStatsManager adapter
         "*.AppCheckInstaller", // thin Firebase SDK glue; the availability gate it relies on is unit-tested
         "*.AppCheckProviders",
     )

@@ -53,7 +53,7 @@ resource "google_apikeys_key" "android" {
 
   project      = var.project_id
   name         = "${var.env}-${each.key}-android"
-  display_name = "Stay Focused ${each.value.name} (${var.env}, Android)"
+  display_name = "Vesper ${each.value.name} (${var.env}, Android)"
 
   restrictions {
     android_key_restrictions {
@@ -97,7 +97,7 @@ resource "google_billing_budget" "gemini" {
   count = var.billing_account != "" ? 1 : 0
 
   billing_account = var.billing_account
-  display_name    = "Stay Focused ${var.env} Gemini budget"
+  display_name    = "Vesper ${var.env} Gemini budget"
 
   budget_filter {
     projects = ["projects/${data.google_project.this.number}"]

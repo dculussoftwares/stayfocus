@@ -10,7 +10,7 @@ comments_location_policy = "both"
 # 3 = action_required, 2 = remediation_recommended, 1 = informational
 inline_comments_severity_threshold = 2
 issues_user_guidelines = """
-Stay Focused is a free, open-source (GPL-3.0) Android app blocker plus a companion Kids app (Kotlin + Jetpack Compose).
+Vesper is a free, open-source (GPL-3.0) Android app blocker plus a companion Kids app (Kotlin + Jetpack Compose).
 Rules are in AGENTS.md and docs/IMPLEMENTATION_PLAN.md (conventions in section 5).
 - Flag any new permission, manifest flag or QUERY_ALL_PACKAGES the story does not call for (Play policy).
 - The project must build without google-services.json.

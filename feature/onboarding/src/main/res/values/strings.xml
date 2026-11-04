@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="welcome_brand">Stay Focused</string>
+    <string name="welcome_brand">Vesper</string>
     <string name="welcome_headline">Take back\nyour time.</string>
     <string name="welcome_body">Block the apps that eat your day. Free and open source.</string>
     <string name="welcome_get_started">Get started</string>
     <string name="welcome_child_phone">This is my child\'s phone</string>
     <!-- PROVISIONAL: the child-phone sheet copy is not in the design handoff. -->
-    <string name="welcome_sheet_title">Your child needs Stay Focused Kids</string>
-    <string name="welcome_sheet_body">Your child\'s phone runs a separate app, Stay Focused Kids. Install it on their phone, then link it from your own phone with this app.</string>
+    <string name="welcome_sheet_title">Your child needs Vesper Kids</string>
+    <string name="welcome_sheet_body">Your child\'s phone runs a separate app, Vesper Kids. Install it on their phone, then link it from your own phone with this app.</string>
     <string name="welcome_sheet_open_play">Open on Google Play</string>
     <string name="sign_in_title">Sign in</string>
     <string name="auth_back">Back</string>
@@ -53,7 +53,7 @@
     <string name="perms_allowed_cd">%1$s allowed</string>
     <string name="perms_count_button">%1$d of 3 allowed</string>
     <string name="perms_count_button_kids">%1$d of 4 allowed</string>
-    <string name="perms_start">Start using Stay Focused</string>
+    <string name="perms_start">Start using Vesper</string>
     <string name="perms_toast_all_set">All set, %1$s</string>
     <string name="perms_toast_all_set_anonymous">All set</string>
     <string name="perms_continue_now">Continue for now</string>

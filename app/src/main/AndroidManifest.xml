@@ -11,10 +11,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
-        android:name=".StayFocusedApp"
+        android:name=".VesperApp"
         android:allowBackup="false"
         android:label="@string/app_name"
-        android:theme="@style/Theme.StayFocused.Starting">
+        android:theme="@style/Theme.Vesper.Starting">
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -26,7 +26,7 @@
 
         <!-- Foreground-app detection. Minimum capabilities only (Play policy); the :kids declaration comes in M8-03. -->
         <service
-            android:name="com.dculus.stayfocused.core.blocking.ForegroundAppService"
+            android:name="com.dculus.vesper.core.blocking.ForegroundAppService"
             android:exported="false"
             android:label="@string/app_name"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -39,7 +39,7 @@
         </service>
 
         <service
-            android:name="com.dculus.stayfocused.core.blocking.standard.BlockingService"
+            android:name="com.dculus.vesper.core.blocking.standard.BlockingService"
             android:exported="false"
             android:foregroundServiceType="specialUse">
             <property
@@ -71,7 +71,7 @@
             android:name=".push.RequestActionReceiver"
             android:exported="false" />
 
-        <!-- WorkManager is initialised on demand by StayFocusedApp (Hilt worker factory). -->
+        <!-- WorkManager is initialised on demand by VesperApp (Hilt worker factory). -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"

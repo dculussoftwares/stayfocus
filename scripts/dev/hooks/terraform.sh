@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # terraform fmt + validate + tflint for every Terraform root that has a changed file under infra/.
-# Needs `terraform` on PATH. tflint is downloaded once into ~/.cache/stayfocus-hooks if it is not installed.
+# Needs `terraform` on PATH. tflint is downloaded once into ~/.cache/vesper-hooks if it is not installed.
 set -euo pipefail
 root="$(cd "$(dirname "$0")/../../.." && pwd)"
 tflint_v=0.64.0
@@ -9,7 +9,7 @@ command -v terraform >/dev/null || { echo "terraform is not installed (brew inst
 
 tflint_bin="$(command -v tflint || true)"
 if [ -z "$tflint_bin" ]; then
-  cache="${XDG_CACHE_HOME:-$HOME/.cache}/stayfocus-hooks"
+  cache="${XDG_CACHE_HOME:-$HOME/.cache}/vesper-hooks"
   tflint_bin="$cache/tflint-$tflint_v"
   if [ ! -x "$tflint_bin" ]; then
     os="$(uname -s | tr '[:upper:]' '[:lower:]')"

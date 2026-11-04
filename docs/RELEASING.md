@@ -40,7 +40,7 @@ Without the `STAYFOCUSED_KEYSTORE_*` environment variables `./gradlew :app:bundl
 ## Install a bundle on a device
 
 ```bash
-java -jar bundletool.jar build-apks --bundle=stayfocused-v0.2.0.aab --output=app.apks \
+java -jar bundletool.jar build-apks --bundle=vesper-v0.2.0.aab --output=app.apks \
   --ks=upload.jks --ks-key-alias=upload   # signs the generated APKs; needed for a device install
 java -jar bundletool.jar install-apks --apks=app.apks
 ```

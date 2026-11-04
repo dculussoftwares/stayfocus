@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Stay Focused Kids</string>
-    <string name="kids_perms_body">Android needs these before Stay Focused Kids can share app use with your parent.</string>
+    <string name="app_name">Vesper Kids</string>
+    <string name="kids_perms_body">Android needs these before Vesper Kids can share app use with your parent.</string>
     <string name="kids_perms_disclosure_reads">Which app is on your screen.</string>
     <string name="kids_perms_disclosure_why">To show the block screen when an app your parent blocked opens, and to share screen time with them.</string>
     <string name="kids_perms_disclosure_never">Reads messages, passwords or typing. Never sold. Shared only with the parent you link.</string>
-    <string name="kids_perms_disclosure_title">Stay Focused Kids uses the Accessibility service</string>
+    <string name="kids_perms_disclosure_title">Vesper Kids uses the Accessibility service</string>
     <string name="kids_battery_strong">Strongly recommended on this phone: without it, Android may stop blocking in the background.</string>
     <!-- Shown in Android\'s Accessibility settings; overrides the phone app\'s text from :core:blocking. -->
-    <string name="foreground_service_description">Stay Focused Kids sees which app is on your screen so it can block the apps your parent chose. It never reads messages, passwords or typing. Nothing is sold, and it is shared only with the parent you link.</string>
+    <string name="foreground_service_description">Vesper Kids sees which app is on your screen so it can block the apps your parent chose. It never reads messages, passwords or typing. Nothing is sold, and it is shared only with the parent you link.</string>
     <!-- Placeholder screens until the Link (QR), Consent and Home stories land. -->
     <string name="kids_link_title">Show this to\nyour parent</string>
     <string name="kids_link_subtitle">They scan it from their phone.</string>
@@ -41,7 +41,7 @@
     <string name="kids_consent_network">Could not reach the server. Check the connection and try again.</string>
     <string name="kids_consent_failed">Something went wrong. Try again.</string>
     <!-- Home. The notice preview, "Today", the rules header and "Unlink from" are from the prototype; the rest is new. -->
-    <string name="kids_home_notice_app">Stay Focused Kids · now</string>
+    <string name="kids_home_notice_app">Vesper Kids · now</string>
     <string name="kids_home_notice_title">This phone is managed by %1$s</string>
     <string name="kids_home_notice_body">Screen time and app use are shared with %1$s.</string>
     <string name="kids_home_notice_badge">SF</string>
