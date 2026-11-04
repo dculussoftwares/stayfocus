@@ -4,8 +4,8 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- A ring with a dot: Vesper. -->
+    <!-- The Vesper evening star, from the Valley launcher icon. -->
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M12,2C6.48,2 2,6.48 2,12s4.48,10 10,10 10,-4.48 10,-10S17.52,2 12,2zM12,19c-3.87,0 -7,-3.13 -7,-7s3.13,-7 7,-7 7,3.13 7,7 -3.13,7 -7,7zM12,9a3,3 0,1 0,0 6,3 3,0 0,0 0,-6z" />
+        android:pathData="M12,1.5C13.57,8.85 14.94,10.43 19.35,12C14.94,13.57 13.57,15.15 12,22.5C10.43,15.15 9.06,13.57 4.65,12C9.06,10.43 10.43,8.85 12,1.5Z" />
 </vector>
