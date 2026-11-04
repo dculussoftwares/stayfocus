@@ -89,6 +89,12 @@ class AccountViewModelTest {
                 viewModel.setWarningGlow(false)
                 assertEquals(false, awaitItem().warningGlow)
                 assertEquals(false, settings.settings.first().usageWarningGlow)
+                assertTrue(viewModel.state.value.appTimer)
+                viewModel.setAppTimer(false)
+                val next = awaitItem()
+                assertEquals(false, next.appTimer)
+                assertEquals(false, next.warningGlow)
+                assertEquals(false, settings.settings.first().appStartTimer)
             }
         }
 
