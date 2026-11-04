@@ -7,7 +7,7 @@ variable "owner" {
 variable "repository" {
   description = "Repository the backlog issues are created in."
   type        = string
-  default     = "stayfocus"
+  default     = "vesper"
 }
 
 variable "backlog_dir" {

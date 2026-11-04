@@ -5,7 +5,7 @@ This is the engineering plan for Phase 1 (v1.0). Product scope, screens and desi
 `design_handoff_stay_focused_phase1/` is the v2 handoff, kept as history only (the v2 design system has been removed).
 
 The work is tracked as **10 epics (one per milestone) with stories as sub-issues** on the
-**GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/stayfocus`. Every story is meant to be
+**GitHub Project kanban board** ([org project #11](https://github.com/orgs/dculussoftwares/projects/11)) for `dculussoftwares/vesper`. Every story is meant to be
 picked up and finished by one coding agent or developer in **one pull request, reviewed by CodeRabbit**. This document is the shared
 contract all stories refer to. Agent prompts and the parallel execution order are in
 [`docs/agents/PHASE1_EXECUTION.md`](agents/PHASE1_EXECUTION.md).
