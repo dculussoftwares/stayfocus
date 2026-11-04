@@ -71,6 +71,23 @@ abstract class SettingsRepositoryContract {
         }
 
     @Test
+    fun `warning glow and app timer default on and each toggles only itself`() =
+        runTest {
+            repo.settings.test {
+                val initial = awaitItem()
+                assertEquals(true, initial.usageWarningGlow)
+                assertEquals(true, initial.appStartTimer)
+                repo.setUsageWarningGlow(false)
+                assertEquals(AppSettings(usageWarningGlow = false), awaitItem())
+                repo.setAppStartTimer(false)
+                assertEquals(AppSettings(usageWarningGlow = false, appStartTimer = false), awaitItem())
+                repo.setUsageWarningGlow(true)
+                assertEquals(AppSettings(appStartTimer = false), awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
     fun `focus session round trips and clears`() =
         runTest {
             val session = FocusSession(Instant.ofEpochMilli(1_000), Instant.ofEpochMilli(61_000), 1)

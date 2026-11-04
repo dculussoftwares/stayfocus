@@ -841,6 +841,17 @@ class RuleEvaluatorTest {
     }
 
     @Test
+    fun `final warning three seconds before a limit is spent`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.ONE_MIN, 5_000L)), limitWarnings(30, 30.0 - 5.0 / 60))
+        assertEquals(listOf(UsageWarning("b1", WarningKind.FINAL, 3_000L)), limitWarnings(30, 30.0 - 3.0 / 60))
+    }
+
+    @Test
+    fun `a one minute limit also gets the final warning`() {
+        assertEquals(listOf(UsageWarning("b1", WarningKind.FINAL, 3_000L)), limitWarnings(1, 1.0 - 3.0 / 60))
+    }
+
+    @Test
     fun `no warning once the limit is spent`() {
         assertEquals(emptyList(), limitWarnings(30, 30.0))
     }
@@ -886,5 +897,29 @@ class RuleEvaluatorTest {
         val b = block(type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
         val c = ctx(wed, b, usage = mapOf(APP to AppUsageSnapshot(5 * MIN, 0)))
         assertEquals(wed.toInstant().plusMillis(10 * MIN), RuleEvaluator.nextEvaluationAt(c))
+    }
+
+    @Test
+    fun `tightest budget is the block with the least time left`() {
+        val daily = block("daily", type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        val cycle = block("cycle", type = BlockType.CYCLE, useMins = 20, restMins = 10)
+        val c =
+            ctx(
+                wed,
+                daily,
+                cycle,
+                usage = mapOf(APP to AppUsageSnapshot(25 * MIN, 0)),
+                cycleStates = mapOf(cycle.cycleKey(APP) to CycleState(usedMs = 5 * MIN)),
+            )
+        assertEquals(AppBudget("daily", 30 * MIN, 5 * MIN), RuleEvaluator.tightestBudget(c))
+    }
+
+    @Test
+    fun `no budget without a limit or cycle, or while locked`() {
+        val sched = block(type = BlockType.SCHEDULE, range = range("22:00–23:00"))
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, sched)))
+        val limit = block(type = BlockType.LIMIT, limitMins = 30, period = LimitPeriod.DAILY)
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, limit, allLocked = true)))
+        assertEquals(null, RuleEvaluator.tightestBudget(ctx(wed, limit, allowlist = setOf(APP))))
     }
 }

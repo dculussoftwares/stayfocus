@@ -147,6 +147,10 @@ fun kotlinx.kover.gradle.plugin.dsl.KoverReportFilter.excludeFromCoverage() {
         "com.dculus.vesper.core.blocking.screen.UsageWarningPill*",
         "com.dculus.vesper.core.blocking.screen.EdgeGlowView",
         "com.dculus.vesper.core.blocking.screen.WarningPalette*",
+        // App timer tab overlay (window, views, drag, animations); when it shows is BlockingEngine and
+        // RuleEvaluator.tightestBudget, and its time formatting (AppTimerChipKt) is unit-tested.
+        "com.dculus.vesper.core.blocking.screen.AppTimerChip",
+        "com.dculus.vesper.core.blocking.screen.AppTimerChip$*",
         "com.dculus.vesper.core.blocking.screen.AccessibilitySurface",
         "com.dculus.vesper.core.blocking.screen.BlockSurfaceKt",
         "com.dculus.vesper.core.blocking.engine.ScreenAndClockReceivers*", // registers system broadcasts

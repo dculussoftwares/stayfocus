@@ -34,4 +34,10 @@
     <string name="block_reason_all_locked">Everything is locked now</string>
     <string name="usage_warning_half">Half your time on %1$s is used</string>
     <string name="usage_warning_one_min">1 min left on %1$s</string>
+    <string name="usage_warning_final">%1$s locks in 3 seconds</string>
+    <!-- App timer tab while a limited app is open: "12:34 left · Instagram" -->
+    <string name="app_timer_left">%1$s left</string>
+    <string name="app_timer_app">" · %1$s"</string>
+    <!-- TalkBack label of the timer tab: "12:34 left on Instagram" -->
+    <string name="app_timer_a11y">%1$s left on %2$s</string>
 </resources>

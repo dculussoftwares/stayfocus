@@ -66,11 +66,12 @@ internal class UsageWarningPill(
         text: String,
         urgent: Boolean,
         durationMs: Long,
+        showGlow: Boolean = true,
     ) {
         remove()
         val palette = if (urgent) WarningPalette.URGENT else WarningPalette.CALM
         val container = FrameLayout(context).apply { clipChildren = false }
-        val glow = EdgeGlowView(context, palette)
+        val glow = EdgeGlowView(context, palette).apply { if (!showGlow) visibility = View.GONE }
         val halo = View(context).apply { background = rounded(palette.halo) }
         val ring = CountdownRing(context)
         val card = cardView(text, ring)

@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -104,6 +105,8 @@ class BlockingEngine
             var flushedAt: Instant,
             var flushedMono: Long,
             var counting: Boolean = true,
+            /** Whether the open-time timer was considered for this stay; it is only ever shown at the start. */
+            var timerChecked: Boolean = false,
         )
 
         private data class Shown(
@@ -129,6 +132,12 @@ class BlockingEngine
 
         /** The most urgent warning already shown per `blockId|pkg`; cleared once the block is out of warning range. */
         private val warned = HashMap<String, WarningKind>()
+
+        /** Monotonic time the app timer last opened expanded per app, so quick app switches don't repeat that. */
+        private val timerShownAt = HashMap<String, Long>()
+
+        /** The app the timer tab is showing over, if any. */
+        private var timerPkg: String? = null
         private val cycleCache = ConcurrentHashMap<CycleKey, CycleState>()
         private val cycleRules = ConcurrentHashMap<String, String>()
 
@@ -196,6 +205,7 @@ class BlockingEngine
                     }
             }
             presenter.dismissOverlay()
+            presenter.hideAppTimer()
         }
 
         /** Books the time since the last evaluation, then forgets everything about the run. */
@@ -400,6 +410,7 @@ class BlockingEngine
             inputs: EngineInputs,
         ): Long {
             val now = clock.instant()
+            if (timerPkg != null && timerPkg != pkg) hideTimer()
             val current = switchSession(pkg, now, inputs)
             if (pkg == null || current == null) {
                 clearShown(now)
@@ -413,12 +424,18 @@ class BlockingEngine
                     BlockingLog.log("Engine", "$pkg -> allow")
                     current.counting = true
                     clearShown(now)
-                    warnIfDue(pkg, ctx)
+                    val didWarn = warnIfDue(pkg, ctx)
+                    if (!current.timerChecked) {
+                        current.timerChecked = true
+                        showTimerIfDue(pkg, ctx, quiet = didWarn)
+                    }
                     wait
                 }
 
                 is Decision.Block -> {
                     current.counting = false
+                    current.timerChecked = true
+                    timerPkg = null
                     enforce(current, decision, now)
                     // Re-check soon: the block screen can disappear while the app stays "in front" for the tracker.
                     minOf(wait, BLOCKED_RECHECK_MS)
@@ -426,19 +443,48 @@ class BlockingEngine
             }
         }
 
-        /** Shows at most one warning per evaluation, and each kind only once per block until its budget resets. */
-        private fun warnIfDue(
+        /**
+         * Shows at most one warning per evaluation, and each kind only once per block until its budget resets.
+         * Returns whether a warning was shown.
+         */
+        private suspend fun warnIfDue(
             pkg: String,
             ctx: EvaluationContext,
-        ) {
+        ): Boolean {
             val reached = RuleEvaluator.usageWarnings(ctx).associateBy { "${it.blockId}|$pkg" }
             warned.keys.removeAll { it.endsWith("|$pkg") && it !in reached }
             val due = reached.filter { (key, w) -> warned[key]?.let { w.kind > it } ?: true }
             reached.forEach { (key, w) -> warned[key] = maxOf(w.kind, warned[key] ?: w.kind) }
-            due.values.minByOrNull { it.remainingMs }?.let {
-                BlockingLog.log("Engine", "$pkg warning ${it.kind}, ${it.remainingMs} ms left")
-                presenter.showWarning(pkg, it.kind)
-            }
+            val warning = due.values.minByOrNull { it.remainingMs } ?: return false
+            BlockingLog.log("Engine", "$pkg warning ${warning.kind}, ${warning.remainingMs} ms left")
+            presenter.showWarning(pkg, warning.kind, settings.settings.first().usageWarningGlow)
+            return true
+        }
+
+        /**
+         * As a limited app comes to the front, docks a timer tab with how much of its budget is left. It opens
+         * expanded, unless the same app opened it within [TIMER_COOLDOWN_MS] (hopping between apps) or a warning
+         * is showing ([quiet]): then it starts tucked in.
+         */
+        private suspend fun showTimerIfDue(
+            pkg: String,
+            ctx: EvaluationContext,
+            quiet: Boolean,
+        ) {
+            val budget = RuleEvaluator.tightestBudget(ctx) ?: return
+            if (!settings.settings.first().appStartTimer) return
+            val mono = monotonic.elapsedMs()
+            val last = timerShownAt[pkg]
+            val expanded = !quiet && (last == null || mono - last >= TIMER_COOLDOWN_MS)
+            if (expanded) timerShownAt[pkg] = mono
+            timerPkg = pkg
+            BlockingLog.log("Engine", "$pkg timer, ${budget.remainingMs} of ${budget.totalMs} ms left")
+            presenter.showAppTimer(pkg, budget.remainingMs, budget.totalMs, expanded)
+        }
+
+        private fun hideTimer() {
+            timerPkg = null
+            presenter.hideAppTimer()
         }
 
         /**
@@ -616,6 +662,7 @@ class BlockingEngine
             private const val RETRY_MS = 5_000L
             private const val BLOCKED_RECHECK_MS = 1_000L
             private const val DISMISS_GRACE_MS = 2_000L
+            private const val TIMER_COOLDOWN_MS = 30_000L
         }
     }
 
