@@ -23,6 +23,7 @@ resource "google_project_service" "seed" {
     "iamcredentials.googleapis.com",
     "sts.googleapis.com",
     "storage.googleapis.com",
+    "androidpublisher.googleapis.com", # Play upload from the release workflow
   ])
 
   project            = google_project.this.project_id
@@ -179,4 +180,20 @@ resource "google_service_account_iam_member" "wif_plan" {
   service_account_id = google_service_account.plan.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/attribute.repository_id/${var.github_repository_id}"
+}
+
+# Play upload: only jobs in the GitHub environment `release` (v* tags only, set in infra/github). The account has no
+# GCP roles; its Play permissions are granted in Play Console (Users and permissions), the one step Terraform can't do.
+resource "google_service_account" "play" {
+  project      = google_project.this.project_id
+  account_id   = "play-publisher"
+  display_name = "Play upload (GitHub Actions, environment ${var.release_environment})"
+
+  depends_on = [google_project_service.seed]
+}
+
+resource "google_service_account_iam_member" "wif_play" {
+  service_account_id = google_service_account.play.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/${var.github_subject_prefix}:environment:${var.release_environment}"
 }

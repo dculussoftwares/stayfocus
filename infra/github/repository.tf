@@ -1,4 +1,4 @@
-# Repository settings, the branch ruleset for `main` and the `prod` environment.
+# Repository settings, the branch ruleset for `main` and the `prod` and `release` environments.
 #
 # Needs a credential with Repository -> Administration: the apply job mints a GitHub App token for it
 # (docs/INFRASTRUCTURE.md). Plans only read, so GITHUB_TOKEN is enough there.
@@ -137,4 +137,24 @@ resource "github_repository_environment_deployment_policy" "prod_main" {
   repository     = github_repository.this.name
   environment    = github_repository_environment.prod.environment
   branch_pattern = "main"
+}
+
+# The environment the release workflow (.github/workflows/release.yml) runs in. It holds the signing secrets
+# (UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_ALIAS, UPLOAD_KEY_PASSWORD), added by hand in GitHub and
+# never through Terraform, so they never reach state. Only `v*` tags may deploy here. No approval step: the workflow
+# also refuses tags that are not on main. The Play upload logs in keylessly as play-publisher (infra/seed).
+resource "github_repository_environment" "release" {
+  repository  = github_repository.this.name
+  environment = "release"
+
+  deployment_branch_policy {
+    protected_branches     = false
+    custom_branch_policies = true
+  }
+}
+
+resource "github_repository_environment_deployment_policy" "release_tags" {
+  repository  = github_repository.this.name
+  environment = github_repository_environment.release.environment
+  tag_pattern = "v*"
 }
