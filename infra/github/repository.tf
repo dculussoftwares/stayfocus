@@ -139,27 +139,13 @@ resource "github_repository_environment_deployment_policy" "prod_main" {
   branch_pattern = "main"
 }
 
-# The environment the release workflow (.github/workflows/release.yml) runs in. It holds the signing and Play secrets
-# (UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_ALIAS, UPLOAD_KEY_PASSWORD, PLAY_SERVICE_ACCOUNT_JSON).
-# Those values are added by hand in GitHub, never through Terraform, so they never reach state. Only `v*` tags may
-# deploy here, and a reviewer approves every run before a signed build is made.
-data "github_user" "release_reviewer" {
-  for_each = toset(var.release_reviewers)
-  username = each.value
-}
-
+# The environment the release workflow (.github/workflows/release.yml) runs in. It holds the signing secrets
+# (UPLOAD_KEYSTORE_BASE64, UPLOAD_KEYSTORE_PASSWORD, UPLOAD_KEY_ALIAS, UPLOAD_KEY_PASSWORD), added by hand in GitHub and
+# never through Terraform, so they never reach state. Only `v*` tags may deploy here. No approval step: the workflow
+# also refuses tags that are not on main. The Play upload logs in keylessly as play-publisher (infra/seed).
 resource "github_repository_environment" "release" {
   repository  = github_repository.this.name
   environment = "release"
-
-  # One maintainer may tag and approve their own release.
-  prevent_self_review = false
-  # Admins get no way around the approval either.
-  can_admins_bypass = false
-
-  reviewers {
-    users = [for u in data.github_user.release_reviewer : tonumber(u.id)]
-  }
 
   deployment_branch_policy {
     protected_branches     = false

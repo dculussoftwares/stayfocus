@@ -34,3 +34,9 @@ variable "region" {
   type        = string
   default     = "europe-west1"
 }
+
+variable "release_environment" {
+  description = "GitHub environment whose jobs may use the Play upload identity. The environment only allows v* tags."
+  type        = string
+  default     = "release"
+}

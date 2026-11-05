@@ -41,9 +41,3 @@ variable "required_status_checks" {
   # see it, and a failed graph would leave dependency review without the Gradle snapshot.
   default = ["ci-pass", "security-pass", "gradle-dependency-graph"]
 }
-
-variable "release_reviewers" {
-  description = "GitHub usernames who approve release runs (environment `release`). GitHub allows up to 6."
-  type        = list(string)
-  default     = ["bannarisoftwares"]
-}
