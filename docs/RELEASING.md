@@ -27,8 +27,10 @@ Create these in the repo's `release` environment (Settings > Environments), neve
 Generate the upload key once (`keytool -genkeypair -keystore upload.jks -alias upload -keyalg RSA -keysize 2048
 -validity 10000`) and keep it and its passwords outside the repo (`*.jks` and `*.keystore` are git-ignored).
 
-The workflow refuses tags that do not point at a commit on `main`. In the `release` environment also restrict deployment
-tags to `v*` and require a reviewer, so a tag push alone cannot reach the secrets.
+The workflow refuses tags that do not point at a commit on `main`. Terraform creates the `release` environment
+(`infra/github/repository.tf`): only `v*` tags may deploy to it, and a reviewer from `release_reviewers`
+(`infra/github/variables.tf`) approves each run, so a tag push alone cannot reach the secrets. The secret values are
+added by hand and never go through Terraform.
 
 ## Local release build
 
