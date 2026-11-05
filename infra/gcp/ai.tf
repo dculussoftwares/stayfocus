@@ -49,7 +49,7 @@ resource "google_firebase_app_check_service_config" "ai_logic" {
 # One key per app, limited to its package and signing certificates and to the APIs above. An app without SHA-1
 # fingerprints gets no key (Android restrictions need at least one; an unrestricted key is not acceptable).
 resource "google_apikeys_key" "android" {
-  for_each = { for k, a in local.apps : k => a if length(var.sha1_fingerprints[k]) > 0 }
+  for_each = { for k, a in local.apps : k => a if length(local.sha1[k]) > 0 }
 
   project      = var.project_id
   name         = "${var.env}-${each.key}-android"
@@ -58,7 +58,7 @@ resource "google_apikeys_key" "android" {
   restrictions {
     android_key_restrictions {
       dynamic "allowed_applications" {
-        for_each = toset(var.sha1_fingerprints[each.key])
+        for_each = toset(local.sha1[each.key])
         content {
           package_name     = each.value.package
           sha1_fingerprint = allowed_applications.value

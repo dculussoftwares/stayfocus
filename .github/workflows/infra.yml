@@ -181,24 +181,6 @@ jobs:
         with:
           module: github
           identity: deploy
-      # One-time move of this module's state from HCP Terraform to GCS. Does nothing once the GCS state has resources
-      # or when the TF_API_TOKEN secret is gone. Remove this step after the move.
-      - name: Move the state from HCP Terraform (one time)
-        env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
-        run: |
-          [ -n "$TF_API_TOKEN" ] || exit 0
-          obj="gs://${TF_STATE_BUCKET}/github/default.tfstate"
-          n=$(gcloud storage cat "$obj" 2>/dev/null | jq '.resources | length' 2>/dev/null || true)
-          if [ "${n:-0}" != "0" ]; then echo "GCS state already has $n resources"; exit 0; fi
-          auth=(-H "Authorization: Bearer ${TF_API_TOKEN}")
-          ws=$(curl -sSf "${auth[@]}" https://app.terraform.io/api/v2/organizations/dculus/workspaces/stayfocus-github | jq -r .data.id)
-          url=$(curl -sSf "${auth[@]}" "https://app.terraform.io/api/v2/workspaces/${ws}/current-state-version" | jq -r '.data.attributes."hosted-state-download-url"')
-          curl -sSfL "${auth[@]}" "$url" -o "$RUNNER_TEMP/hcp.tfstate"
-          jq -e '.resources | length > 0' "$RUNNER_TEMP/hcp.tfstate" > /dev/null
-          gcloud storage cp "$RUNNER_TEMP/hcp.tfstate" "$obj"
-          rm -f "$RUNNER_TEMP/hcp.tfstate"
-          echo "Moved $(gcloud storage cat "$obj" | jq '.resources | length') resources to $obj"
       # Repo settings and the ruleset need Repository -> Administration; the board needs org Projects.
       - name: Mint GitHub App token
         id: app
