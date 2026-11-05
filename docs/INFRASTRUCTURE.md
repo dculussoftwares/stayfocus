@@ -76,7 +76,8 @@ Then merge: Actions creates everything else. Manual steps that have no API:
    *Metadata: read*, *Organization → Projects: read and write*. Set `BACKLOG_APP_CLIENT_ID` and `BACKLOG_APP_PRIVATE_KEY`.
 2. **Google sign-in:** ordinary OAuth clients have no create API, so create a *Web application* client once in
    *Google Auth Platform → Clients* of the project, then set `GOOGLE_OAUTH_WEB_CLIENT_ID` (variable) and
-   `GOOGLE_OAUTH_WEB_CLIENT_SECRET` (secret). The web client ID is also what Credential Manager uses in the app.
+   `GOOGLE_OAUTH_WEB_CLIENT_SECRET` (secret). Add the redirect URI `https://<project_id>.firebaseapp.com/__/auth/handler`.
+   The web client ID is also what Credential Manager uses in the app. (Done for `vesper-prod-31275`: client "Vesper web (Firebase Auth)".)
 3. **Play Console**, once the apps exist: link Play Integrity to both apps, and add the *Play App Signing* SHA-1/SHA-256
    fingerprints to `infra/gcp/terraform.tfvars`.
 
