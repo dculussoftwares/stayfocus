@@ -120,8 +120,9 @@ imported with an `import` block) and a ruleset on the default branch:
 
 - pull request required, stale approvals dismissed on push, **all review threads resolved**;
 - required status checks: `ci-pass` (aggregate job in `ci.yml`), `security-pass` (aggregate job in `security.yml`) and `gradle-dependency-graph` (`dependency-graph.yml`);
-- linear history, no force pushes, no deletion; direct pushes are rejected for everyone;
-- the only bypass is the organisation admin role in `pull_request` mode (emergency merge of a PR).
+- linear history;
+- org admins bypass it (`always`): they can push straight to `main`; everyone else needs a PR;
+- a second ruleset, `main-protect`, blocks force pushes and deleting `main` for everyone, with no bypass.
 
 **Review mechanism: `required_approvals = 0`.** Qodo, the fallback reviewer, cannot approve, so a required approval
 would block fallback merges. The `CodeRabbit` check is not required either (it does not exist in fallback mode). The
