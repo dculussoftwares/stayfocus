@@ -1,0 +1,476 @@
+---
+import Base from "../layouts/Base.astro";
+import Screen from "../components/Screen.astro";
+import FaqIndex from "../components/FaqIndex.astro";
+import PlayIcon from "../components/PlayIcon.astro";
+import { MIN_ANDROID, PLAY_KIDS, PLAY_VESPER, type Faq } from "../lib/site";
+
+const parentCan = [
+  { title: "Block apps and set time limits", body: "Daily limits, use-then-lock, school and bedtime hours. The same four kinds of block you use on your own phone." },
+  { title: "Lock everything for a while", body: "One tap locks every app on their phone. Calls still work." },
+  { title: "Start a focus session", body: "25, 50 or 90 minutes of study time, started from your phone." },
+  { title: "Answer requests for more time", body: "Your child asks from the block screen. You give 15 minutes, 30, an hour, or say no." },
+  { title: "See today at a glance", body: "Screen time by hour, the app in use now, battery, and whether the phone is online." },
+];
+
+const childSees = [
+  "A notice that stays on their phone while it is managed, with your name on it.",
+  "A home screen with the rules you set and today's screen time.",
+  "A button to ask for more time when an app is resting.",
+  "An Unlink button. They can use it anytime, and you get a notification.",
+];
+
+const linking = [
+  { src: "/screens/kids-code.webp", alt: "Vesper Kids: Show this to your parent, with a QR code.", phone: "Their phone", text: "Open Vesper Kids. It shows a code that works for five minutes." },
+  { src: "/screens/link-confirm.webp", alt: "Vesper: Do the codes match? 482 913, and a field to name the phone.", phone: "Your phone", text: "Scan it from Vesper's Family tab and give the phone a name." },
+  { src: "/screens/kids-allow.webp", alt: "Vesper Kids: Let Sam manage this phone? with the same code and what Sam will be able to do.", phone: "Their phone", text: "They check that the six digits match, read what you'll be able to do, and allow it." },
+  { src: "/screens/family.webp", alt: "Vesper Family tab listing Aarav's phone, online, with today's usage.", phone: "Your phone", text: "The phone appears in Family. Set its first block." },
+];
+
+const never = [
+  "Hide from your child. There is no hidden mode.",
+  "Read messages, typing, photos or what is on the screen.",
+  "Track location.",
+  "Show ads, run analytics or sell data.",
+];
+
+const shared = [
+  "The phone's name and model, battery level and whether it is online.",
+  "The app that is open right now.",
+  "The list of apps installed, so you can choose what to block.",
+  "Daily minutes and opens per app.",
+  "Requests for more time and alerts, such as Accessibility being turned off.",
+];
+
+const faq: Faq[] = [
+  { q: "Does my child need an account?", a: "No. Children don't create accounts or enter personal details. You sign in to Vesper on your phone; Vesper Kids links to that account." },
+  { q: "What if they unlink?", a: "The phone stops being managed, its data is deleted from your account, and you get a notification. You can link again together." },
+  { q: "What if they turn off Accessibility?", a: "Blocks pause on their phone and you see “Protection is off” in Vesper. You can send a reminder from there." },
+  { q: "Can they ask for more time?", a: "Yes. When an app is resting, they can ask for 15, 30 or 60 more minutes. You answer from your phone." },
+  { q: "Which phones does it work on?", a: `Both phones need Android 8.0 or newer. Vesper goes on your phone, Vesper Kids on theirs.` },
+  { q: "Can I use it on another adult's phone?", a: "No. Vesper Kids is for a parent or guardian managing their child's phone, with the child's knowledge. It is not designed to be hidden." },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  name: "Vesper Kids",
+  description: "Companion app for parents: manage app limits on your child's Android phone, openly.",
+  operatingSystem: "Android 8.0+",
+  applicationCategory: "LifestyleApplication",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  installUrl: PLAY_KIDS,
+  isAccessibleForFree: true,
+  url: "https://vesper.dculus.com/kids",
+};
+---
+
+<Base
+  title="Vesper Kids: app limits on your child's phone, in the open"
+  description="Vesper Kids links your child's Android phone to Vesper on yours. Set limits, answer requests for more time and start focus sessions. Your child sees it, approves it and can unlink."
+  current="kids"
+  jsonLd={jsonLd}
+>
+  <section class="kids-hero wrap" aria-labelledby="kids-hero-title">
+    <div class="kh-copy">
+      <h1 id="kids-hero-title">Limits your child can see.</h1>
+      <p class="lede">
+        Vesper Kids links your child's Android phone to Vesper on yours. They see it, approve it and can unlink it.
+      </p>
+      <div class="kh-get">
+        <div>
+          <a class="button" href={PLAY_KIDS}><PlayIcon />Get Vesper Kids</a>
+          <p class="muted">For your child's phone</p>
+        </div>
+        <div>
+          <a class="button quiet" href={PLAY_VESPER}><PlayIcon />Get Vesper</a>
+          <p class="muted">For your phone</p>
+        </div>
+      </div>
+    </div>
+    <div class="kh-phones">
+      <figure>
+        <Screen src="/screens/remote-controls.webp" alt="Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone." eager />
+        <figcaption class="caption">Your phone</figcaption>
+      </figure>
+      <figure class="lower">
+        <Screen src="/screens/kids-home.webp" alt="Vesper Kids home on the child's phone, showing who manages it and today's rules." eager />
+        <figcaption class="caption">Their phone</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="section can" aria-labelledby="can-title">
+    <h2 id="can-title" data-rise>From your phone</h2>
+    <dl class="can-list">
+      {
+        parentCan.map((item, i) => (
+          <div data-rise style={`--i:${i}`}>
+            <dt>{item.title}</dt>
+            <dd>{item.body}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </section>
+
+  <section class="section sees" aria-labelledby="sees-title">
+    <div class="sees-shot" data-rise>
+      <Screen src="/screens/kids-allow.webp" alt="Vesper Kids consent screen: Let Sam manage this phone? Allow and link, or Not now." />
+    </div>
+    <div class="sees-copy">
+      <h2 id="sees-title" data-rise>On their phone</h2>
+      <p class="lede" data-rise style="--i:1">Nothing is managed until your child allows it on their own phone.</p>
+      <ul>
+        {childSees.map((line, i) => <li data-rise style={`--i:${i + 2}`}>{line}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section linking" aria-labelledby="linking-title">
+    <h2 id="linking-title" data-rise>Linking takes a minute.</h2>
+    <ol>
+      {
+        linking.map((step, i) => (
+          <li data-rise style={`--i:${i}`}>
+            <figure>
+              <Screen src={step.src} alt={step.alt} />
+              <figcaption class="caption">{step.phone}</figcaption>
+            </figure>
+            <p>{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+
+  <section class="never-field" aria-labelledby="never-title">
+    <div class="never-grid">
+      <h2 id="never-title" data-rise>What Vesper Kids will never do</h2>
+      <ul>
+        {never.map((line, i) => <li data-rise style={`--i:${i}`}>{line}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="section shared" aria-labelledby="shared-title">
+    <div class="shared-head">
+      <h2 id="shared-title" data-rise>What you see, and nothing more</h2>
+      <p data-rise style="--i:1">
+        This goes only to your account, through Firebase. Unlinking the phone deletes it. The <a href="/privacy">privacy policy</a> has the details.
+      </p>
+    </div>
+    <ul>
+      {shared.map((line, i) => <li data-rise style={`--i:${i}`}>{line}</li>)}
+    </ul>
+  </section>
+
+  <section class="section" aria-label="Questions about Vesper Kids">
+    <FaqIndex id="kids-faq" title="Questions from parents" items={faq} />
+  </section>
+
+  <section class="close kids-close" aria-labelledby="kids-close">
+    <div>
+      <h2 id="kids-close">One app on each phone.</h2>
+      <div class="actions">
+        <a class="button" href={PLAY_KIDS}><PlayIcon />Vesper Kids, for their phone</a>
+        <a class="button quiet" href={PLAY_VESPER}><PlayIcon />Vesper, for yours</a>
+      </div>
+      <p class="note">Both free. {MIN_ANDROID} or newer.</p>
+    </div>
+    <div class="pair">
+      <figure>
+        <Screen src="/screens/kids-code.webp" alt="Vesper Kids showing a code for the parent to scan." />
+        <figcaption class="caption">Vesper Kids, on theirs</figcaption>
+      </figure>
+      <figure>
+        <Screen src="/screens/family.webp" alt="Vesper's Family tab with a linked child's phone." />
+        <figcaption class="caption">Vesper, on yours</figcaption>
+      </figure>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .kids-hero {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 24px;
+    align-items: center;
+    min-height: calc(100svh - 80px);
+    padding-block: 24px 64px;
+  }
+
+  .kh-copy {
+    grid-column: 1 / span 6;
+    display: grid;
+    gap: 36px;
+  }
+
+  .kh-copy h1 {
+    font-size: var(--t-display);
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  .kh-get {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 28px;
+  }
+
+  .kh-get p {
+    margin-top: 10px;
+    font-size: var(--t-small);
+    padding-left: 4px;
+  }
+
+  .kh-phones {
+    grid-column: 8 / span 5;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .kh-phones figure {
+    margin: 0;
+  }
+
+  .kh-phones .lower {
+    margin-top: 18%;
+  }
+
+  .can {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+
+  .can h2 {
+    grid-column: 1 / span 4;
+  }
+
+  .can-list {
+    grid-column: 6 / span 7;
+    margin: 0;
+    display: grid;
+    gap: 40px;
+  }
+
+  .can-list dt {
+    font-size: var(--t-statement);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    line-height: 1.2;
+  }
+
+  .can-list dd {
+    margin: 8px 0 0;
+    max-width: 52ch;
+  }
+
+  .sees {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 24px;
+    align-items: center;
+  }
+
+  .sees-shot {
+    grid-column: 2 / span 3;
+  }
+
+  .sees-copy {
+    grid-column: 6 / span 7;
+    display: grid;
+    gap: 28px;
+  }
+
+  .sees-copy ul {
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 18px;
+  }
+
+  .sees-copy li {
+    display: flex;
+    gap: 14px;
+    font-size: 19px;
+    max-width: 48ch;
+  }
+
+  .sees-copy li::before,
+  .shared li::before {
+    content: "";
+    flex: none;
+    width: 8px;
+    height: 8px;
+    margin-top: 0.62em;
+    border-radius: 50%;
+    background: var(--green);
+  }
+
+  .linking h2 {
+    margin-bottom: 56px;
+  }
+
+  .linking ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 24px;
+  }
+
+  .linking figure {
+    margin: 0;
+  }
+
+  .linking li p {
+    margin-top: 12px;
+    max-width: 30ch;
+  }
+
+  .linking li:nth-child(even) {
+    margin-top: 64px;
+  }
+
+  .never-field {
+    margin-top: var(--gap);
+    background: var(--ink);
+    color: #fff;
+    padding: clamp(96px, 10vw, 160px) var(--margin);
+  }
+
+  .never-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 40px 24px;
+  }
+
+  .never-grid h2 {
+    grid-column: 1 / span 5;
+  }
+
+  .never-grid ul {
+    grid-column: 7 / span 6;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 28px;
+    font-size: var(--t-statement);
+    font-weight: 300;
+    line-height: 1.25;
+  }
+
+  .never-grid li {
+    padding-left: 1.2em;
+    position: relative;
+  }
+
+  .never-grid li::before {
+    content: "×";
+    position: absolute;
+    left: 0;
+    color: var(--lime);
+  }
+
+  .shared {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 40px 24px;
+  }
+
+  .shared-head {
+    grid-column: 1 / span 5;
+    display: grid;
+    gap: 24px;
+    align-content: start;
+  }
+
+  .shared ul {
+    grid-column: 7 / span 6;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 18px;
+  }
+
+  .shared li {
+    display: flex;
+    gap: 14px;
+    font-size: 19px;
+  }
+
+  .kids-close {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 48px 24px;
+    align-items: center;
+  }
+
+  .kids-close > div:first-child {
+    grid-column: 1 / span 6;
+  }
+
+  .pair {
+    grid-column: 8 / span 5;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .pair figure {
+    margin: 0;
+  }
+
+  .pair figure:last-child {
+    margin-top: 18%;
+  }
+
+  @media (max-width: 900px) {
+    .kids-close {
+      display: block;
+    }
+    .pair {
+      margin-top: 48px;
+    }
+    .kids-hero,
+    .can,
+    .sees,
+    .never-grid,
+    .shared {
+      display: block;
+    }
+    .kids-hero {
+      min-height: 0;
+    }
+    .kh-phones {
+      margin-top: 48px;
+    }
+    .can h2,
+    .shared-head {
+      margin-bottom: 40px;
+    }
+    .sees-shot {
+      width: min(64vw, 280px);
+      margin-bottom: 48px;
+    }
+    .never-grid ul {
+      margin-top: 40px;
+    }
+    .linking ol {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 40px 16px;
+    }
+    .linking li:nth-child(even) {
+      margin-top: 0;
+    }
+  }
+</style>

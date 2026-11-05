@@ -3,3 +3,4 @@ dist/
 .wrangler/
 # Written at deploy time from Terraform state (web.yml).
 public/firebase-config.json
+.taste-skill/

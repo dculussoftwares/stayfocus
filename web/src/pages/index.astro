@@ -1,16 +1,1221 @@
 ---
 import Base from "../layouts/Base.astro";
+import Screen from "../components/Screen.astro";
+import RestDemo from "../components/RestDemo.astro";
+import FaqIndex from "../components/FaqIndex.astro";
+import PlayIcon from "../components/PlayIcon.astro";
+import { MIN_ANDROID, PLAY_KIDS, PLAY_VESPER, SOURCE, type Faq } from "../lib/site";
+
+const bands = [
+  {
+    text: "Open Instagram for 10, then rest it for 30.",
+    then: "10 min open, then 30 min locked. It repeats all day.",
+    tone: "forest",
+    on: true,
+  },
+  { text: "Give YouTube 45 minutes a day.", then: "After 45 min it locks until midnight.", tone: "lime", on: false },
+  {
+    text: "Keep TikTok closed from 22:00 to 07:00.",
+    then: "Nine quiet hours every night, set once.",
+    tone: "green",
+    on: true,
+  },
+  { text: "Block Reddit for the next 2 hours.", then: "Locked from the moment you tap.", tone: "leaf", on: false },
+  {
+    text: "Take a 30 minute break from everything.",
+    then: "Every distracting app locks. Calls and messages still work.",
+    tone: "mint",
+    on: false,
+  },
+];
+
+const without = ["Ads", "Analytics", "An advertising ID", "A subscription", "A sign-up wall"];
+
+const kidsSteps = [
+  { text: "Install Vesper Kids on their phone. It shows a code for five minutes.", src: "/screens/kids-code.webp", alt: "Vesper Kids showing a QR code to scan.", phone: "Their phone" },
+  { text: "Scan it with Vesper. Both phones show the same six digits.", src: "/screens/link-confirm.webp", alt: "Vesper asking: Do the codes match? 482 913.", phone: "Your phone" },
+  { text: "Your child checks the code and says yes. They can unlink anytime, and you're told.", src: "/screens/kids-allow.webp", alt: "Vesper Kids asking: Let Sam manage this phone?", phone: "Their phone" },
+  { text: "Then set limits, answer requests for more time and start focus sessions from your phone.", src: "/screens/remote-controls.webp", alt: "Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone.", phone: "Your phone" },
+];
+
+const faq: Faq[] = [
+  { q: "Is Vesper really free?", a: "Yes. No ads, no subscription and no paid tier. The code is open source under GPL-3.0, so anyone can read it, build it or improve it." },
+  { q: "Why does it need Accessibility access?", a: "To spot a blocked app the moment it opens and cover it. It reads which app is on screen and the address of websites you open. It never reads your messages, passwords or typing." },
+  { q: "Do I need an account?", a: "No. Without one, your blocks, schedules and screen time stay on your phone. You only sign in to link a child's phone or keep your blocks when you switch phones." },
+  { q: "What happens to the sentence I type for AI?", a: "It goes to Google's Gemini model through Firebase AI Logic to draft the block. It isn't kept unless you report a bad result. If AI is unavailable, your phone reads the sentence itself. Nothing turns on until you check the draft." },
+  { q: "Can I still take calls during a block?", a: "Yes. Breaks and locks cover distracting apps only. Calls and messages keep working." },
+  { q: "Does it work on iPhone?", a: `No. Vesper is for Android, version 8.0 and newer.` },
+  { q: "How do I delete my data?", a: "In the app, open your profile and choose Delete account and all data, or use the account deletion page on this site. Without an account, uninstalling the app removes everything." },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "MobileApplication",
+  name: "Vesper",
+  description: "A free, open-source app blocker for Android: time limits, use-then-lock, schedules, breaks and a Kids companion.",
+  operatingSystem: "Android 8.0+",
+  applicationCategory: "LifestyleApplication",
+  offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+  installUrl: PLAY_VESPER,
+  license: "https://www.gnu.org/licenses/gpl-3.0.html",
+  isAccessibleForFree: true,
+  url: "https://vesper.dculus.com/",
+};
 ---
 
 <Base
   title="Vesper: free, open-source app blocker for Android"
-  description="Vesper is a free, open-source Android app blocker, with a Kids companion app for parents."
+  description="Block the apps that eat your day. Time limits, use-then-lock, schedules and breaks. No ads, no analytics, no account needed. Free and open source."
+  current="home"
+  jsonLd={jsonLd}
+  credit={{ title: "Evening Star with Oak", page: "https://www.flickr.com/photos/42914481@N00/11183635344", author: "albategnius", licence: "CC BY-SA 2.0", licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/", source: "Flickr" }}
 >
-  <h1>Vesper</h1>
-  <p>A free, open-source Android app blocker, with a Kids companion app.</p>
-  <ul>
-    <li><a href="/privacy">Privacy policy</a></li>
-    <li><a href="/delete-account">Delete your account and data</a></li>
-    <li><a href="https://github.com/dculussoftwares/vesper">Source code (GPL-3.0)</a></li>
-  </ul>
+  <!-- Hero: say what you want blocked, see both apps. -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <h1 id="hero-title">Take back your time.</h1>
+      <p class="hero-lede">Vesper is a free, open-source app blocker for Android. No ads, no analytics, no account needed.</p>
+
+      <form class="ask" action="/" method="get" data-ask>
+        <label for="ask-input" class="visually-hidden">Describe a block in your words</label>
+        <svg class="ask-spark" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Zm5.5 10c.3 1.6.8 2.2 2.4 2.6-1.6.4-2.1 1-2.4 2.6-.3-1.6-.8-2.2-2.4-2.6 1.6-.4 2.1-1 2.4-2.6Z" /></svg>
+        <input id="ask-input" name="q" type="text" autocomplete="off" placeholder="Describe a block in your words" />
+        <button type="submit" aria-label="Build my block">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        </button>
+      </form>
+      <ul class="ask-examples" aria-label="Try one">
+        <li><button type="button" data-ask-example>YouTube max 1 hour a day</button></li>
+        <li><button type="button" data-ask-example>Instagram 10 min, then lock it for 30</button></li>
+      </ul>
+
+      <div class="actions hero-actions">
+        <a class="button white" href={PLAY_VESPER}><PlayIcon />Get it on Google Play</a>
+        <a class="on-green" href="/kids">Setting up a child's phone?</a>
+      </div>
+    </div>
+
+    <div class="hero-phones">
+      <figure>
+        <Screen src="/screens/home.webp" alt="Vesper home: 2:33 of screen time today, 27 minutes under a 3 hour goal, 23 blocked opens." eager />
+        <figcaption>Vesper, on your phone</figcaption>
+      </figure>
+      <figure class="lower">
+        <Screen src="/screens/kids-home.webp" alt="Vesper Kids home on a child's phone: who manages it, today's screen time and the rules set." eager />
+        <figcaption>Vesper Kids, on theirs</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <RestDemo />
+
+  <!-- How it works: what you give, what comes back. -->
+  <section class="section how" id="how" aria-labelledby="how-title">
+    <div class="how-head">
+      <h2 id="how-title" data-rise>Set up in a minute.</h2>
+      <p class="muted" data-rise style="--i:1">Everything runs on your phone. You can stop at any step.</p>
+    </div>
+
+    <ol class="how-steps">
+      <li data-rise>
+        <h3>First, flip four switches.</h3>
+        <div class="call perms" data-ui data-perms>
+          {
+            [
+              ["Usage access", "See how long each app is used"],
+              ["Accessibility", "Spot a blocked app the moment it opens"],
+              ["Display over other apps", "Show the block screen on top"],
+              ["Notifications", "Tell you when a block starts or ends"],
+            ].map(([title, sub], i) => (
+              <div class="perm">
+                <div>
+                  <p class="perm-title">{title}</p>
+                  <p class="perm-sub">{sub}</p>
+                </div>
+                <button type="button" class="perm-allow" aria-pressed={i < 2 ? "true" : "false"} aria-label={`Allow ${title}`}>
+                  <span class="allow">Allow</span>
+                  <svg class="tick" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                </button>
+              </div>
+            ))
+          }
+          <p class="perm-count" data-count aria-live="polite">2 of 4 allowed</p>
+        </div>
+        <div class="response disclosure" data-ui>
+          <p class="disc-title">Accessibility access</p>
+          <dl>
+            <div><dt>What it reads</dt><dd>Which app is on screen and the address of websites you open.</dd></div>
+            <div><dt>Why</dt><dd>To block an app or site the moment it opens.</dd></div>
+            <div><dt>Never</dt><dd>Your messages, passwords or typing. Nothing leaves this phone.</dd></div>
+          </dl>
+        </div>
+      </li>
+
+      <li data-rise>
+        <h3>Then say what you want.</h3>
+        <p class="call typed" data-ui>No TikTok or YouTube on school days 8–3</p>
+        <div class="response draft" data-ui>
+          <p class="draft-tag">
+            <svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Z" /></svg>
+            AI draft
+          </p>
+          <p class="draft-note">Check the details, then turn it on.</p>
+          <p class="draft-summary">TikTok and YouTube are blocked from 08:00 to 15:00, Mon–Fri.</p>
+          <span class="draft-button">Turn on block</span>
+        </div>
+      </li>
+
+      <li data-rise>
+        <h3>Then get on with your day.</h3>
+        <div class="call block-card" data-ui>
+          <span class="stack" aria-hidden="true"><span style="--c:#111318">T</span><span style="--c:#FF0033">Y</span></span>
+          <div>
+            <p class="bc-title">TikTok + YouTube</p>
+            <p class="bc-type">Blocked during hours</p>
+          </div>
+          <span class="toggle on" aria-hidden="true"></span>
+          <p class="bc-rule">08:00–15:00, Mon–Fri</p>
+        </div>
+        <div class="response result">
+          <figure>
+            <Screen src="/screens/blocks.webp" alt="Blocks tab with active blocks and their rules." />
+            <figcaption class="caption">Your blocks, each with its own switch.</figcaption>
+          </figure>
+          <figure>
+            <Screen src="/screens/home.webp" alt="Home with today's screen time and blocked count." />
+            <figcaption class="caption">Your day, under your goal.</figcaption>
+          </figure>
+          <figure>
+            <Screen src="/screens/insights.webp" alt="Insights day view with unlocks and blocked opens." />
+            <figcaption class="caption">Unlocks, blocked opens and top apps.</figcaption>
+          </figure>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- Rules as sentences with switches. -->
+  <section class="section rules" id="rules" aria-labelledby="rules-title">
+    <h2 id="rules-title" class="rules-title" data-rise>Four kinds of block, and a break.</h2>
+    <div class="bands">
+      {
+        bands.map((band, i) => (
+          <div class:list={["band", band.tone, { on: band.on }]} data-band>
+            <div class="band-text">
+              <p class="band-line" id={`band-${i}`}>{band.text}</p>
+              <p class="band-then">{band.then}</p>
+            </div>
+            <button
+              class="band-switch"
+              type="button"
+              role="switch"
+              aria-checked={band.on ? "true" : "false"}
+              aria-labelledby={`band-${i}`}
+              data-ui
+            >
+              <span />
+            </button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- What it comes without. -->
+  <section class="without" aria-labelledby="without-title">
+    <h2 id="without-title" class="without-title">Vesper comes without</h2>
+    <ul>
+      {without.map((item) => <li>{item}</li>)}
+    </ul>
+    <p class="without-source"><a href={SOURCE}>Every line of code is public on GitHub.</a></p>
+  </section>
+
+  <!-- Vesper Kids: the linking story, pinned. -->
+  <section class="kids-field" id="kids" aria-labelledby="kids-title">
+    <div class="kids-grid">
+      <div class="kids-copy">
+        <div class="kids-head">
+          <h2 id="kids-title" data-rise>Vesper Kids, for your child's phone.</h2>
+          <p class="lede" data-rise style="--i:1">
+            A companion app that works in the open. Your child sees it, agrees to it and can unlink it.
+          </p>
+          <div class="actions" data-rise style="--i:2">
+            <a class="button white" href={PLAY_KIDS}><PlayIcon />Get Vesper Kids</a>
+            <a class="on-dark" href="/kids">How Vesper Kids works</a>
+          </div>
+        </div>
+        <ol class="kids-steps">
+          {
+            kidsSteps.map((step, i) => (
+              <li data-step={i}>
+                <p>{step.text}</p>
+                <figure class="kids-inline">
+                  <Screen src={step.src} alt={step.alt} />
+                  <figcaption class="caption">{step.phone}</figcaption>
+                </figure>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+      <div class="kids-pin" aria-hidden="true">
+        <div class="kids-stack">
+          {
+            kidsSteps.map((step, i) => (
+              <figure class:list={["kids-frame", { active: i === 0 }]} data-frame={i}>
+                <Screen src={step.src} alt="" />
+                <figcaption class="caption">{step.phone}</figcaption>
+              </figure>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-label="Questions">
+    <FaqIndex id="faq" title="Questions" items={faq} />
+  </section>
+
+  <section class="close home-close" aria-labelledby="close-title">
+    <div class="close-copy">
+      <h2 id="close-title">Give <span class="blank" data-app-blank>Instagram</span> a rest.</h2>
+      <div class="actions">
+        <a class="button" href={PLAY_VESPER}><PlayIcon />Get Vesper on Google Play</a>
+        <a class="button quiet" href={PLAY_KIDS}>Vesper Kids for a child's phone</a>
+      </div>
+      <p class="note">Free. {MIN_ANDROID} or newer. No account needed.</p>
+    </div>
+    <figure class="dusk">
+      <div class="dusk-frame"><img src="/photos/evening-star.webp" width="1024" height="685" loading="lazy" decoding="async" alt="Venus, the evening star, shining over a dark valley and an oak tree just after sunset." /></div>
+      <figcaption class="caption">Vesper is an old name for the evening star: the first light out when the day winds down.</figcaption>
+    </figure>
+  </section>
 </Base>
+
+<style>
+  /* ---------- Hero: one field of brand green ---------- */
+  .hero {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 48px 24px;
+    align-items: center;
+    min-height: calc(100svh - 80px);
+    padding: clamp(48px, 6vw, 96px) var(--margin);
+    background: var(--green-deep);
+    color: #fff;
+    overflow: hidden;
+  }
+
+  .hero-copy {
+    grid-column: 1 / span 6;
+    display: grid;
+    gap: 28px;
+    justify-items: start;
+  }
+
+  .hero h1 {
+    font-size: clamp(52px, 6.6vw, 112px);
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+    max-width: 9ch;
+  }
+
+  .hero-lede {
+    font-size: clamp(18px, 1.4vw, 21px);
+    line-height: 1.45;
+    max-width: 34ch;
+  }
+
+  /* The app's "Describe a block in your words" pill. */
+  .ask {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: min(100%, 560px);
+    min-height: 66px;
+    padding: 0 8px 0 22px;
+    border-radius: 33px;
+    background: #fff;
+    color: var(--ink);
+    transition: box-shadow 200ms var(--ease);
+  }
+
+  .ask:focus-within {
+    outline: 3px solid var(--lime);
+    outline-offset: 3px;
+  }
+
+  .ask-spark {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    color: var(--green);
+  }
+
+  .ask input {
+    flex: 1;
+    min-width: 0;
+    height: 50px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font: 400 18px var(--font);
+  }
+
+  .ask input:focus {
+    outline: none;
+  }
+
+  .ask input::placeholder {
+    color: var(--muted);
+  }
+
+  .ask button {
+    flex: none;
+    width: 50px;
+    height: 50px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 160ms var(--ease);
+  }
+
+  .ask button:hover {
+    transform: translateX(2px);
+  }
+
+  .ask button:active {
+    transform: scale(0.94);
+  }
+
+  .ask button svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .ask-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: -12px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ask-examples button {
+    min-height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+    font: 500 15px var(--font);
+    cursor: pointer;
+    transition: background-color 160ms var(--ease);
+  }
+
+  .ask-examples button:hover {
+    background: rgba(255, 255, 255, 0.28);
+  }
+
+  .hero-actions {
+    margin-top: 8px;
+  }
+
+  .on-green {
+    color: #fff;
+  }
+
+  .hero-phones {
+    grid-column: 8 / span 5;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  .hero-phones figure {
+    margin: 0;
+  }
+
+  .hero-phones figure.lower {
+    margin-top: 22%;
+  }
+
+  .hero-phones :global(.screen) {
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .hero-phones figcaption {
+    margin-top: 14px;
+    font-size: var(--t-small);
+    color: #e3f1dc;
+  }
+
+  @media (max-width: 900px) {
+    .hero {
+      display: block;
+      min-height: 0;
+    }
+    .hero-phones {
+      margin-top: 56px;
+      gap: 14px;
+      max-width: 560px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .ask {
+      padding-left: 20px;
+    }
+    .ask-spark {
+      display: none;
+    }
+    .ask input {
+      font-size: 16px;
+    }
+  }
+
+  /* ---------- How it works ---------- */
+  .how {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+
+  .how-head {
+    grid-column: 1 / span 4;
+    position: sticky;
+    top: 40px;
+    align-self: start;
+    display: grid;
+    gap: 20px;
+  }
+
+  .how-steps {
+    grid-column: 6 / span 7;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 96px;
+  }
+
+  .how-steps > li {
+    min-width: 0;
+  }
+
+  .how-steps h3 {
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  .call {
+    margin-top: 16px;
+    max-width: 560px;
+    border-radius: 24px;
+    background: var(--surface);
+    padding: 20px;
+  }
+
+  .response {
+    margin: 24px 0 0 56px;
+    max-width: 504px;
+  }
+
+  .perms {
+    display: grid;
+    gap: 8px;
+    background: var(--step);
+  }
+
+  .perm {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 22px;
+    background: var(--surface);
+  }
+
+  .perm-title {
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .perm-sub {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .perm-allow {
+    flex: none;
+    display: grid;
+    place-items: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--ink);
+    color: #fff;
+    font: 600 15px var(--font);
+    cursor: pointer;
+    transition:
+      background-color 200ms var(--ease),
+      padding 200ms var(--ease);
+  }
+
+  .perm-allow .tick {
+    display: none;
+    width: 20px;
+    height: 20px;
+  }
+
+  .perm-allow[aria-pressed="true"] {
+    padding: 0;
+    width: 44px;
+    background: var(--green);
+    cursor: default;
+  }
+
+  .perm-allow[aria-pressed="true"] .allow {
+    display: none;
+  }
+
+  .perm-allow[aria-pressed="true"] .tick {
+    display: block;
+  }
+
+  .perm-count {
+    padding: 8px 4px 0;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  .disclosure {
+    border-radius: 24px;
+    background: var(--surface);
+    padding: 24px;
+  }
+
+  .disc-title {
+    font-size: 24px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .disclosure dl {
+    margin: 16px 0 0;
+    display: grid;
+    gap: 14px;
+  }
+
+  .disclosure dt {
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .disclosure dd {
+    margin: 2px 0 0;
+    font-size: 15px;
+  }
+
+  .typed {
+    font-size: 21px;
+    font-weight: 300;
+    line-height: 1.35;
+    padding: 24px 26px;
+  }
+
+  .draft {
+    border-radius: 24px;
+    background: var(--surface);
+    padding: 24px;
+    display: grid;
+    gap: 10px;
+    justify-items: start;
+  }
+
+  .draft-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 12px;
+    border-radius: 14px;
+    background: var(--mint);
+    color: #1f7a33;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .draft-tag svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .draft-note {
+    color: var(--muted);
+    font-size: 15px;
+  }
+
+  .draft-summary {
+    font-size: 22px;
+    font-weight: 300;
+    line-height: 1.25;
+  }
+
+  .draft-button {
+    margin-top: 6px;
+    display: inline-grid;
+    place-items: center;
+    height: 50px;
+    padding: 0 24px;
+    border-radius: 25px;
+    background: var(--ink);
+    color: #fff;
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .block-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 6px 14px;
+    border-radius: 32px;
+  }
+
+  .stack {
+    display: flex;
+  }
+
+  .stack span {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    background: var(--c);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+    font-size: 15px;
+    border: 2px solid #fff;
+  }
+
+  .stack span + span {
+    margin-left: -8px;
+  }
+
+  .bc-title {
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .bc-type {
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .bc-rule {
+    grid-column: 1 / -1;
+    margin-top: 10px;
+    font-size: 22px;
+    font-weight: 300;
+  }
+
+  .toggle {
+    width: 52px;
+    height: 32px;
+    border-radius: 16px;
+    background: var(--ink);
+    position: relative;
+  }
+
+  .toggle::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 23px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #fff;
+  }
+
+  .result {
+    margin-left: 0;
+    max-width: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+  }
+
+  .result figure {
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .how {
+      display: block;
+    }
+    .how-head {
+      position: static;
+      margin-bottom: 56px;
+    }
+    .response {
+      margin-left: 0;
+    }
+    .result {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .result figure:nth-child(3) {
+      display: none;
+    }
+  }
+
+  /* ---------- Rules: sentences with switches ---------- */
+  .rules {
+    padding-inline: 0;
+  }
+
+  .rules-title {
+    padding-inline: var(--margin);
+    margin-bottom: 56px;
+  }
+
+  .band {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 24px;
+    min-height: 20vh;
+    padding: 28px var(--margin);
+    color: var(--muted);
+    transition:
+      background-color 400ms var(--ease),
+      color 400ms var(--ease);
+    --track: var(--ink);
+    --knob: #fff;
+  }
+
+  .band-line {
+    font-size: clamp(26px, 3.5vw, 58px);
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+
+  .band-then {
+    font-size: 17px;
+    font-weight: 500;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition:
+      max-height 400ms var(--ease),
+      opacity 400ms var(--ease),
+      margin 400ms var(--ease);
+  }
+
+  .band.on .band-then {
+    max-height: 3em;
+    opacity: 1;
+    margin-top: 12px;
+  }
+
+  .band.on {
+    color: var(--ink);
+  }
+
+  .band.on.forest {
+    background: var(--ink);
+    color: #fff;
+    --track: var(--lime);
+    --knob: var(--ink);
+  }
+
+  .band.on.lime {
+    background: var(--lime);
+  }
+
+  .band.on.green {
+    background: var(--green-deep);
+    color: #fff;
+    --track: #fff;
+    --knob: var(--green-deep);
+  }
+
+  .band.on.leaf {
+    background: var(--leaf);
+  }
+
+  .band.on.mint {
+    background: var(--mint);
+  }
+
+  .band-switch {
+    position: relative;
+    width: 2.6em;
+    height: 1.55em;
+    padding: 0;
+    border: 0;
+    border-radius: 1em;
+    background: #d3d4d6;
+    font-size: clamp(30px, 3.2vw, 46px);
+    cursor: pointer;
+    transition: background-color 250ms var(--ease);
+  }
+
+  .band-switch::before {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+
+  .band-switch span {
+    position: absolute;
+    top: 0.1em;
+    left: 0.1em;
+    width: 1.35em;
+    height: 1.35em;
+    border-radius: 50%;
+    background: #fff;
+    transition:
+      transform 250ms var(--ease),
+      background-color 250ms var(--ease);
+  }
+
+  .band.on .band-switch {
+    background: var(--track);
+  }
+
+  .band.on .band-switch span {
+    transform: translateX(1.05em);
+    background: var(--knob);
+  }
+
+  .band-switch:active span {
+    width: 1.55em;
+  }
+
+  @media (max-width: 700px) {
+    .band {
+      min-height: 132px;
+    }
+    .band-line {
+      font-size: clamp(24px, 6.4vw, 40px);
+    }
+    .band-then {
+      font-size: 15px;
+    }
+  }
+
+  /* ---------- Without ---------- */
+  .without {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 24px 40px;
+    padding: 140px var(--margin);
+  }
+
+  .without-title {
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 0;
+    color: var(--muted);
+  }
+
+  .without ul {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px 32px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: clamp(22px, 2vw, 30px);
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--green);
+  }
+
+  .without-source {
+    width: 100%;
+    font-size: var(--t-small);
+  }
+
+  @media (max-width: 700px) {
+    .without {
+      padding-block: 96px;
+      display: grid;
+    }
+    .without ul {
+      justify-content: flex-start;
+      gap: 12px 28px;
+    }
+    .without li {
+      white-space: nowrap;
+    }
+  }
+
+  /* ---------- Kids ---------- */
+  .kids-field {
+    background: var(--ink);
+    color: #fff;
+    padding: clamp(96px, 10vw, 160px) var(--margin);
+  }
+
+  .kids-field :global(.caption) {
+    color: var(--on-ink-muted);
+  }
+
+  .on-dark {
+    color: #fff;
+  }
+
+  .kids-grid {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0 24px;
+  }
+
+  .kids-copy {
+    grid-column: 1 / span 6;
+  }
+
+  @media (max-width: 1100px) {
+    .kids-copy {
+      grid-column: 1 / span 7;
+    }
+    .kids-pin {
+      grid-column: 8 / span 5;
+    }
+  }
+
+  .kids-head {
+    display: grid;
+    gap: 28px;
+  }
+
+  .kids-head .lede {
+    color: #e3ecdc;
+  }
+
+  .kids-steps {
+    margin: 64px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .kids-steps li {
+    min-height: 72svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: var(--t-statement);
+    line-height: 1.3;
+    max-width: 24ch;
+    transition: opacity 300ms var(--ease);
+  }
+
+  :global(.js) .kids-steps li {
+    opacity: 0.4;
+  }
+
+  :global(.js) .kids-steps li.current {
+    opacity: 1;
+  }
+
+  .kids-inline {
+    display: none;
+  }
+
+  .kids-pin {
+    grid-column: 8 / span 4;
+    position: relative;
+  }
+
+  .kids-stack {
+    position: sticky;
+    top: 10svh;
+    height: 80svh;
+    display: grid;
+    place-items: center;
+  }
+
+  .kids-frame {
+    grid-area: 1 / 1;
+    margin: 0;
+    width: min(100%, calc(72svh * 390 / 844));
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+    transition:
+      opacity 450ms var(--ease),
+      transform 450ms var(--ease);
+  }
+
+  .kids-frame.active {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 700px) {
+    .kids-copy {
+      grid-column: 1 / -1;
+    }
+    .kids-pin {
+      display: none;
+    }
+    .kids-steps li,
+    :global(.js) .kids-steps li {
+      min-height: 0;
+      opacity: 1;
+      margin-top: 56px;
+    }
+    .kids-inline {
+      display: block;
+      margin: 24px 0 0;
+      width: min(72vw, 300px);
+    }
+  }
+
+  /* ---------- Close ---------- */
+  .home-close {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 48px 24px;
+    align-items: end;
+  }
+
+  .close-copy {
+    grid-column: 1 / span 7;
+  }
+
+  .home-close h2 {
+    font-size: clamp(40px, 4.8vw, 84px);
+  }
+
+  .dusk {
+    grid-column: 8 / span 5;
+    margin: 0;
+  }
+
+  .dusk-frame {
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .dusk img {
+    width: 100%;
+    aspect-ratio: 1024 / 685;
+    object-fit: cover;
+    transform-origin: 20% 30%;
+    animation: drift 24s ease-in-out infinite alternate;
+  }
+
+  @keyframes drift {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.08) translate(1%, 1%);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .home-close {
+      display: block;
+    }
+    .dusk {
+      margin-top: 56px;
+    }
+    .home-close h2 {
+      font-size: clamp(36px, 10vw, 60px);
+    }
+  }
+</style>
+
+<script>
+  // Hero: a sentence typed (or tapped) in the hero fills the demo below and builds it.
+  const ask = document.querySelector<HTMLFormElement>("[data-ask]");
+  const demoForm = document.querySelector<HTMLFormElement>("[data-describe]");
+  const demoInput = demoForm?.querySelector<HTMLInputElement>("input");
+  const sendToDemo = (text: string) => {
+    if (!demoForm || !demoInput || !text.trim()) return;
+    demoInput.value = text;
+    demoForm.requestSubmit();
+  };
+  ask?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendToDemo(ask.querySelector("input")?.value ?? "");
+  });
+  document.querySelectorAll<HTMLButtonElement>("[data-ask-example]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const input = ask?.querySelector("input");
+      if (input) input.value = b.textContent ?? "";
+      sendToDemo(b.textContent ?? "");
+    }),
+  );
+
+  // Permission rows: tap Allow, watch the count.
+  const perms = document.querySelector<HTMLElement>("[data-perms]");
+  if (perms) {
+    const count = perms.querySelector<HTMLElement>("[data-count]");
+    const buttons = [...perms.querySelectorAll<HTMLButtonElement>(".perm-allow")];
+    const refresh = () => {
+      const n = buttons.filter((b) => b.getAttribute("aria-pressed") === "true").length;
+      if (count) count.textContent = n === 4 ? "All set. Start using Vesper." : `${n} of 4 allowed`;
+    };
+    buttons.forEach((b) =>
+      b.addEventListener("click", () => {
+        b.setAttribute("aria-pressed", "true");
+        refresh();
+      }),
+    );
+  }
+
+  // Rule bands: each switch turns its band on or off.
+  document.querySelectorAll<HTMLElement>("[data-band]").forEach((band) => {
+    const button = band.querySelector<HTMLButtonElement>("button");
+    button?.addEventListener("click", () => {
+      const on = !band.classList.contains("on");
+      band.classList.toggle("on", on);
+      button.setAttribute("aria-checked", String(on));
+    });
+  });
+
+  // Kids story: the pinned phone follows the step in view.
+  const steps = [...document.querySelectorAll<HTMLElement>("[data-step]")];
+  const frames = [...document.querySelectorAll<HTMLElement>("[data-frame]")];
+  if (steps.length && "IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const index = Number((entry.target as HTMLElement).dataset.step);
+          steps.forEach((s, i) => s.classList.toggle("current", i === index));
+          frames.forEach((f, i) => f.classList.toggle("active", i === index));
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px" },
+    );
+    steps.forEach((s) => observer.observe(s));
+    steps[0]?.classList.add("current");
+  } else {
+    steps.forEach((s) => s.classList.add("current"));
+  }
+</script>

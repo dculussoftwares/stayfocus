@@ -205,19 +205,21 @@ export default function DeleteAccount() {
   return (
     <>
       {step === "unconfigured" && (
-        <p className="muted">
+        <p className="del-note">
           Account deletion is not available on this site yet. Delete your account in the app instead (Profile, Delete
           account and all data).
         </p>
       )}
 
       {step === "signin" && (
-        <section>
-          <h2>Step 1. Sign in</h2>
-          <button type="button" onClick={signInWithGoogle}>
+        <section className="del-step">
+          <h2>Sign in to the account</h2>
+          <button type="button" className="button white del-google" onClick={signInWithGoogle}>
+            <span className="g" aria-hidden="true">G</span>
             Continue with Google
           </button>
-          <form onSubmit={signInWithEmail}>
+          <p className="del-or">or with email</p>
+          <form className="del-form" onSubmit={signInWithEmail}>
             <label htmlFor="email">Email</label>
             <input
               id="email"
@@ -236,27 +238,31 @@ export default function DeleteAccount() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
-            <button type="submit">Sign in with email</button>
+            <button type="submit" className="button">
+              Sign in with email
+            </button>
           </form>
         </section>
       )}
 
       {step === "confirm" && (
-        <section>
-          <h2>Step 2. Confirm</h2>
+        <section className="del-step">
+          <h2>Delete everything?</h2>
           <p>
             Signed in as <strong>{who}</strong>.
           </p>
-          <button type="button" className="danger" onClick={deleteEverything} disabled={deleting}>
-            Delete account and all data
-          </button>
-          <button type="button" className="secondary" onClick={cancel} disabled={deleting}>
-            Sign out
-          </button>
+          <div className="actions">
+            <button type="button" className="button danger" onClick={deleteEverything} disabled={deleting}>
+              Delete account and all data
+            </button>
+            <button type="button" className="button quiet" onClick={cancel} disabled={deleting}>
+              Sign out
+            </button>
+          </div>
         </section>
       )}
 
-      <p id="status" role="status" aria-live="polite" className={status.error ? "error" : undefined}>
+      <p id="status" role="status" aria-live="polite" className={status.error ? "del-status error" : "del-status"}>
         {status.message}
       </p>
     </>

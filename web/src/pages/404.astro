@@ -3,6 +3,123 @@ import Base from "../layouts/Base.astro";
 ---
 
 <Base title="Page not found - Vesper" description="This page does not exist." noindex>
-  <h1>Page not found</h1>
-  <p><a href="/">Go to the Vesper home page</a></p>
+  <section class="lost wrap" aria-labelledby="lost-title">
+    <div class="lost-copy">
+      <h1 id="lost-title">This page is resting.</h1>
+      <p class="lede">For good, this time. There is nothing at this address.</p>
+      <div class="actions">
+        <a class="button" href="/">Go to the home page</a>
+        <a href="/kids">Vesper Kids</a>
+        <a href="/privacy">Privacy policy</a>
+      </div>
+    </div>
+    <div class="lost-screen" data-ui aria-hidden="true">
+      <span class="icon">?</span>
+      <p class="t">This page is resting</p>
+      <p class="s">Opens again in</p>
+      <p class="clock">--:--</p>
+      <p class="r">Page not found.</p>
+      <span class="close-btn">Close page</span>
+    </div>
+  </section>
 </Base>
+
+<style>
+  .lost {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 48px 24px;
+    align-items: center;
+    min-height: calc(100svh - 160px);
+  }
+
+  .lost-copy {
+    grid-column: 1 / span 7;
+    display: grid;
+    gap: 32px;
+  }
+
+  .lost-copy h1 {
+    font-size: var(--t-display);
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  .lost-screen {
+    grid-column: 9 / span 4;
+    justify-self: center;
+    width: min(100%, 320px);
+    min-height: 560px;
+    border-radius: 36px;
+    padding: 44px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    background:
+      radial-gradient(60% 40% at 50% 40%, rgba(93, 181, 72, 0.9), transparent 75%), /* taste-skill-ignore: brand gradient */
+      radial-gradient(80% 50% at 50% 100%, #9ccb4a, transparent 70%), /* taste-skill-ignore: brand gradient */
+      #2f9a3c;
+  }
+
+  .icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 26px;
+    background: var(--ink);
+    display: grid;
+    place-items: center;
+    font-size: 30px;
+    font-weight: 600;
+  }
+
+  .t {
+    margin-top: 22px;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .s {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .clock {
+    margin-top: 28px;
+    font-size: 72px;
+    font-weight: 200;
+    line-height: 1;
+  }
+
+  .r {
+    margin-top: 28px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .close-btn {
+    margin-top: auto;
+    width: 100%;
+    min-height: 58px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    font-weight: 600;
+  }
+
+  @media (max-width: 900px) {
+    .lost {
+      display: block;
+      padding-top: 32px;
+    }
+    .lost-screen {
+      margin-top: 56px;
+    }
+  }
+</style>

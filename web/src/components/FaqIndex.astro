@@ -1,0 +1,74 @@
+---
+// Questions on the left, one large answer on the right (desktop). On a phone each answer opens under its question.
+// Without script every answer shows under its question.
+import type { Faq } from "../lib/site";
+
+interface Props {
+  id: string;
+  title: string;
+  items: Faq[];
+}
+
+const { id, title, items } = Astro.props;
+---
+
+<div class="faq" data-faq id={id}>
+  <ul class="faq-list">
+    <li><h2 class="faq-title">{title}</h2></li>
+    {
+      items.map((item, i) => (
+        <li>
+          <button
+            class="faq-q"
+            type="button"
+            aria-expanded={i === 0 ? "true" : "false"}
+            aria-controls={`${id}-a${i}`}
+            data-index={i}
+          >
+            {item.q}
+          </button>
+          <p class="faq-inline" id={`${id}-a${i}`}>
+            {item.a}
+          </p>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="faq-pane" aria-live="polite">{items[0]?.a}</p>
+</div>
+
+<script>
+  const wide = window.matchMedia("(min-width: 900px)");
+  for (const faq of document.querySelectorAll<HTMLElement>("[data-faq]")) {
+    faq.classList.add("enhanced");
+    const buttons = [...faq.querySelectorAll<HTMLButtonElement>(".faq-q")];
+    const answers = buttons.map((b) => document.getElementById(b.getAttribute("aria-controls") ?? ""));
+    const pane = faq.querySelector<HTMLElement>(".faq-pane");
+    let selected = 0;
+
+    const select = (index: number, toggle = false) => {
+      const closing = toggle && !wide.matches && index === selected && !answers[index]?.hidden;
+      selected = index;
+      buttons.forEach((button, i) => {
+        const open = i === index && !closing;
+        button.setAttribute("aria-expanded", String(open));
+        const answer = answers[i];
+        if (answer) answer.hidden = !open;
+      });
+      if (pane && answers[index]) {
+        pane.classList.add("fading");
+        window.setTimeout(() => {
+          pane.textContent = answers[index]?.textContent ?? "";
+          pane.classList.remove("fading");
+        }, 150);
+      }
+    };
+
+    buttons.forEach((button, i) => {
+      button.addEventListener("click", () => select(i, true));
+      button.addEventListener("mouseenter", () => wide.matches && i !== selected && select(i));
+      button.addEventListener("focus", () => wide.matches && i !== selected && select(i));
+    });
+    select(0);
+  }
+</script>

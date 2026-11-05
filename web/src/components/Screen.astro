@@ -1,0 +1,15 @@
+---
+// A real screen of the app (Roborazzi render from the repo), cropped to a 390 x 844 phone screen.
+interface Props {
+  src: string;
+  alt: string;
+  eager?: boolean;
+  class?: string;
+}
+
+const { src, alt, eager = false, class: className } = Astro.props;
+---
+
+<div class:list={["screen", className]} data-ui>
+  <img src={src} alt={alt} width="390" height="844" loading={eager ? "eager" : "lazy"} decoding="async" />
+</div>

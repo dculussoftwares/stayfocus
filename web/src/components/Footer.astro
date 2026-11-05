@@ -1,0 +1,36 @@
+---
+import { SOURCE } from "../lib/site";
+
+export interface Credit {
+  title: string;
+  page: string;
+  author: string;
+  licence: string;
+  licenceUrl: string;
+  source: string;
+}
+
+interface Props {
+  credit?: Credit;
+}
+
+const { credit } = Astro.props;
+---
+
+<footer class="site-footer">
+  <p>Vesper, a calm app blocker for Android</p>
+  <ul>
+    <li><a href="/">Vesper</a></li>
+    <li><a href="/kids">Vesper Kids</a></li>
+    <li><a href="/delete-account">Delete account</a></li>
+    <li><a href={SOURCE}>Source code</a></li>
+  </ul>
+  <p class="end">GPL-3.0 · {new Date().getFullYear()} · <a href="/privacy">Privacy</a></p>
+  {
+    credit && (
+      <p class="credit">
+        Photo: <a href={credit.page}>“{credit.title}”</a> by {credit.author}, <a href={credit.licenceUrl}>{credit.licence}</a>, via {credit.source}.
+      </p>
+    )
+  }
+</footer>

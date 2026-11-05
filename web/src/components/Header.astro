@@ -1,0 +1,25 @@
+---
+import { PLAY_VESPER, SOURCE } from "../lib/site";
+import PlayIcon from "./PlayIcon.astro";
+
+interface Props {
+  current?: "home" | "kids" | "privacy" | "delete-account";
+}
+
+const { current } = Astro.props;
+const here = (id: string) => (current === id ? "page" : undefined);
+---
+
+<header class="site-header">
+  <a class="wordmark" href="/" aria-current={here("home")}>
+    <img src="/favicon.svg" alt="" width="34" height="34" />
+    Vesper
+  </a>
+  <nav aria-label="Main">
+    <a class="optional" href="/#try">How it works</a>
+    <a class="link-kids" href="/kids" aria-current={here("kids")}>Vesper Kids</a>
+    <a class="optional" href="/privacy" aria-current={here("privacy")}>Privacy</a>
+    <a class="optional" href={SOURCE}>Source code</a>
+    <a class="button small" href={PLAY_VESPER}><PlayIcon />Get the app</a>
+  </nav>
+</header>

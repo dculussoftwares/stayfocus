@@ -1,0 +1,768 @@
+---
+// The live demo: pick an app and a rule (or describe it), and see the screen Vesper shows when time is up.
+// Copy follows the app: core/blocking strings.xml (block screen) and docs/design/V5_SPEC.md (rule sentences).
+const apps = [
+  { id: "instagram", name: "Instagram", color: "#E1306C" },
+  { id: "youtube", name: "YouTube", color: "#FF0033" },
+  { id: "tiktok", name: "TikTok", color: "#111318" },
+  { id: "reddit", name: "Reddit", color: "#FF4500" },
+];
+const types = [
+  { id: "cycle", name: "Use, then lock", sub: "Open for a bit, then a cooldown" },
+  { id: "limit", name: "Time limit", sub: "A daily allowance, then it locks" },
+  { id: "schedule", name: "Block during hours", sub: "School, work or bedtime" },
+  { id: "now", name: "Block now", sub: "Lock them right away" },
+];
+const presets = [
+  { id: "night", name: "Night", from: "22:00", to: "07:00", weekdays: false },
+  { id: "school", name: "School", from: "08:00", to: "15:00", weekdays: true },
+  { id: "work", name: "Work", from: "09:00", to: "17:00", weekdays: true },
+  { id: "dinner", name: "Dinner", from: "19:00", to: "20:30", weekdays: false },
+];
+const examples = [
+  "Instagram 10 min, then lock it for 30",
+  "No TikTok or YouTube on school days 8–3",
+  "YouTube max 1 hour a day",
+  "Block Reddit for the next 2 hours",
+];
+---
+
+<section class="section demo-section" id="try" aria-labelledby="try-title">
+  <div class="section-head">
+    <h2 id="try-title" data-rise>Give an app a rest.</h2>
+    <p class="lede" data-rise style="--i:1">
+      Pick an app and a rule. When the time is up, this is the screen you get instead of the feed.
+    </p>
+  </div>
+
+  <div class="demo" data-demo data-rise style="--i:2">
+    <div class="demo-stage">
+      <div class="rest" data-ui role="img" aria-label="Vesper's block screen" data-rest>
+        <span class="rest-icon" data-letter style="--app:#E1306C">I</span>
+        <p class="rest-title"><span data-name>Instagram</span> is resting</p>
+        <p class="rest-sub">Opens again in</p>
+        <p class="rest-clock" data-clock>30:00</p>
+        <p class="rest-reason" data-reason>Your rule: 10 min open, then 30 min locked. You used your 10 minutes.</p>
+        <span class="rest-close">Close <span data-name>Instagram</span></span>
+      </div>
+    </div>
+
+    <form class="demo-controls" data-ui data-controls aria-label="Block settings" onsubmit="return false">
+      <fieldset class="seg">
+        <legend>App</legend>
+        <div class="seg-track">
+          {
+            apps.map((app, i) => (
+              <label>
+                <input type="radio" name="app" value={app.id} data-color={app.color} data-label={app.name} checked={i === 0} />
+                <span>{app.name}</span>
+              </label>
+            ))
+          }
+        </div>
+      </fieldset>
+
+      <fieldset class="types">
+        <legend>Rule</legend>
+        {
+          types.map((type, i) => (
+            <label class="type">
+              <input type="radio" name="type" value={type.id} checked={i === 0} />
+              <span class="type-text">
+                <span class="type-name">{type.name}</span>
+                <span class="type-sub">{type.sub}</span>
+              </span>
+              <span class="type-dot" aria-hidden="true" />
+            </label>
+          ))
+        }
+      </fieldset>
+
+      <div class="knobs">
+        <div data-for="cycle">
+          <label class="knob">
+            <span>Open for <output data-out="open">10 min</output></span>
+            <input type="range" name="open" min="1" max="60" step="1" value="10" />
+          </label>
+          <label class="knob">
+            <span>Then lock <output data-out="rest">30 min</output></span>
+            <input type="range" name="rest" min="5" max="180" step="5" value="30" />
+          </label>
+        </div>
+        <div data-for="limit" hidden>
+          <label class="knob">
+            <span>Allowed per day <output data-out="limit">45 min</output></span>
+            <input type="range" name="limit" min="5" max="240" step="5" value="45" />
+          </label>
+        </div>
+        <fieldset data-for="schedule" class="chips" hidden>
+          <legend>Blocked from</legend>
+          {
+            presets.map((p, i) => (
+              <label>
+                <input type="radio" name="preset" value={p.id} data-from={p.from} data-to={p.to} data-weekdays={String(p.weekdays)} checked={i === 0} />
+                <span>{p.name} {p.from}–{p.to}</span>
+              </label>
+            ))
+          }
+        </fieldset>
+        <div data-for="now" hidden>
+          <label class="knob">
+            <span>Lock for <output data-out="now">1h</output></span>
+            <input type="range" name="now" min="15" max="480" step="15" value="60" />
+          </label>
+        </div>
+      </div>
+
+      <p class="demo-sentence" data-sentence aria-live="polite">10 min open, then 30 min locked</p>
+    </form>
+  </div>
+
+  <form class="describe" data-describe data-rise style="--i:3">
+    <label for="describe-input">Or describe it in words</label>
+    <div class="describe-row">
+      <input id="describe-input" name="sentence" type="text" autocomplete="off" placeholder="e.g. Let me use Instagram for 10 minutes, then lock it for 30" />
+      <button class="button" type="submit">
+        <svg viewBox="0 0 20 20" aria-hidden="true" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Zm5.5 10c.3 1.6.8 2.2 2.4 2.6-1.6.4-2.1 1-2.4 2.6-.3-1.6-.8-2.2-2.4-2.6 1.6-.4 2.1-1 2.4-2.6Z" /></svg>
+        Build my block
+      </button>
+    </div>
+    <ul class="examples" aria-label="Examples">
+      {examples.map((e) => <li><button type="button" data-example>{e}</button></li>)}
+    </ul>
+    <p class="describe-status" data-status aria-live="polite">
+      In the app, AI drafts the block from your sentence, and nothing turns on until you check it.
+    </p>
+  </form>
+</section>
+
+<style>
+  .demo {
+    display: grid;
+    grid-template-columns: 62fr 38fr;
+    border-radius: var(--radius);
+    overflow: hidden;
+    min-height: 700px;
+  }
+
+  .demo-stage {
+    background: var(--step);
+    display: grid;
+    place-items: center;
+    padding: 48px 24px;
+  }
+
+  /* The block screen, as the app draws it (BrandGradient, white text, Plus Jakarta Sans 200 numerals). */
+  .rest {
+    width: min(100%, 330px);
+    min-height: 600px;
+    border-radius: 36px;
+    padding: 44px 22px 22px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    color: #fff;
+    background:
+      radial-gradient(60% 40% at 50% 40%, rgba(93, 181, 72, 0.9), transparent 75%), /* taste-skill-ignore: brand gradient */
+      radial-gradient(80% 50% at 50% 100%, #9ccb4a, transparent 70%), /* taste-skill-ignore: brand gradient */
+      #2f9a3c;
+  }
+
+  .rest-icon {
+    width: 76px;
+    height: 76px;
+    border-radius: 26px;
+    background: var(--app);
+    display: grid;
+    place-items: center;
+    font-size: 30px;
+    font-weight: 600;
+    transition: background-color 300ms var(--ease);
+  }
+
+  .rest-title {
+    margin-top: 22px;
+    font-size: 30px;
+    font-weight: 300;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+
+  .rest-sub {
+    margin-top: 8px;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .rest-clock {
+    margin-top: 28px;
+    font-size: 72px;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rest-reason {
+    margin-top: 28px;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+    max-width: 28ch;
+  }
+
+  .rest-close {
+    margin-top: auto;
+    width: 100%;
+    min-height: 58px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.28em;
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  /* Controls: the app's own control styles. */
+  .demo-controls {
+    background: var(--surface);
+    padding: 36px clamp(20px, 2.4vw, 36px);
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    font-size: 15px;
+  }
+
+  fieldset {
+    border: 0;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+  }
+
+  legend,
+  .knob > span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 10px;
+    padding: 0;
+  }
+
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .seg-track {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px;
+    padding: 4px;
+    border-radius: 28px;
+    background: var(--ink);
+  }
+
+  .seg-track label {
+    position: relative;
+  }
+
+  .seg-track span {
+    display: grid;
+    place-items: center;
+    min-height: 40px;
+    border-radius: 24px;
+    color: var(--on-ink-muted);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition:
+      background-color 200ms var(--ease),
+      color 200ms var(--ease);
+  }
+
+  .seg-track span:hover {
+    color: #fff;
+  }
+
+  .seg-track input:checked + span {
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .types {
+    display: grid;
+    gap: 6px;
+  }
+
+  .type {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-height: 56px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f3f4f1;
+    cursor: pointer;
+    transition: background-color 200ms var(--ease);
+  }
+
+  .type:hover {
+    background: var(--mint);
+  }
+
+  .type-text {
+    flex: 1;
+    display: grid;
+    line-height: 1.25;
+  }
+
+  .type-name {
+    font-weight: 600;
+    font-size: 16px;
+  }
+
+  .type-sub {
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .type-dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    flex: none;
+    transition: background-color 200ms var(--ease);
+  }
+
+  .type:has(input:checked) {
+    background: var(--green-deep);
+    color: #fff;
+  }
+
+  .type:has(input:checked) .type-sub {
+    color: #e3f1dc;
+  }
+
+  .type:has(input:checked) .type-dot {
+    border-color: #fff;
+    background: #fff;
+  }
+
+  .seg-track label:has(input:focus-visible) span,
+  .type:has(input:focus-visible),
+  .chips label:has(input:focus-visible) span {
+    outline: 3px solid var(--green);
+    outline-offset: 2px;
+  }
+
+  .knobs > div {
+    display: grid;
+    gap: 18px;
+  }
+
+  .knob {
+    display: grid;
+  }
+
+  .knob > span {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .knob output {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 32px;
+    background: transparent;
+    cursor: pointer;
+    --fill: 50%;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--green) var(--fill), #e4e5e1 var(--fill)); /* taste-skill-ignore: slider fill */
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 6px;
+    border-radius: 3px;
+    background: #e4e5e1;
+  }
+
+  input[type="range"]::-moz-range-progress {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--green);
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 26px;
+    height: 26px;
+    margin-top: -10px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 4px solid #fff;
+    box-shadow: 0 2px 8px rgba(22, 61, 34, 0.35); /* taste-skill-ignore: slider thumb lift, as in the app. */
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--ink);
+    border: 4px solid #fff;
+    box-shadow: 0 2px 8px rgba(22, 61, 34, 0.35); /* taste-skill-ignore: slider thumb lift, as in the app. */
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .chips legend {
+    width: 100%;
+  }
+
+  .chips label {
+    position: relative;
+  }
+
+  .chips span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    padding: 0 16px;
+    border-radius: 20px;
+    background: #f3f4f1;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .chips input:checked + span {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .demo-sentence {
+    margin-top: auto;
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+
+  /* Describe it in words */
+  .describe {
+    margin-top: 40px;
+    max-width: 980px;
+  }
+
+  .describe label {
+    display: block;
+    font-size: var(--t-statement);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin-bottom: 16px;
+  }
+
+  .describe-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .describe input {
+    flex: 1;
+    min-width: 0;
+    min-height: 62px;
+    padding: 0 26px;
+    border: 0;
+    border-radius: 31px;
+    background: var(--surface);
+    color: var(--ink);
+    font: 400 18px var(--font);
+  }
+
+  .describe input::placeholder {
+    color: var(--muted);
+  }
+
+  .describe .button {
+    min-height: 62px;
+  }
+
+  .examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .examples button {
+    min-height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: 22px;
+    background: var(--step);
+    color: var(--ink);
+    font: 500 15px var(--font);
+    cursor: pointer;
+    transition:
+      background-color 160ms var(--ease),
+      transform 160ms var(--ease);
+  }
+
+  .examples button:hover {
+    background: var(--mint);
+  }
+
+  .examples button:active {
+    transform: scale(0.97);
+  }
+
+  .describe-status {
+    margin-top: 16px;
+    color: var(--muted);
+    font-size: var(--t-small);
+  }
+
+  @media (max-width: 900px) {
+    .demo {
+      grid-template-columns: 1fr;
+      min-height: 0;
+    }
+    .demo-stage {
+      padding: 28px 16px;
+    }
+    .rest {
+      min-height: 520px;
+    }
+    .describe-row {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<script>
+  type Type = "cycle" | "limit" | "schedule" | "now";
+
+  const demo = document.querySelector<HTMLElement>("[data-demo]");
+  const form = document.querySelector<HTMLFormElement>("[data-controls]");
+  const describe = document.querySelector<HTMLFormElement>("[data-describe]");
+
+  // Durations as the app formats them (fm): "N min", whole hours "Nh", else "Nh Mm".
+  const fm = (m: number) => (m < 60 ? `${m} min` : m % 60 === 0 ? `${m / 60}h` : `${Math.floor(m / 60)}h ${m % 60}m`);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const clock = (s: number) => {
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = s % 60;
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+  };
+  const toMins = (hhmm: string) => {
+    const [h, m] = hhmm.split(":").map(Number);
+    return (h ?? 0) * 60 + (m ?? 0);
+  };
+
+  if (demo && form) {
+    const $ = <T extends Element>(sel: string) => demo.querySelector<T>(sel);
+    const field = (name: string) => form.elements.namedItem(name) as RadioNodeList | HTMLInputElement;
+    let custom: { from: string; to: string; weekdays: boolean } | null = null;
+    let remaining = 0;
+
+    const value = (name: string) => Number((field(name) as HTMLInputElement).value);
+    const checked = (name: string) => form.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`);
+
+    const paintRange = (input: HTMLInputElement) => {
+      const min = Number(input.min);
+      const max = Number(input.max);
+      input.style.setProperty("--fill", `${((Number(input.value) - min) / (max - min)) * 100}%`);
+    };
+
+    const render = (resetClock: boolean) => {
+      const app = checked("app");
+      const type = (checked("type")?.value ?? "cycle") as Type;
+      const name = app?.dataset.label ?? "Instagram";
+      demo.querySelectorAll("[data-name]").forEach((n) => (n.textContent = name));
+      const letter = $<HTMLElement>("[data-letter]");
+      if (letter) {
+        letter.textContent = name.charAt(0);
+        letter.style.setProperty("--app", app?.dataset.color ?? "#E1306C");
+      }
+      document.querySelectorAll("[data-app-blank]").forEach((n) => (n.textContent = name));
+      form.querySelectorAll<HTMLElement>("[data-for]").forEach((g) => (g.hidden = g.dataset.for !== type));
+      form.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach(paintRange);
+
+      const open = value("open");
+      const rest = value("rest");
+      const limit = value("limit");
+      const now = value("now");
+      form.querySelector('[data-out="open"]')!.textContent = `${open} min`;
+      form.querySelector('[data-out="rest"]')!.textContent = fm(rest);
+      form.querySelector('[data-out="limit"]')!.textContent = fm(limit);
+      form.querySelector('[data-out="now"]')!.textContent = fm(now);
+
+      const preset = checked("preset");
+      const sched = custom ?? {
+        from: preset?.dataset.from ?? "22:00",
+        to: preset?.dataset.to ?? "07:00",
+        weekdays: preset?.dataset.weekdays === "true",
+      };
+      const days = sched.weekdays ? "Mon–Fri" : "every day";
+
+      let sentence = "";
+      let reason = "";
+      let seconds = 0;
+      const date = new Date();
+      if (type === "cycle") {
+        sentence = `${open} min open, then ${fm(rest)} locked`;
+        reason = `Your rule: ${open} min open, then ${rest} min locked. You used your ${open} minutes.`;
+        seconds = rest * 60;
+      } else if (type === "limit") {
+        sentence = `${fm(limit)} a day`;
+        reason = "Today's limit is used up.";
+        const midnight = new Date(date);
+        midnight.setHours(24, 0, 0, 0);
+        seconds = Math.round((midnight.getTime() - date.getTime()) / 1000);
+      } else if (type === "schedule") {
+        sentence = `${sched.from}–${sched.to}, ${days}`;
+        reason = "Outside your allowed hours.";
+        seconds = (((toMins(sched.to) - toMins(sched.from)) % 1440) + 1440) % 1440 * 60;
+      } else {
+        const until = new Date(date.getTime() + now * 60_000);
+        sentence = `Until ${pad(until.getHours())}:${pad(until.getMinutes())}`;
+        reason = "Locked right now.";
+        seconds = now * 60;
+      }
+      $<HTMLElement>("[data-reason]")!.textContent = reason;
+      form.querySelector("[data-sentence]")!.textContent = sentence;
+      if (resetClock || type === "limit") remaining = seconds;
+      $<HTMLElement>("[data-clock]")!.textContent = clock(remaining);
+    };
+
+    form.addEventListener("input", (event) => {
+      const target = event.target as HTMLInputElement;
+      if (target.name === "preset") custom = null;
+      render(true);
+    });
+
+    // Tick only while the demo is on screen.
+    let timer = 0;
+    const tick = () => {
+      if (remaining > 0) remaining -= 1;
+      if ((checked("type")?.value as Type) === "limit") render(false);
+      else $<HTMLElement>("[data-clock]")!.textContent = clock(remaining);
+    };
+    new IntersectionObserver(([entry]) => {
+      window.clearInterval(timer);
+      if (entry?.isIntersecting) timer = window.setInterval(tick, 1000);
+    }).observe(demo);
+
+    // Describe it in words: a small reader for the kinds of sentence the app understands.
+    const setRadio = (name: string, v: string) => {
+      const input = form.querySelector<HTMLInputElement>(`input[name="${name}"][value="${v}"]`);
+      if (input) input.checked = true;
+    };
+    const setRange = (name: string, v: number) => {
+      const input = field(name) as HTMLInputElement;
+      const step = Number(input.step);
+      input.value = String(Math.min(Number(input.max), Math.max(Number(input.min), Math.round(v / step) * step)));
+    };
+    const minutes = (n: string, unit: string) => Math.round(Number(n) * (/^h/.test(unit) ? 60 : 1));
+    const hour = (h: string, m?: string) => `${pad(Number(h) % 24)}:${m ?? "00"}`;
+
+    const read = (text: string): string | null => {
+      const t = text.toLowerCase().replace(/–|—/g, "-");
+      const found = ["instagram", "youtube", "tiktok", "reddit"]
+        .map((id) => ({ id, at: t.indexOf(id) }))
+        .filter((a) => a.at >= 0)
+        .sort((a, b) => a.at - b.at)[0];
+      if (found) setRadio("app", found.id);
+      let m: RegExpMatchArray | null;
+      if ((m = t.match(/(\d+)\s*(?:min|m)\w*.*?(?:then|and)\s+(?:lock|block|rest)\w*(?:\s+it)?(?:\s+for)?\s+(\d+(?:\.\d+)?)\s*(h\w*|m\w*)?/))) {
+        setRadio("type", "cycle");
+        setRange("open", Number(m[1]));
+        setRange("rest", minutes(m[2]!, m[3] ?? "min"));
+        return "Use, then lock";
+      }
+      if ((m = t.match(/next\s+(\d+(?:\.\d+)?)\s*(h\w*|m\w*)/))) {
+        setRadio("type", "now");
+        setRange("now", minutes(m[1]!, m[2]!));
+        return "Block now";
+      }
+      if ((m = t.match(/(\d{1,2})(?::(\d\d))?\s*(?:-|to)\s*(\d{1,2})(?::(\d\d))?/))) {
+        let from = Number(m[1]);
+        let to = Number(m[3]);
+        if (to <= 12 && to < from) to += 12;
+        if (/night|bed/.test(t) && from < 12) from += 12;
+        setRadio("type", "schedule");
+        form.querySelectorAll<HTMLInputElement>('input[name="preset"]').forEach((p) => (p.checked = false));
+        custom = { from: hour(String(from), m[2]), to: hour(String(to), m[4]), weekdays: /school|weekday|work|mon/.test(t) };
+        return "Block during hours";
+      }
+      if ((m = t.match(/(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|m)\b/))) {
+        setRadio("type", "limit");
+        setRange("limit", minutes(m[1]!, m[2]!));
+        return "Time limit";
+      }
+      return null;
+    };
+
+    if (describe) {
+      const input = describe.querySelector<HTMLInputElement>("input")!;
+      const status = describe.querySelector<HTMLElement>("[data-status]")!;
+      const build = () => {
+        const kind = read(input.value);
+        if (!kind) {
+          status.textContent = "Name an app and a time, like the examples below.";
+          return;
+        }
+        render(true);
+        status.textContent = `Drafted a “${kind}” block. Check the details above.`;
+        const box = demo.getBoundingClientRect();
+        if (box.top < 0 || box.top > window.innerHeight * 0.5) {
+          const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+          demo.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+        }
+      };
+      describe.addEventListener("submit", (event) => {
+        event.preventDefault();
+        build();
+      });
+      describe.querySelectorAll<HTMLButtonElement>("[data-example]").forEach((b) =>
+        b.addEventListener("click", () => {
+          input.value = b.textContent ?? "";
+          build();
+        }),
+      );
+    }
+
+    render(true);
+
+    // A sentence sent from the hero form (?q=...).
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q && describe) {
+      describe.querySelector<HTMLInputElement>("input")!.value = q;
+      describe.requestSubmit();
+    }
+  }
+</script>

@@ -1,31 +1,174 @@
 ---
 import Base from "../layouts/Base.astro";
-import Nav from "../components/Nav.astro";
 import DeleteAccount from "../components/DeleteAccount";
 ---
 
 <Base
   title="Delete account - Vesper"
   description="Delete your Vesper account and all data stored with it: sign in, confirm, and everything is removed."
+  current="delete-account"
 >
-  <Nav current="delete-account" />
-  <h1>Delete your Vesper account</h1>
+  <div class="del wrap">
+    <section class="del-info" aria-labelledby="del-title">
+      <h1 id="del-title">Delete your account</h1>
+      <p class="lede">Sign in, confirm, and your Vesper account is gone with everything stored with it.</p>
 
-  <div class="panel">
-    <h2>What gets deleted</h2>
-    <ul>
-      <li>Your account (email, name and sign-in details).</li>
-      <li>
-        Everything stored with it: linked devices and their data, blocked-app lists, requests, alerts and notification
-        tokens.
-      </li>
-      <li>Pending link codes you created.</li>
-    </ul>
-    <p>
-      Linked child devices notice and reset. This cannot be undone. Data kept only on your phone (when you use the app
-      without an account) is not affected; uninstall the app to remove it.
-    </p>
+      <h2>What gets deleted</h2>
+      <ul>
+        <li>Your account (email, name and sign-in details).</li>
+        <li>
+          Everything stored with it: linked devices and their data, blocked-app lists, requests, alerts and notification
+          tokens.
+        </li>
+        <li>Pending link codes you created.</li>
+      </ul>
+      <p>
+        Linked child devices notice and reset. This cannot be undone. Data kept only on your phone (when you use the app
+        without an account) is not affected; uninstall the app to remove it.
+      </p>
+      <p class="muted">You can also do this in the app: Profile, Delete account and all data.</p>
+    </section>
+
+    <div class="del-panel">
+      <DeleteAccount client:only="react" />
+    </div>
   </div>
-
-  <DeleteAccount client:only="react" />
 </Base>
+
+<style>
+  .del {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 48px 24px;
+    align-items: start;
+    padding-top: clamp(48px, 7vw, 120px);
+  }
+
+  .del-info {
+    grid-column: 1 / span 6;
+    display: grid;
+    gap: 24px;
+  }
+
+  .del-info h1 {
+    font-size: clamp(48px, 6vw, 96px);
+    letter-spacing: -0.04em;
+    line-height: 0.95;
+  }
+
+  .del-info h2 {
+    margin-top: 32px;
+    font-size: var(--t-statement);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+  }
+
+  .del-info ul {
+    margin: 0;
+    padding-left: 1.2em;
+    display: grid;
+    gap: 10px;
+  }
+
+  .del-info li::marker {
+    color: var(--green);
+  }
+
+  .del-info p:not(.lede) {
+    max-width: 58ch;
+  }
+
+  .del-panel {
+    grid-column: 8 / span 5;
+    position: sticky;
+    top: 32px;
+    min-height: 420px;
+    padding: clamp(24px, 3vw, 40px);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  .del-panel :global(h2) {
+    font-size: clamp(28px, 2.4vw, 36px);
+    margin-bottom: 24px;
+  }
+
+  .del-panel :global(.del-google) {
+    width: 100%;
+    background: var(--bg);
+  }
+
+  .del-panel :global(.del-google:hover) {
+    background: var(--mint);
+  }
+
+  .del-panel :global(.g) {
+    color: #4285f4;
+    font-weight: 800;
+    font-size: 19px;
+  }
+
+  .del-panel :global(.del-or) {
+    margin: 24px 0 8px;
+    text-align: center;
+    color: var(--muted);
+    font-size: var(--t-small);
+  }
+
+  .del-panel :global(.del-form) {
+    display: grid;
+    gap: 8px;
+  }
+
+  .del-panel :global(label) {
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: var(--t-small);
+  }
+
+  .del-panel :global(input) {
+    width: 100%;
+    min-height: 58px;
+    padding: 0 22px;
+    border: 2px solid transparent;
+    border-radius: 24px;
+    background: var(--bg);
+    color: var(--ink);
+    font: 400 16px var(--font);
+  }
+
+  .del-panel :global(input:focus) {
+    outline: none;
+    border-color: var(--green);
+  }
+
+  .del-panel :global(.del-form .button) {
+    margin-top: 16px;
+  }
+
+  .del-panel :global(.del-note) {
+    font-size: 19px;
+    line-height: 1.45;
+  }
+
+  .del-panel :global(.del-status) {
+    margin-top: 20px;
+    min-height: 1.5em;
+    font-weight: 500;
+  }
+
+  .del-panel :global(.del-status.error) {
+    color: var(--danger);
+  }
+
+  @media (max-width: 900px) {
+    .del {
+      display: block;
+    }
+    .del-panel {
+      position: static;
+      margin-top: 48px;
+      min-height: 0;
+    }
+  }
+</style>
