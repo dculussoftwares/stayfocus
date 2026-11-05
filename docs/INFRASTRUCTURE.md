@@ -3,7 +3,7 @@
 ## The rule
 
 Every resource is created and changed through Terraform, applied by GitHub Actions. That covers GitHub (repo settings,
-ruleset, environments, backlog labels/milestones/issues, Pages) and GCP/Firebase. A change is a PR: the plan is posted on
+ruleset, environments, backlog labels/milestones/issues, Pages), GCP/Firebase and the website's Cloudflare Worker. A change is a PR: the plan is posted on
 the PR and the apply runs when it merges to `main`. Nobody creates infrastructure in a console.
 
 There is **one GCP project** (`vesper-prod-31275`, org `natheeshece-org`). Debug builds and release builds use it.
@@ -13,11 +13,12 @@ There is **one GCP project** (`vesper-prod-31275`, org `natheeshece-org`). Debug
 | `infra/seed` | The project, billing link, Terraform state bucket, keyless GitHub login (Workload Identity Federation), the `tf-deploy` and `tf-plan` identities | `seed/` |
 | `infra/gcp` | Firebase project and apps, Auth, Firestore + rules, App Check, Cloud Functions, AI Logic, monitoring, budgets | `gcp/` |
 | `infra/github` | Repo settings, `main` ruleset, `prod` environment, Pages, backlog labels/milestones/issues | `github/` |
+| `infra/cloudflare` | The website's Worker (`vesper-web`) and its custom domain `vesper.dculus.com` (DNS record + certificate) | `cloudflare/` |
 
-One workflow runs all three: `.github/workflows/infra.yml`.
+One workflow runs all four: `.github/workflows/infra.yml`.
 
 - **PR:** `validate` (every module, no credentials, forks too), then `plan` (every module, read-only identity, one PR comment per module).
-- **Merge to `main`:** `apply-seed`, then `apply-gcp` and `apply-github`, in the GitHub environment `prod`. No approval step: merging is the approval.
+- **Merge to `main`:** `apply-seed`, then `apply-gcp`, `apply-github` and `apply-cloudflare`, in the GitHub environment `prod`. No approval step: merging is the approval.
 
 `backlog-board.yml` updates the kanban board when an issue closes or reopens.
 
@@ -53,6 +54,8 @@ Public configuration is committed: `infra/prod.env`, `infra/seed/terraform.tfvar
 | variable `GOOGLE_OAUTH_WEB_CLIENT_ID` + secret `GOOGLE_OAUTH_WEB_CLIENT_SECRET` | optional | Google sign-in (see below). Empty = provider off |
 | secret | `APP_CHECK_DEBUG_TOKENS` | optional: `{"app":{"<name>":"<uuid>"},"kids":{}}` debug tokens registered with App Check |
 | secret | `ALERT_EMAIL` | optional: where Cloud Monitoring alerts go |
+| secret (environment `prod`) | `CLOUDFLARE_API_TOKEN` | Cloudflare edit token: `apply-cloudflare` and the website deploy (`web.yml`) |
+| secret | `CLOUDFLARE_API_TOKEN_READ` | Cloudflare read-only token: `plan` for `infra/cloudflare` on PRs |
 
 ## First run (once)
 
@@ -78,7 +81,12 @@ Then merge: Actions creates everything else. Manual steps that have no API:
    *Google Auth Platform → Clients* of the project, then set `GOOGLE_OAUTH_WEB_CLIENT_ID` (variable) and
    `GOOGLE_OAUTH_WEB_CLIENT_SECRET` (secret). Add the redirect URI `https://<project_id>.firebaseapp.com/__/auth/handler`.
    The web client ID is also what Credential Manager uses in the app. (Done for `vesper-prod-31275`: client "Vesper web (Firebase Auth)".)
-3. **Play Console**, once the apps exist: link Play Integrity to both apps, and add the *Play App Signing* SHA-1/SHA-256
+3. **Cloudflare tokens** (*My Profile → API Tokens → Create Custom Token*). An API token can't create itself, so these
+   two are made by hand once:
+   - `CLOUDFLARE_API_TOKEN` (environment secret of `prod`): *Account → Workers Scripts: Edit* on the account; *Zone →
+     Workers Routes: Edit*, *DNS: Edit* and *Zone: Read* on `dculus.com` only.
+   - `CLOUDFLARE_API_TOKEN_READ` (repository secret): the same scopes with *Read* instead of *Edit*.
+4. **Play Console**, once the apps exist: link Play Integrity to both apps, and add the *Play App Signing* SHA-1/SHA-256
    fingerprints to `infra/gcp/terraform.tfvars`.
 
 If CI ever loses access, a project owner can always fix it from Cloud Shell; nothing depends on a stored credential.
@@ -92,8 +100,13 @@ If CI ever loses access, a project owner can always fix it from Cloud Shell; not
   runtime service account with the roles listed in `local.functions`.
 - **Firebase config for builds:** `scripts/ci/fetch-google-services.sh` writes `app/` and `kids/google-services.json`
   from the `google_services_json` output (read-only identity). CI uses it on `main`, `release.yml` for releases, and
-  `pages.yml` reads `firebase_web_config` the same way. Locally: `gcloud auth login`, then
+  `web.yml` reads `firebase_web_config` the same way. Locally: `gcloud auth login`, then
   `TF_STATE_BUCKET=<bucket> scripts/ci/fetch-google-services.sh`. The files are git-ignored; never commit them.
+- **Website (Cloudflare):** `infra/cloudflare` owns the Worker and the custom domain; `web.yml` only uploads new
+  versions with `wrangler deploy` (it waits for the Terraform-created Worker and never creates one). The `dculus.com`
+  zone and its other records are not managed here, and every Cloudflare resource has `prevent_destroy`: a plan that
+  would delete one fails. On the very first apply the custom domain can fail because the Worker has no version yet;
+  re-run `infra` after the first `web` deploy.
 - **Run Terraform locally (read-only):** `GOOGLE_OAUTH_ACCESS_TOKEN=$(gcloud auth print-access-token) terraform init -backend-config=bucket=<bucket> && terraform plan -lock=false`.
   Don't apply locally.
 

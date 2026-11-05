@@ -4,9 +4,10 @@ name: infra
 #   infra/seed    project, state bucket, keyless GitHub login, CI identities
 #   infra/gcp     Firebase, Auth, Firestore + rules, App Check, Functions, AI Logic, monitoring, budgets
 #   infra/github  repo settings, ruleset, `prod` environment, backlog labels/milestones/issues
+#   infra/cloudflare  the website's Worker and its custom domain (vesper.dculus.com); never deletes anything
 #
 # PR:    validate every module; plan every module with the read-only identity; one comment per module.
-# Merge: apply seed, then github and gcp, in the GitHub environment `prod` (the only place the deploy identity works).
+# Merge: apply seed, then github, gcp and cloudflare, in the GitHub environment `prod` (the only place the deploy identity works).
 # GCP login is keyless (Workload Identity Federation); the values it needs are in infra/prod.env.
 # Third-party actions are pinned to commit SHAs.
 
@@ -53,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [seed, gcp, github]
+        module: [seed, gcp, github, cloudflare]
     defaults:
       run:
         working-directory: infra/${{ matrix.module }}
@@ -84,6 +85,9 @@ jobs:
           # the last applied state instead.
           - module: github
             plan_args: "-refresh=false"
+          # Read-only Cloudflare token (repository secret); the edit token is only in the `prod` environment.
+          - module: cloudflare
+            plan_args: ""
     permissions:
       contents: read
       id-token: write
@@ -98,6 +102,7 @@ jobs:
       TF_VAR_google_oauth_client_secret: ${{ secrets.GOOGLE_OAUTH_WEB_CLIENT_SECRET }}
       TF_VAR_app_check_debug_tokens: ${{ secrets.APP_CHECK_DEBUG_TOKENS || '{}' }}
       TF_VAR_alert_email: ${{ secrets.ALERT_EMAIL }}
+      CLOUDFLARE_API_TOKEN: ${{ matrix.module == 'cloudflare' && secrets.CLOUDFLARE_API_TOKEN_READ || '' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -208,3 +213,24 @@ jobs:
           terraform output -json backlog > "$RUNNER_TEMP/backlog.json"
           python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" relations
           GH_TOKEN="$APP_TOKEN" python3 ../../scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board
+
+  apply-cloudflare:
+    needs: apply-seed
+    runs-on: ubuntu-latest
+    environment: prod
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Edit token (environment secret of `prod`): Workers Scripts on the account, Workers Routes and DNS on dculus.com.
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/terraform-init
+        with:
+          module: cloudflare
+          identity: deploy
+      - working-directory: infra/cloudflare
+        run: terraform apply -auto-approve

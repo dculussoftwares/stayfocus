@@ -1,6 +1,6 @@
-# Firebase web app for the GitHub Pages site (/web account-deletion page).
+# Firebase web app for the website (web/, vesper.dculus.com; the account-deletion page).
 # The web config is public by design (it identifies the project; security comes from Auth, rules and App Check).
-# pages.yml reads the `firebase_web_config` output at deploy time and writes it to web/firebase-config.json.
+# web.yml reads the `firebase_web_config` output at deploy time and writes it to web/public/firebase-config.json.
 
 resource "google_firebase_web_app" "site" {
   provider = google-beta

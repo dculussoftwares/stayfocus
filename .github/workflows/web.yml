@@ -1,0 +1,112 @@
+name: web
+
+# The website (web/: Astro + React) at https://vesper.dculus.com, on Cloudflare Workers static assets.
+# PR: type-check and build. Merge: build and `wrangler deploy` a new version of the Worker. The Worker and its custom
+# domain are created by Terraform (infra/cloudflare); this workflow never creates or deletes Cloudflare resources.
+# The Firebase web config (public values) is read from the infra/gcp Terraform state (GCS, read-only identity) and
+# written to web/public/firebase-config.json. Without it the site still deploys; the deletion page then tells people
+# to delete the account in the app.
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/web.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "!web/github-pages/**"
+      - ".github/workflows/web.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: web-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  build:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The Cloudflare edit token is a secret of this environment, which only accepts the main branch.
+    environment:
+      name: prod
+      url: https://vesper.dculus.com
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+        working-directory: .
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_PLAN_SA }}
+      - name: Write Firebase web config
+        working-directory: .
+        run: |
+          # A missing output is not an error: the site deploys without it.
+          if scripts/infra/read-output.sh gcp firebase_web_config > web/public/firebase-config.json; then
+            echo "Firebase web config written."
+          else
+            rm -f web/public/firebase-config.json
+            echo "::warning::firebase_web_config output not available yet; deploying without it"
+          fi
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run build
+      # Terraform (infra.yml, apply-cloudflare) creates the Worker. Wait for it instead of letting wrangler create it,
+      # which would leave Terraform unable to create its own copy.
+      - name: Wait for the Worker created by Terraform
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          account="$(jq -r .account_id < <(sed 's|^ *//.*||' wrangler.jsonc))"
+          worker="$(jq -r .name < <(sed 's|^ *//.*||' wrangler.jsonc))"
+          for _ in $(seq 1 20); do
+            if curl -fsS -o /dev/null -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              "https://api.cloudflare.com/client/v4/accounts/$account/workers/workers/$worker"; then
+              exit 0
+            fi
+            echo "Worker $worker not created yet; waiting for infra.yml (apply-cloudflare)."
+            sleep 30
+          done
+          echo "::error::Worker $worker does not exist. Run the infra workflow first."
+          exit 1
+      - name: Deploy to Cloudflare
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy

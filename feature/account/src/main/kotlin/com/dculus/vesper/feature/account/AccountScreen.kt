@@ -83,7 +83,7 @@ internal const val ACCOUNT_DISCLOSURE_AGREE_TAG = "account_disclosure_agree"
 
 internal const val GITHUB_URL = "https://github.com/dculussoftwares/vesper"
 internal const val LICENSE_URL = "https://github.com/dculussoftwares/vesper/blob/main/LICENSE"
-internal const val PRIVACY_URL = "https://dculussoftwares.github.io/vesper/privacy.html"
+internal const val PRIVACY_URL = "https://vesper.dculus.com/privacy"
 
 private val OffLed = Color(0xFF3A3E35)
 

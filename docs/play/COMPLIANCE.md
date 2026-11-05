@@ -16,8 +16,8 @@ wired in [`build-logic/convention/src/main/kotlin/ManifestAuditPlugin.kt`](../..
 | 4b | No battery-optimisation exemption request | `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` is never declared | all manifests | **Automated** |
 | 5 | Foreground service `specialUse` with a written use-case | `:kids` `MonitoringService` and `:app` `BlockingService` (standard engine, blocking without Accessibility) both have `foregroundServiceType=specialUse` plus `PROPERTY_SPECIAL_USE_FGS_SUBTYPE`; `:app` declares no other foreground service and requests only `FOREGROUND_SERVICE_SPECIAL_USE` | [`kids/src/main/AndroidManifest.xml`](../../kids/src/main/AndroidManifest.xml), [`app/src/main/AndroidManifest.xml`](../../app/src/main/AndroidManifest.xml) | **Automated** (`ManifestAudit`); the FGS declaration in Play Console for **each** app (with a short video of the block screen appearing for `:app`) is manual |
 | 6 | Target API 36 | `TARGET_SDK = 36` in the convention plugin | [`build-logic/convention/src/main/kotlin/ProjectExtensions.kt`](../../build-logic/convention/src/main/kotlin/ProjectExtensions.kt) | **Automated** (`targetSdk == 36` for both apps) |
-| 7 | Account deletion in-app and on the web | Profile screen action plus web page | [`web/delete-account.html`](../../web/delete-account.html) | Manual |
-| 8 | Privacy policy and Data safety | Hosted policy; form answers | [`web/privacy.html`](../../web/privacy.html), [`docs/play/DATA_SAFETY.md`](DATA_SAFETY.md) | Manual |
+| 7 | Account deletion in-app and on the web | Profile screen action plus web page | [`web/src/pages/delete-account.astro`](../../web/src/pages/delete-account.astro), https://vesper.dculus.com/delete-account | Manual |
+| 8 | Privacy policy and Data safety | Hosted policy; form answers | [`web/src/pages/privacy.astro`](../../web/src/pages/privacy.astro), https://vesper.dculus.com/privacy, [`docs/play/DATA_SAFETY.md`](DATA_SAFETY.md) | Manual |
 
 Notes
 - The bare `android.permission.FOREGROUND_SERVICE` permission is merged into `:app` by Firebase / Play services

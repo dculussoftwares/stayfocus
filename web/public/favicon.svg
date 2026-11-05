@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">
+  <!-- Vesper launcher icon, Valley (app/src/main/res/drawable/ic_launcher_*.xml). -->
+  <defs>
+    <radialGradient id="dusk" cx="81" cy="16.2" r="86.4" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9CCB4A"/>
+      <stop offset="0.7" stop-color="#9CCB4A" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="54" cy="44" r="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity="0.55"/>
+      <stop offset="0.35" stop-color="#fff" stop-opacity="0.19"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="108" height="108" rx="24" fill="#2F9A3C"/>
+  <rect width="108" height="108" rx="24" fill="url(#dusk)"/>
+  <circle cx="54" cy="44" r="27" fill="url(#glow)"/>
+  <path fill="#0F2A18" d="M0,84V48.6A52,52 0,0 1,54 75.8A52,52 0,0 1,108 48.6V84a24,24 0,0 1,-24 24H24A24,24 0,0 1,0 84Z"/>
+  <path fill="#fff" d="M54,25C56.7,37.6 59.04,40.3 66.6,43C59.04,45.7 56.7,48.4 54,61C51.3,48.4 48.96,45.7 41.4,43C48.96,40.3 51.3,37.6 54,25Z"/>
+</svg>
