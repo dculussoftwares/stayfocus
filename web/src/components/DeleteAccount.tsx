@@ -1,9 +1,11 @@
 // Account deletion for the web (Play requirement). Signs the user in with the Firebase JS SDK, then calls the
 // `deleteAccount` callable, which deletes the user's data and Auth account (M6-06).
+// The callable enforces App Check, which the page passes with reCAPTCHA Enterprise (infra/gcp/web.tf).
 // The Firebase web config is public by design; web.yml writes it to firebase-config.json at deploy time. Without it
 // the page tells people to delete the account in the app.
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { type FirebaseOptions, initializeApp } from "firebase/app";
+import { ReCaptchaEnterpriseProvider, initializeAppCheck } from "firebase/app-check";
 import {
   type Auth,
   type User,
@@ -16,7 +18,7 @@ import {
 } from "firebase/auth";
 import { type HttpsCallable, getFunctions, httpsCallable } from "firebase/functions";
 
-type Config = FirebaseOptions & { functionsRegion?: string };
+type Config = FirebaseOptions & { functionsRegion?: string; recaptchaSiteKey?: string };
 type Step = "loading" | "unconfigured" | "signin" | "confirm" | "done";
 
 interface Firebase {
@@ -29,7 +31,8 @@ async function loadConfig(): Promise<Config | null> {
     const response = await fetch("/firebase-config.json", { cache: "no-store" });
     if (!response.ok) return null;
     const config = (await response.json()) as Config | null;
-    return config?.apiKey ? config : null;
+    // The callables enforce App Check, so deletion can't work without the reCAPTCHA site key.
+    return config?.apiKey && config.recaptchaSiteKey ? config : null;
   } catch {
     return null;
   }
@@ -77,8 +80,12 @@ export default function DeleteAccount() {
         setStep("unconfigured");
         return;
       }
-      const { functionsRegion, ...options } = config;
+      const { functionsRegion, recaptchaSiteKey, ...options } = config;
       const app = initializeApp(options);
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey as string),
+        isTokenAutoRefreshEnabled: true,
+      });
       const auth = getAuth(app);
       const deleteAccount = httpsCallable(getFunctions(app, functionsRegion || "europe-west1"), "deleteAccount");
       setFirebase({ auth, deleteAccount });
@@ -146,7 +153,8 @@ export default function DeleteAccount() {
     setDeleting(true);
     say("Deleting...");
     try {
-      await firebase.deleteAccount();
+      // The callable's input schema is an empty object; no argument would be sent as null and rejected.
+      await firebase.deleteAccount({});
       confirmedUid.current = null;
       await signOut(firebase.auth).catch(() => {});
       setStep("done");

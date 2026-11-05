@@ -13,6 +13,7 @@ output "firebase_web_config" {
     messagingSenderId = data.google_firebase_web_app_config.site.messaging_sender_id
     appId             = google_firebase_web_app.site.app_id
     functionsRegion   = var.region
+    recaptchaSiteKey  = google_recaptcha_enterprise_key.web.name
   }
 }
 
