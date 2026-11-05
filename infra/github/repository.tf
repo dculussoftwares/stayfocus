@@ -69,17 +69,15 @@ resource "github_repository_ruleset" "main" {
     }
   }
 
-  # Emergency escape hatch: an org admin may merge a PR without waiting for checks or approval.
-  # Direct pushes to main stay rejected for everyone ("pull_request" bypass mode).
+  # Org admins may push straight to main (and merge PRs without waiting for checks). Everyone else needs a PR.
+  # Force pushes and deleting main stay blocked for everyone (ruleset main_protect, no bypass).
   bypass_actors {
     actor_id    = 0 # OrganizationAdmin (GitHub stores 0 for this actor type)
     actor_type  = "OrganizationAdmin"
-    bypass_mode = "pull_request"
+    bypass_mode = "always"
   }
 
   rules {
-    deletion                = true
-    non_fast_forward        = true
     required_linear_history = true
 
     pull_request {
@@ -100,6 +98,26 @@ resource "github_repository_ruleset" "main" {
         }
       }
     }
+  }
+}
+
+# No force pushes and no deletion of main, for everyone (no bypass).
+resource "github_repository_ruleset" "main_protect" {
+  name        = "main-protect"
+  repository  = github_repository.this.name
+  target      = "branch"
+  enforcement = "active"
+
+  conditions {
+    ref_name {
+      include = ["~DEFAULT_BRANCH"]
+      exclude = []
+    }
+  }
+
+  rules {
+    deletion         = true
+    non_fast_forward = true
   }
 }
 
