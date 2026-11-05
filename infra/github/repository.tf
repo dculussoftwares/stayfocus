@@ -72,7 +72,7 @@ resource "github_repository_ruleset" "main" {
   # Emergency escape hatch: an org admin may merge a PR without waiting for checks or approval.
   # Direct pushes to main stay rejected for everyone ("pull_request" bypass mode).
   bypass_actors {
-    actor_id    = 1 # OrganizationAdmin
+    actor_id    = 0 # OrganizationAdmin (GitHub stores 0 for this actor type)
     actor_type  = "OrganizationAdmin"
     bypass_mode = "pull_request"
   }
