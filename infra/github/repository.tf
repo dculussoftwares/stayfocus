@@ -154,6 +154,8 @@ resource "github_repository_environment" "release" {
 
   # One maintainer may tag and approve their own release.
   prevent_self_review = false
+  # Admins get no way around the approval either.
+  can_admins_bypass = false
 
   reviewers {
     users = [for u in data.github_user.release_reviewer : tonumber(u.id)]

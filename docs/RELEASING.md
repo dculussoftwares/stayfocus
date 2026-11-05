@@ -29,7 +29,9 @@ Generate the upload key once (`keytool -genkeypair -keystore upload.jks -alias u
 
 The workflow refuses tags that do not point at a commit on `main`. Terraform creates the `release` environment
 (`infra/github/repository.tf`): only `v*` tags may deploy to it, and a reviewer from `release_reviewers`
-(`infra/github/variables.tf`) approves each run, so a tag push alone cannot reach the secrets. The secret values are
+(`infra/github/variables.tf`) approves each run, so a tag push alone cannot reach the secrets. A release asks for two
+approvals: one for the `build` job and one for `play-internal-track` (approve it even without a Play service account;
+it then skips the upload). The secret values are
 added by hand and never go through Terraform.
 
 ## Local release build
