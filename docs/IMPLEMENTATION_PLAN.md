@@ -55,7 +55,7 @@ contract all stories refer to. Agent prompts and the parallel execution order ar
 :feature:insights          Insights
 :feature:account           Account, permission health, delete account
 /firebase                  firestore.rules, Cloud Functions (TS), emulator tests (deployed by Terraform, never the Firebase CLI)
-/web                       Privacy policy + account deletion page (GitHub Pages)
+/web                       Website (Astro + React): privacy policy, account deletion; vesper.dculus.com on Cloudflare
 /infra/github              Terraform: labels, milestones, backlog issues, repo settings
 /infra/seed                Terraform: the GCP project, state bucket, keyless GitHub login, CI identities
 /infra/gcp                 Terraform: Firebase/GCP resources inside the project

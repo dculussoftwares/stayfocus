@@ -1,0 +1,16 @@
+// Cloudflare Worker that serves the built site (dist/). The Worker and its custom domain (vesper.dculus.com) are
+// created by Terraform (infra/cloudflare); `wrangler deploy` (.github/workflows/web.yml) only uploads new versions.
+// Keep `name` equal to web_worker_name in infra/cloudflare/terraform.tfvars, and add no routes here.
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "vesper-web",
+  "account_id": "e1498f66f9581a21c633ca4c9a59cfcc",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page"
+  }
+}

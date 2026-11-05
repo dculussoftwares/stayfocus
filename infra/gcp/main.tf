@@ -1,5 +1,5 @@
 # Everything inside the project: Firebase, the Android apps, Auth and budgets. Other files: firestore.tf (database and
-# rules), appcheck.tf, functions.tf, ai.tf (Firebase AI Logic), monitoring.tf, web.tf (Pages site).
+# rules), appcheck.tf, functions.tf, ai.tf (Firebase AI Logic), monitoring.tf, web.tf (website).
 
 locals {
   base_apis = [
@@ -89,6 +89,14 @@ resource "google_identity_platform_config" "this" {
   multi_tenant {
     allow_tenants = false
   }
+
+  # Domains allowed to sign in with the web SDK: the Firebase defaults and the website (infra/cloudflare), which
+  # hosts the account-deletion page.
+  authorized_domains = [
+    "${var.project_id}.firebaseapp.com",
+    "${var.project_id}.web.app",
+    var.web_hostname,
+  ]
 
   depends_on = [google_firebase_project.this]
 }

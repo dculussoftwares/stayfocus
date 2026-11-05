@@ -20,6 +20,15 @@ updates:
       npm-minor-patch:
         update-types: [minor, patch]
 
+  # Website (Astro + React, deployed to Cloudflare by web.yml).
+  - package-ecosystem: npm
+    directory: "/web"
+    schedule:
+      interval: weekly
+    groups:
+      web-minor-patch:
+        update-types: [minor, patch]
+
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -33,6 +42,7 @@ updates:
       - "/infra/seed"
       - "/infra/gcp"
       - "/infra/github"
+      - "/infra/cloudflare"
     schedule:
       interval: weekly
     groups:

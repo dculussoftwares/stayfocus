@@ -1,20 +1,16 @@
 name: pages
 
-# Deploys /web (privacy policy + account-deletion page) to GitHub Pages. Pages itself is enabled by Terraform
-# (infra/github, `github_repository_pages`, build_type workflow).
-# The Firebase web config (public values) is read from the infra/gcp Terraform state (GCS, read-only identity) and
-# written to web/firebase-config.json. Without it (before infra has applied) the site still deploys; the deletion page
-# then tells people to delete the account in the app.
+# The website moved to https://vesper.dculus.com (web/, deployed to Cloudflare by web.yml). GitHub Pages now serves
+# only redirects (web/github-pages/) from the old dculussoftwares.github.io/vesper URLs, which older app versions and
+# store listings still link to. Pages itself is enabled by Terraform (infra/github, `github_repository_pages`).
 # Third-party actions are pinned to commit SHAs.
 
 on:
   push:
     branches: [main]
     paths:
-      - "web/**"
+      - "web/github-pages/**"
       - ".github/workflows/pages.yml"
-  # Run by hand after infra has applied, so the Firebase web config and the Pages setting exist.
-  # (No schedule or workflow_run: a deploy that cannot read Terraform state would silently disable web deletion.)
   workflow_dispatch:
 
 concurrency:
@@ -27,31 +23,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
-        with:
-          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
-          service_account: ${{ env.GCP_PLAN_SA }}
-      - name: Write Firebase web config
-        run: |
-          # A missing output is not an error: the site deploys without it.
-          if scripts/infra/read-output.sh gcp firebase_web_config > web/firebase-config.json; then
-            echo "Firebase web config written."
-          else
-            rm -f web/firebase-config.json
-            echo "::warning::firebase_web_config output not available yet; deploying without it"
-          fi
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
-          path: web
+          path: web/github-pages
 
   deploy:
     needs: build

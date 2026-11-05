@@ -2,7 +2,7 @@
 
 Answers for the Play Console "Data safety" form, one section per app. Reviewed against the Firestore schema
 (`docs/IMPLEMENTATION_PLAN.md` section 7) and the SDKs the apps include (Firebase Auth, Cloud Firestore, Cloud
-Messaging, App Check with Play Integrity, AI Logic). Public policy: `web/privacy.html`.
+Messaging, App Check with Play Integrity, AI Logic). Public policy: https://vesper.dculus.com/privacy (`web/src/pages/privacy.astro`).
 **Release gate:** several features described here (sign-in, linking, usage sync, AI Logic, report-a-bad-result, web
 deletion) land in later milestones. Before the first public release, verify each row against the shipped code and
 remove anything not shipped. Re-check this file whenever a Firebase SDK or a Firestore field is added.
@@ -10,7 +10,7 @@ remove anything not shipped. Re-check this file whenever a Firebase SDK or a Fir
 Common to both apps
 - Data is encrypted in transit: **Yes** (TLS to Firebase).
 - Users can request deletion: **Yes**, in the app (Profile, Delete account and all data) and at the web deletion page
-  (`web/delete-account.html`).
+  (https://vesper.dculus.com/delete-account).
 - Data shared with third parties: **No**. Firebase/Google acts as a processor, which Play does not count as sharing.
 - Ads / ad SDKs: **None**. No Analytics, no Crashlytics, no advertising ID.
 - Data is not used for ads, marketing or profiling. Purposes: **App functionality**, plus **Account management** for

@@ -132,3 +132,9 @@ variable "fcm_failure_threshold" {
   type        = number
   default     = 2
 }
+
+variable "web_hostname" {
+  description = "Hostname of the website (infra/cloudflare); allowed to sign in with the Firebase web SDK."
+  type        = string
+  default     = "vesper.dculus.com"
+}

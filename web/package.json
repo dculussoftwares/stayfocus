@@ -1,0 +1,33 @@
+{
+  "name": "vesper-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "check": "astro check",
+    "preview": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "@astrojs/react": "7.1.2",
+    "@astrojs/sitemap": "3.7.4",
+    "astro": "7.4.5",
+    "firebase": "13.2.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "6.0.3",
+    "wrangler": "4.158.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "1.14.7"
+  },
+  "engines": {
+    "node": ">=22.23.4"
+  }
+}

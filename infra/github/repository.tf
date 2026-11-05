@@ -44,7 +44,8 @@ resource "github_repository" "this" {
   }
 }
 
-# GitHub Pages for /web, deployed by .github/workflows/pages.yml (actions/deploy-pages).
+# GitHub Pages: only redirects (web/github-pages/) from the old github.io URLs to https://vesper.dculus.com, deployed
+# by .github/workflows/pages.yml. The website itself is on Cloudflare (infra/cloudflare).
 resource "github_repository_pages" "this" {
   repository = github_repository.this.name
   build_type = "workflow"

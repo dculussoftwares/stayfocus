@@ -1,0 +1,31 @@
+---
+import Base from "../layouts/Base.astro";
+import Nav from "../components/Nav.astro";
+import DeleteAccount from "../components/DeleteAccount";
+---
+
+<Base
+  title="Delete account - Vesper"
+  description="Delete your Vesper account and all data stored with it: sign in, confirm, and everything is removed."
+>
+  <Nav current="delete-account" />
+  <h1>Delete your Vesper account</h1>
+
+  <div class="panel">
+    <h2>What gets deleted</h2>
+    <ul>
+      <li>Your account (email, name and sign-in details).</li>
+      <li>
+        Everything stored with it: linked devices and their data, blocked-app lists, requests, alerts and notification
+        tokens.
+      </li>
+      <li>Pending link codes you created.</li>
+    </ul>
+    <p>
+      Linked child devices notice and reset. This cannot be undone. Data kept only on your phone (when you use the app
+      without an account) is not affected; uninstall the app to remove it.
+    </p>
+  </div>
+
+  <DeleteAccount client:only="react" />
+</Base>

@@ -133,7 +133,7 @@ jobs:
       - name: tflint
         run: |
           status=0
-          for dir in infra/seed infra/gcp infra/github; do
+          for dir in infra/seed infra/gcp infra/github infra/cloudflare; do
             echo "== $dir"
             tflint --chdir="$dir" --config "$GITHUB_WORKSPACE/.tflint.hcl" || status=1
           done

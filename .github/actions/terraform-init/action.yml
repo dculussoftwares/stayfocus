@@ -5,7 +5,7 @@ description: >
 
 inputs:
   module:
-    description: "Terraform root under infra/: seed, gcp or github."
+    description: "Terraform root under infra/: seed, gcp, github or cloudflare."
     required: true
   identity:
     description: "plan (read-only, any job of this repo) or deploy (only jobs in the GitHub environment prod)."
@@ -46,4 +46,21 @@ runs:
     - name: terraform init
       shell: bash
       working-directory: infra/${{ inputs.module }}
-      run: terraform init -input=false -backend-config="bucket=${TF_STATE_BUCKET}"
+      env:
+        IDENTITY: ${{ inputs.identity }}
+        MODULE: ${{ inputs.module }}
+      run: |
+        # A new module has no state yet, and the read-only identity can't create it: plan against an empty local
+        # state until the first apply writes it. Only a confirmed missing object counts; any other error fails.
+        state="gs://${TF_STATE_BUCKET}/${MODULE}/default.tfstate"
+        if [ "$IDENTITY" = plan ] && ! err="$(gcloud storage ls "$state" 2>&1 >/dev/null)"; then
+          if ! grep -q "matched no objects" <<<"$err"; then
+            echo "::error::Could not check $state: $err"
+            exit 1
+          fi
+          echo "::notice::No state for ${MODULE} yet; planning against an empty state."
+          printf 'terraform {\n  backend "local" {}\n}\n' > backend_override.tf
+          terraform init -input=false
+        else
+          terraform init -input=false -backend-config="bucket=${TF_STATE_BUCKET}"
+        fi

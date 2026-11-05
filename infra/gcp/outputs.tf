@@ -4,7 +4,7 @@ output "env" {
 }
 
 output "firebase_web_config" {
-  description = "Public Firebase web config for the Pages site (written to web/firebase-config.json by pages.yml)."
+  description = "Public Firebase web config for the website (written to web/public/firebase-config.json by web.yml)."
   value = {
     apiKey            = data.google_firebase_web_app_config.site.api_key
     authDomain        = data.google_firebase_web_app_config.site.auth_domain
@@ -13,6 +13,7 @@ output "firebase_web_config" {
     messagingSenderId = data.google_firebase_web_app_config.site.messaging_sender_id
     appId             = google_firebase_web_app.site.app_id
     functionsRegion   = var.region
+    recaptchaSiteKey  = google_recaptcha_enterprise_key.web.name
   }
 }
 
