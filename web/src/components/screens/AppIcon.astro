@@ -1,0 +1,23 @@
+---
+// An app's launcher icon on a white tile, or a letter tile in the app's brand colour (V5AppBrandColors) when the site
+// has no icon for it.
+interface Props {
+  app?: "instagram" | "youtube" | "tiktok" | "reddit";
+  letter?: string;
+  color?: string;
+  class?: string;
+}
+const { app, letter, color = "#163D22", class: className } = Astro.props;
+---
+
+{
+  app ? (
+    <span class:list={["ico", className]}>
+      <img src={`/apps/${app}.webp`} alt="" width="56" height="56" loading="lazy" decoding="async" />
+    </span>
+  ) : (
+    <span class:list={["ico lt", className]} style={`--c:${color}`}>
+      {letter}
+    </span>
+  )
+}

@@ -1,0 +1,18 @@
+---
+// Vesper Kids "Show this to your parent" (kids/ pairing): the QR code draws in, a scan line passes over it and the
+// five-minute expiry counts down for real.
+import { qrPath } from "../../lib/screens";
+
+const qr = qrPath(11, 25);
+---
+
+<div class="ls-body kidscode">
+  <p class="kc-app" data-in="fade">Vesper Kids</p>
+  <p class="kc-t" data-in style="--d:80">Show this to<br />your parent</p>
+  <p class="kc-s" data-in style="--d:160">They scan it from their phone.</p>
+  <div class="kc-qr" data-in="pop" style="--d:240">
+    <svg viewBox="-0.5 -0.5 26 26" shape-rendering="crispEdges"><path d={qr}></path></svg>
+    <i class="kc-scan"></i>
+  </div>
+  <p class="kc-exp" data-in style="--d:500">Code expires in <span data-countdown="292">4:52</span></p>
+</div>

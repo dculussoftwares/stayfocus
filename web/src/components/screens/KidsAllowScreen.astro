@@ -1,0 +1,28 @@
+---
+// Vesper Kids consent screen (kids/ pairing): the same code rolls into place, what Sam will be able to do is listed,
+// and "Allow and link" waits for a tap.
+import Odo from "./Odo.astro";
+
+const can = [
+  "See screen time and which app is open",
+  "Block apps and set time limits",
+  "Lock the phone for study time",
+  "Answer your requests for more time",
+];
+---
+
+<div class="ls-body kidsallow">
+  <p class="ka-app" data-in="fade">Vesper Kids</p>
+  <p class="ka-t" data-in style="--d:60">Let Sam manage<br />this phone?</p>
+  <div class="card ka-code" data-in style="--d:140">
+    <p>Check that Sam's phone shows</p>
+    <Odo code="482913" seed={9} />
+  </div>
+  <div class="card ka-can" data-in style="--d:220">
+    <p class="b">Sam will be able to</p>
+    <ul>{can.map((line, i) => <li data-in style={`--d:${900 + i * 140}`}>{line}</li>)}</ul>
+  </div>
+  <p class="ka-n" data-in style="--d:300">You can unlink anytime from this app. Sam gets a notification if you do.</p>
+  <div class="ka-btn-in" data-in style="--d:360"><span class="btn-ink ka-btn">Allow and link</span></div>
+  <p class="ka-not" data-in="fade" style="--d:420">Not now</p>
+</div>

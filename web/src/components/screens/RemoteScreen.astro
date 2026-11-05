@@ -1,0 +1,59 @@
+---
+// Vesper, managing a child's phone (feature/devices remote_*): Lock all apps, focus sessions, that phone's blocks and
+// today's use per app.
+import AppIcon from "./AppIcon.astro";
+
+const usage = [
+  { icon: { app: "youtube" as const }, name: "YouTube", time: "1h 20m", share: 1, over: false, on: false },
+  { icon: { app: "instagram" as const }, name: "Instagram", time: "40m", share: 0.5, over: true, on: true },
+  { icon: { letter: "W", color: "#22A55A" }, name: "WhatsApp", time: "0m", share: 0, over: false, on: false },
+];
+---
+
+<div class="ls-body remote">
+  <div class="rc-tiles">
+    <section class="rc-lock" data-in>
+      <svg class="rc-ic lock" viewBox="0 0 24 24"><path class="shackle" d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><rect x="5.5" y="11" width="13" height="9.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"></rect></svg>
+      <p class="t">Lock all apps</p>
+      <p class="s">Calls still work</p>
+    </section>
+    <section class="rc-focus brand" data-in style="--d:80">
+      <svg class="rc-ic timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5" fill="none" stroke="currentColor" stroke-width="1.8"></circle><path d="M10 3h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path><path class="hand" d="M12 13.5V9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+      <p class="t">Focus 25 min</p>
+      <p class="s">Start a study session</p>
+    </section>
+  </div>
+  <div class="rc-pills" data-in style="--d:160"><span>Focus 50 min</span><span>Focus 90 min</span></div>
+
+  <div class="rc-head" data-in style="--d:220">
+    <p>Blocks on this phone</p>
+    <span class="btn-ink sm">+ New block</span>
+  </div>
+  <div class="card rc-row" data-in style="--d:280">
+    <AppIcon app="instagram" />
+    <div><p class="n">Instagram</p><p class="s">30 min a day</p></div>
+    <span class="tog on" style="--d:800"></span>
+  </div>
+  <div class="card rc-row off" data-in style="--d:340">
+    <AppIcon letter="S" color="#7C8494" />
+    <div><p class="n">School night</p><p class="s">Every day · 22:00–07:00</p></div>
+    <span class="tog"></span>
+  </div>
+
+  <p class="rc-cap" data-in style="--d:400"><span>Today · 2h 27m</span><span>Lock</span></p>
+  {
+    usage.map((u, i) => (
+      <div class="card rc-app" data-in style={`--d:${460 + i * 70}`}>
+        <AppIcon {...u.icon} />
+        <div class="mid">
+          <p><span>{u.name}</span><span>{u.time}</span></p>
+          <i class="bar">
+            <i class={u.over ? "over" : ""} data-in="grow" style={`--w:${u.share};--d:${900 + i * 140}`} />
+          </i>
+        </div>
+        <span class:list={["tog", { on: u.on }]} style={`--d:${1100 + i * 140}`} />
+      </div>
+    ))
+  }
+  <p class="rc-unlink">Unlink this phone</p>
+</div>

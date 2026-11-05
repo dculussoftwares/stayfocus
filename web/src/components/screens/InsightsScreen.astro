@@ -1,0 +1,79 @@
+---
+// Vesper Insights, day view (feature/insights): screen time with its chart, Unlocks, Blocked and the top apps.
+import AppIcon from "./AppIcon.astro";
+import { dayChart, uid } from "../../lib/screens";
+
+const hours = [0, 0, 0, 0, 0, 0, 0.02, 0.1, 0.3, 0.52, 0.28, 0.24, 0.42, 0.5, 0.16, 0.2, 0.36, 0.3, 0.5, 0.68, 0.84, 0.8, 0.5, 0.06];
+const chart = dayChart(hours, 330, 90);
+const now = chart.points[21]!;
+const fill = uid("i-fill");
+const apps = [
+  { app: "instagram", name: "Instagram", time: "41m", share: 1 },
+  { app: "youtube", name: "YouTube", time: "33m", share: 0.8 },
+  { app: "tiktok", name: "TikTok", time: "19m", share: 0.46 },
+] as const;
+---
+
+<div class="ls-body insights">
+  <div class="i-top" data-in>
+    <p class="ttl">Insights</p>
+    <div class="seg sm"><span class="on">Day</span><span>Week</span></div>
+  </div>
+  <div class="i-nav" data-in style="--d:60">
+    <span class="circ"><svg viewBox="0 0 20 20"><path d="M16 10H5m4.5-4.5L5 10l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+    <p><b>Today</b><span data-today="short">08 OCT</span></p>
+    <span class="circ dim"><svg viewBox="0 0 20 20"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  </div>
+
+  <section class="i-hero brand" data-in style="--d:120">
+    <div class="i-hero-top">
+      <p>Screen time today</p>
+      <span class="chip-glass">Avg 6m/h</span>
+    </div>
+    <p class="i-big"><b data-count="2" data-delay="400" data-dur="900">2</b><small>h</small> <b data-count="33" data-delay="400" data-dur="1500">33</b><small>m</small></p>
+    <div class="h-chart i-chart">
+      <svg viewBox="0 0 330 90" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.4"></stop>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <path class="c-area" d={chart.area} fill={`url(#${fill})`}></path>
+        <path class="c-line" d={chart.line} pathLength="1"></path>
+      </svg>
+      <span class="c-now" style={`left:${(now[0] / 330) * 100}%;top:${(now[1] / 90) * 100}%`}></span>
+    </div>
+    <p class="axis"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span></p>
+  </section>
+
+  <div class="i-tiles">
+    <section class="brand i-tile" data-in style="--d:220">
+      <p>Unlocks</p>
+      <b data-count="41" data-delay="600">41</b>
+      <p>Today</p>
+    </section>
+    <section class="brand i-tile" data-in style="--d:280">
+      <p>Blocked</p>
+      <b data-count="23" data-delay="650">23</b>
+      <p>Times today</p>
+    </section>
+  </div>
+
+  <section class="i-sheet" data-in style="--d:340">
+    <div class="seg"><span class="on">Screen time</span><span>Opens</span></div>
+    {
+      apps.map((a, i) => (
+        <div class="i-app">
+          <AppIcon app={a.app} />
+          <div>
+            <p><span>{a.name}</span><span>{a.time}</span></p>
+            <i class="bar">
+              <i data-in="grow" style={`--w:${a.share};--d:${700 + i * 120}`} />
+            </i>
+          </div>
+        </div>
+      ))
+    }
+  </section>
+</div>

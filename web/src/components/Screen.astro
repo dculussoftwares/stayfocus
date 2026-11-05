@@ -1,15 +1,67 @@
 ---
-// A real screen of the app (Roborazzi render from the repo), cropped to a 390 x 844 phone screen.
+// A screen of the app, rebuilt in HTML from the Roborazzi renders and played when it scrolls into view
+// (lib/live.ts). It scales with its width like a picture would, and reads as one image to screen readers.
+import "../styles/screens.css";
+import HomeScreen from "./screens/HomeScreen.astro";
+import KidsHomeScreen from "./screens/KidsHomeScreen.astro";
+import BlocksScreen from "./screens/BlocksScreen.astro";
+import InsightsScreen from "./screens/InsightsScreen.astro";
+import KidsCodeScreen from "./screens/KidsCodeScreen.astro";
+import LinkConfirmScreen from "./screens/LinkConfirmScreen.astro";
+import KidsAllowScreen from "./screens/KidsAllowScreen.astro";
+import RemoteScreen from "./screens/RemoteScreen.astro";
+import FamilyScreen from "./screens/FamilyScreen.astro";
+
+const screens = {
+  home: HomeScreen,
+  "kids-home": KidsHomeScreen,
+  blocks: BlocksScreen,
+  insights: InsightsScreen,
+  "kids-code": KidsCodeScreen,
+  "link-confirm": LinkConfirmScreen,
+  "kids-allow": KidsAllowScreen,
+  "remote-controls": RemoteScreen,
+  family: FamilyScreen,
+};
+
+export type ScreenName = keyof typeof screens;
+
 interface Props {
-  src: string;
+  name: ScreenName;
+  /** What the screen shows. Empty when the same screen is described next to it. */
   alt: string;
-  eager?: boolean;
+  /** Played by the page (the pinned Kids story) instead of on scroll. */
+  manual?: boolean;
   class?: string;
 }
 
-const { src, alt, eager = false, class: className } = Astro.props;
+const { name, alt, manual = false, class: className } = Astro.props;
+const View = screens[name];
 ---
 
-<div class:list={["screen", className]} data-ui>
-  <img src={src} alt={alt} width="390" height="844" loading={eager ? "eager" : "lazy"} decoding="async" />
+<div
+  class:list={["screen live", `s-${name}`, className]}
+  role={alt ? "img" : undefined}
+  aria-label={alt || undefined}
+  aria-hidden={alt ? undefined : "true"}
+  data-live
+  data-manual={manual ? "" : undefined}
+  data-ui
+>
+  <div class="live-screen">
+    <div class="sb">
+      <span data-now>9:41</span>
+      <span class="sb-cam"></span>
+      <span class="sb-icons">
+        <svg viewBox="0 0 16 12"><path d="M8 11.5 0.6 3.6a10.6 10.6 0 0 1 14.8 0L8 11.5Z" fill="currentColor"></path></svg>
+        <svg viewBox="0 0 14 12"><path d="M13 1v10H1Z" fill="currentColor"></path></svg>
+        <svg viewBox="0 0 22 12"><rect x="0.75" y="0.75" width="18" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"></rect><rect x="2.5" y="2.5" width="11" height="7" rx="1.6" fill="currentColor"></rect><rect x="20" y="4" width="1.6" height="4" rx="0.8" fill="currentColor" opacity="0.5"></rect></svg>
+      </span>
+    </div>
+    <View />
+  </div>
 </div>
+
+<script>
+  import "../lib/live";
+</script>

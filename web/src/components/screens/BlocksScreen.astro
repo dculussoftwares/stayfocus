@@ -1,0 +1,61 @@
+---
+// Vesper Blocks tab (feature/blocks): the New block card, the describe box, and block cards whose usage meter fills
+// minute by minute.
+import AppIcon from "./AppIcon.astro";
+
+const meter = (used: number) => Array.from({ length: 40 }, (_, i) => i < used);
+---
+
+<div class="ls-body blocks">
+  <p class="ttl" data-in>Blocks</p>
+  <div class="b-phone" data-in style="--d:60">My phone</div>
+
+  <section class="card b-new" data-in style="--d:120">
+    <div>
+      <p class="b-new-t">New block</p>
+      <span class="chip"><i></i>on My phone</span>
+    </div>
+    <span class="fab-ink">+</span>
+  </section>
+
+  <div class="ask-pill small" data-in style="--d:180">
+    <svg class="spark" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Zm5.5 10c.3 1.6.8 2.2 2.4 2.6-1.6.4-2.1 1-2.4 2.6-.3-1.6-.8-2.2-2.4-2.6 1.6-.4 2.1-1 2.4-2.6Z"></path></svg>
+    <span class="ask-text"><span class="ph">Or describe it in words</span></span>
+    <span class="go"><svg viewBox="0 0 20 20"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  </div>
+
+  <div class="seg" data-in style="--d:240"><span class="on">Blocks</span><span>All apps</span></div>
+  <p class="b-count" data-in style="--d:280">2 of 3 blocks on</p>
+
+  <section class="card b-card" data-in style="--d:320">
+    <div class="b-head">
+      <span class="stack"><AppIcon app="instagram" /><AppIcon app="youtube" /></span>
+      <div class="b-names">
+        <p class="b-name">Instagram + YouTube</p>
+        <p class="b-type">Use, then lock</p>
+      </div>
+      <span class="tog on" style="--d:700"></span>
+    </div>
+    <p class="b-rule">10 min open, then 30 min locked</p>
+    <div class="meter">{meter(24).map((on, i) => <i class={on ? "on" : ""} style={on ? `--t:${i}` : undefined} />)}</div>
+    <p class="b-meta"><span><span data-count="6" data-delay="800" data-dur="1100">6</span> of 10 min used</span><span>10 min</span></p>
+  </section>
+
+  <section class="card b-card" data-in style="--d:420">
+    <div class="b-head">
+      <span class="stack"><AppIcon app="reddit" /><AppIcon letter="X" color="#000B1A" /></span>
+      <div class="b-names">
+        <p class="b-name">Reddit + X</p>
+        <p class="b-type">Daily limit</p>
+      </div>
+      <span class="tog on" style="--d:900"></span>
+    </div>
+    <p class="b-rule">30 min a day</p>
+    <div class="meter">{meter(12).map((on, i) => <i class={on ? "on" : ""} style={on ? `--t:${i + 6}` : undefined} />)}</div>
+  </section>
+
+  <div class="b-fabs">
+    <span class="b-spark" data-in="pop" style="--d:1100"><svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Z"></path></svg></span>
+    <span class="b-fab" data-in="pop" style="--d:1000">+ New block</span>
+  </div>
+</div>

@@ -1,0 +1,96 @@
+---
+// Vesper home (feature/home): screen time today, the day chart, Blocked and Most used, Block apps, Take a break and
+// the "Describe a block in your words" box, which types out example sentences.
+import AppIcon from "./AppIcon.astro";
+import { dayChart, uid } from "../../lib/screens";
+
+// Screen time per hour, 12 AM to 11 PM, shaped like the Roborazzi render.
+const hours = [0, 0, 0, 0, 0, 0, 0, 0.06, 0.5, 0.22, 0.14, 0.42, 0.12, 0.2, 0.08, 0.16, 0.3, 0.14, 0.22, 0.46, 0.78, 0.72, 0.4, 0.06];
+const chart = dayChart(hours, 330, 60);
+const now = chart.points[12]!;
+const ticks = Array.from({ length: 41 }, (_, i) => i);
+const fill = uid("h-fill");
+const examples = ["Instagram 10 min, then lock it for 30", "YouTube max 1 hour a day", "No TikTok on school days 8–3"];
+---
+
+<div class="ls-body home">
+  <header class="h-top" data-in>
+    <span class="h-av">S</span>
+    <div class="h-hello">
+      <p class="h-date" data-today="long">Sunday, 18 October</p>
+      <p class="h-hi">Hi, Sam</p>
+    </div>
+    <span class="h-bell">
+      <svg viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15L6 16Zm4 4a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"></path></svg>
+      <i></i>
+    </span>
+  </header>
+
+  <section class="h-hero brand" data-in style="--d:80">
+    <p class="h-label">Screen time today</p>
+    <p class="h-big" data-count="153" data-format="clock" data-dur="1700" data-delay="300">2:33</p>
+    <p class="h-goal">27 min under your 3h goal</p>
+    <div class="h-chart">
+      <svg viewBox="0 0 330 60" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id={fill} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fff" stop-opacity="0.45"></stop>
+            <stop offset="1" stop-color="#fff" stop-opacity="0"></stop>
+          </linearGradient>
+        </defs>
+        <path class="c-area" d={chart.area} fill={`url(#${fill})`}></path>
+        <path class="c-line" d={chart.line} pathLength="1"></path>
+      </svg>
+      <span class="c-now" style={`left:${(now[0] / 330) * 100}%;top:${(now[1] / 60) * 100}%`}></span>
+    </div>
+    <p class="axis"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span><span>11 PM</span></p>
+    <div class="h-tiles">
+      <div class="glass h-tile">
+        <p class="t-head">
+          <span class="t-ic"><svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"></circle><path d="M5.5 5.5l9 9" stroke="currentColor" stroke-width="1.7"></path></svg></span>
+          Blocked
+        </p>
+        <p class="t-num"><b data-count="23" data-delay="700" data-dur="1200">23</b><span>times</span></p>
+        <p class="t-sub">Apps stopped today</p>
+      </div>
+      <div class="glass h-tile">
+        <p class="t-head"><AppIcon app="instagram" class="t-ic" />Most used</p>
+        <p class="t-num"><b data-count="52" data-delay="800" data-dur="1200">52</b><span>min</span></p>
+        <p class="t-sub">Instagram</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="h-row">
+    <section class="h-apps" data-in style="--d:220">
+      <p class="h-card-title">Block<br />apps</p>
+      <span class="plus">+</span>
+      <AppIcon app="instagram" class="h-fly a" />
+      <AppIcon app="youtube" class="h-fly b" />
+      <div class="h-active">
+        <p>Active blocks</p>
+        <p class="muted">3 on this phone</p>
+      </div>
+    </section>
+    <section class="h-break brand" data-in style="--d:300">
+      <p class="h-card-title">Take a<br />break</p>
+      <span class="plus white">+</span>
+      <p class="h-break-num"><b data-count="30" data-from="5" data-delay="900" data-dur="1300">30</b><span>min</span></p>
+      <div class="ruler">
+        <div class="ruler-track">{ticks.map((i) => <i class={i % 5 === 0 ? "tall" : ""} />)}</div>
+        <span class="ruler-mark"></span>
+      </div>
+    </section>
+  </div>
+
+  <div class="ask-pill" data-in style="--d:380">
+    <svg class="spark" viewBox="0 0 20 20" fill="currentColor"><path d="M10 1.5c.7 3.6 1.8 5 5.3 5.9-3.5.9-4.6 2.3-5.3 5.9-.7-3.6-1.8-5-5.3-5.9 3.5-.9 4.6-2.3 5.3-5.9Zm5.5 10c.3 1.6.8 2.2 2.4 2.6-1.6.4-2.1 1-2.4 2.6-.3-1.6-.8-2.2-2.4-2.6 1.6-.4 2.1-1 2.4-2.6Z"></path></svg>
+    <span class="ask-text" data-type-loop={JSON.stringify(examples)}>
+      <span class="ph">Describe a block in your words</span>
+      <span class="tx"></span>
+    </span>
+    <span class="go"><svg viewBox="0 0 20 20"><path d="M4 10h11m-4.5-4.5L15 10l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  </div>
+
+  <section class="h-peek brand" data-in style="--d:440"></section>
+</div>

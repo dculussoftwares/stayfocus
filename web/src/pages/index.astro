@@ -32,10 +32,10 @@ const bands = [
 const without = ["Ads", "Analytics", "An advertising ID", "A subscription", "A sign-up wall"];
 
 const kidsSteps = [
-  { text: "Install Vesper Kids on their phone. It shows a code for five minutes.", src: "/screens/kids-code.webp", alt: "Vesper Kids showing a QR code to scan.", phone: "Their phone" },
-  { text: "Scan it with Vesper. Both phones show the same six digits.", src: "/screens/link-confirm.webp", alt: "Vesper asking: Do the codes match? 482 913.", phone: "Your phone" },
-  { text: "Your child checks the code and says yes. They can unlink anytime, and you're told.", src: "/screens/kids-allow.webp", alt: "Vesper Kids asking: Let Sam manage this phone?", phone: "Their phone" },
-  { text: "Then set limits, answer requests for more time and start focus sessions from your phone.", src: "/screens/remote-controls.webp", alt: "Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone.", phone: "Your phone" },
+  { text: "Install Vesper Kids on their phone. It shows a code for five minutes.", name: "kids-code" as const, alt: "Vesper Kids showing a QR code to scan.", phone: "Their phone" },
+  { text: "Scan it with Vesper. Both phones show the same six digits.", name: "link-confirm" as const, alt: "Vesper asking: Do the codes match? 482 913.", phone: "Your phone" },
+  { text: "Your child checks the code and says yes. They can unlink anytime, and you're told.", name: "kids-allow" as const, alt: "Vesper Kids asking: Let Sam manage this phone?", phone: "Their phone" },
+  { text: "Then set limits, answer requests for more time and start focus sessions from your phone.", name: "remote-controls" as const, alt: "Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone.", phone: "Your phone" },
 ];
 
 const faq: Faq[] = [
@@ -98,11 +98,11 @@ const jsonLd = {
 
     <div class="hero-phones">
       <figure>
-        <Screen src="/screens/home.webp" alt="Vesper home: 2:33 of screen time today, 27 minutes under a 3 hour goal, 23 blocked opens." eager />
+        <Screen name="home" alt="Vesper home: 2:33 of screen time today, 27 minutes under a 3 hour goal, 23 blocked opens." />
         <figcaption>Vesper, on your phone</figcaption>
       </figure>
       <figure class="lower">
-        <Screen src="/screens/kids-home.webp" alt="Vesper Kids home on a child's phone: who manages it, today's screen time and the rules set." eager />
+        <Screen name="kids-home" alt="Vesper Kids home on a child's phone: who manages it, today's screen time and the rules set." />
         <figcaption>Vesper Kids, on theirs</figcaption>
       </figure>
     </div>
@@ -179,15 +179,15 @@ const jsonLd = {
         </div>
         <div class="response result">
           <figure>
-            <Screen src="/screens/blocks.webp" alt="Blocks tab with active blocks and their rules." />
+            <Screen name="blocks" alt="Blocks tab with active blocks and their rules." />
             <figcaption class="caption">Your blocks, each with its own switch.</figcaption>
           </figure>
           <figure>
-            <Screen src="/screens/home.webp" alt="Home with today's screen time and blocked count." />
+            <Screen name="home" alt="Home with today's screen time and blocked count." />
             <figcaption class="caption">Your day, under your goal.</figcaption>
           </figure>
           <figure>
-            <Screen src="/screens/insights.webp" alt="Insights day view with unlocks and blocked opens." />
+            <Screen name="insights" alt="Insights day view with unlocks and blocked opens." />
             <figcaption class="caption">Unlocks, blocked opens and top apps.</figcaption>
           </figure>
         </div>
@@ -251,7 +251,7 @@ const jsonLd = {
               <li data-step={i}>
                 <p>{step.text}</p>
                 <figure class="kids-inline">
-                  <Screen src={step.src} alt={step.alt} />
+                  <Screen name={step.name} alt={step.alt} />
                   <figcaption class="caption">{step.phone}</figcaption>
                 </figure>
               </li>
@@ -264,7 +264,7 @@ const jsonLd = {
           {
             kidsSteps.map((step, i) => (
               <figure class:list={["kids-frame", { active: i === 0 }]} data-frame={i}>
-                <Screen src={step.src} alt="" />
+                <Screen name={step.name} alt="" manual />
                 <figcaption class="caption">{step.phone}</figcaption>
               </figure>
             ))
@@ -1149,6 +1149,8 @@ const jsonLd = {
 </style>
 
 <script>
+  import { play } from "../lib/live";
+
   // Hero: a sentence typed (or tapped) in the hero fills the demo below and builds it.
   const ask = document.querySelector<HTMLFormElement>("[data-ask]");
   const demoForm = document.querySelector<HTMLFormElement>("[data-describe]");
@@ -1197,10 +1199,15 @@ const jsonLd = {
     });
   });
 
-  // Kids story: the pinned phone follows the step in view.
+  // Kids story: the pinned phone follows the step in view, and each screen plays again as its step comes up.
   const steps = [...document.querySelectorAll<HTMLElement>("[data-step]")];
   const frames = [...document.querySelectorAll<HTMLElement>("[data-frame]")];
+  const playFrame = (frame: HTMLElement | undefined) => {
+    const screen = frame?.querySelector<HTMLElement>("[data-live]");
+    if (screen) play(screen);
+  };
   if (steps.length && "IntersectionObserver" in window) {
+    let shown = -1;
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -1208,6 +1215,10 @@ const jsonLd = {
           const index = Number((entry.target as HTMLElement).dataset.step);
           steps.forEach((s, i) => s.classList.toggle("current", i === index));
           frames.forEach((f, i) => f.classList.toggle("active", i === index));
+          if (index !== shown) {
+            shown = index;
+            playFrame(frames[index]);
+          }
         }
       },
       { rootMargin: "-45% 0px -45% 0px" },

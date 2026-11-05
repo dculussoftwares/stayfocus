@@ -21,10 +21,10 @@ const childSees = [
 ];
 
 const linking = [
-  { src: "/screens/kids-code.webp", alt: "Vesper Kids: Show this to your parent, with a QR code.", phone: "Their phone", text: "Open Vesper Kids. It shows a code that works for five minutes." },
-  { src: "/screens/link-confirm.webp", alt: "Vesper: Do the codes match? 482 913, and a field to name the phone.", phone: "Your phone", text: "Scan it from Vesper's Family tab and give the phone a name." },
-  { src: "/screens/kids-allow.webp", alt: "Vesper Kids: Let Sam manage this phone? with the same code and what Sam will be able to do.", phone: "Their phone", text: "They check that the six digits match, read what you'll be able to do, and allow it." },
-  { src: "/screens/family.webp", alt: "Vesper Family tab listing Aarav's phone, online, with today's usage.", phone: "Your phone", text: "The phone appears in Family. Set its first block." },
+  { name: "kids-code" as const, alt: "Vesper Kids: Show this to your parent, with a QR code.", phone: "Their phone", text: "Open Vesper Kids. It shows a code that works for five minutes." },
+  { name: "link-confirm" as const, alt: "Vesper: Do the codes match? 482 913, and a field to name the phone.", phone: "Your phone", text: "Scan it from Vesper's Family tab and give the phone a name." },
+  { name: "kids-allow" as const, alt: "Vesper Kids: Let Sam manage this phone? with the same code and what Sam will be able to do.", phone: "Their phone", text: "They check that the six digits match, read what you'll be able to do, and allow it." },
+  { name: "family" as const, alt: "Vesper Family tab listing Aarav's phone, online, with today's usage.", phone: "Your phone", text: "The phone appears in Family. Set its first block." },
 ];
 
 const never = [
@@ -90,11 +90,11 @@ const jsonLd = {
     </div>
     <div class="kh-phones">
       <figure>
-        <Screen src="/screens/remote-controls.webp" alt="Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone." eager />
+        <Screen name="remote-controls" alt="Managing Aarav's phone in Vesper: Lock all apps, Focus 25 min and the blocks on that phone." />
         <figcaption class="caption">Your phone</figcaption>
       </figure>
       <figure class="lower">
-        <Screen src="/screens/kids-home.webp" alt="Vesper Kids home on the child's phone, showing who manages it and today's rules." eager />
+        <Screen name="kids-home" alt="Vesper Kids home on the child's phone, showing who manages it and today's rules." />
         <figcaption class="caption">Their phone</figcaption>
       </figure>
     </div>
@@ -116,7 +116,7 @@ const jsonLd = {
 
   <section class="section sees" aria-labelledby="sees-title">
     <div class="sees-shot" data-rise>
-      <Screen src="/screens/kids-allow.webp" alt="Vesper Kids consent screen: Let Sam manage this phone? Allow and link, or Not now." />
+      <Screen name="kids-allow" alt="Vesper Kids consent screen: Let Sam manage this phone? Allow and link, or Not now." />
     </div>
     <div class="sees-copy">
       <h2 id="sees-title" data-rise>On their phone</h2>
@@ -134,7 +134,7 @@ const jsonLd = {
         linking.map((step, i) => (
           <li data-rise style={`--i:${i}`}>
             <figure>
-              <Screen src={step.src} alt={step.alt} />
+              <Screen name={step.name} alt={step.alt} />
               <figcaption class="caption">{step.phone}</figcaption>
             </figure>
             <p>{step.text}</p>
@@ -180,11 +180,11 @@ const jsonLd = {
     </div>
     <div class="pair">
       <figure>
-        <Screen src="/screens/kids-code.webp" alt="Vesper Kids showing a code for the parent to scan." />
+        <Screen name="kids-code" alt="Vesper Kids showing a code for the parent to scan." />
         <figcaption class="caption">Vesper Kids, on theirs</figcaption>
       </figure>
       <figure>
-        <Screen src="/screens/family.webp" alt="Vesper's Family tab with a linked child's phone." />
+        <Screen name="family" alt="Vesper's Family tab with a linked child's phone." />
         <figcaption class="caption">Vesper, on yours</figcaption>
       </figure>
     </div>

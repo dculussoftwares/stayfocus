@@ -1,0 +1,16 @@
+---
+// Vesper "Do the codes match?" (feature/devices link_confirm_*): the code rolls into place, the phone's name is typed
+// in, and the button is ready.
+import Odo from "./Odo.astro";
+---
+
+<div class="ls-body linkconfirm">
+  <span class="circ back" data-in="fade"><svg viewBox="0 0 20 20"><path d="M16 10H5m4.5-4.5L5 10l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+  <p class="lc-t" data-in style="--d:60">Do the codes<br />match?</p>
+  <p class="lc-s" data-in style="--d:120">Your child's phone shows the same six digits.</p>
+  <div class="card lc-code" data-in style="--d:180"><Odo code="482913" seed={5} /></div>
+  <p class="lc-l" data-in style="--d:260">Name this phone</p>
+  <div class="field" data-in style="--d:300"><span data-type data-delay="1500">Aarav's phone</span><i class="caret"></i></div>
+  <p class="lc-n" data-in style="--d:360">Your child sees that you manage this phone and can unlink anytime. You get notified if they do.</p>
+  <span class="btn-ink lc-btn" data-in style="--d:420">Codes match, link it</span>
+</div>

@@ -331,7 +331,7 @@ a:hover {
   }
 }
 
-/* ---------- Phone screenshots (the app's own interface) ---------- */
+/* ---------- Phones: the app's own screens, rebuilt live (components/Screen.astro) ---------- */
 
 .screen {
   border-radius: clamp(26px, 2.8vw, 42px);
@@ -345,13 +345,6 @@ a:hover {
 .kids-field .screen,
 .never-field .screen {
   border-color: #2a5134;
-}
-
-.screen img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: top;
 }
 
 .caption {
