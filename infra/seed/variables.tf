@@ -13,8 +13,8 @@ variable "billing_account" {
   type        = string
 }
 
-variable "github_repository" {
-  description = "owner/name of the repository whose workflows may log in to GCP."
+variable "github_subject_prefix" {
+  description = "Start of the GitHub OIDC subject for this repository. The repository uses immutable subjects (owner and repo with their numeric IDs): gh api repos/OWNER/NAME/actions/oidc/customization/sub --jq .sub_claim_prefix"
   type        = string
 }
 
