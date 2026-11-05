@@ -171,7 +171,7 @@ resource "google_iam_workload_identity_pool_provider" "github" {
 resource "google_service_account_iam_member" "wif_deploy" {
   service_account_id = google_service_account.deploy.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/repo:${var.github_repository}:environment:${var.deploy_environment}"
+  member             = "principal://iam.googleapis.com/${google_iam_workload_identity_pool.github.name}/subject/${var.github_subject_prefix}:environment:${var.deploy_environment}"
 }
 
 # Plan: any job of this repository. Fork pull requests get no OIDC token, so they can't use it.

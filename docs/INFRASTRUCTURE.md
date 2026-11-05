@@ -28,7 +28,7 @@ One workflow runs all three: `.github/workflows/infra.yml`.
 
 | Identity | Who can use it | Rights |
 |---|---|---|
-| `tf-deploy` | Only jobs of this repository (numeric ID) running in the GitHub environment `prod`, which only accepts `main` | Owner of the project; budgets on the billing account |
+| `tf-deploy` | Only jobs of this repository running in the GitHub environment `prod`, which only accepts `main`. Matched on the immutable OIDC subject `repo:<owner>@<owner id>/<repo>@<repo id>:environment:prod` | Owner of the project; budgets on the billing account |
 | `tf-plan` | Any job of this repository (fork PRs get no OIDC token) | Read-only: viewer roles, Terraform state |
 
 Because `tf-deploy` owns the project, adding a resource (and the roles it needs) is one PR; no person has to grant
@@ -148,5 +148,5 @@ resolved threads. Don't raise `required_approvals` without revisiting the fallba
 ## Forks
 
 Run the first run above with your own org, billing account and project ID (edit `infra/seed/terraform.tfvars`, including
-`github_repository` and `github_repository_id`), commit your own `infra/prod.env`, and set `project_id` in
+`github_repository_id` and `github_subject_prefix`), commit your own `infra/prod.env`, and set `project_id` in
 `infra/gcp/terraform.tfvars`. The Android apps build without any of it (no `google-services.json` → Firebase features off).
