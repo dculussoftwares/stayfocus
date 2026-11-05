@@ -1,5 +1,5 @@
 {
-  "name": "stayfocus-functions",
+  "name": "vesper-functions",
   "private": true,
   "description": "Cloud Functions (2nd gen) for Stay Focused. Built by Actions and deployed by Terraform (infra/firebase/functions.tf); never by the Firebase CLI.",
   "license": "GPL-3.0-only",
@@ -10,7 +10,7 @@
     "build": "tsc --noEmit && node scripts/build.mjs",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "firebase emulators:exec --only firestore --project demo-stayfocus --config ../firebase.json \"jest --runInBand\"",
+    "test": "firebase emulators:exec --only firestore --project demo-vesper --config ../firebase.json \"jest --runInBand\"",
     "test:unit": "jest --runInBand"
   },
   "dependencies": {

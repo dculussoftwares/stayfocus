@@ -284,13 +284,16 @@ jobs:
         working-directory: firebase/rules-tests
         run: GRADLE_JAVA_HOME="$JAVA_HOME_17_X64" npm run test:android
 
-  # Optional (not part of ci-pass): the same build with the REAL dev google-services.json, read from the Terraform
-  # state (output google_services_json of infra/firebase). Runs on pushes to main and manual runs, never on forks.
+  # Optional (not part of ci-pass): the same build with the REAL google-services.json, read from the Terraform
+  # state (output google_services_json of infra/gcp). Runs on pushes to main and manual runs, never on forks.
   build-with-terraform-firebase-config:
     name: build-with-terraform-firebase-config
-    if: github.event_name != 'pull_request' && vars.TF_CLOUD_ORGANIZATION != ''
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -299,22 +302,23 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_wrapper: false
       - uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+      - id: gcp
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_PLAN_SA }}
       - name: Write google-services.json from the Terraform output
-        env:
-          TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-          TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
         run: scripts/ci/fetch-google-services.sh
-      # Gradle (and everything it runs) must not be able to read the HCP token.
-      - name: Remove the Terraform CLI credential
-        run: rm -f "$TF_CLI_CONFIG_FILE" "$HOME/.terraformrc" "$HOME/.terraform.d/credentials.tfrc.json"
-      - name: Assemble debug (app and kids) with the real dev Firebase config
+      # Gradle (and everything it runs) must not be able to use the GCP login.
+      - name: Remove the GCP credential
+        env:
+          CREDS: ${{ steps.gcp.outputs.credentials_file_path }}
+        run: rm -f "$CREDS"
+      - name: Assemble debug (app and kids) with the real Firebase config
         run: ./gradlew :app:assembleDebug :kids:assembleDebug
 
   # Compose UI / AndroidX Test on Gradle Managed Devices (API 26 + API 36, headless). Failing navigation tests fail the PR.

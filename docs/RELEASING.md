@@ -22,7 +22,6 @@ Create these in the repo's `release` environment (Settings > Environments), neve
 |---|---|
 | `UPLOAD_KEYSTORE_BASE64` | `base64 -i upload.jks` of the **upload** key (Play App Signing holds the app signing key) |
 | `UPLOAD_KEYSTORE_PASSWORD`, `UPLOAD_KEY_ALIAS`, `UPLOAD_KEY_PASSWORD` | keystore and key credentials |
-| `GOOGLE_SERVICES_APP_PROD_BASE64`, `GOOGLE_SERVICES_KIDS_PROD_BASE64` | prod `google-services.json` per app (from the Terraform outputs, M10-04). Required: the workflow fails without them, so no release ships without the prod Firebase config |
 | `PLAY_SERVICE_ACCOUNT_JSON` | optional: Play Console service account JSON with release permission; the Play upload is skipped without it |
 
 Generate the upload key once (`keytool -genkeypair -keystore upload.jks -alias upload -keyalg RSA -keysize 2048
@@ -33,9 +32,9 @@ tags to `v*` and require a reviewer, so a tag push alone cannot reach the secret
 
 ## Local release build
 
-Without the `STAYFOCUSED_KEYSTORE_*` environment variables `./gradlew :app:bundleRelease :kids:bundleRelease` builds an
-**unsigned** bundle (R8 still runs). To sign locally set `STAYFOCUSED_KEYSTORE_FILE`, `STAYFOCUSED_KEYSTORE_PASSWORD`,
-`STAYFOCUSED_KEY_ALIAS` and `STAYFOCUSED_KEY_PASSWORD`. R8 rules: `config/proguard/proguard-rules.pro`.
+Without the `VESPER_KEYSTORE_*` environment variables `./gradlew :app:bundleRelease :kids:bundleRelease` builds an
+**unsigned** bundle (R8 still runs). To sign locally set `VESPER_KEYSTORE_FILE`, `VESPER_KEYSTORE_PASSWORD`,
+`VESPER_KEY_ALIAS` and `VESPER_KEY_PASSWORD`. R8 rules: `config/proguard/proguard-rules.pro`.
 
 ## Install a bundle on a device
 

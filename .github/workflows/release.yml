@@ -27,14 +27,12 @@ jobs:
     environment: release
     permissions:
       contents: read
+      id-token: write # read the Firebase config from the Terraform state (read-only GCP identity)
     env:
       KEYSTORE_B64: ${{ secrets.UPLOAD_KEYSTORE_BASE64 }}
-      STAYFOCUSED_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
-      STAYFOCUSED_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
-      STAYFOCUSED_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
-      # Prod Firebase config (Terraform outputs of infra/firebase, M10-04), stored as base64 secrets. Required.
-      GOOGLE_SERVICES_APP_B64: ${{ secrets.GOOGLE_SERVICES_APP_PROD_BASE64 }}
-      GOOGLE_SERVICES_KIDS_B64: ${{ secrets.GOOGLE_SERVICES_KIDS_PROD_BASE64 }}
+      VESPER_KEYSTORE_PASSWORD: ${{ secrets.UPLOAD_KEYSTORE_PASSWORD }}
+      VESPER_KEY_ALIAS: ${{ secrets.UPLOAD_KEY_ALIAS }}
+      VESPER_KEY_PASSWORD: ${{ secrets.UPLOAD_KEY_PASSWORD }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -57,17 +55,28 @@ jobs:
 
       - name: Check the release secrets are present
         run: |
-          for v in KEYSTORE_B64 STAYFOCUSED_KEYSTORE_PASSWORD STAYFOCUSED_KEY_ALIAS STAYFOCUSED_KEY_PASSWORD GOOGLE_SERVICES_APP_B64 GOOGLE_SERVICES_KIDS_B64; do
+          for v in KEYSTORE_B64 VESPER_KEYSTORE_PASSWORD VESPER_KEY_ALIAS VESPER_KEY_PASSWORD; do
             if [ -z "${!v}" ]; then echo "::error::Missing release secret for $v (see docs/RELEASING.md)"; exit 1; fi
           done
 
-      - name: Decode the upload keystore and Firebase config
+      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+      - id: gcp
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_PLAN_SA }}
+      - name: Write the Firebase config from the Terraform output (infra/gcp)
+        env:
+          REQUIRED: "1"
+          CREDS: ${{ steps.gcp.outputs.credentials_file_path }}
+        run: |
+          scripts/ci/fetch-google-services.sh
+          rm -f "$CREDS"
+      - name: Decode the upload keystore
         run: |
           umask 077
           echo "$KEYSTORE_B64" | base64 --decode > "$RUNNER_TEMP/upload.jks"
-          echo "STAYFOCUSED_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
-          echo "$GOOGLE_SERVICES_APP_B64" | base64 --decode > app/google-services.json
-          echo "$GOOGLE_SERVICES_KIDS_B64" | base64 --decode > kids/google-services.json
+          echo "VESPER_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
       - name: Build signed bundles
         run: ./gradlew :app:bundleRelease :kids:bundleRelease -PversionName="${GITHUB_REF_NAME}" --configuration-cache

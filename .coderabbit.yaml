@@ -47,7 +47,7 @@ reviews:
         compileSdk/targetSdk 36, minSdk 26. The build must still work without google-services.json.
     - path: "infra/**/*.tf"
       instructions: |
-        Terraform applied only by GitHub Actions with HCP Terraform state. Check least privilege for IAM roles and service accounts,
+        Terraform applied only by GitHub Actions with state in GCS. Check least privilege for IAM roles and service accounts,
         no secrets or credentials in code or defaults, pinned provider versions, no resources that should come from another
         root module, and that destructive changes (replace/destroy) are intentional.
     - path: "firebase/firestore.rules"

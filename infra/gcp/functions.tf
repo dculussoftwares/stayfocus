@@ -1,6 +1,6 @@
-# Cloud Functions (2nd gen), deployed by Terraform only (M7-02). Never `firebase deploy`.
+# Cloud Functions (2nd gen), deployed by Terraform only. Never `firebase deploy`.
 #
-# Pipeline: the infra-firebase workflow runs `npm ci && npm run build` in firebase/functions, which writes one folder per
+# Pipeline: the infra workflow runs `npm ci && npm run build` in firebase/functions, which writes one folder per
 # function (dist/<name>/index.js + package.json). Terraform zips each folder, uploads it under a content-hashed name and
 # points that function at it. A change to one function's code changes only its zip, so only that function is redeployed.
 #
@@ -13,7 +13,7 @@ locals {
     "run.googleapis.com",
     "eventarc.googleapis.com",
     "artifactregistry.googleapis.com",
-    "fcm.googleapis.com", # Firebase Cloud Messaging API (push to the parent app, M8-05)
+    "fcm.googleapis.com", # Firebase Cloud Messaging API (push to the parent app)
   ]
 
   # kind "callable": an HTTPS callable. Cloud Run's invoker is public because the Functions framework checks App Check and
@@ -27,12 +27,12 @@ locals {
       kind  = "callable"
       roles = ["roles/datastore.user"] # rate-limit counters in Firestore
     }
-    # Deletes the signed-in parent's data and Auth user (M6-06).
+    # Deletes the signed-in parent's data and Auth user.
     deleteAccount = {
       kind  = "callable"
       roles = ["roles/datastore.user", "roles/firebaseauth.admin"] # Firestore deletes, Auth user deletion
     }
-    # Pairing handshake (M7-07): claimLinkToken (parent) and approveLink (child) write across the two accounts.
+    # Pairing handshake: claimLinkToken (parent) and approveLink (child) write across the two accounts.
     claimLinkToken = {
       kind  = "callable"
       roles = ["roles/datastore.user", "roles/firebaseappcheck.tokenVerifier"] # link token transaction, rate-limit counters, App Check token consumption
@@ -41,19 +41,19 @@ locals {
       kind  = "callable"
       roles = ["roles/datastore.user", "roles/firebaseappcheck.tokenVerifier"] # creates the device document in the parent's tree, App Check token consumption
     }
-    # Unlinks a child's phone for the parent or the child (M7-09): recursive delete of the device subtree.
+    # Unlinks a child's phone for the parent or the child: recursive delete of the device subtree.
     unlinkDevice = {
       kind  = "callable"
       roles = ["roles/datastore.user", local.fcm_send_role] # Firestore reads and deletes, rate-limit counters, push to the parent
     }
-    # Pushes a child's request for more time to the parent's phones (M8-05). Its own service account has Firestore
+    # Pushes a child's request for more time to the parent's phones. Its own service account has Firestore
     # access (device name, FCM tokens) and FCM send, nothing else.
     notifyParent = {
       kind     = "firestore_created"
       document = "users/{uid}/devices/{deviceId}/requests/{reqId}"
       roles    = ["roles/datastore.user", local.fcm_send_role]
     }
-    # Pushes a child's lost-permission alert to the parent's phones (M8-06). Same access as notifyParent.
+    # Pushes a child's lost-permission alert to the parent's phones. Same access as notifyParent.
     notifyParentAlert = {
       kind     = "firestore_created"
       document = "users/{uid}/devices/{deviceId}/alerts/{alertId}"

@@ -1,4 +1,4 @@
-# Firestore (native mode), TTL for link tokens, composite indexes and the security rules release (M7-01).
+# Firestore (native mode), TTL for link tokens, composite indexes and the security rules release.
 
 locals {
   firestore_apis = [
@@ -45,7 +45,7 @@ resource "google_firestore_field" "link_token_ttl" {
   index_config {}
 }
 
-# Composite indexes for the M7/M8 queries. The device subcollections are read per device (COLLECTION scope) and, for the
+# Composite indexes for the parent/child queries. The device subcollections are read per device (COLLECTION scope) and, for the
 # parent's "everything pending" views, across devices (COLLECTION_GROUP scope).
 locals {
   composite_indexes = {
@@ -69,7 +69,7 @@ locals {
       query_scope = "COLLECTION"
       fields      = [["dismissed", "ASCENDING"], ["createdAt", "DESCENDING"]]
     }
-    # "Report a bad result" (M9-05): the maintainers review a user's reports newest first.
+    # "Report a bad result": the maintainers review a user's reports newest first.
     ai_reports_uid_created = {
       collection  = "aiReports"
       query_scope = "COLLECTION"

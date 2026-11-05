@@ -1,9 +1,10 @@
 terraform {
   required_version = ">= 1.9"
 
-  # State lives in HCP Terraform (workspace stayfocus-firebase-dev, Local execution mode).
-  # Organization and workspace come from TF_CLOUD_ORGANIZATION / TF_WORKSPACE (set in the workflow).
-  cloud {}
+  # State in the bucket created by infra/seed (terraform init -backend-config=bucket=$TF_STATE_BUCKET).
+  backend "gcs" {
+    prefix = "gcp"
+  }
 
   required_providers {
     google = {
@@ -29,6 +30,9 @@ provider "google" {
   # Billing budgets and Firebase Management are quota-billed to the project, not to the caller.
   user_project_override = true
   billing_project       = var.project_id
+
+  # Cost-allocation labels on every resource that supports them (shown in billing reports).
+  default_labels = local.labels
 }
 
 provider "google-beta" {
@@ -37,4 +41,15 @@ provider "google-beta" {
 
   user_project_override = true
   billing_project       = var.project_id
+
+  default_labels = local.labels
+}
+
+locals {
+  labels = {
+    app        = "vesper"
+    env        = "prod"
+    managed-by = "terraform"
+    component  = "app"
+  }
 }

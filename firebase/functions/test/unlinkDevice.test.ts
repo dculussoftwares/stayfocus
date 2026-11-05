@@ -10,7 +10,7 @@ jest.mock("firebase-admin/messaging", () => ({
   getMessaging: () => ({ sendEachForMulticast: () => Promise.resolve({ responses: [] }) }),
 }));
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 const deps: SecureDeps = { db: () => db, now: () => new Date() };
 const unlink = secureHandler(unlinkDeviceConfig, deps);

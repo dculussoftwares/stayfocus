@@ -1,5 +1,5 @@
-# Cloud Monitoring alerts (M10-04): Cloud Functions error rate and FCM send failures. Same resources in dev and prod;
-# only the notification email differs (alert_email). Without an email the policies still exist and show in the console.
+# Cloud Monitoring alerts: Cloud Functions error rate and FCM send failures. Without an alert_email the policies
+# still exist and show in the console.
 
 resource "google_project_service" "monitoring" {
   for_each = toset(["monitoring.googleapis.com", "logging.googleapis.com"])

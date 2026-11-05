@@ -1,4 +1,4 @@
-# App Check for both Android apps (M7-01): Play Integrity in production builds, debug tokens for dev and CI, and
+# App Check for both Android apps: Play Integrity in release builds, debug tokens for debug and CI builds, and
 # enforcement on Firestore.
 
 resource "google_firebase_app_check_play_integrity_config" "this" {

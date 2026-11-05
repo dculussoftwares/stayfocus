@@ -2,9 +2,9 @@ name: pages
 
 # Deploys /web (privacy policy + account-deletion page) to GitHub Pages. Pages itself is enabled by Terraform
 # (infra/github, `github_repository_pages`, build_type workflow).
-# The Firebase web config (public values) is read from the infra/firebase Terraform state (HCP Terraform) and written to
-# web/firebase-config.json. Without it (before infra-firebase has applied) the site still deploys; the deletion page then
-# tells people to delete the account in the app.
+# The Firebase web config (public values) is read from the infra/gcp Terraform state (GCS, read-only identity) and
+# written to web/firebase-config.json. Without it (before infra has applied) the site still deploys; the deletion page
+# then tells people to delete the account in the app.
 # Third-party actions are pinned to commit SHAs.
 
 on:
@@ -13,7 +13,7 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/pages.yml"
-  # Run by hand after infra-firebase / backlog have applied, so the Firebase web config and the Pages setting exist.
+  # Run by hand after infra has applied, so the Firebase web config and the Pages setting exist.
   # (No schedule or workflow_run: a deploy that cannot read Terraform state would silently disable web deletion.)
   workflow_dispatch:
 
@@ -24,35 +24,28 @@ concurrency:
 permissions:
   contents: read
 
-env:
-  TF_CLOUD_ORGANIZATION: ${{ vars.TF_CLOUD_ORGANIZATION }}
-  TF_WORKSPACE: ${{ vars.TF_WORKSPACE_FIREBASE_DEV || 'stayfocus-firebase-dev' }}
-  TF_VAR_project_id: ${{ vars.GCP_PROJECT_ID_DEV || 'stayfocus-dev' }}
-  TF_IN_AUTOMATION: "true"
-
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
-        if: vars.TF_CLOUD_ORGANIZATION != ''
+      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
-          cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
-          terraform_wrapper: false
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_PLAN_SA }}
       - name: Write Firebase web config
-        if: vars.TF_CLOUD_ORGANIZATION != ''
         run: |
-          # Reads state only (no GCP credentials). Missing state or output is not an error: the site deploys without it.
-          cd infra/firebase
-          # A failing init (bad token, HCP outage) fails the job on purpose; only a missing output is tolerated.
-          terraform init -input=false >/dev/null
-          if terraform output -json firebase_web_config > ../../web/firebase-config.json; then
+          # A missing output is not an error: the site deploys without it.
+          if scripts/infra/read-output.sh gcp firebase_web_config > web/firebase-config.json; then
             echo "Firebase web config written."
           else
-            rm -f ../../web/firebase-config.json
+            rm -f web/firebase-config.json
             echo "::warning::firebase_web_config output not available yet; deploying without it"
           fi
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

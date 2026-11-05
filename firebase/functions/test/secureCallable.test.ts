@@ -5,7 +5,7 @@ import type { CallableRequest } from "firebase-functions/v2/https";
 import { z } from "zod";
 import { secureHandler, type SecureDeps } from "../src/lib/secureCallable";
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 const deps: SecureDeps = { db: () => db, now: () => new Date() };
 

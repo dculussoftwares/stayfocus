@@ -78,7 +78,7 @@ M13 extras + v2 removal). Run it exactly like Phase 1: `/wave 17`, `/clear`, `/w
    launch/UI criteria; Terraform for `infra` stories; Node for `firebase/` (from M7); Maestro for E2E flows (from M1-16).
 5. Permission mode lets the session run `git`, `gh`, `./gradlew`, `terraform` and `python3` without asking each time.
 6. Infra stories (`infra` label) get a Terraform plan comment on the PR and apply on merge through GitHub Actions. They need
-   the secrets from `docs/INFRASTRUCTURE.md` (and from M1-13 on, the GCP bootstrap).
+   the secrets from `docs/INFRASTRUCTURE.md` (and the one-time GCP seed).
 7. Once story M1-12 is merged, `main` enforces this: PRs only, the `ci-pass` check green, every review thread resolved,
    and CodeRabbit's review.
 

@@ -6,7 +6,7 @@ import { answerLink, approveLinkConfig } from "../src/functions/approveLink";
 import { claimLinkTokenConfig, claimToken } from "../src/functions/claimLinkToken";
 import { secureHandler, type SecureDeps } from "../src/lib/secureCallable";
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 const deps: SecureDeps = { db: () => db, now: () => new Date() };
 

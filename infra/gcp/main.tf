@@ -1,5 +1,5 @@
-# Per-environment resources (dev and prod, the same module; only variables differ). Later stories add more milestone by milestone
-# (M7-01 rules, M7-02 Functions in functions.tf, M9-03 AI Logic, ...).
+# Everything inside the project: Firebase, the Android apps, Auth and budgets. Other files: firestore.tf (database and
+# rules), appcheck.tf, functions.tf, ai.tf (Firebase AI Logic), monitoring.tf, web.tf (Pages site).
 
 locals {
   base_apis = [
@@ -93,12 +93,12 @@ resource "google_identity_platform_default_supported_idp_config" "google" {
   depends_on = [google_identity_platform_config.this]
 }
 
-# Budget alert on the dev project (skipped when the billing account isn't provided).
+# Budget alert on the project (skipped when the billing account isn't provided).
 data "google_project" "this" {
   project_id = var.project_id
 }
 
-resource "google_billing_budget" "dev" {
+resource "google_billing_budget" "project" {
   count = var.billing_account != "" ? 1 : 0
 
   billing_account = var.billing_account

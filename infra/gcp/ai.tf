@@ -1,4 +1,4 @@
-# Firebase AI Logic (M9-03): the Gemini Developer API reached through the Firebase AI Logic proxy, with App Check
+# Firebase AI Logic: the Gemini Developer API reached through the Firebase AI Logic proxy, with App Check
 # enforced on the proxy, restricted Android API keys, a Gemini quota cap and a Gemini budget alert.
 
 locals {
