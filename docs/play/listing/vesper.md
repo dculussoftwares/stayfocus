@@ -1,41 +1,41 @@
-# Vesper: store listing (draft)
+# Vesper: store listing
 
-**Title (max 30):** Vesper: Calm App Blocker
+Entered in Play Console on 2026-11-05. Keep this file and the console in sync.
+
+**Title (max 30):** Vesper: App Blocker & Focus
 
 **Short description (max 80):**
-Block distracting apps with time limits, schedules and breaks. Free and open source.
+Block distracting apps with time limits, schedules and breaks. No ads.
 
 **Full description (max 4000):**
 
-Vesper is a free, open-source app blocker that helps you take back your attention.
+Take back your time. Vesper blocks the apps that eat your day, with rules you choose and a calm screen that holds you to them.
 
-Set the rules you want and let the app hold you to them:
-- Time limit: cap how long you spend in an app each day.
-- Use, then rest: a few minutes of use, then a pause.
-- Block during hours: keep apps closed at set times, for example at night or during work.
-- Block now: shut distractions out immediately.
-- Take a break: a timed pause when you really need one.
+Four kinds of blocks
+• Time limit: a daily allowance for an app, then it locks.
+• Use, then lock: open an app for a few minutes, then a cooldown.
+• Block during hours: keep apps closed at school, work or bedtime, on the days you pick.
+• Block now: lock apps right away, for as long as you set.
 
-See where your time goes: a screen-time gauge, hourly bars, and counts of launches, unlocks and blocked attempts.
+Need a moment? Take a break pauses your blocks for a short, timed window, then everything turns back on by itself.
 
-Describe a block in your own words (optional AI): type a sentence about what to limit and when, and the app drafts the
-block for you. The draft is only a suggestion. It is marked "AI DRAFT" and nothing turns on until you check it and confirm.
-Your sentence is sent to Google's Gemini model through Firebase AI Logic to produce the draft.
+See where your time goes
+Screen time today with an hourly chart, a weekly view, and how many times you opened apps, unlocked your phone and hit a block.
 
-Link a child's phone (optional): if you are a parent, you can install Vesper Kids on your child's phone and link
-it by scanning a QR code on that phone. The child's phone shows a clear notice that it is managed, and linking needs the
-child's phone to approve it. You can then set blocks, lock apps and start focus sessions from your phone, and see
-the child's app usage.
+Describe a block in your own words (optional)
+Type something like "no Instagram after 10pm on school nights" and Vesper drafts the block for you. The draft is marked "AI DRAFT" and nothing turns on until you check it and confirm. Your sentence is sent to Google's Gemini model through Firebase AI Logic to make the draft. If a draft is wrong, tap "Report a bad result".
 
-Permissions, and why:
-- Accessibility service: to detect which app is open so a blocked app can be covered. It is not used to read or store
-  what you type or see on screen.
-- Usage access: to measure time spent per app.
-- Display over other apps: to show the block screen.
-- Notifications: for reminders and break timers.
+For parents: link your child's phone (optional)
+Install Vesper Kids on your child's phone and link it by scanning a code. Linking needs approval on the child's phone, and that phone always shows a notice that it is managed. From your phone you can then set blocks, lock apps, start a focus session and see your child's app usage.
 
-Privacy: no ads, no analytics, no advertising ID. You can use the app without an account, and then nothing leaves your
-phone except an AI sentence if you use that feature. Signing in is only needed to link a child's phone. You can delete
-your account and data in the app. Privacy policy and source code are linked from this page.
+Permissions, and why Vesper asks
+• Accessibility service: to know which app is open, so a blocked app can be covered by the block screen. Vesper does not read, store or share what you type or what is on your screen.
+• Usage access: to measure time spent in each app.
+• Display over other apps: to show the block screen.
+• Notifications: for break timers and reminders.
+Vesper explains each permission on screen before Android asks for it.
 
-Vesper is licensed under GPL-3.0.
+Privacy first
+No ads, no analytics, no advertising ID. You can use Vesper without an account; then nothing leaves your phone except an AI sentence, if you use that feature. An account is only needed to link a child's phone, and you can delete your account and data from the app at any time.
+
+Free and open source under GPL-3.0. Read the code, file an issue or contribute at github.com/dculussoftwares/vesper.
