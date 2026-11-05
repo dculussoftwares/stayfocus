@@ -39,8 +39,6 @@ N of `-rcN` and 99 for a final tag, so `v0.2.0-rc1` < `v0.2.0` < `v0.2.1-rc1`.
    `play-publisher@vesper-prod-31275.iam.gserviceaccount.com` (`GCP_PLAY_SA` in `infra/prod.env`, created by
    `infra/seed`). In Play Console > Users and permissions, invite that address with access to the Vesper app and the
    permissions *Release to testing tracks* and *Manage testing tracks*.
-4. **First upload by hand.** The Play API cannot create an app's first release, so upload the first AAB (from the GitHub
-   Release) in Play Console once. Later tags upload by themselves.
 
 Terraform creates the `release` environment (`infra/github/repository.tf`): only `v*` tags may deploy to it, and the
 workflow also refuses tags that do not point at a commit on `main`. There is no approval step.
