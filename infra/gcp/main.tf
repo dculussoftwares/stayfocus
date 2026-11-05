@@ -42,8 +42,9 @@ resource "google_firebase_android_app" "app" {
   display_name = each.value.name
   package_name = each.value.package
 
-  # Certificate fingerprints (debug and release). Public values passed in as variables.
-  sha1_hashes   = var.sha1_fingerprints[each.key]
+  # Certificate fingerprints (debug and release). Public values passed in as variables. Registering a SHA-1 makes
+  # Google create an Android OAuth client (needed for Google sign-in); see register_sha1_on_firebase_apps.
+  sha1_hashes   = var.register_sha1_on_firebase_apps ? var.sha1_fingerprints[each.key] : []
   sha256_hashes = var.sha256_fingerprints[each.key]
 
   # Terraform removes the app on destroy instead of only abandoning it.

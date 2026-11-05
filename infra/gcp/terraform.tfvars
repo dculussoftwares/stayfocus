@@ -14,6 +14,10 @@ sha256_fingerprints = {
   kids = ["33:DE:AB:3F:93:C9:25:E0:A1:52:F3:40:8C:D4:C2:C4:9B:B8:EA:6D:01:1A:D5:F4:5C:EF:92:92:95:97:22:2B"]
 }
 
+# Off until the deleted StayFocus project releases the debug key's OAuth clients (purged by 2026-12-05). Turn on to
+# enable Google sign-in.
+register_sha1_on_firebase_apps = false
+
 # ENFORCED rejects requests without a valid App Check token; UNENFORCED only records metrics.
 app_check_enforcement = "ENFORCED"
 

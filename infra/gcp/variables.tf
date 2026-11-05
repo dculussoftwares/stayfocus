@@ -24,6 +24,12 @@ variable "sha1_fingerprints" {
   }
 }
 
+variable "register_sha1_on_firebase_apps" {
+  description = "Register sha1_fingerprints on the Firebase Android apps (creates their Android OAuth clients, used by Google sign-in). A package + SHA-1 pair can only have an OAuth client in one project, so this stays off while a deleted project still holds it (up to 30 days after deletion). API key restrictions use sha1_fingerprints either way."
+  type        = bool
+  default     = true
+}
+
 variable "sha256_fingerprints" {
   description = "SHA-256 certificate fingerprints (debug and release) per Android app (app, kids). Public values, not secrets."
   type        = map(list(string))
