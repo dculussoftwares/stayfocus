@@ -6,17 +6,16 @@ project_id = "vesper-prod-31275"
 # Signing-certificate fingerprints per app (public values). Today: the debug key. Add the Play App Signing
 # fingerprints (Play Console > App integrity) when the apps are published.
 sha1_fingerprints = {
-  app  = ["19:AB:1D:9D:74:8E:98:E1:1B:36:AC:FA:E5:C0:BE:B2:2F:A9:62:94"]
-  kids = ["19:AB:1D:9D:74:8E:98:E1:1B:36:AC:FA:E5:C0:BE:B2:2F:A9:62:94"]
+  app  = ["69:38:3E:14:D2:26:49:38:FB:B2:74:BE:31:64:2F:42:E6:33:B7:A7"]
+  kids = ["69:38:3E:14:D2:26:49:38:FB:B2:74:BE:31:64:2F:42:E6:33:B7:A7"]
 }
 sha256_fingerprints = {
-  app  = ["33:DE:AB:3F:93:C9:25:E0:A1:52:F3:40:8C:D4:C2:C4:9B:B8:EA:6D:01:1A:D5:F4:5C:EF:92:92:95:97:22:2B"]
-  kids = ["33:DE:AB:3F:93:C9:25:E0:A1:52:F3:40:8C:D4:C2:C4:9B:B8:EA:6D:01:1A:D5:F4:5C:EF:92:92:95:97:22:2B"]
+  app  = ["0D:1D:88:64:D6:26:6C:14:AD:D4:7E:64:6D:C4:98:80:3B:17:68:3E:F5:9F:A4:D3:9F:26:E1:1D:92:71:1E:9D"]
+  kids = ["0D:1D:88:64:D6:26:6C:14:AD:D4:7E:64:6D:C4:98:80:3B:17:68:3E:F5:9F:A4:D3:9F:26:E1:1D:92:71:1E:9D"]
 }
 
-# Off until the deleted StayFocus project releases the debug key's OAuth clients (purged by 2026-12-05). Turn on to
-# enable Google sign-in.
-register_sha1_on_firebase_apps = false
+# On: the debug key was regenerated on 2026-11-05, so its SHA-1 is not held by the deleted StayFocus project.
+register_sha1_on_firebase_apps = true
 
 # ENFORCED rejects requests without a valid App Check token; UNENFORCED only records metrics.
 app_check_enforcement = "ENFORCED"
