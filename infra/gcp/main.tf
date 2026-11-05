@@ -15,6 +15,10 @@ locals {
     app  = { package = "com.dculus.vesper", name = "Vesper" }
     kids = { package = "com.dculus.vesper.kids", name = "Vesper Kids" }
   }
+
+  # Google stores fingerprints as lowercase hex without colons; tfvars keep the readable AA:BB:... form.
+  sha1   = { for app, prints in var.sha1_fingerprints : app => [for f in prints : lower(replace(f, ":", ""))] }
+  sha256 = { for app, prints in var.sha256_fingerprints : app => [for f in prints : lower(replace(f, ":", ""))] }
 }
 
 resource "google_project_service" "base" {
@@ -44,8 +48,8 @@ resource "google_firebase_android_app" "app" {
 
   # Certificate fingerprints (debug and release). Public values passed in as variables. Registering a SHA-1 makes
   # Google create an Android OAuth client (needed for Google sign-in); see register_sha1_on_firebase_apps.
-  sha1_hashes   = var.register_sha1_on_firebase_apps ? var.sha1_fingerprints[each.key] : []
-  sha256_hashes = var.sha256_fingerprints[each.key]
+  sha1_hashes   = var.register_sha1_on_firebase_apps ? local.sha1[each.key] : []
+  sha256_hashes = local.sha256[each.key]
 
   # Terraform removes the app on destroy instead of only abandoning it.
   deletion_policy = "DELETE"
@@ -74,6 +78,16 @@ resource "google_identity_platform_config" "this" {
     anonymous {
       enabled = true
     }
+
+    # Off; listed so the plan matches what the API returns.
+    phone_number {
+      enabled            = false
+      test_phone_numbers = {}
+    }
+  }
+
+  multi_tenant {
+    allow_tenants = false
   }
 
   depends_on = [google_firebase_project.this]
