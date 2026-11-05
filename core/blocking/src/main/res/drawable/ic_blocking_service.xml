@@ -4,8 +4,12 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-    <!-- The Vesper evening star, from the Valley launcher icon. -->
+    <!-- Venus, the Vesper evening star, from the Valley launcher icon: a planet with its halo ring. -->
+    <path
+        android:pathData="M2.75,12a9.25,9.25 0,1 0,18.5 0a9.25,9.25 0,1 0,-18.5 0z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFFFFFFF" />
     <path
         android:fillColor="#FFFFFFFF"
-        android:pathData="M12,1.5C13.57,8.85 14.94,10.43 19.35,12C14.94,13.57 13.57,15.15 12,22.5C10.43,15.15 9.06,13.57 4.65,12C9.06,10.43 10.43,8.85 12,1.5Z" />
+        android:pathData="M6,12a6,6 0,1 0,12 0a6,6 0,1 0,-12 0z" />
 </vector>
