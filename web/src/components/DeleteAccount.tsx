@@ -177,7 +177,15 @@ export default function DeleteAccount() {
       await withTimeout(getToken(firebase.appCheck), APP_CHECK_TIMEOUT_MS);
     } catch {
       setDeleting(false);
-      say("This page could not verify your browser. Turn off content blockers for this site, then try again.", true);
+      say("This page could not verify your browser. Turn off content blockers for this site, reload the page and try again.", true);
+      return;
+    }
+    // The signed-in user can change while waiting (sign-in in another tab): check again before deleting.
+    if (!confirmedUid.current || firebase.auth.currentUser?.uid !== confirmedUid.current) {
+      setDeleting(false);
+      confirmedUid.current = null;
+      setStep("signin");
+      say("The signed-in account changed. Please sign in again.", true);
       return;
     }
     try {
