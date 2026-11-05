@@ -14,9 +14,10 @@ inputs:
 runs:
   using: composite
   steps:
+    # prod.env is a committed file of public KEY=value lines (no PR-controlled input reaches it on main).
     - name: Load infra/prod.env
       shell: bash
-      run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+      run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV" # zizmor: ignore[github-env]
 
     # The gcp module zips firebase/functions/dist/<name> for each function.
     - if: inputs.module == 'gcp'

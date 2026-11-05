@@ -38,6 +38,9 @@ jobs:
           client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
           private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-issues: read
+          permission-organization-projects: write
       - env:
           GH_TOKEN: ${{ steps.app.outputs.token }}
         run: python3 scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board

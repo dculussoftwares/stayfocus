@@ -207,6 +207,11 @@ jobs:
           client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
           private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
           owner: ${{ github.repository_owner }}
+          repositories: ${{ github.event.repository.name }}
+          permission-administration: write
+          permission-issues: write
+          permission-pages: write
+          permission-organization-projects: write
       - working-directory: infra/github
         env:
           GITHUB_TOKEN: ${{ steps.app.outputs.token }}
