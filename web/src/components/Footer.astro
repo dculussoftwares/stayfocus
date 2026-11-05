@@ -12,9 +12,10 @@ export interface Credit {
 
 interface Props {
   credit?: Credit;
+  appIcons?: boolean;
 }
 
-const { credit } = Astro.props;
+const { credit, appIcons = false } = Astro.props;
 ---
 
 <footer class="site-footer">
@@ -30,6 +31,13 @@ const { credit } = Astro.props;
     credit && (
       <p class="credit">
         Photo: <a href={credit.page}>“{credit.title}”</a> by {credit.author}, <a href={credit.licenceUrl}>{credit.licence}</a>, via {credit.source}.
+      </p>
+    )
+  }
+  {
+    appIcons && (
+      <p class="credit">
+        App logos by <a href="https://icons8.com">Icons8</a>. Instagram, YouTube, TikTok and Reddit are trademarks of their owners.
       </p>
     )
   }

@@ -68,6 +68,7 @@ const jsonLd = {
   description="Block the apps that eat your day. Time limits, use-then-lock, schedules and breaks. No ads, no analytics, no account needed. Free and open source."
   current="home"
   jsonLd={jsonLd}
+  appIcons
   credit={{ title: "Evening Star with Oak", page: "https://www.flickr.com/photos/42914481@N00/11183635344", author: "albategnius", licence: "CC BY-SA 2.0", licenceUrl: "https://creativecommons.org/licenses/by-sa/2.0/", source: "Flickr" }}
 >
   <!-- Hero: say what you want blocked, see both apps. -->
@@ -168,7 +169,7 @@ const jsonLd = {
       <li data-rise>
         <h3>Then get on with your day.</h3>
         <div class="call block-card" data-ui>
-          <span class="stack" aria-hidden="true"><span style="--c:#111318">T</span><span style="--c:#FF0033">Y</span></span>
+          <span class="stack" aria-hidden="true"><span><img src="/apps/tiktok.webp" alt="" width="26" height="26" /></span><span><img src="/apps/youtube.webp" alt="" width="26" height="26" /></span></span>
           <div>
             <p class="bc-title">TikTok + YouTube</p>
             <p class="bc-type">Blocked during hours</p>
@@ -702,13 +703,11 @@ const jsonLd = {
     width: 38px;
     height: 38px;
     border-radius: 13px;
-    background: var(--c);
-    color: #fff;
+    background: #fff;
     display: grid;
     place-items: center;
-    font-weight: 600;
-    font-size: 15px;
     border: 2px solid #fff;
+    box-shadow: 0 0 0 1px var(--step);
   }
 
   .stack span + span {

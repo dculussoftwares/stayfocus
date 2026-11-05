@@ -13,9 +13,11 @@ interface Props {
   jsonLd?: Record<string, unknown>;
   /** Credit for a found photograph shown on the page. */
   credit?: Credit;
+  /** The page shows other apps' logos from Icons8, which the free licence asks us to credit. */
+  appIcons?: boolean;
 }
 
-const { title, description, current, noindex = false, jsonLd, credit } = Astro.props;
+const { title, description, current, noindex = false, jsonLd, credit, appIcons = false } = Astro.props;
 // Pages build as files (privacy.html) but are served at clean URLs (/privacy, see astro.config.mjs).
 const path = Astro.url.pathname.replace(/(index)?\.html$/, "");
 const canonical = new URL(path, Astro.site);
@@ -53,7 +55,7 @@ const image = new URL("/og.png", Astro.site);
     <main>
       <slot />
     </main>
-    <Footer credit={credit} />
+    <Footer credit={credit} appIcons={appIcons} />
     <script>
       // Sections rise into place once as they enter. Without script, or with reduced motion, everything is visible.
       const items = document.querySelectorAll<HTMLElement>("[data-rise]");

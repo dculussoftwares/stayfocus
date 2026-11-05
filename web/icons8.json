@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "icons": {
+    "pack": "color",
+    "sizes": [18, 26, 56],
+    "color": "original",
+    "items": {
+      "instagram": { "id": "32323", "commonName": "instagram-new" },
+      "youtube": { "id": "19318", "commonName": "youtube-play" },
+      "tiktok": { "id": "118640", "commonName": "tiktok" },
+      "reddit": { "id": "13642", "commonName": "reddit" }
+    }
+  }
+}

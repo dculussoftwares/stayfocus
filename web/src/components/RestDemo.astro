@@ -1,11 +1,12 @@
 ---
 // The live demo: pick an app and a rule (or describe it), and see the screen Vesper shows when time is up.
 // Copy follows the app: core/blocking strings.xml (block screen) and docs/design/V5_SPEC.md (rule sentences).
+// App logos: Icons8 "color" pack (public/apps, see web/icons8.json), credited in the footer.
 const apps = [
-  { id: "instagram", name: "Instagram", color: "#E1306C" },
-  { id: "youtube", name: "YouTube", color: "#FF0033" },
-  { id: "tiktok", name: "TikTok", color: "#111318" },
-  { id: "reddit", name: "Reddit", color: "#FF4500" },
+  { id: "instagram", name: "Instagram" },
+  { id: "youtube", name: "YouTube" },
+  { id: "tiktok", name: "TikTok" },
+  { id: "reddit", name: "Reddit" },
 ];
 const types = [
   { id: "cycle", name: "Use, then lock", sub: "Open for a bit, then a cooldown" },
@@ -38,7 +39,7 @@ const examples = [
   <div class="demo" data-demo data-rise style="--i:2">
     <div class="demo-stage">
       <div class="rest" data-ui role="img" aria-label="Vesper's block screen" data-rest>
-        <span class="rest-icon" data-letter style="--app:#E1306C">I</span>
+        <span class="rest-icon"><img data-app-icon src="/apps/instagram.webp" alt="" width="56" height="56" /></span>
         <p class="rest-title"><span data-name>Instagram</span> is resting</p>
         <p class="rest-sub">Opens again in</p>
         <p class="rest-clock" data-clock>30:00</p>
@@ -54,8 +55,11 @@ const examples = [
           {
             apps.map((app, i) => (
               <label>
-                <input type="radio" name="app" value={app.id} data-color={app.color} data-label={app.name} checked={i === 0} />
-                <span>{app.name}</span>
+                <input type="radio" name="app" value={app.id} data-label={app.name} checked={i === 0} />
+                <span>
+                  <img src={`/apps/${app.id}.webp`} alt="" width="18" height="18" />
+                  {app.name}
+                </span>
               </label>
             ))
           }
@@ -173,12 +177,9 @@ const examples = [
     width: 76px;
     height: 76px;
     border-radius: 26px;
-    background: var(--app);
+    background: #fff;
     display: grid;
     place-items: center;
-    font-size: 30px;
-    font-weight: 600;
-    transition: background-color 300ms var(--ease);
   }
 
   .rest-title {
@@ -273,8 +274,10 @@ const examples = [
   }
 
   .seg-track span {
-    display: grid;
-    place-items: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     min-height: 40px;
     border-radius: 24px;
     color: var(--on-ink-muted);
@@ -284,6 +287,16 @@ const examples = [
     transition:
       background-color 200ms var(--ease),
       color 200ms var(--ease);
+  }
+
+  .seg-track img {
+    flex: none;
+  }
+
+  @media (max-width: 440px) {
+    .seg-track img {
+      display: none;
+    }
   }
 
   .seg-track span:hover {
@@ -603,11 +616,8 @@ const examples = [
       const type = (checked("type")?.value ?? "cycle") as Type;
       const name = app?.dataset.label ?? "Instagram";
       demo.querySelectorAll("[data-name]").forEach((n) => (n.textContent = name));
-      const letter = $<HTMLElement>("[data-letter]");
-      if (letter) {
-        letter.textContent = name.charAt(0);
-        letter.style.setProperty("--app", app?.dataset.color ?? "#E1306C");
-      }
+      const icon = $<HTMLImageElement>("[data-app-icon]");
+      if (icon) icon.src = `/apps/${app?.value ?? "instagram"}.webp`;
       document.querySelectorAll("[data-app-blank]").forEach((n) => (n.textContent = name));
       form.querySelectorAll<HTMLElement>("[data-for]").forEach((g) => (g.hidden = g.dataset.for !== type));
       form.querySelectorAll<HTMLInputElement>('input[type="range"]').forEach(paintRange);
