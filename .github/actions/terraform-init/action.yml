@@ -46,4 +46,16 @@ runs:
     - name: terraform init
       shell: bash
       working-directory: infra/${{ inputs.module }}
-      run: terraform init -input=false -backend-config="bucket=${TF_STATE_BUCKET}"
+      env:
+        IDENTITY: ${{ inputs.identity }}
+        MODULE: ${{ inputs.module }}
+      run: |
+        # A new module has no state yet, and the read-only identity can't create it: plan against an empty local
+        # state until the first apply writes it.
+        if [ "$IDENTITY" = plan ] && ! gcloud storage ls "gs://${TF_STATE_BUCKET}/${MODULE}/default.tfstate" >/dev/null 2>&1; then
+          echo "::notice::No state for ${MODULE} yet; planning against an empty state."
+          printf 'terraform {\n  backend "local" {}\n}\n' > backend_override.tf
+          terraform init -input=false
+        else
+          terraform init -input=false -backend-config="bucket=${TF_STATE_BUCKET}"
+        fi
