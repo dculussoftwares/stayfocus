@@ -5,7 +5,7 @@
 // the page tells people to delete the account in the app.
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import { type FirebaseOptions, initializeApp } from "firebase/app";
-import { ReCaptchaEnterpriseProvider, initializeAppCheck } from "firebase/app-check";
+import { type AppCheck, ReCaptchaEnterpriseProvider, getToken, initializeAppCheck } from "firebase/app-check";
 import {
   type Auth,
   type User,
@@ -23,7 +23,28 @@ type Step = "loading" | "unconfigured" | "signin" | "confirm" | "done";
 
 interface Firebase {
   auth: Auth;
+  appCheck: AppCheck;
   deleteAccount: HttpsCallable;
+}
+
+// How long to wait for an App Check token. A content blocker can stop reCAPTCHA from loading; without a limit the
+// page would stay on "Deleting..." forever.
+const APP_CHECK_TIMEOUT_MS = 15_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("timeout")), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error: unknown) => {
+        clearTimeout(timer);
+        reject(error instanceof Error ? error : new Error(String(error)));
+      },
+    );
+  });
 }
 
 async function loadConfig(): Promise<Config | null> {
@@ -82,13 +103,13 @@ export default function DeleteAccount() {
       }
       const { functionsRegion, recaptchaSiteKey, ...options } = config;
       const app = initializeApp(options);
-      initializeAppCheck(app, {
+      const appCheck = initializeAppCheck(app, {
         provider: new ReCaptchaEnterpriseProvider(recaptchaSiteKey as string),
         isTokenAutoRefreshEnabled: true,
       });
       const auth = getAuth(app);
       const deleteAccount = httpsCallable(getFunctions(app, functionsRegion || "europe-west1"), "deleteAccount");
-      setFirebase({ auth, deleteAccount });
+      setFirebase({ auth, appCheck, deleteAccount });
       setStep("signin");
       unsubscribe = onAuthStateChanged(auth, (user) => {
         if (confirmedUid.current && (!user || user.uid !== confirmedUid.current)) {
@@ -152,6 +173,13 @@ export default function DeleteAccount() {
     }
     setDeleting(true);
     say("Deleting...");
+    try {
+      await withTimeout(getToken(firebase.appCheck), APP_CHECK_TIMEOUT_MS);
+    } catch {
+      setDeleting(false);
+      say("This page could not verify your browser. Turn off content blockers for this site, then try again.", true);
+      return;
+    }
     try {
       // The callable's input schema is an empty object; no argument would be sent as null and rejected.
       await firebase.deleteAccount({});
