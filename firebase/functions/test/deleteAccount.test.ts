@@ -6,7 +6,7 @@ import { z } from "zod";
 import { deleteAccountConfig, deleteAccountData, MAX_AUTH_AGE_SECONDS, type UserDeleter } from "../src/functions/deleteAccount";
 import { secureHandler, type SecureDeps } from "../src/lib/secureCallable";
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 const NOW = new Date("2026-06-01T12:00:00Z");
 const deps: SecureDeps = { db: () => db, now: () => NOW };

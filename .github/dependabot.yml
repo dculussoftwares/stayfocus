@@ -30,9 +30,9 @@ updates:
 
   - package-ecosystem: terraform
     directories:
+      - "/infra/seed"
+      - "/infra/gcp"
       - "/infra/github"
-      - "/infra/bootstrap"
-      - "/infra/firebase"
     schedule:
       interval: weekly
     groups:

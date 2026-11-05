@@ -1,4 +1,4 @@
-# Firebase web app for the GitHub Pages site (M6-07: /web account-deletion page).
+# Firebase web app for the GitHub Pages site (/web account-deletion page).
 # The web config is public by design (it identifies the project; security comes from Auth, rules and App Check).
 # pages.yml reads the `firebase_web_config` output at deploy time and writes it to web/firebase-config.json.
 

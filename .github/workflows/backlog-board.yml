@@ -1,0 +1,43 @@
+name: backlog-board
+
+# When an issue closes or reopens, update the kanban board (org project #11): Backlog -> Ready when dependencies
+# close, Done when an issue closes. Issue numbers come from the infra/github Terraform state (read-only identity).
+# Third-party actions are pinned to commit SHAs.
+
+on:
+  issues:
+    types: [closed, reopened]
+
+concurrency:
+  group: backlog-board
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  sync-status:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      issues: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: grep -E '^[A-Z_]+=' infra/prod.env >> "$GITHUB_ENV"
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_PLAN_SA }}
+      - run: scripts/infra/read-output.sh github backlog > "$RUNNER_TEMP/backlog.json"
+      - id: app
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.BACKLOG_APP_CLIENT_ID }}
+          private-key: ${{ secrets.BACKLOG_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - env:
+          GH_TOKEN: ${{ steps.app.outputs.token }}
+        run: python3 scripts/backlog/sync_project.py "$RUNNER_TEMP/backlog.json" board

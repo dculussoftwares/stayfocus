@@ -1,5 +1,5 @@
 variable "project_id" {
-  description = "GCP project that hosts this environment's Firebase resources (for example stayfocus-dev)."
+  description = "The GCP project (created by infra/seed)."
   type        = string
 }
 
@@ -10,14 +10,9 @@ variable "region" {
 }
 
 variable "env" {
-  description = "Environment name: dev or prod."
+  description = "Environment name, used in display names. There is one environment: prod."
   type        = string
-  default     = "dev"
-
-  validation {
-    condition     = contains(["dev", "prod"], var.env)
-    error_message = "env must be dev or prod."
-  }
+  default     = "prod"
 }
 
 variable "sha1_fingerprints" {
@@ -103,7 +98,7 @@ variable "gemini_billing_services" {
 }
 
 variable "app_check_debug_tokens" {
-  description = "App Check debug tokens (UUIDs) for dev and CI builds, per app and name, for example {\"app\":{\"ci\":\"<uuid>\"},\"kids\":{}}. Pass as TF_VAR_app_check_debug_tokens from a GitHub secret; never commit."
+  description = "App Check debug tokens (UUIDs) for debug and CI builds, per app and name, for example {\"app\":{\"ci\":\"<uuid>\"},\"kids\":{}}. Pass as TF_VAR_app_check_debug_tokens from a GitHub secret; never commit."
   type        = map(map(string))
   default     = {}
   sensitive   = true

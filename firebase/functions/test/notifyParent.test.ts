@@ -5,7 +5,7 @@ import { handleRequestCreated } from "../src/functions/notifyParent";
 import { cleanLabel, pushToParent, type NotifyDeps } from "../src/lib/notify";
 import type { MulticastMessage } from "firebase-admin/messaging";
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 
 interface Sent {

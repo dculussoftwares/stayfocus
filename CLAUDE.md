@@ -14,11 +14,11 @@ Phase 1 (M1–M10, waves 1–16) is built; only `needs-human` stories remain. Th
 | `design/` | **v5 redesign** source: `Vesper v5.dc.html` (prototype, source of truth), `screens-v5/` (24 reference PNGs, re-render with `scripts/design/capture-v5.mjs`). `README.md`/`screenshots/` there are the older v2 (historical) |
 | `docs/design/V5_SPEC.md` | v5 spec for epics M11–M13: strategy, tokens, components, copy per screen, extras |
 | `docs/IMPLEMENTATION_PLAN.md` | Decisions, module map, workflow, definition of done, data model, backend/Functions policy |
-| `docs/INFRASTRUCTURE.md` | Terraform + GitHub Actions only; HCP state; bootstrap |
+| `docs/INFRASTRUCTURE.md` | Terraform + GitHub Actions only; one prod GCP project; state in GCS; keyless login |
 | `backlog/phase1/` | Epics and stories (source of truth for the GitHub issues) |
-| `infra/github/` | Terraform that turns `backlog/` into labels, milestones and issues |
+| `infra/` | Terraform: `seed` (project, state bucket, keyless login), `gcp` (Firebase), `github` (repo settings, backlog issues). Public CI values in `infra/prod.env` |
 | `scripts/backlog/sync_project.py` | Post-apply sync: sub-issues, "blocked by" links, Projects v2 board |
-| `.github/workflows/backlog.yml` | Plan on PR, apply on merge to `main`; board status sync when issues close |
+| `.github/workflows/infra.yml` | All Terraform (`infra/seed`, `infra/gcp`, `infra/github`): plan on PR, apply on merge to `main`. `backlog-board.yml` syncs the board when issues close |
 | `.coderabbit.yaml` | CodeRabbit review config (advisory reviewer; never blocks a merge) |
 | `scripts/backlog/board.py` | Move a card on the kanban board / list Ready cards |
 | `docs/agents/PHASE1_EXECUTION.md` | How to run the backlog (`/wave`, `/next-wave`, `/story`), CodeRabbit rules, the 16-wave order |

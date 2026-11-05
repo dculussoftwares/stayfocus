@@ -3,10 +3,10 @@ import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure
 
 /** Environment variables that carry the upload key in CI (see docs/RELEASING.md). Never committed. */
-private const val ENV_KEYSTORE = "STAYFOCUSED_KEYSTORE_FILE"
-private const val ENV_STORE_PASSWORD = "STAYFOCUSED_KEYSTORE_PASSWORD"
-private const val ENV_KEY_ALIAS = "STAYFOCUSED_KEY_ALIAS"
-private const val ENV_KEY_PASSWORD = "STAYFOCUSED_KEY_PASSWORD"
+private const val ENV_KEYSTORE = "VESPER_KEYSTORE_FILE"
+private const val ENV_STORE_PASSWORD = "VESPER_KEYSTORE_PASSWORD"
+private const val ENV_KEY_ALIAS = "VESPER_KEY_ALIAS"
+private const val ENV_KEY_PASSWORD = "VESPER_KEY_PASSWORD"
 
 /**
  * Release build type shared by `:app` and `:kids`: version from `-PversionName` / `-PversionBuild`, R8 with the

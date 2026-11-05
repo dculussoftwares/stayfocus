@@ -5,7 +5,7 @@ import { handleAlertCreated } from "../src/functions/notifyParentAlert";
 import type { NotifyDeps } from "../src/lib/notify";
 import type { MulticastMessage } from "firebase-admin/messaging";
 
-if (getApps().length === 0) initializeApp({ projectId: "demo-stayfocus" });
+if (getApps().length === 0) initializeApp({ projectId: "demo-vesper" });
 const db = getFirestore();
 
 function fakeMessaging() {

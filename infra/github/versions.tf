@@ -1,11 +1,10 @@
 terraform {
   required_version = ">= 1.9"
 
-  # State lives in HCP Terraform. Organization and workspace come from the
-  # TF_CLOUD_ORGANIZATION and TF_WORKSPACE environment variables (set in the
-  # GitHub Actions workflow). Workspaces use the "Local" execution mode, so
-  # plans and applies run inside GitHub Actions.
-  cloud {}
+  # State in the bucket created by infra/seed (terraform init -backend-config=bucket=$TF_STATE_BUCKET).
+  backend "gcs" {
+    prefix = "github"
+  }
 
   required_providers {
     github = {

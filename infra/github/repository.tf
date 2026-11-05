@@ -1,7 +1,7 @@
-# Repository settings and the branch ruleset for `main` (M1-12).
+# Repository settings, the branch ruleset for `main` and the `prod` environment.
 #
 # Needs a credential with Repository -> Administration: the apply job mints a GitHub App token for it
-# (docs/INFRASTRUCTURE.md, bootstrap step 3). Plans only read, so GITHUB_TOKEN is enough there.
+# (docs/INFRASTRUCTURE.md). Plans only read, so GITHUB_TOKEN is enough there.
 
 import {
   to = github_repository.this
@@ -29,7 +29,7 @@ resource "github_repository" "this" {
 
   archive_on_destroy = true
 
-  # Secret scanning and push protection (free on public repositories) (M1-15).
+  # Secret scanning and push protection (free on public repositories).
   security_and_analysis {
     secret_scanning {
       status = "enabled"
@@ -44,13 +44,13 @@ resource "github_repository" "this" {
   }
 }
 
-# GitHub Pages for /web (M6-07), deployed by .github/workflows/pages.yml (actions/deploy-pages).
+# GitHub Pages for /web, deployed by .github/workflows/pages.yml (actions/deploy-pages).
 resource "github_repository_pages" "this" {
   repository = github_repository.this.name
   build_type = "workflow"
 }
 
-# Dependabot alerts (M1-15).
+# Dependabot alerts.
 resource "github_repository_vulnerability_alerts" "this" {
   repository = github_repository.this.name
   enabled    = true
@@ -103,22 +103,11 @@ resource "github_repository_ruleset" "main" {
   }
 }
 
-# Protected environment for applying infra/firebase to the prod project (M10-04). The apply job waits for a reviewer.
-data "github_user" "prod_reviewer" {
-  for_each = var.prod_reviewers
-  username = each.value
-}
-
+# The environment infra applies run in. GCP only lets jobs in this environment use the deploy identity
+# (infra/seed, wif_deploy), and the environment only accepts the main branch. No approval step: merging is the approval.
 resource "github_repository_environment" "prod" {
   repository  = github_repository.this.name
   environment = "prod"
-
-  # The reviewer approval also applies to repository admins.
-  can_admins_bypass = false
-
-  reviewers {
-    users = [for u in data.github_user.prod_reviewer : u.id]
-  }
 
   deployment_branch_policy {
     protected_branches     = false

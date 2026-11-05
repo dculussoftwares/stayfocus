@@ -35,7 +35,7 @@ for (const name of names) {
   for (const d of externals) {
     dependencies[d] = JSON.parse(await readFile(join(root, "node_modules", d, "package.json"), "utf8")).version;
   }
-  const manifest = { name: `stayfocus-fn-${name}`, private: true, main: "index.js", engines: { node: "22" }, dependencies };
+  const manifest = { name: `vesper-fn-${name}`, private: true, main: "index.js", engines: { node: "22" }, dependencies };
   await writeFile(join(out, "package.json"), JSON.stringify(manifest, null, 2) + "\n");
 }
 console.log(`built ${names.length} function(s): ${names.join(", ")}`);
