@@ -1,7 +1,12 @@
 # Play store listings
 
 Draft listing copy for both apps, plus the checklist for the graphics a person must produce from real builds.
-Status: **draft, awaiting human review** (M10-05). Do not paste into the Play Console until the review checklist below is ticked.
+Status: Vesper's listing is **in Play Console** (default store listing, saved 2026-11-05): `vesper.md`, `icon-app.png`,
+`feature-app.png` and `screenshots/app-1..6.png`. The screenshots are the Roborazzi baselines of the v5 screens, framed
+with a caption. Vesper Kids is still a draft.
+
+Vesper's review checklist below is not ticked. Do not treat this listing as
+reviewed until it is.
 
 | File | App |
 |---|---|
