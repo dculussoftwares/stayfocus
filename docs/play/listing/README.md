@@ -5,6 +5,9 @@ Status: Vesper's listing is **in Play Console** (default store listing, saved 20
 `feature-app.png` and `screenshots/app-1..6.png`. The screenshots are the Roborazzi baselines of the v5 screens, framed
 with a caption. Vesper Kids is still a draft.
 
+Vesper's review checklist below is not ticked. Do not treat this listing as
+reviewed until it is.
+
 | File | App |
 |---|---|
 | `vesper.md` | Vesper (`:app`) |

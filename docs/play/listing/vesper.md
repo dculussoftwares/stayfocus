@@ -22,9 +22,6 @@ Need a moment? Take a break pauses your blocks for a short, timed window, then e
 See where your time goes
 Screen time today with an hourly chart, a weekly view, and how many times you opened apps, unlocked your phone and hit a block.
 
-Describe a block in your own words (optional)
-Type something like "no Instagram after 10pm on school nights" and Vesper drafts the block for you. The draft is marked "AI DRAFT" and nothing turns on until you check it and confirm. Your sentence is sent to Google's Gemini model through Firebase AI Logic to make the draft. If a draft is wrong, tap "Report a bad result".
-
 For parents: link your child's phone (optional)
 Install Vesper Kids on your child's phone and link it by scanning a code. Linking needs approval on the child's phone, and that phone always shows a notice that it is managed. From your phone you can then set blocks, lock apps, start a focus session and see your child's app usage.
 
@@ -36,6 +33,6 @@ Permissions, and why Vesper asks
 Vesper explains each permission on screen before Android asks for it.
 
 Privacy first
-No ads, no analytics, no advertising ID. You can use Vesper without an account; then nothing leaves your phone except an AI sentence, if you use that feature. An account is only needed to link a child's phone, and you can delete your account and data from the app at any time.
+No ads, no analytics, no advertising ID. You can use Vesper without an account; then nothing leaves your phone. An account is only needed to link a child's phone, and you can delete your account and data from the app at any time.
 
 Free and open source under GPL-3.0. Read the code, file an issue or contribute at github.com/dculussoftwares/vesper.
